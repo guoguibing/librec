@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>   
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"> <log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>  
+
+<appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">   
+    <layout class="org.apache.log4j.PatternLayout">   
+        <param name="ConversionPattern" value="[%4p] %m%n"/>   
+    </layout>   
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">   
+	     <param name="LevelMin" value="DEBUG" />   
+	     <param name="LevelMax" value="INFO" />   
+	</filter>  
+</appender>   
+
+<appender name="DEBUG" class="org.apache.log4j.RollingFileAppender">   
+    <param name="File" value="debug.log"/>   
+    <param name="Append" value="false"/>   
+    <param name="MaxFileSize" value="200MB"/>   
+    <param name="MaxBackupIndex" value="2"/>   
+    <layout class="org.apache.log4j.PatternLayout">   
+        <param name="ConversionPattern" value="[%-5p] %d -- %m%n"/>   
+    </layout>   
+	<filter class="org.apache.log4j.varia.LevelRangeFilter">   
+	     <param name="LevelMin" value="DEBUG" />   
+	     <param name="LevelMax" value="INFO" />   
+	</filter>   
+</appender>   
+  
+<appender name="WARN" class="org.apache.log4j.RollingFileAppender">   
+    <param name="File" value="warn.log"/>   
+    <param name="Append" value="false"/>   
+    <param name="MaxFileSize" value="20MB"/>   
+    <param name="MaxBackupIndex" value="2"/>   
+    <layout class="org.apache.log4j.PatternLayout">   
+        <param name="ConversionPattern" value="%c %d -- %m%n"/>   
+    </layout>   
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">   
+        <param name="LevelMin" value="WARN" />   
+        <param name="LevelMax" value="WARN" />   
+    </filter>   
+</appender>   
+  
+<appender name="ERROR" class="org.apache.log4j.RollingFileAppender">   
+    <param name="File" value="error.log"/>   
+    <param name="Append" value="false"/>   
+    <param name="MaxFileSize" value="100KB"/>   
+    <param name="MaxBackupIndex" value="2"/>   
+    <layout class="org.apache.log4j.PatternLayout">   
+        <param name="ConversionPattern" value="%c %d -- %p -- %m%n"/>   
+    </layout>   
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">   
+        <param name="LevelMin" value="ERROR" />   
+        <param name="LevelMax" value="ERROR" />   
+    </filter>   
+</appender>   
+
+<appender name="INFO" class="org.apache.log4j.RollingFileAppender">   
+    <param name="File" value="./results.txt" />   
+    <param name="Append" value="false"/>   
+    <param name="MaxFileSize" value="20MB"/>   
+    <param name="MaxBackupIndex" value="2"/>   
+    <layout class="org.apache.log4j.PatternLayout">   
+        <param name="ConversionPattern" value="%m%n"/>   
+    </layout>   
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">   
+        <param name="LevelMin" value="INFO" />   
+        <param name="LevelMax" value="INFO" />   
+    </filter>   
+</appender>  
+
+<!-- send all error logs to my email address -->
+<appender name="EmailAlert" class="org.apache.log4j.net.SMTPAppender">
+   <!-- set SSL true -->
+   <param name="SMTPProtocol" value="smtps" />
+   
+   <param name="SMTPHost" value="smtp.gmail.com" />
+   <param name="SMTPUsername" value="guoguibing@gmail.com" />
+   <param name="SMTPPassword" value="${password}" />
+   <!-- Debug enabled -->
+   <param name="SMTPDebug" value="false" /> 
+   <!-- ONLY Send email when it is "error" level, not work even set it "info" --> 
+   <param name="Threshold" value="error" />  
+   <!-- Gmail Port --> 
+   <param name="SMTPPort" value="465" />   
+   <param name="From" value="guoguibing@gmail.com" />
+   <param name="To" value="gguo1@e.ntu.edu.sg" />
+   <param name="Subject" value="Error: program occurs errors." />
+   <!-- if your buffer contains 50k, an email should be sent -->
+   <param name="BufferSize" value="1" />
+   <layout class="org.apache.log4j.PatternLayout">
+     <param name="ConversionPattern" value="%d -- %m%n" />
+   </layout>
+ </appender>   
+  
+<root>   
+    <priority value="debug"/>   
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="DEBUG"/>   
+    <appender-ref ref="INFO"/>   
+	<!--     <appender-ref ref="EmailAlert"/>    -->
+    <!-- <appender-ref ref="WARN"/>  -->   
+    <!-- <appender-ref ref="ERROR"/>   -->
+</root>   
+  
+</log4j:configuration> 

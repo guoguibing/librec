@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project CF-RS with libraries in sub-folder">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="D:/Java/Workspace/CF-RS/target/cf.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.felix.algorithms.cf.RunCF"/>
+                <attribute name="Class-Path" value=". cf_lib/junit.jar cf_lib/org.hamcrest.core_1.1.0.v20090501071000.jar cf_lib/derby-10.8.2.2.jar cf_lib/slf4j-log4j12-1.6.4.jar cf_lib/slf4j-api-1.6.4.jar cf_lib/log4j-1.2.16.jar cf_lib/commons-math-2.2.jar cf_lib/commons-exec-1.1.jar cf_lib/mail-1.4.5.jar cf_lib/activation-1.1.jar cf_lib/opencsv-2.3.jar cf_lib/jena-2.6.4.jar cf_lib/iri-0.8.jar cf_lib/icu4j-3.4.4.jar cf_lib/xercesImpl-2.7.1.jar"/>
+            </manifest>
+            <fileset dir="D:/Java/Workspace/CF-RS/target/classes"/>
+            <fileset dir="D:/Java/Workspace/happy-coding/target/classes"/>
+        </jar>
+        <delete dir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <mkdir dir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="D:/Java/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="D:/Java/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/org/apache/derby/derby/10.8.2.2/derby-10.8.2.2.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/org/slf4j/slf4j-log4j12/1.6.4/slf4j-log4j12-1.6.4.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/log4j/log4j/1.2.16/log4j-1.2.16.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/org/apache/commons/commons-math/2.2/commons-math-2.2.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/javax/mail/mail/1.4.5/mail-1.4.5.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/net/sf/opencsv/opencsv/2.3/opencsv-2.3.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/com/hp/hpl/jena/jena/2.6.4/jena-2.6.4.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/com/hp/hpl/jena/iri/0.8/iri-0.8.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/com/ibm/icu/icu4j/3.4.4/icu4j-3.4.4.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+        <copy file="C:/Users/Felix/.m2/repository/xerces/xercesImpl/2.7.1/xercesImpl-2.7.1.jar" todir="D:/Java/Workspace/CF-RS/target/cf_lib"/>
+    </target>
+</project>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project CF-RS with libraries in sub-folder">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="C:/Users/guoguibing/Desktop/tm.jar">
+            <manifest>
+                <attribute name="Main-Class" value="org.felix.tp.TrustModel"/>
+                <attribute name="Class-Path" value=". tm_lib/junit.jar tm_lib/org.hamcrest.core_1.3.0.v201303031735.jar tm_lib/derby-10.8.2.2.jar tm_lib/guava-15.0.jar tm_lib/mtj-1.0.1.jar tm_lib/arpack_combined_all-0.1.jar tm_lib/core-1.1.2.jar tm_lib/netlib-native_ref-osx-x86_64-1.1-natives.jar tm_lib/native_ref-java-1.1.jar tm_lib/jniloader-1.1.jar tm_lib/netlib-native_ref-linux-x86_64-1.1-natives.jar tm_lib/netlib-native_ref-linux-i686-1.1-natives.jar tm_lib/netlib-native_ref-win-x86_64-1.1-natives.jar tm_lib/netlib-native_ref-win-i686-1.1-natives.jar tm_lib/netlib-native_ref-linux-armhf-1.1-natives.jar tm_lib/netlib-native_system-osx-x86_64-1.1-natives.jar tm_lib/native_system-java-1.1.jar tm_lib/netlib-native_system-linux-x86_64-1.1-natives.jar tm_lib/netlib-native_system-linux-i686-1.1-natives.jar tm_lib/netlib-native_system-linux-armhf-1.1-natives.jar tm_lib/netlib-native_system-win-x86_64-1.1-natives.jar tm_lib/netlib-native_system-win-i686-1.1-natives.jar tm_lib/slf4j-log4j12-1.6.4.jar tm_lib/slf4j-api-1.6.4.jar tm_lib/log4j-1.2.16.jar tm_lib/commons-math-2.2.jar tm_lib/commons-exec-1.1.jar tm_lib/mail-1.4.5.jar tm_lib/activation-1.1.jar tm_lib/opencsv-2.3.jar tm_lib/jena-2.6.4.jar tm_lib/iri-0.8.jar tm_lib/icu4j-3.4.4.jar tm_lib/xercesImpl-2.7.1.jar tm_lib/twitter4j-core-2.2.6.jar tm_lib/libsvm-3.1.jar tm_lib/jsoup-1.7.1.jar tm_lib/liblinear-1.92.jar"/>
+            </manifest>
+            <fileset dir="D:/Java/Workspace/CF-RS/target/classes"/>
+            <fileset dir="D:/Java/Workspace/happy-coding/target/classes"/>
+        </jar>
+        <delete dir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <mkdir dir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="D:/Dropbox/Coding/Java_Projects/Prea_Eclipse_1.2/eclipse-kepler/plugins/org.junit_4.11.0.v201303080030/junit.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="D:/Dropbox/Coding/Java_Projects/Prea_Eclipse_1.2/eclipse-kepler/plugins/org.hamcrest.core_1.3.0.v201303031735.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/apache/derby/derby/10.8.2.2/derby-10.8.2.2.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/google/guava/guava/15.0/guava-15.0.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/googlecode/matrix-toolkits-java/mtj/1.0.1/mtj-1.0.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/net/sourceforge/f2j/arpack_combined_all/0.1/arpack_combined_all-0.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/core/1.1.2/core-1.1.2.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_ref-osx-x86_64/1.1/netlib-native_ref-osx-x86_64-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/native_ref-java/1.1/native_ref-java-1.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/jniloader/1.1/jniloader-1.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_ref-linux-x86_64/1.1/netlib-native_ref-linux-x86_64-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_ref-linux-i686/1.1/netlib-native_ref-linux-i686-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_ref-win-x86_64/1.1/netlib-native_ref-win-x86_64-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_ref-win-i686/1.1/netlib-native_ref-win-i686-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_ref-linux-armhf/1.1/netlib-native_ref-linux-armhf-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_system-osx-x86_64/1.1/netlib-native_system-osx-x86_64-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/native_system-java/1.1/native_system-java-1.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_system-linux-x86_64/1.1/netlib-native_system-linux-x86_64-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_system-linux-i686/1.1/netlib-native_system-linux-i686-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_system-linux-armhf/1.1/netlib-native_system-linux-armhf-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_system-win-x86_64/1.1/netlib-native_system-win-x86_64-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/github/fommil/netlib/netlib-native_system-win-i686/1.1/netlib-native_system-win-i686-1.1-natives.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/slf4j/slf4j-log4j12/1.6.4/slf4j-log4j12-1.6.4.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/slf4j/slf4j-api/1.6.4/slf4j-api-1.6.4.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/log4j/log4j/1.2.16/log4j-1.2.16.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/apache/commons/commons-math/2.2/commons-math-2.2.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/javax/mail/mail/1.4.5/mail-1.4.5.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/net/sf/opencsv/opencsv/2.3/opencsv-2.3.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/hp/hpl/jena/jena/2.6.4/jena-2.6.4.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/hp/hpl/jena/iri/0.8/iri-0.8.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/com/ibm/icu/icu4j/3.4.4/icu4j-3.4.4.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/xerces/xercesImpl/2.7.1/xercesImpl-2.7.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/twitter4j/twitter4j-core/2.2.6/twitter4j-core-2.2.6.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/tw/edu/ntu/csie/libsvm/3.1/libsvm-3.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/org/jsoup/jsoup/1.7.1/jsoup-1.7.1.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+        <copy file="C:/Users/guoguibing/.m2/repository/de/bwaldvogel/liblinear/1.92/liblinear-1.92.jar" todir="C:/Users/guoguibing/Desktop/tm_lib"/>
+    </target>
+</project>
