@@ -74,7 +74,7 @@ public class RecSys {
 		Logs.config(FileIO.getResource("log4j.properties"), false);
 
 		// get configuration file
-		cf = new Configer("rec.conf");
+		cf = new Configer("librec.conf");
 
 		// debug info
 		debugInfo();
