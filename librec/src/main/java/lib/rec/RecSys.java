@@ -52,7 +52,7 @@ import com.google.common.collect.Table;
  */
 public class RecSys {
 
-	// configuration 
+	// configuration
 	private static Configer cf;
 	private static String algorithm;
 
@@ -60,7 +60,7 @@ public class RecSys {
 	public static int paramIdx;
 	public static boolean isMultRun = false;
 
-	// rating matrix 
+	// rating matrix
 	private static CompRowMatrix rateMatrix = null;
 	// user {raw id, internal id} map
 	private final static BiMap<String, Integer> userIds = HashBiMap.create();
@@ -82,11 +82,11 @@ public class RecSys {
 		// prepare data
 		readData(cf.getPath("dataset.ratings"));
 
-		// config general recommender 
+		// config general recommender
 		Recommender.cf = cf;
 		Recommender.rateMatrix = rateMatrix;
-		Recommender.numUsers = userIds.size();
-		Recommender.numItems = itemIds.size();
+		Recommender.userIds = userIds;
+		Recommender.itemIds = itemIds;
 		Recommender.scales = scales;
 
 		// required: only one parameter varying for multiple run
@@ -100,7 +100,8 @@ public class RecSys {
 					RecSys.paramIdx = i;
 					runAlgorithm();
 
-					// useful for some methods which do not use the parameters defined in Recommender.params
+					// useful for some methods which do not use the parameters
+					// defined in Recommender.params
 					if (!isMultRun)
 						break;
 				}
@@ -112,7 +113,8 @@ public class RecSys {
 		}
 
 		// collect results
-		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"), cf.isOn("is.email.notify"));
+		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"),
+				cf.isOn("is.email.notify"));
 	}
 
 	private static void runAlgorithm() throws Exception {
@@ -149,7 +151,8 @@ public class RecSys {
 		for (Recommender algo : algos) {
 			for (Entry<Measure, Double> en : algo.measures.entrySet()) {
 				Measure m = en.getKey();
-				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
+				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m)
+						: 0.0;
 				avgMeasure.put(m, val + en.getValue() / kFold);
 			}
 		}
@@ -179,7 +182,8 @@ public class RecSys {
 		String result = Recommender.getEvalInfo(ms, Recommender.isRankingPred);
 		String time = Dates.parse(ms.get(Measure.TrainTime).longValue()) + ","
 				+ Dates.parse(ms.get(Measure.TestTime).longValue());
-		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result, algo.toString(), time);
+		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result,
+				algo.toString(), time);
 
 		Logs.info(evalInfo);
 	}
@@ -187,7 +191,8 @@ public class RecSys {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(CompRowMatrix[] data, int fold) throws Exception {
+	private static Recommender getRecommender(CompRowMatrix[] data, int fold)
+			throws Exception {
 
 		CompRowMatrix trainMatrix = data[0], testMatrix = data[1];
 		algorithm = cf.getString("recommender");
@@ -259,15 +264,18 @@ public class RecSys {
 
 			dataTable.put(user, item, rate);
 			if (!userIds.containsKey(user))
-				userIds.put(user, userIds.size()); // inner user id starts from 0
+				userIds.put(user, userIds.size()); // inner user id starts from
+													// 0
 
 			if (!itemIds.containsKey(item))
-				itemIds.put(item, itemIds.size()); // inner item id starts from 0
+				itemIds.put(item, itemIds.size()); // inner item id starts from
+													// 0
 		}
 		br.close();
 
 		Collections.sort(scales);
-		Logs.debug("User amount: {}, item amount: {}", userIds.size(), itemIds.size());
+		Logs.debug("User amount: {}, item amount: {}", userIds.size(),
+				itemIds.size());
 		Logs.debug("Rating Scales: {{}}", Strings.toString(scales, ", "));
 
 		// if min-rate = 0.0, add a small value
@@ -319,7 +327,8 @@ public class RecSys {
 		String datasetInfo = String.format(
 				"Dataset: %s, %s",
 				Strings.last(cf.getPath("dataset.ratings"), 38),
-				cf.isOn("is.cross.validation") ? "kFold: " + cf.getInt("num.kfold") : "ratio: "
+				cf.isOn("is.cross.validation") ? "kFold: "
+						+ cf.getInt("num.kfold") : "ratio: "
 						+ (float) cf.getDouble("val.ratio"));
 		Logs.info(datasetInfo);
 	}

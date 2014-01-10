@@ -28,6 +28,7 @@ import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.BiMap;
 
 /**
  * Interface of general recommendation system.
@@ -53,6 +54,9 @@ public abstract class Recommender implements Runnable {
 	protected static boolean verbose;
 	// is ranking/rating prediction
 	protected static boolean isRankingPred, isDiverseUsed;
+
+	// {raw-id, inner-id} of users/items mappings
+	protected static BiMap<String, Integer> userIds, itemIds;
 
 	// Rating matrix for training and testing
 	protected static CompRowMatrix rateMatrix;
@@ -85,7 +89,8 @@ public abstract class Recommender implements Runnable {
 	 * @param testMatrix
 	 *            test matrix
 	 */
-	public Recommender(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public Recommender(CompRowMatrix trainMatrix, CompRowMatrix testMatrix,
+			int fold) {
 		this.trainMatrix = trainMatrix;
 		this.testMatrix = testMatrix;
 		this.fold = fold;
@@ -93,7 +98,7 @@ public abstract class Recommender implements Runnable {
 		initMean = 0.0;
 		initStd = 0.1;
 
-		// config recommender 
+		// config recommender
 		if (cf == null || rateMatrix == null) {
 			Logs.error("Recommender is not well configed");
 			System.exit(-1);
@@ -101,6 +106,9 @@ public abstract class Recommender implements Runnable {
 
 		minRate = scales.get(0);
 		maxRate = scales.get(scales.size() - 1);
+
+		numUsers = userIds.size();
+		numItems = itemIds.size();
 
 		verbose = cf.isOn("is.verbose");
 		isRankingPred = cf.isOn("is.ranking.pred");
@@ -154,29 +162,48 @@ public abstract class Recommender implements Runnable {
 
 		String foldStr = fold > 0 ? " fold[" + fold + "]" : "";
 		String evalInfo = algoName + foldStr + ": " + result + "\tTime: "
-				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
+				+ Dates.parse(measures.get(Measure.TrainTime).longValue())
+				+ ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
 		if (fold > 0)
 			Logs.debug(evalInfo);
 	}
 
-	protected static String getEvalInfo(Map<Measure, Double> measures, boolean isRankingPred) {
+	protected static String getEvalInfo(Map<Measure, Double> measures,
+			boolean isRankingPred) {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
-						measures.get(Measure.D5), measures.get(Measure.D10), measures.get(Measure.MAE),
-						measures.get(Measure.RMSE), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
-						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
-						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
+				evalInfo = String
+						.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+								measures.get(Measure.D5),
+								measures.get(Measure.D10),
+								measures.get(Measure.MAE),
+								measures.get(Measure.RMSE),
+								measures.get(Measure.Pre5),
+								measures.get(Measure.Pre10),
+								measures.get(Measure.Rec5),
+								measures.get(Measure.Rec10),
+								measures.get(Measure.AUC),
+								measures.get(Measure.MAP),
+								measures.get(Measure.NDCG),
+								measures.get(Measure.MRR), numIgnore);
 			else
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
-						measures.get(Measure.MAE), measures.get(Measure.RMSE), measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
-						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR), numIgnore);
+				evalInfo = String
+						.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+								measures.get(Measure.MAE),
+								measures.get(Measure.RMSE),
+								measures.get(Measure.Pre5),
+								measures.get(Measure.Pre10),
+								measures.get(Measure.Rec5),
+								measures.get(Measure.Rec10),
+								measures.get(Measure.AUC),
+								measures.get(Measure.MAP),
+								measures.get(Measure.NDCG),
+								measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
+			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f",
+					measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
 		return evalInfo;
@@ -203,21 +230,25 @@ public abstract class Recommender implements Runnable {
 
 		FlexCompRowMatrix corrs = new FlexCompRowMatrix(numCount, numCount);
 		for (int i = 0; i < numCount; i++) {
-			SparseVector iv = isUser ? MatrixUtils.row(trainMatrix, i) : MatrixUtils.col(trainMatrix, i);
+			SparseVector iv = isUser ? MatrixUtils.row(trainMatrix, i)
+					: MatrixUtils.col(trainMatrix, i);
 			List<Integer> items = Lists.toList(iv.getIndex());
 			if (items.size() == 0)
 				continue;
 
 			for (int j = i + 1; j < numCount; j++) {
-				SparseVector jv = isUser ? MatrixUtils.row(trainMatrix, j) : MatrixUtils.col(trainMatrix, j);
+				SparseVector jv = isUser ? MatrixUtils.row(trainMatrix, j)
+						: MatrixUtils.col(trainMatrix, j);
 
 				// compute similarity
 				List<Double> is = new ArrayList<>();
 				List<Double> js = new ArrayList<>();
 				for (Integer item : jv.getIndex()) {
 					if (items.contains(item)) {
-						is.add(isUser ? trainMatrix.get(i, item) : trainMatrix.get(item, i));
-						js.add(isUser ? trainMatrix.get(j, item) : trainMatrix.get(item, j));
+						is.add(isUser ? trainMatrix.get(i, item) : trainMatrix
+								.get(item, i));
+						js.add(isUser ? trainMatrix.get(j, item) : trainMatrix
+								.get(item, j));
 					}
 				}
 
@@ -302,7 +333,8 @@ public abstract class Recommender implements Runnable {
 		double asymm = sum_asyms / numCount;
 
 		measures.put(Measure.MAE, mae);
-		// normalized MAE: useful for direct comparison between two systems using different rating scales. 
+		// normalized MAE: useful for direct comparison between two systems
+		// using different rating scales.
 		measures.put(Measure.NMAE, mae / (maxRate - minRate));
 		measures.put(Measure.RMSE, rmse);
 		measures.put(Measure.ASYMM, asymm);
@@ -343,7 +375,8 @@ public abstract class Recommender implements Runnable {
 			Map<Integer, Integer> itemDegrees = new HashMap<>();
 			for (int j : candItems)
 				itemDegrees.put(j, MatrixUtils.col(trainMatrix, j).getUsed());
-			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegrees, true);
+			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(
+					itemDegrees, true);
 			int k = 0;
 			for (KeyValPair<Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
@@ -392,7 +425,7 @@ public abstract class Recommender implements Runnable {
 			// predicted items: no repeated items that has been rated by user u
 			List<Integer> rankedItems = ranking(u, candItems, ratedItems);
 			if (rankedItems.size() == 0)
-				continue; // no recommendations available for user u 
+				continue; // no recommendations available for user u
 
 			int numDropped = numCand - rankedItems.size();
 			double AUC = Measures.AUC(rankedItems, correctItems, numDropped);
@@ -409,8 +442,10 @@ public abstract class Recommender implements Runnable {
 			}
 
 			List<Integer> cutoffs = Arrays.asList(5, 10);
-			Map<Integer, Double> precs = Measures.PrecAt(rankedItems, correctItems, cutoffs);
-			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems, correctItems, cutoffs);
+			Map<Integer, Double> precs = Measures.PrecAt(rankedItems,
+					correctItems, cutoffs);
+			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems,
+					correctItems, cutoffs);
 
 			precs5.add(precs.get(5));
 			precs10.add(precs.get(10));
@@ -506,7 +541,8 @@ public abstract class Recommender implements Runnable {
 	 *            items to be ignored from candidate items
 	 * @return a list of ranked items
 	 */
-	protected List<Integer> ranking(int u, Collection<Integer> candItems, Collection<Integer> ignoreItems) {
+	protected List<Integer> ranking(int u, Collection<Integer> candItems,
+			Collection<Integer> ignoreItems) {
 
 		List<Integer> items = new ArrayList<>();
 
@@ -522,8 +558,8 @@ public abstract class Recommender implements Runnable {
 		if (itemScores.size() > 0) {
 
 			List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores, true);
-			List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted.subList(0,
-					numRecs);
+			List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted
+					: sorted.subList(0, numRecs);
 
 			for (KeyValPair<Integer> kv : recomd)
 				items.add(kv.getKey());
