@@ -6,8 +6,8 @@
   <dependencies>
   	<dependency>
   		<groupId>happy.coding</groupId>
-  		<artifactId>happy-coding</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<artifactId>utils</artifactId>
+  		<version>1.0</version>
   	</dependency>
   </dependencies>
   <build>
