@@ -1,9 +1,9 @@
 package lib.rec.core;
 
-import lib.rec.MatrixUtils;
-import lib.rec.Recommender;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
+import lib.rec.MatrixUtils;
+import lib.rec.Recommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
@@ -164,8 +164,14 @@ public class RegSVD extends Recommender {
 		}
 
 		// more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html
+		// The update rules refers to: 
+		// (1) bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.
+		// (2) constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.
+		double decay = cf.getDouble("val.decay.rate");
 		if (isBoldDriver && last_loss != 0.0)
-			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.03 : lRate * 0.5;
+			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
+		else if (decay > 0 && decay < 1)
+			lRate *= decay;
 
 		last_loss = loss;
 
