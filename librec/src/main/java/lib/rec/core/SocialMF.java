@@ -14,8 +14,8 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  */
 public class SocialMF extends SocialRecommender {
 
-	public SocialMF(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
-		super(trainMatrix, testMatrix, fold);
+	public SocialMF(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold, String path) {
+		super(trainMatrix, testMatrix, fold, path);
 
 		algoName = "SocialMF";
 	}

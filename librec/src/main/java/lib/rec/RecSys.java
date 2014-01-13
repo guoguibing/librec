@@ -6,9 +6,6 @@ import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.system.Dates;
 
-import java.io.BufferedReader;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,11 +36,6 @@ import lib.rec.ext.DRMPlus;
 import lib.rec.ext.Hybrid;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Table;
-
 /**
  * Main Class for Matrix-based Recommender Systems
  * 
@@ -62,12 +54,6 @@ public class RecSys {
 
 	// rating matrix
 	private static CompRowMatrix rateMatrix = null;
-	// user {raw id, internal id} map
-	private final static BiMap<String, Integer> userIds = HashBiMap.create();
-	// item {raw id, internal id} map
-	private final static BiMap<String, Integer> itemIds = HashBiMap.create();
-	// rating scales
-	private final static List<Double> scales = new ArrayList<>();
 
 	public static void main(String[] args) throws Exception {
 		// config logger
@@ -80,14 +66,13 @@ public class RecSys {
 		debugInfo();
 
 		// prepare data
-		readData(cf.getPath("dataset.ratings"));
+		DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+		rateMatrix = rateDao.readData();
 
 		// config general recommender
 		Recommender.cf = cf;
 		Recommender.rateMatrix = rateMatrix;
-		Recommender.userIds = userIds;
-		Recommender.itemIds = itemIds;
-		Recommender.scales = scales;
+		Recommender.rateDao = rateDao;
 
 		// required: only one parameter varying for multiple run
 		Recommender.params = RecUtils.buildParams(cf);
@@ -113,8 +98,7 @@ public class RecSys {
 		}
 
 		// collect results
-		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"),
-				cf.isOn("is.email.notify"));
+		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"), cf.isOn("is.email.notify"));
 	}
 
 	private static void runAlgorithm() throws Exception {
@@ -151,8 +135,7 @@ public class RecSys {
 		for (Recommender algo : algos) {
 			for (Entry<Measure, Double> en : algo.measures.entrySet()) {
 				Measure m = en.getKey();
-				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m)
-						: 0.0;
+				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
 				avgMeasure.put(m, val + en.getValue() / kFold);
 			}
 		}
@@ -182,8 +165,7 @@ public class RecSys {
 		String result = Recommender.getEvalInfo(ms, Recommender.isRankingPred);
 		String time = Dates.parse(ms.get(Measure.TrainTime).longValue()) + ","
 				+ Dates.parse(ms.get(Measure.TestTime).longValue());
-		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result,
-				algo.toString(), time);
+		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result, algo.toString(), time);
 
 		Logs.info(evalInfo);
 	}
@@ -191,10 +173,11 @@ public class RecSys {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(CompRowMatrix[] data, int fold)
-			throws Exception {
+	private static Recommender getRecommender(CompRowMatrix[] data, int fold) throws Exception {
 
 		CompRowMatrix trainMatrix = data[0], testMatrix = data[1];
+		String socialPath = cf.getPath("dataset.social");
+
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
@@ -227,7 +210,7 @@ public class RecSys {
 		case "climf":
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "socialmf":
-			return new SocialMF(trainMatrix, testMatrix, fold);
+			return new SocialMF(trainMatrix, testMatrix, fold, socialPath);
 		case "aaai-basemf":
 			return new BaseMF(trainMatrix, testMatrix, fold);
 		case "aaai-dmf":
@@ -247,79 +230,6 @@ public class RecSys {
 		}
 	}
 
-	private static void readData(String path) throws Exception {
-
-		Table<String, String, Double> dataTable = HashBasedTable.create();
-		BufferedReader br = FileIO.getReader(path);
-		String line = null;
-		while ((line = br.readLine()) != null) {
-			String[] data = line.split("[ \t,]");
-
-			String user = data[0];
-			String item = data[1];
-			Double rate = Double.valueOf(data[2]);
-
-			if (!scales.contains(rate))
-				scales.add(rate); // rating scales
-
-			dataTable.put(user, item, rate);
-			if (!userIds.containsKey(user))
-				userIds.put(user, userIds.size()); // inner user id starts from
-													// 0
-
-			if (!itemIds.containsKey(item))
-				itemIds.put(item, itemIds.size()); // inner item id starts from
-													// 0
-		}
-		br.close();
-
-		Collections.sort(scales);
-		Logs.debug("User amount: {}, item amount: {}", userIds.size(),
-				itemIds.size());
-		Logs.debug("Rating Scales: {{}}", Strings.toString(scales, ", "));
-
-		// if min-rate = 0.0, add a small value
-		double epsilon = scales.get(0).doubleValue() == 0.0 ? 1e-5 : 0;
-
-		// build rating matrix
-		int numRows = userIds.size();
-		int numCols = itemIds.size();
-		int[][] nz = new int[numRows][];
-
-		BiMap<Integer, String> idUsers = userIds.inverse();
-
-		for (int uid = 0; uid < nz.length; uid++) {
-			String user = idUsers.get(uid);
-
-			nz[uid] = new int[dataTable.row(user).size()];
-
-			List<Integer> items = new ArrayList<>();
-			for (String item : dataTable.row(user).keySet()) {
-				int iid = itemIds.get(item);
-				items.add(iid);
-			}
-			Collections.sort(items);
-
-			for (int c = 0, cm = items.size(); c < cm; c++)
-				nz[uid][c] = items.get(c);
-		}
-
-		rateMatrix = new CompRowMatrix(numRows, numCols, nz);
-		for (int i = 0; i < numRows; i++) {
-			String user = idUsers.get(i);
-
-			Map<String, Double> itemRates = dataTable.row(user);
-			for (Entry<String, Double> en : itemRates.entrySet()) {
-				int j = itemIds.get(en.getKey());
-				double rate = en.getValue();
-				rateMatrix.set(i, j, rate + epsilon);
-			}
-		}
-
-		// release memory of data table
-		dataTable = null;
-	}
-
 	/**
 	 * print out debug information
 	 */
@@ -327,8 +237,7 @@ public class RecSys {
 		String datasetInfo = String.format(
 				"Dataset: %s, %s",
 				Strings.last(cf.getPath("dataset.ratings"), 38),
-				cf.isOn("is.cross.validation") ? "kFold: "
-						+ cf.getInt("num.kfold") : "ratio: "
+				cf.isOn("is.cross.validation") ? "kFold: " + cf.getInt("num.kfold") : "ratio: "
 						+ (float) cf.getDouble("val.ratio"));
 		Logs.info(datasetInfo);
 	}
