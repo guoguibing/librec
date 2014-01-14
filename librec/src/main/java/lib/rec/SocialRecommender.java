@@ -30,6 +30,7 @@ public abstract class SocialRecommender extends Recommender {
 			socialScales = socialDao.getScales();
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(-1);
 		}
 
 	}
