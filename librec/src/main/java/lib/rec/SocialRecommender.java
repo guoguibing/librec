@@ -10,7 +10,7 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  * @author guoguibing
  * 
  */
-public abstract class SocialRecommender extends Recommender {
+public abstract class SocialRecommender extends IterativeRecommender {
 
 	// social data dao
 	protected DataDAO socialDao;

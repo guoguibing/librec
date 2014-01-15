@@ -1,5 +1,6 @@
 package lib.rec.core;
 
+import lib.rec.IterativeRecommender;
 import lib.rec.MatrixUtils;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
@@ -20,7 +21,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  * @author guoguibing
  * 
  */
-public class PMF extends RegSVD {
+public class PMF extends IterativeRecommender {
 
 	protected DenseMatrix userDeltas, itemDeltas;
 

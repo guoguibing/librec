@@ -1,5 +1,6 @@
 package lib.rec.core;
 
+import lib.rec.IterativeRecommender;
 import lib.rec.MatrixUtils;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
@@ -14,7 +15,7 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  * @author guoguibing
  * 
  */
-public class BiasedMF extends RegSVD {
+public class BiasedMF extends IterativeRecommender {
 
 	public BiasedMF(CompRowMatrix rm, CompRowMatrix tm, int fold) {
 		super(rm, tm, fold);

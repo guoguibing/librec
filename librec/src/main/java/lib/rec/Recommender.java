@@ -30,7 +30,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
 import com.google.common.base.Stopwatch;
 
 /**
- * Interface of general recommendation system.
+ * Interface class for general recommendation system.
  * 
  * @author Guibing Guo
  */

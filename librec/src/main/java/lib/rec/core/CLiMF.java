@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lib.rec.IterativeRecommender;
 import lib.rec.MatrixUtils;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
@@ -18,7 +19,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  * @author guoguibing
  * 
  */
-public class CLiMF extends RegSVD {
+public class CLiMF extends IterativeRecommender {
 
 	public CLiMF(CompRowMatrix rm, CompRowMatrix tm, int fold) {
 		super(rm, tm, fold);

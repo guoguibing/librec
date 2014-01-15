@@ -20,4 +20,11 @@ public class SocialMF extends SocialRecommender {
 		algoName = "SocialMF";
 	}
 
+	@Override
+	protected void buildModel() {
+		for (int iter = 0; iter < maxIters; iter++) {
+
+		}
+	}
+
 }
