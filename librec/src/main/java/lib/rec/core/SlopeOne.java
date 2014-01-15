@@ -1,7 +1,7 @@
 package lib.rec.core;
 
 import lib.rec.MatrixUtils;
-import lib.rec.Recommender;
+import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;

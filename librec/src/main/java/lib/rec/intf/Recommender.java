@@ -1,4 +1,4 @@
-package lib.rec;
+package lib.rec.intf;
 
 import happy.coding.io.Configer;
 import happy.coding.io.KeyValPair;
@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import lib.rec.DataDAO;
+import lib.rec.MatrixUtils;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.MatrixEntry;
@@ -37,7 +39,7 @@ import com.google.common.base.Stopwatch;
 public abstract class Recommender implements Runnable {
 
 	// Algorithm's Name
-	protected String algoName;
+	public String algoName;
 	// current fold
 	protected int fold;
 
@@ -45,26 +47,27 @@ public abstract class Recommender implements Runnable {
 	public static Configer cf;
 
 	// params used for multiple runs
-	protected static Map<String, List<Double>> params;
+	public static Map<String, List<Double>> params;
 
 	protected static double globalMean, initMean, initStd;
 
 	// verbose
 	protected static boolean verbose;
 	// is ranking/rating prediction
-	protected static boolean isRankingPred, isDiverseUsed;
+	public static boolean isRankingPred;
+	protected static boolean isDiverseUsed;
 
 	// {raw-id, inner-id} of users/items mappings
-	protected static DataDAO rateDao;
+	public static DataDAO rateDao;
 
 	// Rating matrix for training and testing
-	protected static CompRowMatrix rateMatrix;
+	public static CompRowMatrix rateMatrix;
 	protected CompRowMatrix trainMatrix, testMatrix;
 	protected DenseVector userBiases, itemBiases;
 
 	// item-item correlation matrix for diversity measures only
 	protected FlexCompRowMatrix corrs;
-	protected Map<Measure, Double> measures;
+	public Map<Measure, Double> measures;
 
 	// number of users, items, ratings
 	protected static int numUsers, numItems, numRates;
@@ -167,7 +170,7 @@ public abstract class Recommender implements Runnable {
 			Logs.debug(evalInfo);
 	}
 
-	protected static String getEvalInfo(Map<Measure, Double> measures, boolean isRankingPred) {
+	public static String getEvalInfo(Map<Measure, Double> measures, boolean isRankingPred) {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)

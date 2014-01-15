@@ -1,6 +1,6 @@
 package lib.rec.core;
 
-import lib.rec.SocialRecommender;
+import lib.rec.intf.SocialRecommender;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**

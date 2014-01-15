@@ -1,8 +1,8 @@
 package lib.rec.core;
 
 import happy.coding.io.Strings;
-import lib.rec.IterativeRecommender;
 import lib.rec.MatrixUtils;
+import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;

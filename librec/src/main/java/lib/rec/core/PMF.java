@@ -1,7 +1,7 @@
 package lib.rec.core;
 
-import lib.rec.IterativeRecommender;
 import lib.rec.MatrixUtils;
+import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;

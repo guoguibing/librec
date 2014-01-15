@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import lib.rec.MatrixUtils;
-import lib.rec.Recommender;
+import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;

@@ -1,6 +1,6 @@
 package lib.rec.baseline;
 
-import lib.rec.Recommender;
+import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**

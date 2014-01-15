@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import lib.rec.Recommender.Measure;
 import lib.rec.baseline.ConstantGuess;
 import lib.rec.baseline.GlobalAverage;
 import lib.rec.baseline.ItemAverage;
@@ -34,6 +33,8 @@ import lib.rec.ext.DNM;
 import lib.rec.ext.DRM;
 import lib.rec.ext.DRMPlus;
 import lib.rec.ext.Hybrid;
+import lib.rec.intf.Recommender;
+import lib.rec.intf.Recommender.Measure;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**

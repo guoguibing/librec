@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lib.rec.MatrixUtils;
-import lib.rec.Recommender;
+import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**

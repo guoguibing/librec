@@ -1,6 +1,7 @@
-package lib.rec;
+package lib.rec.intf;
 
 import happy.coding.io.Logs;
+import lib.rec.MatrixUtils;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
@@ -46,7 +47,7 @@ public abstract class IterativeRecommender extends Recommender {
 		numFactors = cf.getInt("num.factors");
 		maxIters = cf.getInt("num.max.iter");
 
-		isBoldDriver = cf.isOn("is.bold.driver");
+		isBoldDriver = cf.isOn("is.bold.driver"); 
 	}
 	
 	/**

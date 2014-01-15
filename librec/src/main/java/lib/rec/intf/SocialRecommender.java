@@ -1,7 +1,8 @@
-package lib.rec;
+package lib.rec.intf;
 
 import java.util.List;
 
+import lib.rec.DataDAO;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**
@@ -13,7 +14,7 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
 public abstract class SocialRecommender extends IterativeRecommender {
 
 	// social data dao
-	protected DataDAO socialDao;
+	protected DataDAO socialDao; 
 
 	// social rate matrix
 	protected CompRowMatrix socialMatrix;

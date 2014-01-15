@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lib.rec.IterativeRecommender;
 import lib.rec.MatrixUtils;
+import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
