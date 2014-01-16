@@ -21,10 +21,14 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	protected CompRowMatrix socialMatrix, invSocialMatrix;
 	// a list of social scales
 	protected static List<Double> socialScales;
+	
+	// social regularization
+	protected double regS;
 
 	public SocialRecommender(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold, String path) {
 		super(trainMatrix, testMatrix, fold);
 
+		regS = cf.getDouble("val.reg.social");
 		socialDao = new DataDAO(path, rateDao.getUserIds());
 
 		try {
