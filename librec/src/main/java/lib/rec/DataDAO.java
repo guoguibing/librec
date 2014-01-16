@@ -60,12 +60,12 @@ public class DataDAO {
 		if (userIds == null)
 			this.userIds = HashBiMap.create();
 		else
-			this.userIds = userIds;
+			this.userIds = HashBiMap.create(userIds);
 
 		if (itemIds == null)
 			this.itemIds = HashBiMap.create();
 		else
-			this.itemIds = itemIds;
+			this.itemIds = HashBiMap.create(itemIds);
 
 		scales = new ArrayList<>();
 

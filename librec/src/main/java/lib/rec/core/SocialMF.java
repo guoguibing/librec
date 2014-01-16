@@ -1,6 +1,7 @@
 package lib.rec.core;
 
 import happy.coding.math.Maths;
+import happy.coding.system.Debug;
 import lib.rec.MatrixUtils;
 import lib.rec.intf.SocialRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
@@ -21,6 +22,13 @@ public class SocialMF extends SocialRecommender {
 		super(trainMatrix, testMatrix, fold, path);
 
 		algoName = "SocialMF";
+
+		if (Debug.ON) {
+			// use the suggested parameters for epinions from the paper
+			regU = 0.1;
+			regI = 0.1;
+			regS = 5;
+		}
 	}
 
 	@Override
@@ -52,7 +60,7 @@ public class SocialMF extends SocialRecommender {
 
 				double ruj = Maths.normalize(rate, minRate, maxRate);
 				double pred = predict(u, j);
-				double euj = ruj - pred;
+				double euj = ruj - g(pred);
 
 				errs += euj * euj;
 				loss += euj * euj;
@@ -87,13 +95,18 @@ public class SocialMF extends SocialRecommender {
 				for (int u = 0; u < numUsers; u++) {
 					SparseVector uv = MatrixUtils.row(socialMatrix, u);
 					double[] sumNNs = new double[numFactors];
+					int cnt = 0;
 					for (int v : uv.getIndex()) {
-						for (int f = 0; f < numFactors; f++)
-							sumNNs[f] += socialMatrix.get(u, v) * P.get(v, f);
+						// some users may not occur in the rate matrix but could be in the social matrix
+						if (v < numUsers)
+							for (int f = 0; f < numFactors; f++) {
+								sumNNs[f] += socialMatrix.get(u, v) * P.get(v, f);
+								cnt++;
+							}
 					}
 
 					for (int f = 0; f < numFactors; f++) {
-						double diff = P.get(u, f) - sumNNs[f] / uv.getUsed();
+						double diff = P.get(u, f) - sumNNs[f] / cnt;
 						userSgds.add(u, f, regS * diff);
 
 						loss += regS * diff * diff;
@@ -101,17 +114,24 @@ public class SocialMF extends SocialRecommender {
 
 					SparseVector iuv = MatrixUtils.row(invSocialMatrix, u);
 					for (int v : iuv.getIndex()) {
+						if (v >= numUsers)
+							continue;
+
 						double tvu = socialMatrix.get(v, u);
 
 						SparseVector vv = MatrixUtils.row(socialMatrix, v);
 						double[] sumDiffs = new double[numFactors];
+						cnt = 0;
 						for (int w : vv.getIndex()) {
-							for (int f = 0; f < numFactors; f++)
-								sumDiffs[f] = socialMatrix.get(v, w) * P.get(w, f);
+							if (w < numUsers)
+								for (int f = 0; f < numFactors; f++) {
+									sumDiffs[f] = socialMatrix.get(v, w) * P.get(w, f);
+									cnt++;
+								}
 						}
 
 						for (int f = 0; f < numFactors; f++)
-							userSgds.add(u, f, -regS * tvu * (P.get(v, f) - sumDiffs[f] / vv.getUsed()));
+							userSgds.add(u, f, -regS * tvu * (P.get(v, f) - sumDiffs[f] / cnt));
 					}
 				}
 			}
@@ -119,7 +139,7 @@ public class SocialMF extends SocialRecommender {
 			// update user factors
 			P.add(userSgds.scale(-lRate));
 			Q.add(itemSgds.scale(-lRate));
-			
+
 			errs *= 0.5;
 			loss *= 0.5;
 
