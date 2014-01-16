@@ -107,4 +107,28 @@ public abstract class IterativeRecommender extends Recommender {
 		return (cond1 || cond2) ? true : false;
 	}
 
+	@Override
+	protected void initModel() {
+	
+		P = new DenseMatrix(numUsers, numFactors);
+		Q = new DenseMatrix(numItems, numFactors);
+	
+		// initialize model
+		MatrixUtils.init(P, initMean, initStd);
+		MatrixUtils.init(Q, initMean, initStd);
+	
+		// set to 0 for users without any ratings
+		for (int u = 0, um = P.numRows(); u < um; u++) {
+			if (MatrixUtils.row(trainMatrix, u).getUsed() == 0) {
+				MatrixUtils.setOneValue(P, u, 0.0);
+			}
+		}
+		// set to 0 for items without any ratings
+		for (int j = 0, jm = Q.numRows(); j < jm; j++) {
+			if (MatrixUtils.col(trainMatrix, j).getUsed() == 0) {
+				MatrixUtils.setOneValue(Q, j, 0.0);
+			}
+		}
+	}
+
 }

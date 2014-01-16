@@ -7,8 +7,6 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  * Jamali and Ester, <strong>A matrix factorization technique with trust
  * propagation for recommendation in social networks</strong>, RecSys 2010.
  * 
- * TODO: add implementations here ...
- * 
  * @author guoguibing
  * 
  */
@@ -19,11 +17,24 @@ public class SocialMF extends SocialRecommender {
 
 		algoName = "SocialMF";
 	}
+	
+	@Override
+	protected void initModel() {
+		super.initModel();
+		
+		invSocialMatrix = socialMatrix.copy();
+		socialMatrix.transpose(invSocialMatrix);
+	}
 
 	@Override
 	protected void buildModel() {
 		for (int iter = 0; iter < maxIters; iter++) {
+			for (int u = 0; u < numUsers; u++) {
 
+				for (int j = 0; j < numItems; j++) {
+					//
+				}
+			}
 		}
 	}
 

@@ -16,8 +16,9 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// social data dao
 	protected DataDAO socialDao; 
 
-	// social rate matrix
-	protected CompRowMatrix socialMatrix;
+	// socialMatrix: social rate matrix, indicating a user is connecting to a number of other users  
+	// invSocialMatrix: inverse social matrix, indicating a user is connected by a number of other users
+	protected CompRowMatrix socialMatrix, invSocialMatrix;
 	// a list of social scales
 	protected static List<Double> socialScales;
 
