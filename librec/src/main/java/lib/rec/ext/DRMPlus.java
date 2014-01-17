@@ -15,13 +15,19 @@ import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class DRMPlus extends CLiMF {
 
-	protected double alpha;
+	protected double alpha, minSim;
+
+	protected boolean isPosOnly;
 
 	public DRMPlus(CompRowMatrix rm, CompRowMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "DRMPlus";
 		alpha = RecUtils.getMKey(params, "val.diverse.alpha");
+
+		initStd = 0.01;
+		isPosOnly = cf.isOn("is.similarity.pos");
+		minSim = isPosOnly ? 0.0 : Double.MIN_VALUE;
 	}
 
 	@Override
@@ -91,9 +97,10 @@ public class DRMPlus extends CLiMF {
 							double qkf = Q.get(k, f);
 							double sji = MatrixUtils.rowMult(Q, j, Q, k);
 
-							double sgd_d = 2 * (1 - sji) * (qjf - qkf) - qkf * Math.pow(qjf - qkf, 2);
-
-							sgd += 0.5 * alpha * sgd_d / w;
+							if (sji > minSim) {
+								double sgd_d = 2 * (1 - sji) * (qjf - qkf) - qkf * Math.pow(qjf - qkf, 2);
+								sgd += 0.5 * alpha * sgd_d / w;
+							}
 						}
 
 						jSgds.add(sgd);
@@ -127,11 +134,14 @@ public class DRMPlus extends CLiMF {
 							loss += Math.log(1 - g(fui - fuj));
 
 							double sji = MatrixUtils.rowMult(Q, j, Q, i);
-							double sum = 0;
-							for (int f = 0; f < numFactors; f++)
-								sum += Math.pow(Q.get(j, f) - Q.get(i, f), 2);
 
-							loss += 0.5 * alpha * (1 - sji) * sum / w;
+							if (sji > minSim) {
+								double sum = 0;
+								for (int f = 0; f < numFactors; f++)
+									sum += Math.pow(Q.get(j, f) - Q.get(i, f), 2);
+
+								loss += 0.5 * alpha * (1 - sji) * sum / w;
+							}
 						}
 					}
 
@@ -155,6 +165,6 @@ public class DRMPlus extends CLiMF {
 
 	@Override
 	public String toString() {
-		return super.toString() + "," + (float) alpha;
+		return super.toString() + "," + (float) alpha + "," + isPosOnly;
 	}
 }
