@@ -34,6 +34,8 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		try {
 			socialMatrix = socialDao.readData();
 			socialScales = socialDao.getScales();
+			
+			numUsers = socialDao.numUsers();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
