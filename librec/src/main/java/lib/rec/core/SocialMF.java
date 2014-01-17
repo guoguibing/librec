@@ -102,11 +102,14 @@ public class SocialMF extends SocialRecommender {
 							sumNNs[f] += socialMatrix.get(u, v) * P.get(v, f);
 					}
 
-					for (int f = 0; f < numFactors; f++) {
-						double diff = P.get(u, f) - sumNNs[f] / uv.getUsed();
-						userSgds.add(u, f, regS * diff);
+					int numConns = uv.getUsed();
+					if (numConns > 0) {
+						for (int f = 0; f < numFactors; f++) {
+							double diff = P.get(u, f) - sumNNs[f] / numConns;
+							userSgds.add(u, f, regS * diff);
 
-						loss += regS * diff * diff;
+							loss += regS * diff * diff;
+						}
 					}
 
 					SparseVector iuv = invSocialMatrix.getRow(u);
@@ -120,8 +123,10 @@ public class SocialMF extends SocialRecommender {
 								sumDiffs[f] = socialMatrix.get(v, w) * P.get(w, f);
 						}
 
-						for (int f = 0; f < numFactors; f++)
-							userSgds.add(u, f, -regS * tvu * (P.get(v, f) - sumDiffs[f] / vv.getUsed()));
+						numConns = vv.getUsed();
+						if (numConns > 0)
+							for (int f = 0; f < numFactors; f++)
+								userSgds.add(u, f, -regS * tvu * (P.get(v, f) - sumDiffs[f] / numConns));
 					}
 				}
 			}

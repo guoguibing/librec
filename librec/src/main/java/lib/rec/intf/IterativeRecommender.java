@@ -118,15 +118,16 @@ public abstract class IterativeRecommender extends Recommender {
 		MatrixUtils.init(Q, initMean, initStd);
 
 		// set to 0 for users without any ratings
-		int numTrains = trainMatrix.numRows();
+		int numTrainUsers = trainMatrix.numRows();
 		for (int u = 0, um = P.numRows(); u < um; u++) {
-			if (u >= numTrains || MatrixUtils.row(trainMatrix, u).getUsed() == 0) {
+			if (u >= numTrainUsers || MatrixUtils.row(trainMatrix, u).getUsed() == 0) {
 				MatrixUtils.setOneValue(P, u, 0.0);
 			}
 		}
 		// set to 0 for items without any ratings
+		int numTrainItems = trainMatrix.numColumns();
 		for (int j = 0, jm = Q.numRows(); j < jm; j++) {
-			if (MatrixUtils.col(trainMatrix, j).getUsed() == 0) {
+			if (j >= numTrainItems || MatrixUtils.col(trainMatrix, j).getUsed() == 0) {
 				MatrixUtils.setOneValue(Q, j, 0.0);
 			}
 		}
