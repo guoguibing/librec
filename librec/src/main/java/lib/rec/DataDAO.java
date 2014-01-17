@@ -69,7 +69,7 @@ public class DataDAO {
 
 		scales = new ArrayList<>();
 
-		isItemAsUser = userIds == itemIds;
+		isItemAsUser = this.userIds == this.itemIds;
 	}
 
 	/**
