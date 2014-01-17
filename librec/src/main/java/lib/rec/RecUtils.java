@@ -49,5 +49,5 @@ public class RecUtils {
 
 		return alpha;
 	}
-
+	
 }

@@ -65,8 +65,6 @@ public abstract class Recommender implements Runnable {
 	protected CompRowMatrix trainMatrix, testMatrix;
 	protected DenseVector userBiases, itemBiases;
 
-	// item-item correlation matrix for diversity measures only
-	protected FlexCompRowMatrix corrs;
 	public Map<Measure, Double> measures;
 
 	// number of users, items, ratings
@@ -128,8 +126,8 @@ public abstract class Recommender implements Runnable {
 		globalMean = Stats.sum(trainMatrix.getData()) / numRates;
 
 		// compute item-item correlations
-		if (isRankingPred && isDiverseUsed)
-			corrs = buildCorrs(false);
+		//if (isRankingPred && isDiverseUsed)
+		//	corrs = buildCorrs(false);
 	}
 
 	public void run() {
@@ -208,6 +206,7 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 */
 	protected FlexCompRowMatrix buildCorrs(boolean isUser) {
+		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
 		int numCount = isUser ? numUsers : numItems;
 
@@ -221,44 +220,7 @@ public abstract class Recommender implements Runnable {
 			for (int j = i + 1; j < numCount; j++) {
 				SparseVector jv = isUser ? MatrixUtils.row(trainMatrix, j) : MatrixUtils.col(trainMatrix, j);
 
-				// compute similarity
-				List<Double> is = new ArrayList<>();
-				List<Double> js = new ArrayList<>();
-				for (Integer item : jv.getIndex()) {
-					if (items.contains(item)) {
-						is.add(isUser ? trainMatrix.get(i, item) : trainMatrix.get(item, i));
-						js.add(isUser ? trainMatrix.get(j, item) : trainMatrix.get(item, j));
-					}
-				}
-
-				double sim = 0;
-				switch (cf.getString("similarity").toLowerCase()) {
-				case "cos":
-					sim = Sims.cos(is, js);
-					break;
-				case "msd":
-					sim = Sims.msd(is, js);
-					break;
-				case "cpc":
-					sim = Sims.cpc(is, js, (minRate + maxRate) / 2.0);
-					break;
-				case "exjaccard":
-					sim = Sims.exJaccard(is, js);
-					break;
-				case "pcc":
-				default:
-					sim = Sims.pcc(is, js);
-					break;
-				}
-
-				if (Double.isNaN(sim))
-					sim = 0.0; // 0: no correlation
-
-				// shrink to account for vector size
-				int n = is.size();
-				int shrinkage = cf.getInt("num.shrinkage");
-				if (shrinkage > 0)
-					sim *= n / (n + shrinkage + 0.0);
+				double sim = compCorr(iv, jv, items);
 
 				if (sim != 0.0) {
 					corrs.set(i, j, sim);
@@ -268,6 +230,74 @@ public abstract class Recommender implements Runnable {
 		}
 
 		return corrs;
+	}
+
+	/**
+	 * Compute the correlation between two vectors
+	 * 
+	 * @param iv
+	 *            vector i
+	 * @param jv
+	 *            vector j
+	 * @return the correlation between vectors i and j
+	 */
+	protected double compCorr(SparseVector iv, SparseVector jv) {
+
+		return compCorr(iv, jv, Lists.toList(iv.getIndex()));
+	}
+
+	/**
+	 * Compute the correlation between two vectors
+	 * 
+	 * @param iv
+	 *            vector i
+	 * @param jv
+	 *            vector j
+	 * @param items
+	 *            all the keys in the sparse vector iv
+	 * @return the correlation between vectors i and j
+	 */
+	protected double compCorr(SparseVector iv, SparseVector jv, List<Integer> items) {
+		// compute similarity
+		List<Double> is = new ArrayList<>();
+		List<Double> js = new ArrayList<>();
+		for (Integer item : jv.getIndex()) {
+			if (items.contains(item)) {
+				is.add(iv.get(item));
+				js.add(jv.get(item));
+			}
+		}
+
+		double sim = 0;
+		switch (cf.getString("similarity").toLowerCase()) {
+		case "cos":
+			sim = Sims.cos(is, js);
+			break;
+		case "msd":
+			sim = Sims.msd(is, js);
+			break;
+		case "cpc":
+			sim = Sims.cpc(is, js, (minRate + maxRate) / 2.0);
+			break;
+		case "exjaccard":
+			sim = Sims.exJaccard(is, js);
+			break;
+		case "pcc":
+		default:
+			sim = Sims.pcc(is, js);
+			break;
+		}
+
+		if (Double.isNaN(sim))
+			sim = 0.0; // 0: no correlation
+
+		// shrink to account for vector size
+		int n = is.size();
+		int shrinkage = cf.getInt("num.shrinkage");
+		if (shrinkage > 0)
+			sim *= n / (n + shrinkage + 0.0);
+		
+		return sim;
 	}
 
 	/**
@@ -411,9 +441,9 @@ public abstract class Recommender implements Runnable {
 			double nDCG = Measures.nDCG(rankedItems, correctItems);
 			double RR = Measures.RR(rankedItems, correctItems);
 
-			if (corrs != null) {
-				double d5 = Measures.DiverseAt(rankedItems, 5, corrs);
-				double d10 = Measures.DiverseAt(rankedItems, 10, corrs);
+			if (isDiverseUsed) {
+				double d5 = diverseAt(rankedItems, 5);
+				double d10 = diverseAt(rankedItems, 10);
 
 				ds5.add(d5);
 				ds10.add(d10);
@@ -434,8 +464,8 @@ public abstract class Recommender implements Runnable {
 			ndcgs.add(nDCG);
 		}
 
-		measures.put(Measure.D5, corrs != null ? Stats.mean(ds5) : 0.0);
-		measures.put(Measure.D10, corrs != null ? Stats.mean(ds10) : 0.0);
+		measures.put(Measure.D5, isDiverseUsed ? Stats.mean(ds5) : 0.0);
+		measures.put(Measure.D10, isDiverseUsed ? Stats.mean(ds10) : 0.0);
 		measures.put(Measure.Pre5, Stats.mean(precs5));
 		measures.put(Measure.Pre10, Stats.mean(precs10));
 		measures.put(Measure.Rec5, Stats.mean(recalls5));
@@ -541,6 +571,42 @@ public abstract class Recommender implements Runnable {
 		}
 
 		return items;
+	}
+	
+	/**
+	 * 
+	 * @param rankedItems
+	 *            the list of ranked items to be recommended
+	 * @param cutoff
+	 *            cutoff in the list
+	 * @param corrs
+	 *            correlations between items
+	 * @return diversity at a specific cutoff position
+	 */
+	protected double diverseAt(List<Integer> rankedItems, int cutoff) {
+
+		int num = 0;
+		double sum = 0.0;
+		for (int id = 0; id < cutoff; id++) {
+			int i = rankedItems.get(id);
+			
+			SparseVector iv = MatrixUtils.col(trainMatrix, i);
+			List<Integer> items = Lists.toList(iv.getIndex());
+
+			for (int jd = id + 1; jd < cutoff; jd++) {
+				int j = rankedItems.get(jd);
+				
+				SparseVector jv = MatrixUtils.col(trainMatrix, j);
+				double corr = compCorr(iv, jv, items);
+
+				if (!Double.isNaN(corr)) {
+					sum += (1 - corr);
+					num++;
+				}
+			}
+		}
+
+		return 0.5 * (sum / num);
 	}
 
 	/**
