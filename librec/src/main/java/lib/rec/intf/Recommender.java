@@ -65,6 +65,7 @@ public abstract class Recommender implements Runnable {
 	protected CompRowMatrix trainMatrix, testMatrix;
 	protected DenseVector userBiases, itemBiases;
 
+	protected FlexCompRowMatrix corrs;
 	public Map<Measure, Double> measures;
 
 	// number of users, items, ratings
@@ -126,8 +127,8 @@ public abstract class Recommender implements Runnable {
 		globalMean = Stats.sum(trainMatrix.getData()) / numRates;
 
 		// compute item-item correlations
-		//if (isRankingPred && isDiverseUsed)
-		//	corrs = buildCorrs(false);
+		if (isRankingPred && isDiverseUsed)
+			corrs = new FlexCompRowMatrix(numItems, numItems);
 	}
 
 	public void run() {
@@ -296,7 +297,7 @@ public abstract class Recommender implements Runnable {
 		int shrinkage = cf.getInt("num.shrinkage");
 		if (shrinkage > 0)
 			sim *= n / (n + shrinkage + 0.0);
-		
+
 		return sim;
 	}
 
@@ -572,7 +573,7 @@ public abstract class Recommender implements Runnable {
 
 		return items;
 	}
-	
+
 	/**
 	 * 
 	 * @param rankedItems
@@ -589,16 +590,23 @@ public abstract class Recommender implements Runnable {
 		double sum = 0.0;
 		for (int id = 0; id < cutoff; id++) {
 			int i = rankedItems.get(id);
-			
+
 			SparseVector iv = MatrixUtils.col(trainMatrix, i);
 			List<Integer> items = Lists.toList(iv.getIndex());
 
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
-				
-				SparseVector jv = MatrixUtils.col(trainMatrix, j);
-				double corr = compCorr(iv, jv, items);
 
+				double corr = corrs.get(i, j);
+
+				if (corr == 0) {
+					SparseVector jv = MatrixUtils.col(trainMatrix, j);
+					corr = compCorr(iv, jv, items);
+					
+					corrs.set(i, j, corr);
+					corrs.set(j, i, corr);
+				}
+				
 				if (!Double.isNaN(corr)) {
 					sum += (1 - corr);
 					num++;
