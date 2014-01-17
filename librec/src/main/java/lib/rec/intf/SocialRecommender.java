@@ -4,6 +4,7 @@ import java.util.List;
 
 import lib.rec.DataDAO;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 
 /**
  * Abstract class for social recommender where social information is enabled.
@@ -18,7 +19,9 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	// socialMatrix: social rate matrix, indicating a user is connecting to a number of other users  
 	// invSocialMatrix: inverse social matrix, indicating a user is connected by a number of other users
-	protected CompRowMatrix socialMatrix, invSocialMatrix;
+	protected CompRowMatrix socialMatrix; 
+	protected FlexCompRowMatrix invSocialMatrix;
+	
 	// a list of social scales
 	protected static List<Double> socialScales;
 	
