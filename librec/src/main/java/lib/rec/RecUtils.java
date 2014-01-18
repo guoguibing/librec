@@ -40,11 +40,11 @@ public class RecUtils {
 	public static double getMKey(Map<String, List<Double>> params, String key) {
 		double alpha = 0;
 		if (params != null && params.containsKey(key)) {
-			alpha = params.get(key).get(RecSys.paramIdx);
-			RecSys.isMultRun = true;
+			alpha = params.get(key).get(LibRec.paramIdx);
+			LibRec.isMultRun = true;
 		} else {
 			alpha = Recommender.cf.getDouble(key);
-			RecSys.isMultRun = false;
+			LibRec.isMultRun = false;
 		}
 
 		return alpha;

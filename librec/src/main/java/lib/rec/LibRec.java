@@ -45,7 +45,7 @@ import lib.rec.intf.Recommender.Measure;
  * @author guoguibing
  * 
  */
-public class RecSys {
+public class LibRec {
 
 	// configuration
 	private static Configer cf;
@@ -85,7 +85,7 @@ public class RecSys {
 			// multiple run
 			for (Entry<String, List<Double>> en : Recommender.params.entrySet()) {
 				for (int i = 0, im = en.getValue().size(); i < im; i++) {
-					RecSys.paramIdx = i;
+					LibRec.paramIdx = i;
 					runAlgorithm();
 
 					// useful for some methods which do not use the parameters
