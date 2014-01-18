@@ -3,7 +3,9 @@ package lib.rec.ext;
 import happy.coding.math.Randoms;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lib.rec.data.DenseVec;
 import lib.rec.data.SparseMat;
@@ -39,10 +41,23 @@ public class BaseNM extends IterativeRecommender {
 
 		// item correlation matrix
 		itemCorrs = new UpperSymmMat(numItems);
+		
+		// ignore items without any training ratings: can greatly reduce memory usage
+		Set<Integer> items = new HashSet<>();
+		for (int i = 0; i < numItems; i++)
+			if (trainMatrix.col(i).getUsed() == 0)
+				items.add(i);
+
 		for (int i = 0; i < numItems; i++) {
+			if (items.contains(i))
+				continue;
+
 			itemCorrs.set(i, i, 0.0);
 
 			for (int j = i + 1; j < numItems; j++) {
+				if (items.contains(j))
+					continue;
+
 				double val = isPosOnly ? Randoms.uniform(0.0, 0.01) : Randoms.gaussian(initMean, initStd);
 				itemCorrs.set(i, j, val);
 			}

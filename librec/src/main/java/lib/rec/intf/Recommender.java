@@ -141,8 +141,6 @@ public abstract class Recommender implements Runnable {
 	public void execute() {
 
 		Stopwatch sw = Stopwatch.createStarted();
-		if(verbose)
-			Logs.debug("Initialize recommendation model ...");
 		initModel();
 
 		// print out algorithm's settings: to indicate starting building models
