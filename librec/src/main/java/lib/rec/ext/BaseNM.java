@@ -88,7 +88,7 @@ public class BaseNM extends IterativeRecommender {
 					continue;
 
 				double val = isPosOnly ? Randoms.uniform(0.0, 0.01) : Randoms.gaussian(initMean, initStd);
-				sb.append(i + "\t" + j + "\t" + val + "\n");
+				sb.append(j + " " + val + "\n");
 			}
 			// output to disk
 			if (sb.length() > 0)
@@ -287,7 +287,7 @@ public class BaseNM extends IterativeRecommender {
 		for (int i : corrVec.getIndex()) {
 			double val = corrVec.get(i);
 			if (val != 0)
-				sb.append(i + "\t" + j + "\t" + val + "\n");
+				sb.append(i + " " + val + "\n");
 		}
 
 		FileIO.writeString(dirPath + j + ".txt", sb.toString());
@@ -304,8 +304,8 @@ public class BaseNM extends IterativeRecommender {
 			while ((line = br.readLine()) != null) {
 				String[] data = line.split("[ \t,]");
 
-				int i = Integer.parseInt(data[1]);
-				double val = Integer.parseInt(data[2]);
+				int i = Integer.parseInt(data[0]);
+				double val = Double.parseDouble(data[1]);
 
 				iv.set(i, val);
 			}
