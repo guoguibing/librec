@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import lib.rec.DataDAO;
 import lib.rec.MatrixUtils;
-import lib.rec.UpperSymmMetrix;
+import lib.rec.UpperSymmMatrix;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.MatrixEntry;
@@ -65,7 +65,7 @@ public abstract class Recommender implements Runnable {
 	protected CompRowMatrix trainMatrix, testMatrix;
 	protected DenseVector userBiases, itemBiases;
 
-	protected UpperSymmMetrix corrs;
+	protected UpperSymmMatrix corrs;
 	public Map<Measure, Double> measures;
 
 	// number of users, items, ratings
@@ -128,7 +128,7 @@ public abstract class Recommender implements Runnable {
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
-			corrs = new UpperSymmMetrix(numItems);
+			corrs = new UpperSymmMatrix(numItems);
 	}
 
 	public void run() {
@@ -206,11 +206,11 @@ public abstract class Recommender implements Runnable {
 	 * @return a upper symmetric matrix with user-user or item-item coefficients
 	 * 
 	 */
-	protected UpperSymmMetrix buildCorrs(boolean isUser) {
+	protected UpperSymmMatrix buildCorrs(boolean isUser) {
 		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
 		int numCount = isUser ? numUsers : numItems;
-		UpperSymmMetrix corrs = new UpperSymmMetrix(numCount);
+		UpperSymmMatrix corrs = new UpperSymmMatrix(numCount);
 		
 		for (int i = 0; i < numCount; i++) {
 			SparseVector iv = isUser ? MatrixUtils.row(trainMatrix, i) : MatrixUtils.col(trainMatrix, i);

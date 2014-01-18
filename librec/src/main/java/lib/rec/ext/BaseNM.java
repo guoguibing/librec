@@ -6,16 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lib.rec.MatrixUtils;
+import lib.rec.UpperSymmMatrix;
 import lib.rec.core.RegSVD;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class BaseNM extends RegSVD {
 
-	protected FlexCompRowMatrix itemCorrs;
+	protected UpperSymmMatrix itemCorrs;
 	protected boolean isPosOnly;
 	protected double minSim;
 
@@ -29,7 +29,7 @@ public class BaseNM extends RegSVD {
 	}
 
 	@Override
-	public void initModel() {
+	protected void initModel() {
 
 		// user, item biases
 		userBiases = new DenseVector(numUsers);
@@ -39,7 +39,7 @@ public class BaseNM extends RegSVD {
 		MatrixUtils.init(itemBiases, initMean, initStd);
 
 		// item correlation matrix
-		itemCorrs = new FlexCompRowMatrix(numItems, numItems);
+		itemCorrs = new UpperSymmMatrix(numItems);
 		for (int i = 0; i < numItems; i++) {
 			itemCorrs.set(i, i, 0.0);
 

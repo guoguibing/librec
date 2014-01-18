@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import lib.rec.MatrixUtils;
-import lib.rec.UpperSymmMetrix;
+import lib.rec.UpperSymmMatrix;
 import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
@@ -19,7 +19,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
 public class UserKNN extends Recommender {
 
 	// user: nearest neighborhood
-	private UpperSymmMetrix userCorrs;
+	private UpperSymmMatrix userCorrs;
 	private DenseVector userMeans;
 	private int knn;
 

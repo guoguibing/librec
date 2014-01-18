@@ -3,10 +3,21 @@ package lib.rec;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
-public class UpperSymmMetrix extends FlexCompRowMatrix {
+/**
+ * Upper Symmetric and Sparse Matrix: most useful for item/user correlations
+ * 
+ * @author guoguibing
+ *
+ */
+public class UpperSymmMatrix extends FlexCompRowMatrix {
 
-	public UpperSymmMetrix(int dimension) {
-		super(dimension, dimension);
+	/**
+	 * Constructor for Upper Symmetric and SparseMatrix
+	 * 
+	 * @param dim dimension size
+	 */
+	public UpperSymmMatrix(int dim) {
+		super(dim, dim);
 	}
 
 	/**
