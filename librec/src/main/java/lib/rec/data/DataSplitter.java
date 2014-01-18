@@ -78,8 +78,8 @@ public class DataSplitter {
 
 		assert (ratio > 0 && ratio <= 1);
 
-		SparseMat trainMatrix = rateMatrix.copy();
-		SparseMat testMatrix = rateMatrix.copy();
+		SparseMat trainMatrix = new SparseMat(rateMatrix);
+		SparseMat testMatrix = new SparseMat(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -111,8 +111,8 @@ public class DataSplitter {
 		if (k > numFold || k < 1)
 			return null;
 
-		SparseMat trainMatrix = rateMatrix.copy();
-		SparseMat testMatrix = rateMatrix.copy();
+		SparseMat trainMatrix = new SparseMat(rateMatrix);
+		SparseMat testMatrix = new SparseMat(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 

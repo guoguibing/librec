@@ -132,10 +132,5 @@ public class SparseMat extends CompRowMatrix {
 		}
 		return sv;
 	}
-	
-	@Override
-	public SparseMat copy() {
-		return (SparseMat) super.copy();
-	}
 
 }
