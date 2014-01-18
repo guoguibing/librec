@@ -30,7 +30,7 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 * @return a value at (row, col) if row<col; otherwise at (col, row)
 	 */
 	public double get(int row, int col) {
-		return row < col ? get(row, col) : get(col, row);
+		return row < col ? super.get(row, col) : super.get(col, row);
 	}
 
 	/**
@@ -43,9 +43,9 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 */
 	public void set(int row, int col, double val) {
 		if (row < col)
-			set(row, col, val);
+			super.set(row, col, val);
 		else
-			set(col, row, val);
+			super.set(col, row, val);
 	}
 
 	/**
@@ -58,9 +58,9 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 */
 	public void add(int row, int col, double val) {
 		if (row < col)
-			add(row, col, val);
+			super.add(row, col, val);
 		else
-			add(col, row, val);
+			super.add(col, row, val);
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 * @return a sparse vector
 	 */
 	public SparseVector row(int i) {
-		SparseVector nv = getRow(i);
+		SparseVector nv = super.getRow(i);
 		for (int j = 0; j < i; j++) {
 			double val = get(j, i);
 			if (val != 0)

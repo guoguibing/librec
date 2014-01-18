@@ -26,8 +26,8 @@ public class SparseMat extends CompRowMatrix {
 	 */
 	public SparseVector row(int row) {
 
-		int[] row_ptr = getRowPointers();
-		int[] col_idx = getColumnIndices();
+		int[] row_ptr = super.getRowPointers();
+		int[] col_idx = super.getColumnIndices();
 
 		int start = row_ptr[row];
 		int end = row_ptr[row + 1];
@@ -58,8 +58,8 @@ public class SparseMat extends CompRowMatrix {
 	 */
 	public SparseVector row(int row, int except) {
 
-		int[] row_ptr = getRowPointers();
-		int[] col_idx = getColumnIndices();
+		int[] row_ptr = super.getRowPointers();
+		int[] col_idx = super.getColumnIndices();
 
 		int start = row_ptr[row];
 		int end = row_ptr[row + 1];
@@ -69,7 +69,7 @@ public class SparseMat extends CompRowMatrix {
 		for (int j = start; j < end; j++) {
 			int col = col_idx[j];
 			if (col != except) {
-				double val = get(row, col);
+				double val = super.get(row, col);
 				if (val != 0.0)
 					sv.set(col, val);
 			}

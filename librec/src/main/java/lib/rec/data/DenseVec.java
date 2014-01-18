@@ -15,7 +15,7 @@ public class DenseVec extends DenseVector {
 	 * initialize a dense vector with Gaussian values
 	 */
 	public void init(double mean, double sigma) {
-		double[] data = getData();
+		double[] data = super.getData();
 		for (int i = 0; i < data.length; i++)
 			data[i] = Randoms.gaussian(mean, sigma);
 	}

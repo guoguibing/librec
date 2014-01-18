@@ -19,7 +19,7 @@ public class DenseMat extends DenseMatrix {
 	 */
 	public void init(double mean, double sigma) {
 
-		double[] data = getData();
+		double[] data = super.getData();
 		for (int i = 0; i < data.length; i++)
 			data[i] = Randoms.gaussian(mean, sigma);
 	}
@@ -29,7 +29,7 @@ public class DenseMat extends DenseMatrix {
 	 */
 	public void init() {
 
-		double[] data = getData();
+		double[] data = super.getData();
 		for (int i = 0; i < data.length; i++)
 			data[i] = Randoms.uniform(0.0, 0.01);
 	}
@@ -39,7 +39,7 @@ public class DenseMat extends DenseMatrix {
 		DenseVector dv = new DenseVector(numColumns);
 
 		for (int j = 0; j < numColumns(); j++) {
-			double val = get(row, j);
+			double val = super.get(row, j);
 			if (val != 0.0)
 				dv.set(j, val);
 		}
@@ -87,6 +87,6 @@ public class DenseMat extends DenseMatrix {
 	 */
 	public void setRow(int row, double val) {
 		for (int c = 0; c < numColumns; c++)
-			set(row, c, val);
+			super.set(row, c, val);
 	}
 }
