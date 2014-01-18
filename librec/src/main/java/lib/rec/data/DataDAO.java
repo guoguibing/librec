@@ -90,6 +90,28 @@ public class DataDAO {
 		this(path, userIds, userIds);
 	}
 
+	public void convert(String sep) throws Exception {
+		BufferedReader br = FileIO.getReader(dataPath);
+
+		String line = null;
+		List<String> lines = new ArrayList<>();
+		while ((line = br.readLine()) != null) {
+			String newline = line.replaceAll(sep, " ");
+
+			lines.add(newline);
+
+			if (lines.size() >= 1000) {
+				FileIO.writeList(dataPath + "-converted", lines, null, true);
+				lines.clear();
+			}
+		}
+
+		if (lines.size() > 0)
+			FileIO.writeList(dataPath + "-converted", lines, null, true);
+
+		br.close();
+	}
+
 	public SparseMat readData() throws Exception {
 
 		Table<String, String, Double> dataTable = HashBasedTable.create();
@@ -118,7 +140,7 @@ public class DataDAO {
 
 		Collections.sort(scales);
 		int numRows = numUsers(), numCols = numItems();
-		
+
 		// if min-rate = 0.0, add a small value
 		double epsilon = scales.get(0).doubleValue() == 0.0 ? 1e-5 : 0;
 		if (epsilon > 0) {

@@ -5,6 +5,7 @@ import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.system.Dates;
+import happy.coding.system.Debug;
 
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +71,12 @@ public class LibRec {
 
 		// prepare data
 		DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+
+		if (Debug.OFF) {
+			rateDao.convert("::");
+			return;
+		}
+
 		rateMatrix = rateDao.readData();
 
 		// config general recommender
