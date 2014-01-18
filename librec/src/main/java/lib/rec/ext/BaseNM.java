@@ -6,8 +6,10 @@ import happy.coding.system.Systems;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import lib.rec.data.DenseVec;
@@ -81,15 +83,16 @@ public class BaseNM extends IterativeRecommender {
 
 			StringBuilder sb = new StringBuilder();
 			// Different from memory-based: scan all items 
-			for (int j = 0; j < numItems; j++) {
-				if (i == j || items.contains(j))
+			for (int j = i + 1; j < numItems; j++) {
+				if (items.contains(j))
 					continue;
 
 				double val = isPosOnly ? Randoms.uniform(0.0, 0.01) : Randoms.gaussian(initMean, initStd);
 				sb.append(i + "\t" + j + "\t" + val + "\n");
 			}
 			// output to disk
-			FileIO.writeString(dirPath + i + ".txt", sb.toString());
+			if (sb.length() > 0)
+				FileIO.writeString(dirPath + i + ".txt", sb.toString());
 		}
 	}
 
@@ -205,10 +208,17 @@ public class BaseNM extends IterativeRecommender {
 
 				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
+
+				Map<Integer, SparseVector> itemVectors = new HashMap<>();
 				for (int i : uv.getIndex()) {
-					double sji = cv.get(i);
-					if (sji != 0 && sji > minSim)
+					SparseVector sv = null;
+					double sji = i > j ? cv.get(i) : (sv = getCorrVector(i)).get(j);
+					if (sji != 0 && sji > minSim) {
 						items.add(i);
+
+						if (sv != null)
+							itemVectors.put(i, sv);
+					}
 				}
 				double w = Math.sqrt(items.size());
 
@@ -218,7 +228,7 @@ public class BaseNM extends IterativeRecommender {
 
 				double sum_sji = 0;
 				for (int i : items) {
-					double sji = cv.get(i);
+					double sji = i > j ? cv.get(i) : itemVectors.get(i).get(j);
 					double rui = uv.get(i);
 					double bui = globalMean + bu + itemBiases.get(i);
 
@@ -232,12 +242,19 @@ public class BaseNM extends IterativeRecommender {
 
 				// update similarity frist since bu and bj are used here
 				for (int i : items) {
-					double sji = cv.get(i);
+					SparseVector sv = null;
+					double sji = i > j ? cv.get(i) : (sv = itemVectors.get(i)).get(j);
 					double rui = uv.get(i);
 					double bui = globalMean + bu + itemBiases.get(i);
 
 					double delta = lRate * (euj * (rui - bui) / w - regU * sji);
-					cv.add(i, delta);
+
+					if (i > j)
+						cv.add(i, delta);
+					else {
+						sv.add(j, delta);
+						updateCorrVector(i, sv);
+					}
 
 					loss += regU * sji * sji;
 				}
