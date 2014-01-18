@@ -597,14 +597,13 @@ public abstract class Recommender implements Runnable {
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
 
-				double corr = corrs.get(i, j);
+				double corr = MatrixUtils.get(corrs, i, j);
 
 				if (corr == 0) {
 					SparseVector jv = MatrixUtils.col(trainMatrix, j);
 					corr = compCorr(iv, jv, items);
 					
-					corrs.set(i, j, corr);
-					corrs.set(j, i, corr);
+					MatrixUtils.set(corrs, i, j, corr);
 				}
 				
 				if (!Double.isNaN(corr)) {

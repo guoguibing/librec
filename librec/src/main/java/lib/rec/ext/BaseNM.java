@@ -46,7 +46,6 @@ public class BaseNM extends RegSVD {
 			for (int j = i + 1; j < numItems; j++) {
 				double val = isPosOnly ? Randoms.uniform(0.0, 0.01) : Randoms.gaussian(initMean, initStd);
 				itemCorrs.set(i, j, val);
-				itemCorrs.set(j, i, val);
 			}
 		}
 	}
@@ -72,7 +71,7 @@ public class BaseNM extends RegSVD {
 				SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
-					if (itemCorrs.get(j, i) > minSim)
+					if (MatrixUtils.get(itemCorrs, j, i) > minSim)
 						items.add(i);
 				}
 				double w = Math.sqrt(items.size());
@@ -83,7 +82,7 @@ public class BaseNM extends RegSVD {
 
 				double sum_sji = 0;
 				for (int i : items) {
-					double sji = itemCorrs.get(j, i);
+					double sji = MatrixUtils.get(itemCorrs, j, i);
 					double rui = trainMatrix.get(u, i);
 					double bui = globalMean + bu + itemBiases.get(i);
 
@@ -97,13 +96,12 @@ public class BaseNM extends RegSVD {
 
 				// update similarity frist since bu and bj are used here
 				for (int i : items) {
-					double sji = itemCorrs.get(j, i);
+					double sji = MatrixUtils.get(itemCorrs, j, i);
 					double rui = trainMatrix.get(u, i);
 					double bui = globalMean + bu + itemBiases.get(i);
 
 					double delta = lRate * (euj * (rui - bui) / w - regU * sji);
-					itemCorrs.add(j, i, delta);
-					itemCorrs.add(i, j, delta);
+					MatrixUtils.add(itemCorrs, j, i, delta);
 
 					loss += regU * sji * sji;
 				}
@@ -141,7 +139,7 @@ public class BaseNM extends RegSVD {
 		int k = 0;
 		double sum = 0;
 		for (int i : items) {
-			double sji = itemCorrs.get(j, i);
+			double sji = MatrixUtils.get(itemCorrs, j, i);
 
 			if (sji > minSim) {
 				double rui = trainMatrix.get(u, i);
