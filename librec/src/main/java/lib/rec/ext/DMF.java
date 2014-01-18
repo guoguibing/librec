@@ -22,7 +22,7 @@ public class DMF extends BaseMF {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 		last_loss = 0;
 
 		for (int iter = 1; iter <= maxIters; iter++) {

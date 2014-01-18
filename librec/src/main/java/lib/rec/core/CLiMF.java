@@ -27,7 +27,7 @@ public class CLiMF extends IterativeRecommender {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 
 		for (int iter = 1; iter <= maxIters; iter++) {
 

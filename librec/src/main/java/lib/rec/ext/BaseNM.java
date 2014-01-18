@@ -1,7 +1,10 @@
 package lib.rec.ext;
 
+import happy.coding.io.FileIO;
 import happy.coding.math.Randoms;
+import happy.coding.system.Systems;
 
+import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +23,9 @@ public class BaseNM extends IterativeRecommender {
 	protected boolean isPosOnly;
 	protected double minSim;
 
+	protected String dirPath;
+	protected boolean isMem;
+
 	public BaseNM(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
@@ -27,21 +33,15 @@ public class BaseNM extends IterativeRecommender {
 
 		isPosOnly = cf.isOn("is.similarity.pos");
 		minSim = isPosOnly ? 0.0 : Double.MIN_VALUE;
+
+		dirPath = Systems.getDesktop() + "Fold " + fold;
+		isMem = numItems < 20_000;
 	}
 
-	@Override
-	protected void initModel() {
-
-		// user, item biases
-		userBiases = new DenseVec(numUsers);
-		itemBiases = new DenseVec(numItems);
-
-		userBiases.init(initMean, initStd);
-		itemBiases.init(initMean, initStd);
-
+	private void initItemCorrsMem() {
 		// item correlation matrix
 		itemCorrs = new UpperSymmMat(numItems);
-		
+
 		// ignore items without any training ratings: can greatly reduce memory usage
 		Set<Integer> items = new HashSet<>();
 		for (int i = 0; i < numItems; i++)
@@ -64,9 +64,56 @@ public class BaseNM extends IterativeRecommender {
 		}
 	}
 
-	@Override
-	protected void buildModel() {
+	private void initItemCorrsDisk() throws Exception {
+		// ignore items without any training ratings
+		Set<Integer> items = new HashSet<>();
+		for (int i = 0; i < numItems; i++)
+			if (trainMatrix.col(i).getUsed() == 0)
+				items.add(i);
 
+		// create fold
+		FileIO.deleteDirectory(dirPath);
+		dirPath = FileIO.makeDirectory(dirPath);
+
+		for (int i = 0; i < numItems; i++) {
+			if (items.contains(i))
+				continue;
+
+			StringBuilder sb = new StringBuilder();
+			// Different from memory-based: scan all items 
+			for (int j = 0; j < numItems; j++) {
+				if (i == j || items.contains(j))
+					continue;
+
+				double val = isPosOnly ? Randoms.uniform(0.0, 0.01) : Randoms.gaussian(initMean, initStd);
+				sb.append(i + "\t" + j + "\t" + val + "\n");
+			}
+			// output to disk
+			FileIO.writeString(dirPath + i + ".txt", sb.toString());
+		}
+	}
+
+	@Override
+	protected void initModel() {
+
+		// user, item biases
+		userBiases = new DenseVec(numUsers);
+		itemBiases = new DenseVec(numItems);
+
+		userBiases.init(initMean, initStd);
+		itemBiases.init(initMean, initStd);
+
+		if (isMem)
+			initItemCorrsMem();
+		else
+			try {
+				initItemCorrsDisk();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+	}
+
+	private void buildModelMem() {
 		for (int iter = 1; iter <= maxIters; iter++) {
 
 			loss = 0;
@@ -137,13 +184,145 @@ public class BaseNM extends IterativeRecommender {
 				break;
 
 		}// end of training
+	}
 
+	private void buildModelDisk() throws Exception {
+		for (int iter = 1; iter <= maxIters; iter++) {
+
+			loss = 0;
+			errs = 0;
+			for (MatrixEntry me : trainMatrix) {
+
+				int u = me.row(); // user
+				int j = me.column(); // item
+
+				double ruj = me.get();
+				if (ruj <= 0.0)
+					continue;
+
+				// a set of similar items
+				SparseVector cv = getCorrVector(j);
+
+				SparseVector uv = trainMatrix.row(u, j);
+				List<Integer> items = new ArrayList<>();
+				for (int i : uv.getIndex()) {
+					double sji = cv.get(i);
+					if (sji != 0 && sji > minSim)
+						items.add(i);
+				}
+				double w = Math.sqrt(items.size());
+
+				// obtain the prediction
+				double bu = userBiases.get(u), bj = itemBiases.get(j);
+				double pred = globalMean + bu + bj;
+
+				double sum_sji = 0;
+				for (int i : items) {
+					double sji = cv.get(i);
+					double rui = uv.get(i);
+					double bui = globalMean + bu + itemBiases.get(i);
+
+					pred += sji * (rui - bui) / w;
+					sum_sji += sji / w;
+				}
+
+				double euj = ruj - pred;
+				errs += euj * euj;
+				loss += euj * euj;
+
+				// update similarity frist since bu and bj are used here
+				for (int i : items) {
+					double sji = cv.get(i);
+					double rui = uv.get(i);
+					double bui = globalMean + bu + itemBiases.get(i);
+
+					double delta = lRate * (euj * (rui - bui) / w - regU * sji);
+					cv.add(i, delta);
+
+					loss += regU * sji * sji;
+				}
+
+				// update correlation vector to disk
+				updateCorrVector(j, cv);
+
+				// update factors
+				double sgd = euj * (1 - sum_sji) - regU * bu;
+				userBiases.add(u, lRate * sgd);
+				loss += regU * bu * bu;
+
+				sgd = euj * (1 - sum_sji) - regI * bj;
+				itemBiases.add(j, lRate * sgd);
+				loss += regI * bj * bj;
+			}
+
+			errs *= 0.5;
+			loss *= 0.5;
+
+			if (postEachIter(iter))
+				break;
+
+		}// end of training
+	}
+
+	private void updateCorrVector(int j, SparseVector corrVec) throws Exception {
+		StringBuilder sb = new StringBuilder();
+
+		for (int i : corrVec.getIndex()) {
+			double val = corrVec.get(i);
+			if (val != 0)
+				sb.append(i + "\t" + j + "\t" + val + "\n");
+		}
+
+		FileIO.writeString(dirPath + j + ".txt", sb.toString());
+	}
+
+	private SparseVector getCorrVector(int j) {
+		SparseVector iv = new SparseVector(numItems);
+
+		// read data
+		BufferedReader br = null;
+		try {
+			br = FileIO.getReader(dirPath + j + ".txt");
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				String[] data = line.split("[ \t,]");
+
+				int i = Integer.parseInt(data[1]);
+				double val = Integer.parseInt(data[2]);
+
+				iv.set(i, val);
+			}
+
+			br.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return iv;
+	}
+
+	@Override
+	protected void buildModel() {
+
+		if (isMem)
+			buildModelMem();
+		else
+			try {
+				buildModelDisk();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 	}
 
 	@Override
 	protected double predict(int u, int j) {
 		double bu = userBiases.get(u);
 		double pred = globalMean + bu + itemBiases.get(j);
+
+		SparseVector cv = null;
+		if (!isMem)
+			cv = getCorrVector(j);
 
 		// get a number of similar items except item j
 		SparseVector uv = trainMatrix.row(u, j);
@@ -152,9 +331,9 @@ public class BaseNM extends IterativeRecommender {
 		int k = 0;
 		double sum = 0;
 		for (int i : items) {
-			double sji = itemCorrs.get(j, i);
+			double sji = isMem ? itemCorrs.get(j, i) : cv.get(i);
 
-			if (sji > minSim) {
+			if (sji != 0 && sji > minSim) {
 				double rui = trainMatrix.get(u, i);
 				double bui = globalMean + bu + itemBiases.get(i);
 
