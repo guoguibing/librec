@@ -141,9 +141,11 @@ public abstract class Recommender implements Runnable {
 	public void execute() {
 
 		Stopwatch sw = Stopwatch.createStarted();
+		if(verbose)
+			Logs.debug("Initialize recommendation model ...");
 		initModel();
 
-		// print out algorithm's settings
+		// print out algorithm's settings: to indicate starting building models
 		String algoInfo = toString();
 		if (!algoInfo.isEmpty())
 			Logs.debug(algoName + ": " + algoInfo);
@@ -159,6 +161,7 @@ public abstract class Recommender implements Runnable {
 		sw.stop();
 		long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
 
+		// collecting results
 		measures.put(Measure.TrainTime, (double) trainTime);
 		measures.put(Measure.TestTime, (double) testTime);
 
