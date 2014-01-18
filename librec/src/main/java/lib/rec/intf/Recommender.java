@@ -223,10 +223,9 @@ public abstract class Recommender implements Runnable {
 
 				double sim = compCorr(iv, jv, items);
 
-				if (sim != 0.0) {
+				// to save memory, we only save as the upper matrix
+				if (sim != 0.0)
 					corrs.set(i, j, sim);
-					corrs.set(j, i, sim);
-				}
 			}
 		}
 
@@ -602,10 +601,10 @@ public abstract class Recommender implements Runnable {
 				if (corr == 0) {
 					SparseVector jv = MatrixUtils.col(trainMatrix, j);
 					corr = compCorr(iv, jv, items);
-					
+
 					MatrixUtils.set(corrs, i, j, corr);
 				}
-				
+
 				if (!Double.isNaN(corr)) {
 					sum += (1 - corr);
 					num++;

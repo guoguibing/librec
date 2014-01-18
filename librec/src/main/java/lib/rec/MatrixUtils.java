@@ -263,7 +263,7 @@ public class MatrixUtils {
 		else
 			m.set(col, row, val);
 	}
-	
+
 	/**
 	 * add a specific value at (row, col) of a Symmetric (upper) matrix
 	 * 
@@ -279,6 +279,26 @@ public class MatrixUtils {
 			m.add(row, col, val);
 		else
 			m.add(col, row, val);
+	}
+
+	/**
+	 * find a set of items similar to item i
+	 * 
+	 * @param m
+	 *            upper symmetric correlation matrix
+	 * @param i
+	 *            item id
+	 * @return a sparse vector
+	 */
+	public static SparseVector nn(FlexCompRowMatrix m, int i) {
+		SparseVector nv = m.getRow(i);
+		for (int j = 0; j < i; j++) {
+			double val = m.get(j, i);
+			if (val != 0)
+				nv.set(j, val);
+		}
+
+		return nv;
 	}
 
 }

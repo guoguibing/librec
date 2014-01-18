@@ -52,7 +52,6 @@ public class BaseNM extends RegSVD {
 
 	@Override
 	public void buildModel() {
-		last_loss = 0;
 
 		for (int iter = 1; iter <= maxIters; iter++) {
 

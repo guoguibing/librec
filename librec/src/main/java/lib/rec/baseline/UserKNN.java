@@ -47,7 +47,7 @@ public class UserKNN extends Recommender {
 		// find a number of similar users
 		Map<Integer, Double> nns = new HashMap<>();
 
-		SparseVector dv = userCorrs.getRow(u);
+		SparseVector dv = MatrixUtils.nn(userCorrs, u);
 		for (int v : dv.getIndex()) {
 			double sim = dv.get(v);
 			double rate = trainMatrix.get(v, j);
