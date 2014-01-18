@@ -116,7 +116,7 @@ public class BaseNM extends IterativeRecommender {
 			}
 	}
 
-	private void buildModelMem() {
+	protected void buildModelMem() {
 		for (int iter = 1; iter <= maxIters; iter++) {
 
 			loss = 0;
@@ -189,7 +189,7 @@ public class BaseNM extends IterativeRecommender {
 		}// end of training
 	}
 
-	private void buildModelDisk() throws Exception {
+	protected void buildModelDisk() throws Exception {
 		for (int iter = 1; iter <= maxIters; iter++) {
 
 			loss = 0;
@@ -281,7 +281,7 @@ public class BaseNM extends IterativeRecommender {
 		}// end of training
 	}
 
-	private void updateCorrVector(int j, SparseVector corrVec) throws Exception {
+	protected void updateCorrVector(int j, SparseVector corrVec) throws Exception {
 		StringBuilder sb = new StringBuilder();
 
 		for (int i : corrVec.getIndex()) {
@@ -293,7 +293,7 @@ public class BaseNM extends IterativeRecommender {
 		FileIO.writeString(dirPath + j + ".txt", sb.toString());
 	}
 
-	private SparseVector getCorrVector(int j) {
+	protected SparseVector getCorrVector(int j) {
 		SparseVector iv = new SparseVector(numItems);
 
 		// read data
