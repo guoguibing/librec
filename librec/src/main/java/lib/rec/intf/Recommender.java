@@ -152,6 +152,8 @@ public abstract class Recommender implements Runnable {
 		long trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
 		// evaluation
+		if (verbose)
+			Logs.debug("Evaluate recommendation results ... ");
 		measures = isRankingPred ? evalRankings() : evalRatings();
 		String result = getEvalInfo(measures, isRankingPred);
 		sw.stop();

@@ -1,7 +1,6 @@
 package lib.rec.core;
 
 import happy.coding.math.Maths;
-import happy.coding.system.Debug;
 import lib.rec.data.SparseMat;
 import lib.rec.intf.SocialRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
@@ -23,12 +22,6 @@ public class SocialMF extends SocialRecommender {
 
 		algoName = "SocialMF";
 
-		if (Debug.ON) {
-			// use the suggested parameters for epinions from the paper
-			regU = 0.1;
-			regI = 0.1;
-			regS = 5;
-		}
 	}
 
 	@Override
