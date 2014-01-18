@@ -5,9 +5,8 @@ import happy.coding.math.Stats;
 import java.util.HashMap;
 import java.util.Map;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -20,7 +19,7 @@ public class UserAverage extends Recommender {
 
 	private Map<Integer, Double> userMeans;
 
-	public UserAverage(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public UserAverage(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "UserAvg";
@@ -32,7 +31,7 @@ public class UserAverage extends Recommender {
 		if (userMeans.containsKey(u))
 			return userMeans.get(u);
 
-		SparseVector uv = MatrixUtils.row(trainMatrix, u);
+		SparseVector uv = trainMatrix.row(u);
 		int numRated = uv.getUsed();
 		double userMean = numRated > 0 ? Stats.sum(uv.getData()) / numRated : globalMean;
 		userMeans.put(u, userMean);

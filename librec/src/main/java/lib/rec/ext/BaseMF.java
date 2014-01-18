@@ -3,12 +3,11 @@ package lib.rec.ext;
 import java.util.ArrayList;
 import java.util.List;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.DenseMat;
+import lib.rec.data.DenseVec;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class BaseMF extends IterativeRecommender {
@@ -16,7 +15,7 @@ public class BaseMF extends IterativeRecommender {
 	protected boolean isPosOnly;
 	protected double minSim;
 
-	public BaseMF(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public BaseMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "BaseMF";
@@ -29,32 +28,32 @@ public class BaseMF extends IterativeRecommender {
 	protected void initModel() {
 
 		// re-use it as another item-factor matrix
-		P = new DenseMatrix(numItems, numFactors);
-		Q = new DenseMatrix(numItems, numFactors);
+		P = new DenseMat(numItems, numFactors);
+		Q = new DenseMat(numItems, numFactors);
 
 		// initialize model
 		if (isPosOnly) {
-			MatrixUtils.init(P);
-			MatrixUtils.init(Q);
+			P.init();
+			Q.init();
 		} else {
-			MatrixUtils.init(P, initMean, initStd);
-			MatrixUtils.init(Q, initMean, initStd);
+			P.init(initMean, initStd);
+			Q.init(initMean, initStd);
 		}
 
 		// set to 0 for items without any ratings
 		for (int j = 0, jm = numItems; j < jm; j++) {
-			if (MatrixUtils.col(trainMatrix, j).getUsed() == 0) {
-				MatrixUtils.setOneValue(P, j, 0.0);
-				MatrixUtils.setOneValue(Q, j, 0.0);
+			if (trainMatrix.col(j).getUsed() == 0) {
+				P.setRow(j, 0.0);
+				Q.setRow(j, 0.0);
 			}
 		}
 
-		userBiases = new DenseVector(numUsers);
-		itemBiases = new DenseVector(numItems);
+		userBiases = new DenseVec(numUsers);
+		itemBiases = new DenseVec(numItems);
 
 		// initialize user bias
-		MatrixUtils.init(userBiases, initMean, initStd);
-		MatrixUtils.init(itemBiases, initMean, initStd);
+		userBiases.init(initMean, initStd);
+		itemBiases.init(initMean, initStd);
 	}
 
 	@Override
@@ -94,11 +93,11 @@ public class BaseMF extends IterativeRecommender {
 				loss += regI * bj * bj;
 
 				// rated items by user u
-				SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
+				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (i != j) {
-						double sji = MatrixUtils.rowMult(P, j, Q, i);
+						double sji = DenseMat.rowMult(P, j, Q, i);
 						if (sji > minSim)
 							items.add(i);
 					}
@@ -155,10 +154,10 @@ public class BaseMF extends IterativeRecommender {
 
 		int k = 0;
 		double sum = 0.0f;
-		SparseVector uv = MatrixUtils.row(trainMatrix, u);
+		SparseVector uv = trainMatrix.row(u);
 		for (int i : uv.getIndex()) {
 			if (i != j) {
-				double sji = MatrixUtils.rowMult(P, j, Q, i);
+				double sji = DenseMat.rowMult(P, j, Q, i);
 				if (sji > minSim) {
 					sum += sji;
 					k++;

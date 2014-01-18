@@ -2,9 +2,8 @@ package lib.rec.intf;
 
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
-import lib.rec.MatrixUtils;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import lib.rec.data.DenseMat;
+import lib.rec.data.SparseMat;
 
 /**
  * Interface class for iterative recommenders such as Matrix Factorization
@@ -27,17 +26,17 @@ public abstract class IterativeRecommender extends Recommender {
 	protected boolean isBoldDriver;
 
 	// factorized user-factor matrix
-	protected DenseMatrix P;
+	protected DenseMat P;
 
 	// factorized item-factor matrix
-	protected DenseMatrix Q;
+	protected DenseMat Q;
 
 	// training errors
 	protected double errs, last_errs = 0;
 	// objective loss
 	protected double loss, last_loss = 0;
 
-	public IterativeRecommender(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public IterativeRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		lRate = cf.getDouble("val.learn.rate");
@@ -56,7 +55,7 @@ public abstract class IterativeRecommender extends Recommender {
 	 */
 	@Override
 	protected double predict(int u, int j) {
-		return MatrixUtils.rowMult(P, u, Q, j);
+		return DenseMat.rowMult(P, u, Q, j);
 	}
 
 	/**
@@ -111,25 +110,25 @@ public abstract class IterativeRecommender extends Recommender {
 	@Override
 	protected void initModel() {
 
-		P = new DenseMatrix(numUsers, numFactors);
-		Q = new DenseMatrix(numItems, numFactors);
+		P = new DenseMat(numUsers, numFactors);
+		Q = new DenseMat(numItems, numFactors);
 
 		// initialize model
-		MatrixUtils.init(P, initMean, initStd);
-		MatrixUtils.init(Q, initMean, initStd);
+		P.init(initMean, initStd);
+		Q.init(initMean, initStd);
 
 		// set to 0 for users without any ratings
 		int numTrainUsers = trainMatrix.numRows();
 		for (int u = 0, um = P.numRows(); u < um; u++) {
-			if (u >= numTrainUsers || MatrixUtils.row(trainMatrix, u).getUsed() == 0) {
-				MatrixUtils.setOneValue(P, u, 0.0);
+			if (u >= numTrainUsers || trainMatrix.row(u).getUsed() == 0) {
+				P.setRow(u, 0.0);
 			}
 		}
 		// set to 0 for items without any ratings
 		int numTrainItems = trainMatrix.numColumns();
 		for (int j = 0, jm = Q.numRows(); j < jm; j++) {
-			if (j >= numTrainItems || MatrixUtils.col(trainMatrix, j).getUsed() == 0) {
-				MatrixUtils.setOneValue(Q, j, 0.0);
+			if (j >= numTrainItems || trainMatrix.col(j).getUsed() == 0) {
+				Q.setRow(j, 0.0);
 			}
 		}
 	}

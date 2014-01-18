@@ -1,9 +1,8 @@
 package lib.rec.core;
 
-import lib.rec.MatrixUtils;
-import no.uib.cipr.matrix.DenseMatrix;
+import lib.rec.data.DenseMat;
+import lib.rec.data.SparseMat;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -15,9 +14,9 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class SVDPlusPlus extends BiasedMF {
 
-	protected DenseMatrix Y;
+	protected DenseMat Y;
 
-	public SVDPlusPlus(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public SVDPlusPlus(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SVD++";
@@ -27,13 +26,13 @@ public class SVDPlusPlus extends BiasedMF {
 	public void initModel() {
 		super.initModel();
 
-		Y = new DenseMatrix(numItems, numFactors);
-		MatrixUtils.init(Y, initMean, initStd);
+		Y = new DenseMat(numItems, numFactors);
+		Y.init(initMean, initStd);
 
 		// set factors to zero for items without training examples
 		for (int j = 0; j < numItems; j++) {
-			if (MatrixUtils.col(trainMatrix, j).getUsed() == 0)
-				MatrixUtils.setOneValue(Y, j, 0.0);
+			if (trainMatrix.col(j).getUsed() == 0)
+				Y.setRow(j, 0.0);
 		}
 	}
 
@@ -59,7 +58,7 @@ public class SVDPlusPlus extends BiasedMF {
 				errs += euj * euj;
 				loss += euj * euj;
 
-				SparseVector uv = MatrixUtils.row(trainMatrix, u);
+				SparseVector uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
 				double w = Math.sqrt(items.length);
 
@@ -120,12 +119,12 @@ public class SVDPlusPlus extends BiasedMF {
 
 	@Override
 	protected double predict(int u, int j) {
-		double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + MatrixUtils.rowMult(P, u, Q, j);
+		double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMat.rowMult(P, u, Q, j);
 
-		SparseVector uv = MatrixUtils.row(trainMatrix, u);
+		SparseVector uv = trainMatrix.row(u);
 		double w = Math.sqrt(uv.getUsed());
 		for (int k : uv.getIndex())
-			pred += MatrixUtils.rowMult(Y, k, Q, j) / w;
+			pred += DenseMat.rowMult(Y, k, Q, j) / w;
 
 		return pred;
 	}

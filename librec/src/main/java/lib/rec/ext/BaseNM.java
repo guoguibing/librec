@@ -5,21 +5,20 @@ import happy.coding.math.Randoms;
 import java.util.ArrayList;
 import java.util.List;
 
-import lib.rec.MatrixUtils;
-import lib.rec.UpperSymmMatrix;
+import lib.rec.data.DenseVec;
+import lib.rec.data.SparseMat;
+import lib.rec.data.UpperSymmMat;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class BaseNM extends IterativeRecommender {
 
-	protected UpperSymmMatrix itemCorrs;
+	protected UpperSymmMat itemCorrs;
 	protected boolean isPosOnly;
 	protected double minSim;
 
-	public BaseNM(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public BaseNM(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "BaseNM";
@@ -32,14 +31,14 @@ public class BaseNM extends IterativeRecommender {
 	protected void initModel() {
 
 		// user, item biases
-		userBiases = new DenseVector(numUsers);
-		itemBiases = new DenseVector(numItems);
+		userBiases = new DenseVec(numUsers);
+		itemBiases = new DenseVec(numItems);
 
-		MatrixUtils.init(userBiases, initMean, initStd);
-		MatrixUtils.init(itemBiases, initMean, initStd);
+		userBiases.init(initMean, initStd);
+		itemBiases.init(initMean, initStd);
 
 		// item correlation matrix
-		itemCorrs = new UpperSymmMatrix(numItems);
+		itemCorrs = new UpperSymmMat(numItems);
 		for (int i = 0; i < numItems; i++) {
 			itemCorrs.set(i, i, 0.0);
 
@@ -67,7 +66,7 @@ public class BaseNM extends IterativeRecommender {
 					continue;
 
 				// a set of similar items
-				SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
+				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (itemCorrs.get(j, i) > minSim)
@@ -82,7 +81,7 @@ public class BaseNM extends IterativeRecommender {
 				double sum_sji = 0;
 				for (int i : items) {
 					double sji = itemCorrs.get(j, i);
-					double rui = trainMatrix.get(u, i);
+					double rui = uv.get(i);
 					double bui = globalMean + bu + itemBiases.get(i);
 
 					pred += sji * (rui - bui) / w;
@@ -96,7 +95,7 @@ public class BaseNM extends IterativeRecommender {
 				// update similarity frist since bu and bj are used here
 				for (int i : items) {
 					double sji = itemCorrs.get(j, i);
-					double rui = trainMatrix.get(u, i);
+					double rui = uv.get(i);
 					double bui = globalMean + bu + itemBiases.get(i);
 
 					double delta = lRate * (euj * (rui - bui) / w - regU * sji);
@@ -132,7 +131,7 @@ public class BaseNM extends IterativeRecommender {
 		double pred = globalMean + bu + itemBiases.get(j);
 
 		// get a number of similar items except item j
-		SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
+		SparseVector uv = trainMatrix.row(u, j);
 		int[] items = uv.getIndex();
 
 		int k = 0;

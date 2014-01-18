@@ -1,10 +1,10 @@
 package lib.rec.core;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.DenseMat;
+import lib.rec.data.DenseVec;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**
  * Biased Matrix Factorization Models. <br/>
@@ -17,7 +17,7 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  */
 public class BiasedMF extends IterativeRecommender {
 
-	public BiasedMF(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public BiasedMF(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "BiasedMF";
@@ -27,12 +27,12 @@ public class BiasedMF extends IterativeRecommender {
 
 		super.initModel();
 
-		userBiases = new DenseVector(numUsers);
-		itemBiases = new DenseVector(numItems);
+		userBiases = new DenseVec(numUsers);
+		itemBiases = new DenseVec(numItems);
 
 		// initialize user bias
-		MatrixUtils.init(userBiases, initMean, initStd);
-		MatrixUtils.init(itemBiases, initMean, initStd);
+		userBiases.init(initMean, initStd);
+		itemBiases.init(initMean, initStd);
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public class BiasedMF extends IterativeRecommender {
 	}
 
 	protected double predict(int u, int j) {
-		return globalMean + userBiases.get(u) + itemBiases.get(j) + MatrixUtils.rowMult(P, u, Q, j);
+		return globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMat.rowMult(P, u, Q, j);
 	}
 
 }

@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lib.rec.MatrixUtils;
 import lib.rec.RecUtils;
 import lib.rec.core.CLiMF;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import lib.rec.data.DenseMat;
+import lib.rec.data.SparseMat;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class DRMPlus extends CLiMF {
@@ -19,7 +19,7 @@ public class DRMPlus extends CLiMF {
 
 	protected boolean isPosOnly;
 
-	public DRMPlus(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public DRMPlus(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "DRMPlus";
@@ -40,7 +40,7 @@ public class DRMPlus extends CLiMF {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVector uv = MatrixUtils.row(trainMatrix, u);
+				SparseVector uv = trainMatrix.row(u);
 				List<Integer> items = Lists.toList(uv.getIndex());
 				double w = Math.sqrt(uv.getUsed());
 
@@ -95,7 +95,7 @@ public class DRMPlus extends CLiMF {
 							sgd += gd(-x) * (1.0 / (1 - g(x)) - 1.0 / (1 - g(-x))) * puf;
 
 							double qkf = Q.get(k, f);
-							double sji = MatrixUtils.rowMult(Q, j, Q, k);
+							double sji = DenseMat.rowMult(Q, j, Q, k);
 
 							if (sji > minSim) {
 								double sgd_d = 2 * (1 - sji) * (qjf - qkf) - qkf * Math.pow(qjf - qkf, 2);
@@ -133,7 +133,7 @@ public class DRMPlus extends CLiMF {
 							double fui = predict(u, i);
 							loss += Math.log(1 - g(fui - fuj));
 
-							double sji = MatrixUtils.rowMult(Q, j, Q, i);
+							double sji = DenseMat.rowMult(Q, j, Q, i);
 
 							if (sji > minSim) {
 								double sum = 0;

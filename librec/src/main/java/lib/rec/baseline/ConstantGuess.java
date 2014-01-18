@@ -1,7 +1,7 @@
 package lib.rec.baseline;
 
+import lib.rec.data.SparseMat;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**
  * Baseline: predict by a constant rating
@@ -13,7 +13,7 @@ public class ConstantGuess extends Recommender {
 
 	private double constant;
 
-	public ConstantGuess(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public ConstantGuess(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Constant";

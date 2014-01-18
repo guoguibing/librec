@@ -3,10 +3,9 @@ package lib.rec.ext;
 import java.util.ArrayList;
 import java.util.List;
 
-import lib.rec.MatrixUtils;
 import lib.rec.RecUtils;
+import lib.rec.data.SparseMat;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class DNM extends BaseNM {
@@ -14,7 +13,7 @@ public class DNM extends BaseNM {
 	// diversity parameter
 	private double alpha;
 
-	public DNM(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public DNM(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "DNM";
@@ -38,7 +37,7 @@ public class DNM extends BaseNM {
 					continue;
 
 				// a set of rated and similar items
-				SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
+				SparseVector uv = trainMatrix.row( u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (itemCorrs.get(j, i) > minSim)
@@ -53,7 +52,7 @@ public class DNM extends BaseNM {
 				double sum_sji = 0;
 				for (int i : items) {
 					double sji = itemCorrs.get(j, i);
-					double rui = trainMatrix.get(u, i);
+					double rui = uv.get(i);
 					double bi = itemBiases.get(i);
 					double bui = globalMean + bu + bi;
 
@@ -70,7 +69,7 @@ public class DNM extends BaseNM {
 				// update similarity
 				for (int i : items) {
 					double sji = itemCorrs.get(j, i);
-					double rui = trainMatrix.get(u, i);
+					double rui = uv.get(i);
 					double bi = itemBiases.get(i);
 					double bui = globalMean + bu + bi;
 

@@ -1,7 +1,7 @@
 package lib.rec.ml;
 
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import lib.rec.core.RegSVD;
+import lib.rec.data.SparseMat;
 
 /**
  * Daniel D. Lee and H. Sebastian Seung, <strong>Algorithms for Non-negative
@@ -12,7 +12,7 @@ import lib.rec.core.RegSVD;
  */
 public class NMF extends RegSVD {
 
-	public NMF(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public NMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "NMF";

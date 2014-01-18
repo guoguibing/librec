@@ -1,7 +1,7 @@
 package lib.rec.baseline;
 
+import lib.rec.data.SparseMat;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**
  * Baseline: predict by average rating of all users
@@ -11,7 +11,7 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  */
 public class GlobalAverage extends Recommender {
 
-	public GlobalAverage(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public GlobalAverage(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		this.algoName = "GlobalAvg";

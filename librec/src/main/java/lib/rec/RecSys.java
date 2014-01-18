@@ -26,6 +26,9 @@ import lib.rec.core.RegSVD;
 import lib.rec.core.SVDPlusPlus;
 import lib.rec.core.SlopeOne;
 import lib.rec.core.SocialMF;
+import lib.rec.data.DataDAO;
+import lib.rec.data.DataSplitter;
+import lib.rec.data.SparseMat;
 import lib.rec.ext.BaseMF;
 import lib.rec.ext.BaseNM;
 import lib.rec.ext.DMF;
@@ -35,7 +38,6 @@ import lib.rec.ext.DRMPlus;
 import lib.rec.ext.Hybrid;
 import lib.rec.intf.Recommender;
 import lib.rec.intf.Recommender.Measure;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**
  * Main Class for Matrix-based Recommender Systems
@@ -54,7 +56,7 @@ public class RecSys {
 	public static boolean isMultRun = false;
 
 	// rating matrix
-	private static CompRowMatrix rateMatrix = null;
+	private static SparseMat rateMatrix = null;
 
 	public static void main(String[] args) throws Exception {
 		// config logger
@@ -174,9 +176,9 @@ public class RecSys {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(CompRowMatrix[] data, int fold) throws Exception {
+	private static Recommender getRecommender(SparseMat[] data, int fold) throws Exception {
 
-		CompRowMatrix trainMatrix = data[0], testMatrix = data[1];
+		SparseMat trainMatrix = data[0], testMatrix = data[1];
 		String socialPath = cf.getPath("dataset.social");
 
 		algorithm = cf.getString("recommender");

@@ -9,21 +9,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import lib.rec.MatrixUtils;
-import lib.rec.UpperSymmMatrix;
+import lib.rec.data.DenseVec;
+import lib.rec.data.SparseMat;
+import lib.rec.data.UpperSymmMat;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class ItemKNN extends Recommender {
 
 	// user: nearest neighborhood
-	private UpperSymmMatrix itemCorrs;
-	private DenseVector itemMeans;
+	private UpperSymmMat itemCorrs;
+	private DenseVec itemMeans;
 	private int knn;
 
-	public ItemKNN(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public ItemKNN(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "ItemKNN";
@@ -33,9 +32,9 @@ public class ItemKNN extends Recommender {
 	@Override
 	protected void initModel() {
 		itemCorrs = buildCorrs(false);
-		itemMeans = new DenseVector(numItems);
+		itemMeans = new DenseVec(numItems);
 		for (int i = 0; i < numItems; i++) {
-			SparseVector vs = MatrixUtils.col(trainMatrix, i);
+			SparseVector vs = trainMatrix.col(i);
 			double mean = vs.getUsed() > 0 ? Stats.sum(vs.getData()) / vs.getUsed() : globalMean;
 			itemMeans.set(i, mean);
 		}

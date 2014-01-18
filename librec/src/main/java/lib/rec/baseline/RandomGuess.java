@@ -1,8 +1,8 @@
 package lib.rec.baseline;
 
-import lib.rec.intf.Recommender;
 import happy.coding.math.Randoms;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import lib.rec.data.SparseMat;
+import lib.rec.intf.Recommender;
 
 /**
  * Baseline: predict by a random value in (minRate, maxRate)
@@ -12,7 +12,7 @@ import no.uib.cipr.matrix.sparse.CompRowMatrix;
  */
 public class RandomGuess extends Recommender {
 
-	public RandomGuess(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public RandomGuess(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Random";

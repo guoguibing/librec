@@ -1,8 +1,7 @@
 package lib.rec.core;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
@@ -19,7 +18,7 @@ public class SlopeOne extends Recommender {
 	// matrices for item-item differences with number of occurrences/cardinary 
 	private FlexCompRowMatrix devMatrix, cardMatrix;
 
-	public SlopeOne(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public SlopeOne(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SlopeOne";
@@ -36,7 +35,7 @@ public class SlopeOne extends Recommender {
 
 		// compute items' differences
 		for (int u = 0; u < numUsers; u++) {
-			SparseVector uv = MatrixUtils.row(trainMatrix, u);
+			SparseVector uv = trainMatrix.row(u);
 			int[] items = uv.getIndex();
 
 			for (int i : items) {
@@ -65,7 +64,7 @@ public class SlopeOne extends Recommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
+		SparseVector uv = trainMatrix.row(u, j);
 		int[] items = uv.getIndex();
 		double preds = 0, cards = 0;
 		for (int i : items) {

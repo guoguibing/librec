@@ -1,9 +1,8 @@
 package lib.rec.core;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -25,7 +24,7 @@ public class PMF extends IterativeRecommender {
 
 	protected DenseMatrix userDeltas, itemDeltas;
 
-	public PMF(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public PMF(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "PMF";
@@ -55,7 +54,7 @@ public class PMF extends IterativeRecommender {
 
 			for (int u = 0; u < numUsers; u++) {
 
-				SparseVector uv = MatrixUtils.row(trainMatrix, u);
+				SparseVector uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
 
 				for (int j : items) {

@@ -3,9 +3,8 @@ package lib.rec.baseline;
 import java.util.HashMap;
 import java.util.Map;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 /**
  * Ranking-based Baseline: items are weighted by the number of ratings they
@@ -18,7 +17,7 @@ public class MostPopular extends Recommender {
 
 	private Map<Integer, Integer> itemPops;
 
-	public MostPopular(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	public MostPopular(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		// force to set as the ranking prediction method
@@ -30,7 +29,7 @@ public class MostPopular extends Recommender {
 	@Override
 	protected double ranking(int u, int j) {
 		if (!itemPops.containsKey(j)) {
-			int numRates = MatrixUtils.col(trainMatrix, j).getUsed();
+			int numRates = trainMatrix.col(j).getUsed();
 			itemPops.put(j, numRates);
 		}
 		return itemPops.get(j);

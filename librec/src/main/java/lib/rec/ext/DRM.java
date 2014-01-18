@@ -7,17 +7,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lib.rec.MatrixUtils;
 import lib.rec.RecUtils;
 import lib.rec.core.CLiMF;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import lib.rec.data.SparseMat;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class DRM extends CLiMF {
 
 	protected double alpha;
 
-	public DRM(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public DRM(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "DRM";
@@ -36,7 +35,7 @@ public class DRM extends CLiMF {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVector uv = MatrixUtils.row(trainMatrix, u);
+				SparseVector uv = trainMatrix.row(u);
 				List<Integer> items = Lists.toList(uv.getIndex());
 				double w = Math.sqrt(uv.getUsed());
 

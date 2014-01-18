@@ -7,9 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lib.rec.MatrixUtils;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -21,7 +20,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class CLiMF extends IterativeRecommender {
 
-	public CLiMF(CompRowMatrix rm, CompRowMatrix tm, int fold) {
+	public CLiMF(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "CLiMF";
@@ -38,7 +37,7 @@ public class CLiMF extends IterativeRecommender {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVector uv = MatrixUtils.row(trainMatrix, u);
+				SparseVector uv = trainMatrix.row(u);
 				List<Integer> items = Lists.toList(uv.getIndex());
 
 				// compute sgd for user u

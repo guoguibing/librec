@@ -2,11 +2,10 @@ package lib.rec.core;
 
 import happy.coding.math.Maths;
 import happy.coding.system.Debug;
-import lib.rec.MatrixUtils;
+import lib.rec.data.SparseMat;
 import lib.rec.intf.SocialRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
@@ -19,7 +18,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class SocialMF extends SocialRecommender {
 
-	public SocialMF(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold, String path) {
+	public SocialMF(SparseMat trainMatrix, SparseMat testMatrix, int fold, String path) {
 		super(trainMatrix, testMatrix, fold, path);
 
 		algoName = "SocialMF";
@@ -95,7 +94,7 @@ public class SocialMF extends SocialRecommender {
 			// social regularization
 			if (regS != 0) {
 				for (int u = 0; u < numUsers; u++) {
-					SparseVector uv = MatrixUtils.row(socialMatrix, u);
+					SparseVector uv = socialMatrix.row(u);
 					double[] sumNNs = new double[numFactors];
 					for (int v : uv.getIndex()) {
 						for (int f = 0; f < numFactors; f++)
@@ -116,7 +115,7 @@ public class SocialMF extends SocialRecommender {
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
 
-						SparseVector vv = MatrixUtils.row(socialMatrix, v);
+						SparseVector vv = socialMatrix.row(v);
 						double[] sumDiffs = new double[numFactors];
 						for (int w : vv.getIndex()) {
 							for (int f = 0; f < numFactors; f++)

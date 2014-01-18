@@ -2,8 +2,8 @@ package lib.rec.intf;
 
 import java.util.List;
 
-import lib.rec.DataDAO;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import lib.rec.data.DataDAO;
+import lib.rec.data.SparseMat;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 
 /**
@@ -19,7 +19,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	// socialMatrix: social rate matrix, indicating a user is connecting to a number of other users  
 	// invSocialMatrix: inverse social matrix, indicating a user is connected by a number of other users
-	protected CompRowMatrix socialMatrix; 
+	protected SparseMat socialMatrix; 
 	protected FlexCompRowMatrix invSocialMatrix;
 	
 	// a list of social scales
@@ -28,7 +28,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// social regularization
 	protected double regS;
 
-	public SocialRecommender(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold, String path) {
+	public SocialRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold, String path) {
 		super(trainMatrix, testMatrix, fold);
 
 		regS = cf.getDouble("val.reg.social");

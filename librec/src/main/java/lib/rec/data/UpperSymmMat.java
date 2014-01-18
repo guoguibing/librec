@@ -1,4 +1,4 @@
-package lib.rec;
+package lib.rec.data;
 
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
@@ -9,14 +9,14 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  * @author guoguibing
  *
  */
-public class UpperSymmMatrix extends FlexCompRowMatrix {
+public class UpperSymmMat extends FlexCompRowMatrix {
 
 	/**
 	 * Constructor for Upper Symmetric and SparseMatrix
 	 * 
 	 * @param dim dimension size
 	 */
-	public UpperSymmMatrix(int dim) {
+	public UpperSymmMat(int dim) {
 		super(dim, dim);
 	}
 

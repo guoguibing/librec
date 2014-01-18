@@ -1,4 +1,4 @@
-package lib.rec;
+package lib.rec.data;
 
 import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
@@ -30,7 +30,7 @@ public class DataDAO {
 	// path to data file
 	private String dataPath;
 	// store data as {user/item rate} matrix
-	private CompRowMatrix rateMatrix;
+	private SparseMat rateMatrix;
 
 	// is item type as user
 	private boolean isItemAsUser;
@@ -90,7 +90,7 @@ public class DataDAO {
 		this(path, userIds, userIds);
 	}
 
-	public CompRowMatrix readData() throws Exception {
+	public SparseMat readData() throws Exception {
 
 		Table<String, String, Double> dataTable = HashBasedTable.create();
 		BufferedReader br = FileIO.getReader(dataPath);
@@ -152,7 +152,7 @@ public class DataDAO {
 				nz[uid][c] = items.get(c);
 		}
 
-		rateMatrix = new CompRowMatrix(numRows, numCols, nz);
+		rateMatrix = new SparseMat(numRows, numCols, nz);
 		for (int i = 0; i < numRows; i++) {
 			String user = getUserId(i);
 
