@@ -23,7 +23,7 @@ public class BiasedMF extends IterativeRecommender {
 		algoName = "BiasedMF";
 	}
 
-	public void initModel() {
+	protected void initModel() {
 
 		super.initModel();
 
@@ -36,7 +36,7 @@ public class BiasedMF extends IterativeRecommender {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 
 		for (int iter = 1; iter <= maxIters; iter++) {
 

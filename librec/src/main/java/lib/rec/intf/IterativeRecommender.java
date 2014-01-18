@@ -1,6 +1,7 @@
 package lib.rec.intf;
 
 import happy.coding.io.Logs;
+import happy.coding.io.Strings;
 import lib.rec.MatrixUtils;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
@@ -131,6 +132,12 @@ public abstract class IterativeRecommender extends Recommender {
 				MatrixUtils.setOneValue(Q, j, 0.0);
 			}
 		}
+	}
+	
+	@Override
+	public String toString() {
+		double learnRate = cf.getDouble("val.learn.rate"); // re-get initial learn rate in case bold driver is used. 
+		return Strings.toString(new Object[] { learnRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }

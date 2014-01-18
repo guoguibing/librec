@@ -1,7 +1,5 @@
 package lib.rec.core;
 
-import happy.coding.io.Strings;
-import lib.rec.MatrixUtils;
 import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
@@ -23,7 +21,7 @@ public class RegSVD extends IterativeRecommender {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 
 		for (int iter = 1; iter <= maxIters; iter++) {
 
@@ -68,17 +66,6 @@ public class RegSVD extends IterativeRecommender {
 
 		}// end of training
 
-	}
-
-	@Override
-	protected double predict(int u, int j) {
-		return MatrixUtils.rowMult(P, u, Q, j);
-	}
-
-	@Override
-	public String toString() {
-		double learnRate = cf.getDouble("val.learn.rate"); // re-get initial learn rate in case bold driver is used. 
-		return Strings.toString(new Object[] { learnRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }

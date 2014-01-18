@@ -7,13 +7,13 @@ import java.util.List;
 
 import lib.rec.MatrixUtils;
 import lib.rec.UpperSymmMatrix;
-import lib.rec.core.RegSVD;
+import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
-public class BaseNM extends RegSVD {
+public class BaseNM extends IterativeRecommender {
 
 	protected UpperSymmMatrix itemCorrs;
 	protected boolean isPosOnly;
@@ -51,7 +51,7 @@ public class BaseNM extends RegSVD {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 
 		for (int iter = 1; iter <= maxIters; iter++) {
 

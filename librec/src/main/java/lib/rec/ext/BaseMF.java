@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lib.rec.MatrixUtils;
-import lib.rec.core.RegSVD;
+import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
-public class BaseMF extends RegSVD {
+public class BaseMF extends IterativeRecommender {
 
 	protected boolean isPosOnly;
 	protected double minSim;
@@ -26,7 +26,7 @@ public class BaseMF extends RegSVD {
 	}
 
 	@Override
-	public void initModel() {
+	protected void initModel() {
 
 		// re-use it as another item-factor matrix
 		P = new DenseMatrix(numItems, numFactors);
@@ -58,7 +58,7 @@ public class BaseMF extends RegSVD {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 		last_loss = 0;
 
 		for (int iter = 1; iter <= maxIters; iter++) {
