@@ -41,7 +41,7 @@ public class DNM extends BaseNM {
 				SparseVector uv = MatrixUtils.row(trainMatrix, u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
-					if (MatrixUtils.get(itemCorrs, j, i) > minSim)
+					if (itemCorrs.get(j, i) > minSim)
 						items.add(i);
 				}
 				double w = Math.sqrt(items.size());
@@ -52,7 +52,7 @@ public class DNM extends BaseNM {
 
 				double sum_sji = 0;
 				for (int i : items) {
-					double sji = MatrixUtils.get(itemCorrs, j, i);
+					double sji = itemCorrs.get(j, i);
 					double rui = trainMatrix.get(u, i);
 					double bi = itemBiases.get(i);
 					double bui = globalMean + bu + bi;
@@ -69,13 +69,13 @@ public class DNM extends BaseNM {
 
 				// update similarity
 				for (int i : items) {
-					double sji = MatrixUtils.get(itemCorrs, j, i);
+					double sji = itemCorrs.get(j, i);
 					double rui = trainMatrix.get(u, i);
 					double bi = itemBiases.get(i);
 					double bui = globalMean + bu + bi;
 
 					double delta = lRate * (euj * (rui - bui) / w - 0.5 * alpha * Math.pow(bj - bi, 2) - regU * sji);
-					MatrixUtils.add(itemCorrs, j, i, delta);
+					itemCorrs.set(j, i, delta);
 
 					loss += regU * sji * sji;
 				}

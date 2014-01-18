@@ -10,16 +10,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import lib.rec.MatrixUtils;
+import lib.rec.UpperSymmMetrix;
 import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class ItemKNN extends Recommender {
 
 	// user: nearest neighborhood
-	private FlexCompRowMatrix itemCorrs;
+	private UpperSymmMetrix itemCorrs;
 	private DenseVector itemMeans;
 	private int knn;
 
@@ -47,7 +47,7 @@ public class ItemKNN extends Recommender {
 		// find a number of similar users
 		Map<Integer, Double> nns = new HashMap<>();
 
-		SparseVector dv = MatrixUtils.nn(itemCorrs, j);
+		SparseVector dv = itemCorrs.row(j);
 		for (int i : dv.getIndex()) {
 			double sim = dv.get(i);
 			double rate = trainMatrix.get(u, i);

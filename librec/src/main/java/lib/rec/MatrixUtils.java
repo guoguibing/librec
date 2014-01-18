@@ -7,7 +7,6 @@ import java.util.Arrays;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -230,75 +229,6 @@ public class MatrixUtils {
 	public static void setOneValue(DenseMatrix m, int row, double val) {
 		for (int c = 0, cm = m.numColumns(); c < cm; c++)
 			m.set(row, c, val);
-	}
-
-	/**
-	 * get a specific value at (row, col) of a Symmetric (upper) matrix
-	 * 
-	 * @param m
-	 *            symmetric matrix
-	 * @param row
-	 *            row id
-	 * @param col
-	 *            col id
-	 * @return a value at (row, col) if row<col; otherwise at (col, row)
-	 */
-	public static double get(FlexCompRowMatrix m, int row, int col) {
-		return row < col ? m.get(row, col) : m.get(col, row);
-	}
-
-	/**
-	 * set a specific value at (row, col) of a Symmetric (upper) matrix
-	 * 
-	 * @param m
-	 *            symmetric matrix
-	 * @param row
-	 *            row id
-	 * @param col
-	 *            col id
-	 */
-	public static void set(FlexCompRowMatrix m, int row, int col, double val) {
-		if (row < col)
-			m.set(row, col, val);
-		else
-			m.set(col, row, val);
-	}
-
-	/**
-	 * add a specific value at (row, col) of a Symmetric (upper) matrix
-	 * 
-	 * @param m
-	 *            symmetric matrix
-	 * @param row
-	 *            row id
-	 * @param col
-	 *            col id
-	 */
-	public static void add(FlexCompRowMatrix m, int row, int col, double val) {
-		if (row < col)
-			m.add(row, col, val);
-		else
-			m.add(col, row, val);
-	}
-
-	/**
-	 * find a set of items similar to item i
-	 * 
-	 * @param m
-	 *            upper symmetric correlation matrix
-	 * @param i
-	 *            item id
-	 * @return a sparse vector
-	 */
-	public static SparseVector nn(FlexCompRowMatrix m, int i) {
-		SparseVector nv = m.getRow(i);
-		for (int j = 0; j < i; j++) {
-			double val = m.get(j, i);
-			if (val != 0)
-				nv.set(j, val);
-		}
-
-		return nv;
 	}
 
 }

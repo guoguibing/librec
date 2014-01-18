@@ -22,11 +22,11 @@ import java.util.concurrent.TimeUnit;
 
 import lib.rec.DataDAO;
 import lib.rec.MatrixUtils;
+import lib.rec.UpperSymmMetrix;
 import no.uib.cipr.matrix.DenseVector;
 import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 import com.google.common.base.Stopwatch;
@@ -65,7 +65,7 @@ public abstract class Recommender implements Runnable {
 	protected CompRowMatrix trainMatrix, testMatrix;
 	protected DenseVector userBiases, itemBiases;
 
-	protected FlexCompRowMatrix corrs;
+	protected UpperSymmMetrix corrs;
 	public Map<Measure, Double> measures;
 
 	// number of users, items, ratings
@@ -128,7 +128,7 @@ public abstract class Recommender implements Runnable {
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
-			corrs = new FlexCompRowMatrix(numItems, numItems);
+			corrs = new UpperSymmMetrix(numItems);
 	}
 
 	public void run() {
@@ -203,15 +203,15 @@ public abstract class Recommender implements Runnable {
 	 * @param isUser
 	 *            whether it is user-user correlation matrix
 	 * 
-	 * @return a dense matrix with user-user or item-item coefficients
+	 * @return a upper symmetric matrix with user-user or item-item coefficients
 	 * 
 	 */
-	protected FlexCompRowMatrix buildCorrs(boolean isUser) {
+	protected UpperSymmMetrix buildCorrs(boolean isUser) {
 		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
 		int numCount = isUser ? numUsers : numItems;
-
-		FlexCompRowMatrix corrs = new FlexCompRowMatrix(numCount, numCount);
+		UpperSymmMetrix corrs = new UpperSymmMetrix(numCount);
+		
 		for (int i = 0; i < numCount; i++) {
 			SparseVector iv = isUser ? MatrixUtils.row(trainMatrix, i) : MatrixUtils.col(trainMatrix, i);
 			List<Integer> items = Lists.toList(iv.getIndex());
@@ -223,7 +223,6 @@ public abstract class Recommender implements Runnable {
 
 				double sim = compCorr(iv, jv, items);
 
-				// to save memory, we only save as the upper matrix
 				if (sim != 0.0)
 					corrs.set(i, j, sim);
 			}
@@ -596,13 +595,13 @@ public abstract class Recommender implements Runnable {
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
 
-				double corr = MatrixUtils.get(corrs, i, j);
+				double corr = corrs.get(i, j);
 
 				if (corr == 0) {
 					SparseVector jv = MatrixUtils.col(trainMatrix, j);
 					corr = compCorr(iv, jv, items);
 
-					MatrixUtils.set(corrs, i, j, corr);
+					corrs.set(i, j, corr);
 				}
 
 				if (!Double.isNaN(corr)) {
