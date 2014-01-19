@@ -152,9 +152,9 @@ public abstract class Recommender implements Runnable {
 		long trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
 		// evaluation
-		String foldStr = fold > 0 ? " fold[" + fold + "]" : "";
+		String foldStr = fold > 0 ? " fold [" + fold + "]" : "";
 		if (verbose)
-			Logs.debug("{}{} evaluate testing data ... ", algoName, foldStr);
+			Logs.debug("{}{}: evaluate testing data ... ", algoName, foldStr);
 		measures = isRankingPred ? evalRankings() : evalRatings();
 		String result = getEvalInfo(measures, isRankingPred);
 		sw.stop();
