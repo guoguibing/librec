@@ -152,8 +152,9 @@ public abstract class Recommender implements Runnable {
 		long trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
 		// evaluation
+		String foldStr = fold > 0 ? " fold[" + fold + "]" : "";
 		if (verbose)
-			Logs.debug("Evaluate recommendation results ... ");
+			Logs.debug("{}{} evaluate testing data ... ", algoName, foldStr);
 		measures = isRankingPred ? evalRankings() : evalRatings();
 		String result = getEvalInfo(measures, isRankingPred);
 		sw.stop();
@@ -163,7 +164,6 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.TrainTime, (double) trainTime);
 		measures.put(Measure.TestTime, (double) testTime);
 
-		String foldStr = fold > 0 ? " fold[" + fold + "]" : "";
 		String evalInfo = algoName + foldStr + ": " + result + "\tTime: "
 				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
@@ -389,8 +389,7 @@ public abstract class Recommender implements Runnable {
 			int k = 0;
 			for (KeyValPair<Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
-				k++;
-				if (k >= numIgnore)
+				if (++k >= numIgnore)
 					break;
 			}
 		}
@@ -594,17 +593,25 @@ public abstract class Recommender implements Runnable {
 			SparseVector iv = trainMatrix.col(i);
 			List<Integer> items = Lists.toList(iv.getIndex());
 
+			SparseVector cv = corrs.row(i);
+			int[] cs = cv.getIndex();
+
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
 
-				double corr = corrs.get(i, j);
+				double corr = 0;
+				int idx = Arrays.binarySearch(cs, j);
 
-				if (corr == 0) {
-					SparseVector jv = trainMatrix.col(j);
-					corr = compCorr(iv, jv, items);
-
+				if (idx < 0) {
+					// if not found
+					corr = compCorr(iv, trainMatrix.col(j), items);
 					corrs.set(i, j, corr);
-				}
+
+					// updated vector
+					cv.set(j, corr);
+					cs = cv.getIndex();
+				} else
+					corr = cv.get(j);
 
 				if (!Double.isNaN(corr)) {
 					sum += (1 - corr);

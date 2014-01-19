@@ -7,14 +7,15 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  * Upper Symmetric and Sparse Matrix: most useful for item/user correlations
  * 
  * @author guoguibing
- *
+ * 
  */
 public class UpperSymmMat extends FlexCompRowMatrix {
 
 	/**
 	 * Constructor for Upper Symmetric and SparseMatrix
 	 * 
-	 * @param dim dimension size
+	 * @param dim
+	 *            dimension size
 	 */
 	public UpperSymmMat(int dim) {
 		super(dim, dim);
@@ -72,8 +73,8 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 */
 	public SparseVector row(int i) {
 		SparseVector nv = super.getRow(i);
-		for (int j = 0; j < i; j++) {
-			double val = get(j, i);
+		for (int j = 0; j <= i; j++) {
+			double val = super.get(j, i);
 			if (val != 0)
 				nv.set(j, val);
 		}

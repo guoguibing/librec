@@ -250,11 +250,10 @@ public class LibRec {
 	 * print out debug information
 	 */
 	private static void debugInfo() {
-		String datasetInfo = String.format(
-				"Dataset: %s, %s",
-				Strings.last(cf.getPath("dataset.ratings"), 38),
-				cf.isOn("is.cross.validation") ? "kFold: " + cf.getInt("num.kfold") : "ratio: "
-						+ (float) cf.getDouble("val.ratio"));
+		String cv = "kFold: " + cf.getInt("num.kfold")
+				+ (cf.isOn("is.parallel.folds") ? " [Parallelism]" : " [Singleton]");
+		String datasetInfo = String.format("Dataset: %s, %s", Strings.last(cf.getPath("dataset.ratings"), 38),
+				cf.isOn("is.cross.validation") ? cv : "ratio: " + (float) cf.getDouble("val.ratio"));
 		Logs.info(datasetInfo);
 	}
 }
