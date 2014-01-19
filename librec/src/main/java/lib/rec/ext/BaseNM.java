@@ -37,7 +37,7 @@ public class BaseNM extends IterativeRecommender {
 		minSim = isPosOnly ? 0.0 : Double.MIN_VALUE;
 
 		dirPath = Systems.getDesktop() + "Fold " + fold;
-		isMem = numItems < 20_000;
+		isMem = numItems < 100_000;
 	}
 
 	private void initItemCorrsMem() {
