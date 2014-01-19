@@ -409,7 +409,7 @@ public abstract class Recommender implements Runnable {
 					correctItems.add(j);
 
 				double pred = predict(u, j, true);
-				if (pred > Double.MIN_VALUE) {
+				if (!Double.isNaN(pred)) {
 					double rate = tv.get(j);
 					double euj = rate - pred;
 
@@ -555,7 +555,7 @@ public abstract class Recommender implements Runnable {
 		for (Integer j : candItems) {
 			if (!ignoreItems.contains(j)) {
 				double rank = ranking(u, j);
-				if (rank > Double.MIN_VALUE)
+				if (!Double.isNaN(rank))
 					itemScores.put(j, rank);
 			}
 		}

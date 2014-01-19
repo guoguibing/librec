@@ -33,7 +33,7 @@ public class BaseNM extends IterativeRecommender {
 		algoName = "BaseNM";
 
 		isPosOnly = cf.isOn("is.similarity.pos");
-		minSim = isPosOnly ? 0.0 : Double.MIN_VALUE;
+		minSim = isPosOnly ? 0.0 : Double.NEGATIVE_INFINITY;
 
 		dirPath = "Fold " + fold;
 		isMem = numItems < 100_000;

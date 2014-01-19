@@ -21,7 +21,7 @@ public class BaseMF extends IterativeRecommender {
 		algoName = "BaseMF";
 
 		isPosOnly = cf.isOn("is.similarity.pos");
-		minSim = isPosOnly ? 0.0 : Double.MIN_VALUE;
+		minSim = isPosOnly ? 0.0 : Double.NEGATIVE_INFINITY;
 	}
 
 	@Override
