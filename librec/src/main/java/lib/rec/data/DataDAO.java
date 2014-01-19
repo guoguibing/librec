@@ -3,6 +3,7 @@ package lib.rec.data;
 import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
+import happy.coding.math.Stats;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
@@ -12,10 +13,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import no.uib.cipr.matrix.sparse.SparseVector;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 
 /**
@@ -36,6 +40,8 @@ public class DataDAO {
 
 	// data scales
 	private List<Double> scales;
+	// scale distribution
+	private Multiset<Double> scaleDist;
 
 	// number of rates
 	private int numRates;
@@ -70,7 +76,7 @@ public class DataDAO {
 		else
 			this.itemIds = itemIds;
 
-		scales = new ArrayList<>();
+		scaleDist = HashMultiset.create();
 
 		isItemAsUser = this.userIds == this.itemIds;
 	}
@@ -120,7 +126,6 @@ public class DataDAO {
 		Table<String, String, Double> dataTable = HashBasedTable.create();
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
-		numRates = 0;
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split("[ \t,]");
 
@@ -128,24 +133,21 @@ public class DataDAO {
 			String item = data[1];
 			Double rate = Double.valueOf(data[2]);
 
-			if (!scales.contains(rate))
-				scales.add(rate); // rating scales
-
+			scaleDist.add(rate);
 			dataTable.put(user, item, rate);
-			numRates++;
 
+			// inner id starting from 0
 			if (!userIds.containsKey(user))
-				userIds.put(user, userIds.size()); // inner user id starts from
-													// 0
+				userIds.put(user, userIds.size());
 
 			if (!itemIds.containsKey(item))
-				itemIds.put(item, itemIds.size()); // inner item id starts from
-													// 0
+				itemIds.put(item, itemIds.size());
 		}
 		br.close();
 
+		numRates = scaleDist.size();
+		scales = new ArrayList<>(scaleDist.elementSet());
 		Collections.sort(scales);
-		int numRows = numUsers(), numCols = numItems();
 
 		// if min-rate = 0.0, add a small value
 		double epsilon = scales.get(0).doubleValue() == 0.0 ? 1e-5 : 0;
@@ -156,6 +158,7 @@ public class DataDAO {
 			}
 		}
 
+		int numRows = numUsers(), numCols = numItems();
 		if (isItemAsUser) {
 			Logs.debug("User amount: {}, scales: {{}}", numRows, Strings.toString(scales, ", "));
 		} else {
@@ -196,6 +199,57 @@ public class DataDAO {
 		dataTable = null;
 
 		return rateMatrix;
+	}
+
+	/**
+	 * print out specifications of the dataset
+	 */
+	public void printSpecs() throws Exception {
+		if (rateMatrix == null)
+			readData();
+
+		List<String> sps = new ArrayList<>();
+
+		sps.add(String.format("Dataset: %s", Strings.last(dataPath, 38)));
+		sps.add("User amount: " + numUsers() + ", " + FileIO.formatSize(numUsers()));
+		if (!isItemAsUser)
+			sps.add("Item amount: " + numItems() + ", " + FileIO.formatSize(numItems()));
+		sps.add("Rate amount: " + numRates + ", " + FileIO.formatSize(numRates));
+		sps.add("Scales dist: " + scaleDist.toString());
+
+		// user/item mean
+		double[] data = rateMatrix.getData();
+		double mean = Stats.sum(data) / numRates;
+		double std = Stats.sd(data);
+		double mode = Stats.mode(data);
+		double median = Stats.median(data);
+
+		sps.add(String.format("Mean: %.6f", mean));
+		sps.add(String.format("Std : %.6f", std));
+		sps.add(String.format("Mode: %.6f", mode));
+		sps.add(String.format("Median: %.6f", median));
+
+		List<Integer> userCnts = new ArrayList<>();
+		for (int u = 0, um = numUsers(); u < um; u++) {
+			SparseVector uv = rateMatrix.row(u);
+			if (uv.getUsed() > 0)
+				userCnts.add(uv.getUsed());
+		}
+		sps.add(String.format("User mean: %.6f", Stats.mean(userCnts)));
+		sps.add(String.format("User Std : %.6f", Stats.sd(userCnts)));
+
+		if (!isItemAsUser) {
+			List<Integer> itemCnts = new ArrayList<>();
+			for (int j = 0, jm = numItems(); j < jm; j++) {
+				SparseVector jv = rateMatrix.col(j);
+				if (jv.getUsed() > 0)
+					itemCnts.add(jv.getUsed());
+			}
+			sps.add(String.format("Item mean: %.6f", Stats.mean(itemCnts)));
+			sps.add(String.format("Item Std : %.6f", Stats.sd(itemCnts)));
+		}
+
+		Logs.debug(Strings.toSection(sps));
 	}
 
 	/**

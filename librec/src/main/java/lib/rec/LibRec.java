@@ -72,8 +72,8 @@ public class LibRec {
 		// prepare data
 		DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
 
-		if (Debug.OFF) {
-			rateDao.convert("::");
+		if (Debug.ON) {
+			rateDao.printSpecs();
 			return;
 		}
 
