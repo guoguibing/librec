@@ -129,16 +129,22 @@ public class LibRec {
 		Thread[] ts = new Thread[kFold];
 		Recommender[] algos = new Recommender[kFold];
 
+		boolean isPara = cf.isOn("is.parallel.folds");
+
 		for (int i = 0; i < kFold; i++) {
 			Recommender algo = getRecommender(ds.getKthFold(i + 1), i + 1);
 
 			algos[i] = algo;
 			ts[i] = new Thread(algo);
 			ts[i].start();
+
+			if (!isPara)
+				ts[i].join();
 		}
 
-		for (Thread t : ts)
-			t.join();
+		if (isPara)
+			for (Thread t : ts)
+				t.join();
 
 		// average performance of k-fold
 		Map<Measure, Double> avgMeasure = new HashMap<>();

@@ -2,7 +2,6 @@ package lib.rec.ext;
 
 import happy.coding.io.FileIO;
 import happy.coding.math.Randoms;
-import happy.coding.system.Systems;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ public class BaseNM extends IterativeRecommender {
 		isPosOnly = cf.isOn("is.similarity.pos");
 		minSim = isPosOnly ? 0.0 : Double.MIN_VALUE;
 
-		dirPath = Systems.getDesktop() + "Fold " + fold;
+		dirPath = "Fold " + fold;
 		isMem = numItems < 100_000;
 	}
 
