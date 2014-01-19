@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import no.uib.cipr.matrix.Matrix;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class SparseMat extends CompRowMatrix {
 
@@ -24,7 +23,7 @@ public class SparseMat extends CompRowMatrix {
 	 * @return a sparse vector of {index, value}
 	 * 
 	 */
-	public SparseVector row(int row) {
+	public SparseVec row(int row) {
 
 		int[] row_ptr = super.getRowPointers();
 		int[] col_idx = super.getColumnIndices();
@@ -32,7 +31,7 @@ public class SparseMat extends CompRowMatrix {
 		int start = row_ptr[row];
 		int end = row_ptr[row + 1];
 
-		SparseVector sv = new SparseVector(numColumns);
+		SparseVec sv = new SparseVec(numColumns);
 
 		for (int j = start; j < end; j++) {
 			int col = col_idx[j];
@@ -56,7 +55,7 @@ public class SparseMat extends CompRowMatrix {
 	 * @return a sparse vector of {index, value}
 	 * 
 	 */
-	public SparseVector row(int row, int except) {
+	public SparseVec row(int row, int except) {
 
 		int[] row_ptr = super.getRowPointers();
 		int[] col_idx = super.getColumnIndices();
@@ -64,7 +63,7 @@ public class SparseMat extends CompRowMatrix {
 		int start = row_ptr[row];
 		int end = row_ptr[row + 1];
 
-		SparseVector sv = new SparseVector(numColumns);
+		SparseVec sv = new SparseVec(numColumns);
 
 		for (int j = start; j < end; j++) {
 			int col = col_idx[j];
@@ -85,9 +84,9 @@ public class SparseMat extends CompRowMatrix {
 	 *            column id
 	 * @return a list of row indices whose corresponding matrix values are not 0
 	 */
-	public SparseVector col(int col) {
+	public SparseVec col(int col) {
 
-		SparseVector sv = new SparseVector(numRows);
+		SparseVec sv = new SparseVec(numRows);
 
 		for (int row = 0; row < numRows; row++) {
 
@@ -107,12 +106,12 @@ public class SparseMat extends CompRowMatrix {
 	 *             hence all should use {@code col} method to retrieve a column
 	 *             vector¡£
 	 */
-	public SparseVector colByStorage(int col) {
+	public SparseVec colByStorage(int col) {
 
 		int[] row_ptr = getRowPointers();
 		int[] col_idx = getColumnIndices().clone();
 
-		SparseVector sv = new SparseVector(numRows);
+		SparseVec sv = new SparseVec(numRows);
 
 		// slower as col_idx is much greater than num of rows
 		for (int idx = 0; idx < col_idx.length; idx++) {

@@ -1,7 +1,5 @@
 package lib.rec.ext;
 
-import happy.coding.io.Lists;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +9,7 @@ import lib.rec.RecUtils;
 import lib.rec.core.CLiMF;
 import lib.rec.data.DenseMat;
 import lib.rec.data.SparseMat;
-import no.uib.cipr.matrix.sparse.SparseVector;
+import lib.rec.data.SparseVec;
 
 public class DRMPlus extends CLiMF {
 
@@ -40,8 +38,8 @@ public class DRMPlus extends CLiMF {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVector uv = trainMatrix.row(u);
-				List<Integer> items = Lists.toList(uv.getIndex());
+				SparseVec uv = trainMatrix.row(u);
+				int[] items = uv.getIndex();
 				//double w = Math.sqrt(uv.getUsed());
 
 				// compute sgd for user u
@@ -83,7 +81,7 @@ public class DRMPlus extends CLiMF {
 						double puf = P.get(u, f);
 						double qjf = Q.get(j, f);
 
-						double yuj = items.contains(j) ? 1.0 : 0.0;
+						double yuj = uv.contains(j) ? 1.0 : 0.0;
 						double sgd = yuj * g(-fuj) * puf - regI * qjf;
 						double sum = 0;
 						int cnt = 0;
@@ -125,7 +123,7 @@ public class DRMPlus extends CLiMF {
 				// compute loss
 				for (int j = 0; j < numItems; j++) {
 
-					if (items.contains(j)) {
+					if (uv.contains(j)) {
 						double fuj = predict(u, j);
 						double ruj = trainMatrix.get(u, j);
 

@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import lib.rec.data.DenseVec;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.data.UpperSymmMat;
 import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.sparse.SparseVector;
@@ -34,7 +35,7 @@ public class ItemKNN extends Recommender {
 		itemCorrs = buildCorrs(false);
 		itemMeans = new DenseVec(numItems);
 		for (int i = 0; i < numItems; i++) {
-			SparseVector vs = trainMatrix.col(i);
+			SparseVec vs = trainMatrix.col(i);
 			double mean = vs.getUsed() > 0 ? Stats.sum(vs.getData()) / vs.getUsed() : globalMean;
 			itemMeans.set(i, mean);
 		}

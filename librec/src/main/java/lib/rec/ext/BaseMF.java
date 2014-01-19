@@ -6,9 +6,9 @@ import java.util.List;
 import lib.rec.data.DenseMat;
 import lib.rec.data.DenseVec;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.intf.IterativeRecommender;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class BaseMF extends IterativeRecommender {
 
@@ -93,7 +93,7 @@ public class BaseMF extends IterativeRecommender {
 				loss += regI * bj * bj;
 
 				// rated items by user u
-				SparseVector uv = trainMatrix.row(u, j);
+				SparseVec uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (i != j) {
@@ -154,7 +154,7 @@ public class BaseMF extends IterativeRecommender {
 
 		int k = 0;
 		double sum = 0.0f;
-		SparseVector uv = trainMatrix.row(u);
+		SparseVec uv = trainMatrix.row(u);
 		for (int i : uv.getIndex()) {
 			if (i != j) {
 				double sji = DenseMat.rowMult(P, j, Q, i);

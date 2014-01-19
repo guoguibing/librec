@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * Baseline: predict by the average of target item's ratings
@@ -31,7 +31,7 @@ public class ItemAverage extends Recommender {
 		if (itemMeans.containsKey(j))
 			return itemMeans.get(j);
 
-		SparseVector jv = trainMatrix.col(j);
+		SparseVec jv = trainMatrix.col(j);
 		int numRated = jv.getUsed();
 		double itemMean = numRated > 0 ? Stats.sum(jv.getData()) / numRated : globalMean;
 		itemMeans.put(j, itemMean);

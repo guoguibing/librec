@@ -241,7 +241,7 @@ public class DataDAO {
 		if (!isItemAsUser) {
 			List<Integer> itemCnts = new ArrayList<>();
 			for (int j = 0, jm = numItems(); j < jm; j++) {
-				SparseVector jv = rateMatrix.col(j);
+				SparseVec jv = rateMatrix.col(j);
 				if (jv.getUsed() > 0)
 					itemCnts.add(jv.getUsed());
 			}
@@ -249,7 +249,7 @@ public class DataDAO {
 			sps.add(String.format("Item Std : %.6f", Stats.sd(itemCnts)));
 		}
 
-		Logs.debug(Strings.toSection(sps));
+		Logs.info(Strings.toSection(sps));
 	}
 
 	/**

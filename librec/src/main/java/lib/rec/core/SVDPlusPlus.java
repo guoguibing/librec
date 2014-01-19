@@ -2,6 +2,7 @@ package lib.rec.core;
 
 import lib.rec.data.DenseMat;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
@@ -58,7 +59,7 @@ public class SVDPlusPlus extends BiasedMF {
 				errs += euj * euj;
 				loss += euj * euj;
 
-				SparseVector uv = trainMatrix.row(u);
+				SparseVec uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
 				double w = Math.sqrt(items.length);
 

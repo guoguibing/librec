@@ -1,7 +1,6 @@
 package lib.rec.data;
 
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * Upper Symmetric and Sparse Matrix: most useful for item/user correlations
@@ -71,8 +70,8 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 *            row id
 	 * @return a sparse vector
 	 */
-	public SparseVector row(int i) {
-		SparseVector nv = super.getRow(i);
+	public SparseVec row(int i) {
+		SparseVec nv = new SparseVec(super.getRow(i));
 		for (int j = 0; j <= i; j++) {
 			double val = super.get(j, i);
 			if (val != 0)

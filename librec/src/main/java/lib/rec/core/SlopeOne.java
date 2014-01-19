@@ -1,9 +1,9 @@
 package lib.rec.core;
 
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.intf.Recommender;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * 
@@ -35,7 +35,7 @@ public class SlopeOne extends Recommender {
 
 		// compute items' differences
 		for (int u = 0; u < numUsers; u++) {
-			SparseVector uv = trainMatrix.row(u);
+			SparseVec uv = trainMatrix.row(u);
 			int[] items = uv.getIndex();
 
 			for (int i : items) {
@@ -64,10 +64,9 @@ public class SlopeOne extends Recommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		SparseVector uv = trainMatrix.row(u, j);
-		int[] items = uv.getIndex();
+		SparseVec uv = trainMatrix.row(u, j);
 		double preds = 0, cards = 0;
-		for (int i : items) {
+		for (int i : uv.getIndex()) {
 			double card = cardMatrix.get(j, i);
 			if (card > 0) {
 				preds += (devMatrix.get(j, i) + uv.get(i)) * card;

@@ -1,15 +1,13 @@
 package lib.rec.core;
 
-import happy.coding.io.Lists;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * Shi et al., <strong>Climf: learning to maximize reciprocal rank with
@@ -37,8 +35,7 @@ public class CLiMF extends IterativeRecommender {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVector uv = trainMatrix.row(u);
-				List<Integer> items = Lists.toList(uv.getIndex());
+				SparseVec uv = trainMatrix.row(u);
 
 				// compute sgd for user u
 				double[] sgds = new double[numFactors];
@@ -46,13 +43,13 @@ public class CLiMF extends IterativeRecommender {
 
 					double sgd = -regU * P.get(u, f);
 
-					for (int j : items) {
+					for (int j : uv.getIndex()) {
 						double fuj = predict(u, j);
 						double qjf = Q.get(j, f);
 
 						sgd += g(-fuj) * qjf;
 
-						for (int k : items) {
+						for (int k : uv.getIndex()) {
 							if (k == j)
 								continue;
 
@@ -79,10 +76,10 @@ public class CLiMF extends IterativeRecommender {
 						double puf = P.get(u, f);
 						double qjf = Q.get(j, f);
 
-						double yuj = items.contains(j) ? 1.0 : 0.0;
+						double yuj = uv.contains(j) ? 1.0 : 0.0;
 						double sgd = yuj * g(-fuj) * puf - regI * qjf;
 
-						for (int k : items) {
+						for (int k : uv.getIndex()) {
 							if (k == j)
 								continue;
 
@@ -110,14 +107,14 @@ public class CLiMF extends IterativeRecommender {
 				// compute loss
 				for (int j = 0; j < numItems; j++) {
 
-					if (items.contains(j)) {
+					if (uv.contains(j)) {
 						double fuj = predict(u, j);
 						double ruj = uv.get(j);
 
 						errs += (ruj - fuj) * (ruj - fuj);
 						loss += Math.log(g(fuj));
 
-						for (int k : items) {
+						for (int k : uv.getIndex()) {
 							double fuk = predict(u, k);
 							loss += Math.log(1 - g(fuk - fuj));
 						}

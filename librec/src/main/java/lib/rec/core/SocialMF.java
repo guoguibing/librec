@@ -2,6 +2,7 @@ package lib.rec.core;
 
 import happy.coding.math.Maths;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.intf.SocialRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.MatrixEntry;
@@ -87,7 +88,7 @@ public class SocialMF extends SocialRecommender {
 			// social regularization
 			if (regS != 0) {
 				for (int u = 0; u < numUsers; u++) {
-					SparseVector uv = socialMatrix.row(u);
+					SparseVec uv = socialMatrix.row(u);
 					double[] sumNNs = new double[numFactors];
 					for (int v : uv.getIndex()) {
 						for (int f = 0; f < numFactors; f++)
@@ -108,7 +109,7 @@ public class SocialMF extends SocialRecommender {
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
 
-						SparseVector vv = socialMatrix.row(v);
+						SparseVec vv = socialMatrix.row(v);
 						double[] sumDiffs = new double[numFactors];
 						for (int w : vv.getIndex()) {
 							for (int f = 0; f < numFactors; f++)

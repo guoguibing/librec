@@ -23,10 +23,10 @@ import java.util.concurrent.TimeUnit;
 import lib.rec.data.DataDAO;
 import lib.rec.data.DenseVec;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import lib.rec.data.UpperSymmMat;
 import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 import com.google.common.base.Stopwatch;
 
@@ -215,15 +215,14 @@ public abstract class Recommender implements Runnable {
 		UpperSymmMat corrs = new UpperSymmMat(numCount);
 
 		for (int i = 0; i < numCount; i++) {
-			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.col(i);
-			List<Integer> items = Lists.toList(iv.getIndex());
-			if (items.size() == 0)
+			SparseVec iv = isUser ? trainMatrix.row(i) : trainMatrix.col(i);
+			if (iv.getUsed() == 0)
 				continue;
 
 			for (int j = i + 1; j < numCount; j++) {
-				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
+				SparseVec jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
 
-				double sim = compCorr(iv, jv, items);
+				double sim = compCorr(iv, jv);
 
 				if (sim != 0.0)
 					corrs.set(i, j, sim);
@@ -242,28 +241,14 @@ public abstract class Recommender implements Runnable {
 	 *            vector j
 	 * @return the correlation between vectors i and j
 	 */
-	protected double compCorr(SparseVector iv, SparseVector jv) {
+	protected double compCorr(SparseVec iv, SparseVec jv) {
 
-		return compCorr(iv, jv, Lists.toList(iv.getIndex()));
-	}
-
-	/**
-	 * Compute the correlation between two vectors
-	 * 
-	 * @param iv
-	 *            vector i
-	 * @param jv
-	 *            vector j
-	 * @param items
-	 *            all the keys in the sparse vector iv
-	 * @return the correlation between vectors i and j
-	 */
-	protected double compCorr(SparseVector iv, SparseVector jv, List<Integer> items) {
 		// compute similarity
 		List<Double> is = new ArrayList<>();
 		List<Double> js = new ArrayList<>();
+
 		for (Integer item : jv.getIndex()) {
-			if (items.contains(item)) {
+			if (iv.contains(item)) {
 				is.add(iv.get(item));
 				js.add(jv.get(item));
 			}
@@ -401,7 +386,7 @@ public abstract class Recommender implements Runnable {
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
 			// get positive items from testing data
-			SparseVector tv = testMatrix.row(u);
+			SparseVec tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
 			for (Integer j : tv.getIndex()) {
 				// interact with the candidate items
@@ -421,7 +406,7 @@ public abstract class Recommender implements Runnable {
 				continue; // no testing data for user u
 
 			// get rated items from training data
-			SparseVector rv = trainMatrix.row(u);
+			SparseVec rv = trainMatrix.row(u);
 			List<Integer> ratedItems = new ArrayList<>();
 			for (Integer j : rv.getIndex()) {
 				if (candItems.contains(j))
@@ -590,10 +575,8 @@ public abstract class Recommender implements Runnable {
 		for (int id = 0; id < cutoff; id++) {
 			int i = rankedItems.get(id);
 
-			SparseVector iv = trainMatrix.col(i);
-			List<Integer> items = Lists.toList(iv.getIndex());
-
-			SparseVector cv = corrs.row(i);
+			SparseVec iv = trainMatrix.col(i);
+			SparseVec cv = corrs.row(i);
 			int[] cs = cv.getIndex();
 
 			for (int jd = id + 1; jd < cutoff; jd++) {
@@ -604,12 +587,12 @@ public abstract class Recommender implements Runnable {
 
 				if (idx < 0) {
 					// if not found
-					corr = compCorr(iv, trainMatrix.col(j), items);
+					corr = compCorr(iv, trainMatrix.col(j));
 					corrs.set(i, j, corr);
 
 					// updated vector
 					cv.set(j, corr);
-					cs = cv.getIndex();
+					cs = cv.getIndex(true);
 				} else
 					corr = cv.get(j);
 

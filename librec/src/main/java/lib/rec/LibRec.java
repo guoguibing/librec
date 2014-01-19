@@ -71,13 +71,12 @@ public class LibRec {
 
 		// prepare data
 		DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-
-		if (Debug.ON) {
+		rateMatrix = rateDao.readData();
+		
+		if (Debug.OFF) {
 			rateDao.printSpecs();
 			return;
 		}
-
-		rateMatrix = rateDao.readData();
 
 		// config general recommender
 		Recommender.cf = cf;
@@ -251,7 +250,7 @@ public class LibRec {
 	 */
 	private static void debugInfo() {
 		String cv = "kFold: " + cf.getInt("num.kfold")
-				+ (cf.isOn("is.parallel.folds") ? " [Parallelism]" : " [Singleton]");
+				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
 		String datasetInfo = String.format("Dataset: %s, %s", Strings.last(cf.getPath("dataset.ratings"), 38),
 				cf.isOn("is.cross.validation") ? cv : "ratio: " + (float) cf.getDouble("val.ratio"));
 		Logs.info(datasetInfo);

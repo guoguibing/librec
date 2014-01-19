@@ -7,8 +7,8 @@ import java.util.Map;
 
 import lib.rec.RecUtils;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class DNM extends BaseNM {
 
@@ -39,7 +39,7 @@ public class DNM extends BaseNM {
 					continue;
 
 				// a set of rated and similar items
-				SparseVector uv = trainMatrix.row( u, j);
+				SparseVec uv = trainMatrix.row( u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (itemCorrs.get(j, i) > minSim)
@@ -118,19 +118,19 @@ public class DNM extends BaseNM {
 					continue;
 				
 				// a set of rated and similar items
-				SparseVector cv = getCorrVector(j);
-				SparseVector uv = trainMatrix.row( u, j);
+				SparseVec cv = getCorrVector(j);
+				SparseVec uv = trainMatrix.row( u, j);
 				List<Integer> items = new ArrayList<>();
 				
-				Map<Integer, SparseVector> itemVectors = new HashMap<>();
+				Map<Integer, SparseVec> itemVecs = new HashMap<>();
 				for (int i : uv.getIndex()) {
-					SparseVector sv = null;
+					SparseVec sv = null;
 					double sji = i > j ? cv.get(i) : (sv = getCorrVector(i)).get(j);
 					if (sji != 0 && sji > minSim) {
 						items.add(i);
 
 						if (sv != null)
-							itemVectors.put(i, sv);
+							itemVecs.put(i, sv);
 					}
 				}
 				double w = Math.sqrt(items.size());
@@ -141,7 +141,7 @@ public class DNM extends BaseNM {
 				
 				double sum_sji = 0;
 				for (int i : items) {
-					double sji = i > j ? cv.get(i) : itemVectors.get(i).get(j);
+					double sji = i > j ? cv.get(i) : itemVecs.get(i).get(j);
 					double rui = uv.get(i);
 					double bi = itemBiases.get(i);
 					double bui = globalMean + bu + bi;
@@ -158,8 +158,8 @@ public class DNM extends BaseNM {
 				
 				// update similarity
 				for (int i : items) {
-					SparseVector sv = null;
-					double sji = i > j ? cv.get(i) : (sv = itemVectors.get(i)).get(j);
+					SparseVec sv = null;
+					double sji = i > j ? cv.get(i) : (sv = itemVecs.get(i)).get(j);
 					double rui = uv.get(i);
 					double bi = itemBiases.get(i);
 					double bui = globalMean + bu + bi;

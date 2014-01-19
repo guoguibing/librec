@@ -6,8 +6,8 @@ import java.util.List;
 import lib.rec.RecUtils;
 import lib.rec.data.DenseMat;
 import lib.rec.data.SparseMat;
+import lib.rec.data.SparseVec;
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class DMF extends BaseMF {
 
@@ -58,7 +58,7 @@ public class DMF extends BaseMF {
 				loss += regI * bj * bj;
 
 				// rated items by user u
-				SparseVector uv = trainMatrix.row(u, j);
+				SparseVec uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (i != j) {
