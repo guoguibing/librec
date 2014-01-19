@@ -42,7 +42,7 @@ public class DRMPlus extends CLiMF {
 				// all user u's ratings
 				SparseVector uv = trainMatrix.row(u);
 				List<Integer> items = Lists.toList(uv.getIndex());
-				double w = Math.sqrt(uv.getUsed());
+				//double w = Math.sqrt(uv.getUsed());
 
 				// compute sgd for user u
 				double[] sgds = new double[numFactors];
@@ -85,6 +85,8 @@ public class DRMPlus extends CLiMF {
 
 						double yuj = items.contains(j) ? 1.0 : 0.0;
 						double sgd = yuj * g(-fuj) * puf - regI * qjf;
+						double sum = 0;
+						int cnt = 0;
 						for (int k : items) {
 							if (k == j)
 								continue;
@@ -99,11 +101,12 @@ public class DRMPlus extends CLiMF {
 
 							if (sji > minSim) {
 								double sgd_d = 2 * (1 - sji) * (qjf - qkf) - qkf * Math.pow(qjf - qkf, 2);
-								sgd += 0.5 * alpha * sgd_d / w;
+								sum += 0.5 * alpha * sgd_d;
+								cnt++;
 							}
 						}
 
-						jSgds.add(sgd);
+						jSgds.add(sgd + cnt > 0 ? sum / Math.sqrt(cnt) : 0);
 					}
 
 					itemSgds.put(j, jSgds);
@@ -129,6 +132,8 @@ public class DRMPlus extends CLiMF {
 						errs += (ruj - fuj) * (ruj - fuj);
 						loss += Math.log(g(fuj));
 
+						double sum_all = 0;
+						int cnt = 0;
 						for (int i : items) {
 							double fui = predict(u, i);
 							loss += Math.log(1 - g(fui - fuj));
@@ -140,9 +145,12 @@ public class DRMPlus extends CLiMF {
 								for (int f = 0; f < numFactors; f++)
 									sum += Math.pow(Q.get(j, f) - Q.get(i, f), 2);
 
-								loss += 0.5 * alpha * (1 - sji) * sum / w;
+								sum_all += 0.5 * alpha * (1 - sji) * sum;
+								cnt++;
 							}
 						}
+						if (cnt > 0)
+							loss += sum_all / Math.sqrt(cnt);
 					}
 
 					for (int f = 0; f < numFactors; f++) {
