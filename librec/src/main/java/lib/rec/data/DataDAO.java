@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 import com.google.common.collect.BiMap;
@@ -37,6 +36,10 @@ public class DataDAO {
 
 	// data scales
 	private List<Double> scales;
+
+	// number of rates
+	private int numRates;
+
 	// user/item {raw id, inner id} map
 	private BiMap<String, Integer> userIds, itemIds;
 
@@ -117,6 +120,7 @@ public class DataDAO {
 		Table<String, String, Double> dataTable = HashBasedTable.create();
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
+		numRates = 0;
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split("[ \t,]");
 
@@ -128,6 +132,8 @@ public class DataDAO {
 				scales.add(rate); // rating scales
 
 			dataTable.put(user, item, rate);
+			numRates++;
+
 			if (!userIds.containsKey(user))
 				userIds.put(user, userIds.size()); // inner user id starts from
 													// 0
@@ -154,7 +160,7 @@ public class DataDAO {
 			Logs.debug("User amount: {}, scales: {{}}", numRows, Strings.toString(scales, ", "));
 		} else {
 			Logs.debug("User amount: {}, item amount: {}", numRows, numCols);
-			Logs.debug("Rating Scales: {{}}", Strings.toString(scales, ", "));
+			Logs.debug("Rating amount: {}, scales: {{}}", numRates, Strings.toString(scales, ", "));
 		}
 
 		// build rating matrix
@@ -210,7 +216,7 @@ public class DataDAO {
 	 * @return number of rates
 	 */
 	public int numRates() {
-		return Matrices.cardinality(rateMatrix);
+		return numRates;
 	}
 
 	/**
