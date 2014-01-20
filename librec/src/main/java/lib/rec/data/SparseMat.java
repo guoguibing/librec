@@ -82,12 +82,9 @@ public class SparseMat extends CompRowMatrix {
 		int[] row_ptr = super.getRowPointers();
 		int[] col_idx = super.getColumnIndices();
 
-		int start = row_ptr[row];
-		int end = row_ptr[row + 1];
-
 		SparseVec sv = new SparseVec(numColumns);
 
-		for (int j = start; j < end; j++) {
+		for (int j = row_ptr[row]; j < row_ptr[row + 1]; j++) {
 			int col = col_idx[j];
 			if (col != except) {
 				double val = super.get(row, col);
