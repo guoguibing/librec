@@ -42,7 +42,7 @@ public class BaseMF extends IterativeRecommender {
 
 		// set to 0 for items without any ratings
 		for (int j = 0, jm = numItems; j < jm; j++) {
-			if (trainMatrix.col(j).getUsed() == 0) {
+			if (trainMatrix.colSize(j) == 0) {
 				P.setRow(j, 0.0);
 				Q.setRow(j, 0.0);
 			}

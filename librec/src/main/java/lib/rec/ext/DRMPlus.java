@@ -23,7 +23,7 @@ public class DRMPlus extends CLiMF {
 		algoName = "DRMPlus";
 		alpha = RecUtils.getMKey(params, "val.diverse.alpha");
 
-		initStd = 0.01;
+		initStd = 0.1;
 		isPosOnly = cf.isOn("is.similarity.pos");
 		minSim = isPosOnly ? 0.0 : Double.NEGATIVE_INFINITY;
 	}

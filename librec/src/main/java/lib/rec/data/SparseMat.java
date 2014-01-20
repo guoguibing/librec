@@ -14,7 +14,7 @@ public class SparseMat extends CompRowMatrix {
 	public SparseMat(int numRows, int numColumns, int[][] nz) {
 		super(numRows, numColumns, nz);
 	}
-	
+
 	/**
 	 * get a row sparse vector of a matrix
 	 * 
@@ -41,6 +41,28 @@ public class SparseMat extends CompRowMatrix {
 		}
 
 		return sv;
+	}
+
+	/**
+	 * query the size of a specific row
+	 * 
+	 * @param row
+	 *            row id
+	 * @return the size of non-zero elements of a row
+	 */
+	public int rowSize(int row) {
+
+		int[] row_ptr = super.getRowPointers();
+		int[] col_idx = super.getColumnIndices();
+
+		int size = 0;
+		for (int j = row_ptr[row]; j < row_ptr[row + 1]; j++) {
+			int col = col_idx[j];
+			if (get(row, col) != 0.0)
+				size++;
+		}
+
+		return size;
 	}
 
 	/**
@@ -93,9 +115,29 @@ public class SparseMat extends CompRowMatrix {
 			double val = get(row, col);
 			if (val != 0.0)
 				sv.set(row, val);
-		} 
+		}
 
 		return sv;
+	}
+
+	/**
+	 * query the size of a specific column
+	 * 
+	 * @param col
+	 *            column id
+	 * @return the size of non-zero elements of a column
+	 */
+	public int colSize(int col) {
+
+		int size = 0;
+		for (int row = 0; row < numRows; row++) {
+
+			double val = get(row, col);
+			if (val != 0.0)
+				size++;
+		}
+
+		return size;
 	}
 
 	/**

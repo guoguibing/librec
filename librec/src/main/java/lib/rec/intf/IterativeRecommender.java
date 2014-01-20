@@ -120,14 +120,14 @@ public abstract class IterativeRecommender extends Recommender {
 		// set to 0 for users without any ratings
 		int numTrainUsers = trainMatrix.numRows();
 		for (int u = 0, um = P.numRows(); u < um; u++) {
-			if (u >= numTrainUsers || trainMatrix.row(u).getUsed() == 0) {
+			if (u >= numTrainUsers || trainMatrix.rowSize(u) == 0) {
 				P.setRow(u, 0.0);
 			}
 		}
 		// set to 0 for items without any ratings
 		int numTrainItems = trainMatrix.numColumns();
 		for (int j = 0, jm = Q.numRows(); j < jm; j++) {
-			if (j >= numTrainItems || trainMatrix.col(j).getUsed() == 0) {
+			if (j >= numTrainItems || trainMatrix.colSize(j) == 0) {
 				Q.setRow(j, 0.0);
 			}
 		}
