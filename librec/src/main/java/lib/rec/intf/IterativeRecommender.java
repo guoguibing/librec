@@ -24,12 +24,14 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// whether to adjust learning rate automatically
 	protected boolean isBoldDriver;
+	// decay of learning rate
+	protected double decay;
 
 	// factorized user-factor matrix
-	protected DenseMat P;
+	protected DenseMat P, last_P;
 
 	// factorized item-factor matrix
-	protected DenseMat Q;
+	protected DenseMat Q, last_Q;
 
 	// training errors
 	protected double errs, last_errs = 0;
@@ -49,6 +51,7 @@ public abstract class IterativeRecommender extends Recommender {
 		maxIters = cf.getInt("num.max.iter");
 
 		isBoldDriver = cf.isOn("is.bold.driver");
+		decay = cf.getDouble("val.decay.rate");
 	}
 
 	/**
@@ -93,10 +96,22 @@ public abstract class IterativeRecommender extends Recommender {
 		// (1) bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.
 		// (2) constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.
 		// (3) Leon Bottou, Stochastic Gradient Descent Tricks
-		double decay = cf.getDouble("val.decay.rate");
-		if (isBoldDriver && last_loss != 0.0)
-			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
-		else if (decay > 0 && decay < 1)
+		if (isBoldDriver && last_loss != 0.0) {
+			if (Math.abs(last_loss) > Math.abs(loss)) {
+				lRate *= 1.05;
+
+				// update last weight changes
+				last_P = P.copy();
+				last_Q = Q.copy();
+			} else {
+				lRate *= 0.5;
+				
+				// undo last weight changes
+				Logs.debug("Undo last weight changes and sharply decrease the learning rate !");
+				P = last_P.copy();
+				Q = last_Q.copy();
+			}
+		} else if (decay > 0 && decay < 1)
 			lRate *= decay;
 		else if (decay == 0)
 			lRate = initLRate / (1 + initLRate * regU * iter);
@@ -135,6 +150,9 @@ public abstract class IterativeRecommender extends Recommender {
 				Q.setRow(j, 0.0);
 			}
 		}
+
+		last_P = P.copy();
+		last_Q = Q.copy();
 	}
 
 	@Override

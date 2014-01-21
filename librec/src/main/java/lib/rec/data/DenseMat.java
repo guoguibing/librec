@@ -3,11 +3,20 @@ package lib.rec.data;
 import happy.coding.math.Randoms;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.DenseVector;
+import no.uib.cipr.matrix.Matrix;
 
 public class DenseMat extends DenseMatrix {
 
 	public DenseMat(int numRows, int numColumns) {
 		super(numRows, numColumns);
+	}
+
+	public DenseMat(Matrix A) {
+		super(A);
+	}
+
+	public DenseMat copy() {
+		return new DenseMat(this);
 	}
 
 	/**
