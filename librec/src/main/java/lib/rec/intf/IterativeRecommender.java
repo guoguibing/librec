@@ -38,6 +38,9 @@ public abstract class IterativeRecommender extends Recommender {
 	// objective loss
 	protected double loss, last_loss = 0;
 
+	// fold information 
+	protected String foldInfo;
+
 	public IterativeRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
@@ -52,6 +55,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 		isBoldDriver = cf.isOn("is.bold.driver");
 		decay = cf.getDouble("val.decay.rate");
+		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 	}
 
 	/**
@@ -67,8 +71,8 @@ public abstract class IterativeRecommender extends Recommender {
 	 * 
 	 * <ol>
 	 * <li>print debug information</li>
-	 * <li>adjust learning rate</li>
 	 * <li>check if converged</li>
+	 * <li>if not, adjust learning rate</li>
 	 * </ol>
 	 * 
 	 * @param iter
@@ -81,7 +85,6 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// print out debug info
 		if (verbose) {
-			String foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
 					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
 							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
@@ -92,28 +95,34 @@ public abstract class IterativeRecommender extends Recommender {
 			System.exit(-1);
 		}
 
-		// update learning rate
-		updateLRate(iter);
-
 		// check if converged
 		boolean cond1 = (errs < 1e-5);
 		boolean cond2 = (last_errs >= errs && last_errs - errs < 1e-5);
-		last_errs = errs;
-
-		return cond1 || cond2;
+		boolean converged = cond1 || cond2;
+		
+		// if not converged, update learning rate
+		if(!converged)
+			updateLRate(iter);
+		
+		return converged;
 	}
 
 	/**
-	 *  Update current learning rate after each epoch <br/>
-	 *  
-	 *	<ol>The update rules refers to: 
-	 *	 <li> bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.</li>
-	 *	 <li> constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.</li>
-	 *	 <li> Leon Bottou, Stochastic Gradient Descent Tricks</li>
-	 *   <li> more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
-	 *  </ol>
-	 *  
-	 *  @param iter the current iteration
+	 * Update current learning rate after each epoch <br/>
+	 * 
+	 * <ol>
+	 * The update rules refers to:
+	 * <li>bold driver: Gemulla et al., Large-scale matrix factorization with
+	 * distributed stochastic gradient descent, ACM KDD 2011.</li>
+	 * <li>constant decay: Niu et al, Hogwild!: A lock-free approach to
+	 * parallelizing stochastic gradient descent, NIPS 2011.</li>
+	 * <li>Leon Bottou, Stochastic Gradient Descent Tricks</li>
+	 * <li>more ways to adapt learning rate can refer to:
+	 * http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
+	 * </ol>
+	 * 
+	 * @param iter
+	 *            the current iteration
 	 */
 	protected void updateLRate(int iter) {
 		if (isBoldDriver && last_loss != 0.0) {
@@ -125,18 +134,22 @@ public abstract class IterativeRecommender extends Recommender {
 				last_Q = Q.copy();
 			} else {
 				lRate *= 0.5;
-				
+
 				// undo last weight changes
-				Logs.debug("Undo last weight changes and sharply decrease the learning rate !");
+				Logs.debug("{} iter {}: undo last weight changes and sharply decrease the learning rate !", foldInfo,
+						iter);
 				P = last_P.copy();
 				Q = last_Q.copy();
+				
+				return; // do no update last loss and errors, since we discard current loss and errors. 
 			}
 		} else if (decay > 0 && decay < 1)
 			lRate *= decay;
 		else if (decay == 0)
 			lRate = initLRate / (1 + initLRate * regU * iter);
-
+		
 		last_loss = loss;
+		last_errs = errs;
 	}
 
 	@Override
