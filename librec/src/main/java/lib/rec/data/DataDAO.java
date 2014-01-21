@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
@@ -231,9 +230,9 @@ public class DataDAO {
 
 		List<Integer> userCnts = new ArrayList<>();
 		for (int u = 0, um = numUsers(); u < um; u++) {
-			SparseVector uv = rateMatrix.row(u);
-			if (uv.getUsed() > 0)
-				userCnts.add(uv.getUsed());
+			int size = rateMatrix.rowSize(u);
+			if (size > 0)
+				userCnts.add(size);
 		}
 		sps.add(String.format("User mean: %.6f", Stats.mean(userCnts)));
 		sps.add(String.format("User Std : %.6f", Stats.sd(userCnts)));
@@ -241,9 +240,9 @@ public class DataDAO {
 		if (!isItemAsUser) {
 			List<Integer> itemCnts = new ArrayList<>();
 			for (int j = 0, jm = numItems(); j < jm; j++) {
-				SparseVec jv = rateMatrix.col(j);
-				if (jv.getUsed() > 0)
-					itemCnts.add(jv.getUsed());
+				int size = rateMatrix.colSize(j);
+				if (size > 0)
+					itemCnts.add(size);
 			}
 			sps.add(String.format("Item mean: %.6f", Stats.mean(itemCnts)));
 			sps.add(String.format("Item Std : %.6f", Stats.sd(itemCnts)));

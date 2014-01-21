@@ -102,6 +102,9 @@ public abstract class IterativeRecommender extends Recommender {
 				lRate *= 0.5;
 		} else if (decay > 0 && decay < 1)
 			lRate *= decay;
+		// Leon Bottou, Stochastic Gradient Descent Tricks
+		else if (decay == 0)
+			lRate = initLRate / (1 + initLRate * regU * iter);
 
 		last_loss = loss;
 

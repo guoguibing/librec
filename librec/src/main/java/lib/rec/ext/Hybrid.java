@@ -47,7 +47,7 @@ public class Hybrid extends Recommender {
 		//userDegrees.put(u, MatrixUtils.row(trainMatrix, u).getUsed());
 
 		for (int j = 0; j < numItems; j++)
-			itemDegrees.put(j, trainMatrix.col(j).getUsed());
+			itemDegrees.put(j, trainMatrix.colSize(j));
 	}
 
 	protected double ranking_basic(int u, int j) {
