@@ -14,7 +14,7 @@ import lib.rec.data.SparseMat;
 public abstract class IterativeRecommender extends Recommender {
 
 	// learning rate 
-	protected double lRate, momentum;
+	protected double lRate, initLRate, momentum;
 	// user and item regularization
 	protected double regU, regI;
 	// number of factors
@@ -40,6 +40,7 @@ public abstract class IterativeRecommender extends Recommender {
 		super(trainMatrix, testMatrix, fold);
 
 		lRate = cf.getDouble("val.learn.rate");
+		initLRate = lRate; // initial learn rate
 		momentum = cf.getDouble("val.momentum");
 		regU = cf.getDouble("val.reg.user");
 		regI = cf.getDouble("val.reg.item");
@@ -92,9 +93,14 @@ public abstract class IterativeRecommender extends Recommender {
 		// (1) bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.
 		// (2) constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.
 		double decay = cf.getDouble("val.decay.rate");
-		if (isBoldDriver && last_loss != 0.0)
-			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
-		else if (decay > 0 && decay < 1)
+		if (isBoldDriver && last_loss != 0.0) {
+			if (Math.abs(last_loss) > Math.abs(loss)) {
+				double nextRate = lRate * 1.05;
+				if (nextRate < 4e-4)
+					lRate = nextRate;
+			} else
+				lRate *= 0.5;
+		} else if (decay > 0 && decay < 1)
 			lRate *= decay;
 
 		last_loss = loss;
@@ -132,7 +138,7 @@ public abstract class IterativeRecommender extends Recommender {
 			}
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		double learnRate = cf.getDouble("val.learn.rate"); // re-get initial learn rate in case bold driver is used. 
