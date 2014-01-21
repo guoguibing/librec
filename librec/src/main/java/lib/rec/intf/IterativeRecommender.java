@@ -80,7 +80,7 @@ public abstract class IterativeRecommender extends Recommender {
 			String foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
 					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
-							(float) (last_loss - loss), (float) lRate });
+							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
 		}
 
 		if (Double.isNaN(loss)) {
@@ -92,17 +92,12 @@ public abstract class IterativeRecommender extends Recommender {
 		// The update rules refers to: 
 		// (1) bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.
 		// (2) constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.
+		// (3) Leon Bottou, Stochastic Gradient Descent Tricks
 		double decay = cf.getDouble("val.decay.rate");
-		if (isBoldDriver && last_loss != 0.0) {
-			if (Math.abs(last_loss) > Math.abs(loss)) {
-				double nextRate = lRate * 1.05;
-				if (nextRate < 4e-4)
-					lRate = nextRate;
-			} else
-				lRate *= 0.5;
-		} else if (decay > 0 && decay < 1)
+		if (isBoldDriver && last_loss != 0.0)
+			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
+		else if (decay > 0 && decay < 1)
 			lRate *= decay;
-		// Leon Bottou, Stochastic Gradient Descent Tricks
 		else if (decay == 0)
 			lRate = initLRate / (1 + initLRate * regU * iter);
 
@@ -113,7 +108,7 @@ public abstract class IterativeRecommender extends Recommender {
 		boolean cond2 = (last_errs >= errs && last_errs - errs < 1e-5);
 		last_errs = errs;
 
-		return (cond1 || cond2) ? true : false;
+		return cond1 || cond2;
 	}
 
 	@Override
