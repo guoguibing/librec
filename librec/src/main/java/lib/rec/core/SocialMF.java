@@ -131,7 +131,7 @@ public class SocialMF extends SocialRecommender {
 			errs *= 0.5;
 			loss *= 0.5;
 
-			if (postEachIter(iter))
+			if (isConverged(iter))
 				break;
 		}
 

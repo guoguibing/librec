@@ -115,7 +115,7 @@ public class DMF extends BaseMF {
 			errs *= 0.5;
 			loss *= 0.5;
 
-			if (postEachIter(iter))
+			if (isConverged(iter))
 				break;
 
 		}// end of training

@@ -87,7 +87,7 @@ public class PMF extends IterativeRecommender {
 			P.add(userDeltas);
 			Q.add(itemDeltas);
 
-			if (postEachIter(iter))
+			if (isConverged(iter))
 				break;
 		}
 	}

@@ -95,7 +95,7 @@ public class DNM extends BaseNM {
 			errs *= 0.5;
 			loss *= 0.5;
 
-			if (postEachIter(iter))
+			if (isConverged(iter))
 				break;
 
 		}// end of training
@@ -194,7 +194,7 @@ public class DNM extends BaseNM {
 			errs *= 0.5;
 			loss *= 0.5;
 			
-			if (postEachIter(iter))
+			if (isConverged(iter))
 				break;
 			
 		}// end of training

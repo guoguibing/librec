@@ -134,7 +134,7 @@ public class DRM extends CLiMF {
 			}
 			errs *= 0.5;
 
-			if (postEachIter(iter))
+			if (isConverged(iter))
 				break;
 
 		}// end of training

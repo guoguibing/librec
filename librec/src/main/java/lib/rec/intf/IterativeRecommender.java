@@ -77,8 +77,9 @@ public abstract class IterativeRecommender extends Recommender {
 	 * @return boolean: true if it is converged; false otherwise
 	 * 
 	 */
-	protected boolean postEachIter(int iter) {
+	protected boolean isConverged(int iter) {
 
+		// print out debug info
 		if (verbose) {
 			String foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
@@ -91,11 +92,30 @@ public abstract class IterativeRecommender extends Recommender {
 			System.exit(-1);
 		}
 
-		// more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html
-		// The update rules refers to: 
-		// (1) bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.
-		// (2) constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.
-		// (3) Leon Bottou, Stochastic Gradient Descent Tricks
+		// update learning rate
+		updateLRate(iter);
+
+		// check if converged
+		boolean cond1 = (errs < 1e-5);
+		boolean cond2 = (last_errs >= errs && last_errs - errs < 1e-5);
+		last_errs = errs;
+
+		return cond1 || cond2;
+	}
+
+	/**
+	 *  Update current learning rate after each epoch <br/>
+	 *  
+	 *	<ol>The update rules refers to: 
+	 *	 <li> bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent, ACM KDD 2011.</li>
+	 *	 <li> constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS 2011.</li>
+	 *	 <li> Leon Bottou, Stochastic Gradient Descent Tricks</li>
+	 *   <li> more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
+	 *  </ol>
+	 *  
+	 *  @param iter the current iteration
+	 */
+	protected void updateLRate(int iter) {
 		if (isBoldDriver && last_loss != 0.0) {
 			if (Math.abs(last_loss) > Math.abs(loss)) {
 				lRate *= 1.05;
@@ -117,13 +137,6 @@ public abstract class IterativeRecommender extends Recommender {
 			lRate = initLRate / (1 + initLRate * regU * iter);
 
 		last_loss = loss;
-
-		// check if converged
-		boolean cond1 = (errs < 1e-5);
-		boolean cond2 = (last_errs >= errs && last_errs - errs < 1e-5);
-		last_errs = errs;
-
-		return cond1 || cond2;
 	}
 
 	@Override
