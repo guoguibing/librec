@@ -139,8 +139,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		double learnRate = cf.getDouble("val.learn.rate"); // re-get initial learn rate in case bold driver is used. 
-		return Strings.toString(new Object[] { learnRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }
