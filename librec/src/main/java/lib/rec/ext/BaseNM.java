@@ -40,7 +40,7 @@ public class BaseNM extends IterativeRecommender {
 		isMem = numItems < 100_000;
 
 		// disable undo to save memory 
-		// isUndoEnabled = false;
+		isUndoEnabled = true;
 	}
 
 	@Override
