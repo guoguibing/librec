@@ -415,10 +415,10 @@ public class DataDAO {
 
 	public static void main(String[] args) throws Exception {
 		String dirPath = "D:\\Java\\Datasets\\EachMovie\\";
-		DataDAO dao = new DataDAO(dirPath + "eachmovie.txt");
+		DataDAO dao = new DataDAO(dirPath + "ratings.txt");
 
-		dao.readData(new int[] { 0, 1, 2, 3 });
+		dao.readData();
 		dao.printSpecs();
-		dao.writeData(dirPath + "ratings.txt");
+		//dao.writeData(dirPath + "ratings.txt");
 	}
 }

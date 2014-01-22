@@ -179,17 +179,16 @@ public abstract class Recommender implements Runnable {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
-						measures.get(Measure.D5), measures.get(Measure.D10), measures.get(Measure.MAE),
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.D5),
+						measures.get(Measure.D10), measures.get(Measure.MAE), measures.get(Measure.RMSE),
+						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
+						measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
+			else
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.MAE),
 						measures.get(Measure.RMSE), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
 						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
 						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
-			else
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
-						measures.get(Measure.MAE), measures.get(Measure.RMSE), measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
-						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR), numIgnore);
 		} else
 			evalInfo = String.format("%s,%s,%s,%s", measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
@@ -435,8 +434,8 @@ public abstract class Recommender implements Runnable {
 			double RR = Measures.RR(rankedItems, correctItems);
 
 			if (isDiverseUsed) {
-				double d5 = diverseAt(rankedItems, 5);
-				double d10 = diverseAt(rankedItems, 10);
+				double d5 = diverseAt2(rankedItems, 5);
+				double d10 = diverseAt2(rankedItems, 10);
 
 				ds5.add(d5);
 				ds10.add(d10);
@@ -603,6 +602,35 @@ public abstract class Recommender implements Runnable {
 					cs = cv.getIndex(true);
 				} else
 					corr = cv.get(j);
+
+				if (!Double.isNaN(corr)) {
+					sum += (1 - corr);
+					num++;
+				}
+			}
+		}
+
+		return 0.5 * (sum / num);
+	}
+
+	protected double diverseAt2(List<Integer> rankedItems, int cutoff) {
+
+		int num = 0;
+		double sum = 0.0;
+		for (int id = 0; id < cutoff; id++) {
+			int i = rankedItems.get(id);
+			SparseVec iv = trainMatrix.col(i);
+
+			for (int jd = id + 1; jd < cutoff; jd++) {
+				int j = rankedItems.get(jd);
+
+				double corr = corrs.get(i, j);
+				if (corr == 0) {
+					// if not found
+					corr = compCorr(iv, trainMatrix.col(j));
+					if (corr != 0)
+						corrs.set(i, j, corr);
+				}
 
 				if (!Double.isNaN(corr)) {
 					sum += (1 - corr);
