@@ -40,7 +40,21 @@ public class BaseNM extends IterativeRecommender {
 		isMem = numItems < 100_000;
 
 		// disable undo to save memory 
-		isUndoEnabled = false;
+		// isUndoEnabled = false;
+	}
+
+	@Override
+	protected void updates() {
+		super.updates();
+		if (itemCorrs != null)
+			last_S = itemCorrs.copy();
+	}
+
+	@Override
+	protected void undos(int iter) {
+		super.undos(iter);
+		if (last_S != null)
+			itemCorrs = last_S.copy();
 	}
 
 	private void initItemCorrsMem() {
@@ -101,7 +115,7 @@ public class BaseNM extends IterativeRecommender {
 
 	@Override
 	protected void initModel() {
-		
+
 		// user, item biases
 		userBiases = new DenseVec(numUsers);
 		itemBiases = new DenseVec(numItems);

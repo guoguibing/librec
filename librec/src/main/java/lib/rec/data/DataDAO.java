@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
@@ -144,11 +143,11 @@ public class DataDAO {
 	/**
 	 * read data from the data file
 	 * 
-	 * @param rels
+	 * @param cols
 	 *            the indexes of the relevant columns in the data file
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMat readData(int[] rels) throws Exception {
+	public SparseMat readData(int[] cols) throws Exception {
 
 		Table<String, String, Double> dataTable = HashBasedTable.create();
 		BufferedReader br = FileIO.getReader(dataPath);
@@ -156,9 +155,15 @@ public class DataDAO {
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split("[ \t,]");
 
-			String user = data[rels[0]];
-			String item = data[rels[1]];
-			Double rate = Double.valueOf(data[rels[2]]);
+			String user = data[cols[0]];
+			String item = data[cols[1]];
+			Double rate = Double.valueOf(data[cols[2]]);
+
+			/*if (cols.length >= 4) {
+				double weight = Double.parseDouble(data[cols[3]]);
+				if (rate == 0 && weight < 1)
+					continue;
+			}*/
 
 			scaleDist.add(rate);
 			dataTable.put(user, item, rate);
@@ -176,8 +181,9 @@ public class DataDAO {
 		scales = new ArrayList<>(scaleDist.elementSet());
 		Collections.sort(scales);
 
-		// if min-rate = 0.0, add a small value
-		double epsilon = scales.get(0).doubleValue() == 0.0 ? 1e-5 : 0;
+		// if min-rate = 0.0, shift upper a scale
+		double minRate = scales.get(0).doubleValue();
+		double epsilon = minRate == 0.0 ? scales.get(1).doubleValue() - minRate : 0;
 		if (epsilon > 0) {
 			for (int i = 0, im = scales.size(); i < im; i++) {
 				double val = scales.get(i);
@@ -233,13 +239,15 @@ public class DataDAO {
 	 * 
 	 * @param toPath
 	 *            the data file to write to
+	 * @param sep
+	 *            the sparator of the written data file
 	 */
-	public void writeData(String toPath) throws Exception {
+	public void writeData(String toPath, String sep) throws Exception {
 		FileIO.deleteFile(toPath);
 
 		List<String> lines = new ArrayList<>(1500);
 		for (MatrixEntry me : rateMatrix) {
-			String line = me.row() + " " + me.column() + " " + (float) me.get();
+			String line = Strings.toString(new Object[] { me.row() + 1, me.column() + 1, (float) me.get() }, sep);
 			lines.add(line);
 
 			if (lines.size() >= 1000) {
@@ -252,6 +260,13 @@ public class DataDAO {
 			FileIO.writeList(toPath, lines, null, true);
 
 		Logs.debug("Data has been exported to {}", toPath);
+	}
+
+	/**
+	 * default sep=" " is adopted
+	 */
+	public void writeData(String toPath) throws Exception {
+		writeData(toPath, " ");
 	}
 
 	/**
@@ -378,7 +393,7 @@ public class DataDAO {
 		return dataPath;
 	}
 
-	public CompRowMatrix getRateMatrix() {
+	public SparseMat getRateMatrix() {
 		return rateMatrix;
 	}
 
@@ -399,10 +414,10 @@ public class DataDAO {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String dirPath = "D:\\Java\\Datasets\\Ciao\\";
-		DataDAO dao = new DataDAO(dirPath + "movie-ratings.txt");
+		String dirPath = "D:\\Java\\Datasets\\EachMovie\\";
+		DataDAO dao = new DataDAO(dirPath + "eachmovie.txt");
 
-		dao.readData(new int[] { 0, 1, 4 });
+		dao.readData(new int[] { 0, 1, 2, 3 });
 		dao.printSpecs();
 		dao.writeData(dirPath + "ratings.txt");
 	}
