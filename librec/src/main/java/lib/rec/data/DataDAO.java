@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 
 import com.google.common.collect.BiMap;
@@ -98,13 +99,22 @@ public class DataDAO {
 		this(path, userIds, userIds);
 	}
 
-	public void convert(String sep) throws Exception {
+	/**
+	 * Convert a data file separated by {@code sep} to a data file separated by
+	 * {@code toSep}
+	 * 
+	 * @param sep
+	 *            separator of the source file
+	 * @param toSep
+	 *            separtor of the target file
+	 */
+	public void convert(String sep, String toSep) throws Exception {
 		BufferedReader br = FileIO.getReader(dataPath);
 
 		String line = null;
 		List<String> lines = new ArrayList<>();
 		while ((line = br.readLine()) != null) {
-			String newline = line.replaceAll(sep, " ");
+			String newline = line.replaceAll(sep, toSep);
 
 			lines.add(newline);
 
@@ -120,7 +130,25 @@ public class DataDAO {
 		br.close();
 	}
 
+	/**
+	 * default relevant columns {0: user column, 1: item column, 2: rate
+	 * column}; otherwise try {@code readData(int[] rels)}
+	 * 
+	 * 
+	 * @return a sparse matrix storing all the relevant data
+	 */
 	public SparseMat readData() throws Exception {
+		return readData(new int[] { 0, 1, 2 });
+	}
+
+	/**
+	 * read data from the data file
+	 * 
+	 * @param rels
+	 *            the indexes of the relevant columns in the data file
+	 * @return a sparse matrix storing all the relevant data
+	 */
+	public SparseMat readData(int[] rels) throws Exception {
 
 		Table<String, String, Double> dataTable = HashBasedTable.create();
 		BufferedReader br = FileIO.getReader(dataPath);
@@ -128,9 +156,9 @@ public class DataDAO {
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split("[ \t,]");
 
-			String user = data[0];
-			String item = data[1];
-			Double rate = Double.valueOf(data[2]);
+			String user = data[rels[0]];
+			String item = data[rels[1]];
+			Double rate = Double.valueOf(data[rels[2]]);
 
 			scaleDist.add(rate);
 			dataTable.put(user, item, rate);
@@ -201,6 +229,32 @@ public class DataDAO {
 	}
 
 	/**
+	 * write the rate data to another data file given by the path {@code toPath}
+	 * 
+	 * @param toPath
+	 *            the data file to write to
+	 */
+	public void writeData(String toPath) throws Exception {
+		FileIO.deleteFile(toPath);
+
+		List<String> lines = new ArrayList<>(1500);
+		for (MatrixEntry me : rateMatrix) {
+			String line = me.row() + " " + me.column() + " " + (float) me.get();
+			lines.add(line);
+
+			if (lines.size() >= 1000) {
+				FileIO.writeList(toPath, lines, null, true);
+				lines.clear();
+			}
+		}
+
+		if (lines.size() > 0)
+			FileIO.writeList(toPath, lines, null, true);
+
+		Logs.debug("Data has been exported to {}", toPath);
+	}
+
+	/**
 	 * print out specifications of the dataset
 	 */
 	public void printSpecs() throws Exception {
@@ -209,12 +263,16 @@ public class DataDAO {
 
 		List<String> sps = new ArrayList<>();
 
+		int users = numUsers();
+		int items = numItems();
+
 		sps.add(String.format("Dataset: %s", Strings.last(dataPath, 38)));
-		sps.add("User amount: " + numUsers() + ", " + FileIO.formatSize(numUsers()));
+		sps.add("User amount: " + users + ", " + FileIO.formatSize(users));
 		if (!isItemAsUser)
-			sps.add("Item amount: " + numItems() + ", " + FileIO.formatSize(numItems()));
+			sps.add("Item amount: " + items + ", " + FileIO.formatSize(items));
 		sps.add("Rate amount: " + numRates + ", " + FileIO.formatSize(numRates));
 		sps.add("Scales dist: " + scaleDist.toString());
+		sps.add(String.format("Data density: %.6f", numRates / (users * items + 0.0)));
 
 		// user/item mean
 		double[] data = rateMatrix.getData();
@@ -338,5 +396,14 @@ public class DataDAO {
 
 	public BiMap<String, Integer> getItemIds() {
 		return itemIds;
+	}
+
+	public static void main(String[] args) throws Exception {
+		String dirPath = "D:\\Java\\Datasets\\Ciao\\";
+		DataDAO dao = new DataDAO(dirPath + "movie-ratings.txt");
+
+		dao.readData(new int[] { 0, 1, 4 });
+		dao.printSpecs();
+		dao.writeData(dirPath + "ratings.txt");
 	}
 }
