@@ -2,6 +2,7 @@ package lib.rec.data;
 
 import happy.coding.math.Randoms;
 import no.uib.cipr.matrix.DenseVector;
+import no.uib.cipr.matrix.Vector;
 
 public class DenseVec extends DenseVector {
 
@@ -9,6 +10,15 @@ public class DenseVec extends DenseVector {
 
 	public DenseVec(int size) {
 		super(size);
+	}
+
+	public DenseVec(Vector x) {
+		super(x);
+	}
+
+	@Override
+	public DenseVec copy() {
+		return new DenseVec(this);
 	}
 
 	/**

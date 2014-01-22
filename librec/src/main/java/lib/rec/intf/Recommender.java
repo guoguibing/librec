@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import lib.rec.data.DataDAO;
-import lib.rec.data.DenseVec;
 import lib.rec.data.SparseMat;
 import lib.rec.data.SparseVec;
 import lib.rec.data.UpperSymmMat;
@@ -62,7 +61,6 @@ public abstract class Recommender implements Runnable {
 	// Rating matrix for training and testing
 	public static SparseMat rateMatrix;
 	protected SparseMat trainMatrix, testMatrix;
-	protected DenseVec userBiases, itemBiases;
 
 	protected UpperSymmMat corrs;
 	public Map<Measure, Double> measures;
@@ -363,10 +361,13 @@ public abstract class Recommender implements Runnable {
 		Set<Integer> candItems = new HashSet<>();
 		for (Integer j : trainMatrix.getColumnIndices())
 			candItems.add(j);
+		
+		Logs.debug("{} candidate items: {}", algoName, candItems.size());
 
 		// ignore items: most popular items
-		List<Integer> ignoreItems = new ArrayList<>();
 		if (numIgnore > 0) {
+			List<Integer> ignoreItems = new ArrayList<>();
+			
 			Map<Integer, Integer> itemDegrees = new HashMap<>();
 			for (int j : candItems)
 				itemDegrees.put(j, trainMatrix.col(j).getUsed());
@@ -377,10 +378,10 @@ public abstract class Recommender implements Runnable {
 				if (++k >= numIgnore)
 					break;
 			}
+			
+			// remove ignore items from candidate items
+			candItems.removeAll(ignoreItems);
 		}
-
-		// remove ignore items from candidate items
-		candItems.removeAll(ignoreItems);
 
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {

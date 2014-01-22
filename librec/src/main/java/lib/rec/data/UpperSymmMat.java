@@ -1,5 +1,6 @@
 package lib.rec.data;
 
+import no.uib.cipr.matrix.Matrix;
 import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 
 /**
@@ -18,6 +19,15 @@ public class UpperSymmMat extends FlexCompRowMatrix {
 	 */
 	public UpperSymmMat(int dim) {
 		super(dim, dim);
+	}
+
+	public UpperSymmMat(Matrix m) {
+		super(m);
+	}
+
+	@Override
+	public UpperSymmMat copy() {
+		return new UpperSymmMat(this);
 	}
 
 	/**

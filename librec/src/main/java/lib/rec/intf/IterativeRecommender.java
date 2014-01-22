@@ -3,6 +3,7 @@ package lib.rec.intf;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import lib.rec.data.DenseMat;
+import lib.rec.data.DenseVec;
 import lib.rec.data.SparseMat;
 
 /**
@@ -23,7 +24,7 @@ public abstract class IterativeRecommender extends Recommender {
 	protected int maxIters;
 
 	// whether to adjust learning rate automatically
-	protected boolean isBoldDriver;
+	protected boolean isBoldDriver, isUndoEnabled;
 	// decay of learning rate
 	protected double decay;
 
@@ -32,6 +33,11 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// factorized item-factor matrix
 	protected DenseMat Q, last_Q;
+
+	// user biases
+	protected DenseVec userBiases, last_UB;
+	// item biases
+	protected DenseVec itemBiases, last_IB;
 
 	// training errors
 	protected double errs, last_errs = 0;
@@ -54,6 +60,8 @@ public abstract class IterativeRecommender extends Recommender {
 		maxIters = cf.getInt("num.max.iter");
 
 		isBoldDriver = cf.isOn("is.bold.driver");
+		isUndoEnabled = true;
+
 		decay = cf.getDouble("val.decay.rate");
 		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 	}
@@ -129,27 +137,56 @@ public abstract class IterativeRecommender extends Recommender {
 				lRate *= 1.05;
 
 				// update last weight changes
-				last_P = P.copy();
-				last_Q = Q.copy();
+				if (isUndoEnabled)
+					updates();
 			} else {
 				lRate *= 0.5;
 
 				// undo last weight changes
-				Logs.debug("{}{} iter {}: undo last weight changes and sharply decrease the learning rate !", algoName,
-						foldInfo, iter);
-				P = last_P.copy();
-				Q = last_Q.copy();
+				if (isUndoEnabled)
+					undos(iter);
 
 				// do not update last loss and errors, since we discard current loss and errors
-				return;  
+				return;
 			}
 		} else if (decay > 0 && decay < 1)
 			lRate *= decay;
 		else if (decay == 0)
-			lRate = initLRate / (1 + initLRate * regU * iter);
+			lRate = initLRate / (1 + initLRate * ((regU + regI) / 2.0) * iter);
 
 		last_loss = loss;
 		last_errs = errs;
+	}
+
+	/**
+	 * updates last weights
+	 */
+	protected void updates() {
+		if (P != null)
+			last_P = P.copy();
+		if (Q != null)
+			last_Q = Q.copy();
+		if (userBiases != null)
+			last_UB = userBiases.copy();
+		if (itemBiases != null)
+			last_IB = itemBiases.copy();
+	}
+
+	/**
+	 * undo last weight changes
+	 */
+	protected void undos(int iter) {
+		Logs.debug("{}{} iter {}: undo last weight changes and sharply decrease the learning rate !", algoName,
+				foldInfo, iter);
+
+		if (last_P != null)
+			P = last_P.copy();
+		if (last_Q != null)
+			Q = last_Q.copy();
+		if (last_UB != null)
+			userBiases = last_UB.copy();
+		if (last_IB != null)
+			itemBiases = last_IB.copy();
 	}
 
 	@Override

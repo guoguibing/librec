@@ -21,7 +21,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class BaseNM extends IterativeRecommender {
 
-	protected UpperSymmMat itemCorrs;
+	protected UpperSymmMat itemCorrs, last_S;
 	protected boolean isPosOnly;
 	protected double minSim;
 
@@ -38,6 +38,9 @@ public class BaseNM extends IterativeRecommender {
 
 		dirPath = "Fold " + fold;
 		isMem = numItems < 100_000;
+
+		// disable undo to save memory 
+		isUndoEnabled = false;
 	}
 
 	private void initItemCorrsMem() {
@@ -98,7 +101,7 @@ public class BaseNM extends IterativeRecommender {
 
 	@Override
 	protected void initModel() {
-
+		
 		// user, item biases
 		userBiases = new DenseVec(numUsers);
 		itemBiases = new DenseVec(numItems);
