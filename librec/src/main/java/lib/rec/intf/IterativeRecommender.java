@@ -44,9 +44,6 @@ public abstract class IterativeRecommender extends Recommender {
 	// objective loss
 	protected double loss, last_loss = 0;
 
-	// fold information 
-	protected String foldInfo;
-
 	public IterativeRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
@@ -60,10 +57,10 @@ public abstract class IterativeRecommender extends Recommender {
 		maxIters = cf.getInt("num.max.iter");
 
 		isBoldDriver = cf.isOn("is.bold.driver");
+		// whether to undo last weight changes if negative loss observed
 		isUndoEnabled = true;
 
 		decay = cf.getDouble("val.decay.rate");
-		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 	}
 
 	/**

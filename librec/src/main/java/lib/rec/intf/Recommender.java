@@ -75,6 +75,9 @@ public abstract class Recommender implements Runnable {
 	// Maximum, minimum values of rating scales
 	protected static double maxRate, minRate;
 
+	// fold information 
+	protected String foldInfo;
+
 	public enum Measure {
 		MAE, RMSE, NMAE, ASYMM, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
 	}
@@ -122,6 +125,9 @@ public abstract class Recommender implements Runnable {
 		// global mean
 		numRates = Matrices.cardinality(trainMatrix);
 		globalMean = Stats.sum(trainMatrix.getData()) / numRates;
+
+		// fold info
+		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
@@ -173,19 +179,19 @@ public abstract class Recommender implements Runnable {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
 						measures.get(Measure.D5), measures.get(Measure.D10), measures.get(Measure.MAE),
 						measures.get(Measure.RMSE), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
 						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
 						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
 			else
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
 						measures.get(Measure.MAE), measures.get(Measure.RMSE), measures.get(Measure.Pre5),
 						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
+			evalInfo = String.format("%s,%s,%s,%s", measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
 		return evalInfo;
@@ -361,24 +367,25 @@ public abstract class Recommender implements Runnable {
 		Set<Integer> candItems = new HashSet<>();
 		for (Integer j : trainMatrix.getColumnIndices())
 			candItems.add(j);
-		
-		Logs.debug("{} candidate items: {}", algoName, candItems.size());
+
+		if (verbose)
+			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
 
 		// ignore items: most popular items
 		if (numIgnore > 0) {
 			List<Integer> ignoreItems = new ArrayList<>();
-			
-			Map<Integer, Integer> itemDegrees = new HashMap<>();
+
+			Map<Integer, Integer> itemDegs = new HashMap<>();
 			for (int j : candItems)
-				itemDegrees.put(j, trainMatrix.col(j).getUsed());
-			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegrees, true);
+				itemDegs.put(j, trainMatrix.colSize(j));
+			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
 			int k = 0;
 			for (KeyValPair<Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
 				if (++k >= numIgnore)
 					break;
 			}
-			
+
 			// remove ignore items from candidate items
 			candItems.removeAll(ignoreItems);
 		}
@@ -390,7 +397,7 @@ public abstract class Recommender implements Runnable {
 			SparseVec tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
 			for (Integer j : tv.getIndex()) {
-				// interact with the candidate items
+				// intersect with the candidate items
 				if (candItems.contains(j))
 					correctItems.add(j);
 
