@@ -95,10 +95,10 @@ public abstract class IterativeRecommender extends Recommender {
 							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
 		}
 
-		/*if (Double.isNaN(loss)) {
+		if (!(isBoldDriver && isUndoEnabled) && Double.isNaN(loss)) {
 			Logs.error("Loss = NaN: current settings cannot train the recommender! Try other settings instead!");
 			System.exit(-1);
-		}*/
+		}
 
 		// check if converged
 		boolean cond1 = (errs < 1e-5);
