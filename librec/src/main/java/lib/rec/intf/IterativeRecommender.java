@@ -24,7 +24,9 @@ public abstract class IterativeRecommender extends Recommender {
 	protected int maxIters;
 
 	// whether to adjust learning rate automatically
-	protected boolean isBoldDriver, isUndoEnabled;
+	protected boolean isBoldDriver;
+	// whether to undo last weight changes if negative loss observed when bold driving
+	protected boolean isUndoEnabled;
 	// decay of learning rate
 	protected double decay;
 
@@ -57,8 +59,7 @@ public abstract class IterativeRecommender extends Recommender {
 		maxIters = cf.getInt("num.max.iter");
 
 		isBoldDriver = cf.isOn("is.bold.driver");
-		// whether to undo last weight changes if negative loss observed
-		isUndoEnabled = true;
+		isUndoEnabled = cf.isOn("is.undo.change");
 
 		decay = cf.getDouble("val.decay.rate");
 	}

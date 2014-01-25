@@ -38,9 +38,6 @@ public class BaseNM extends IterativeRecommender {
 
 		dirPath = "Fold " + fold;
 		isMem = numItems < 100_000;
-
-		// disable undo to save memory 
-		isUndoEnabled = true;
 	}
 
 	@Override
