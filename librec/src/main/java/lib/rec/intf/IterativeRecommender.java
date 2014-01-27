@@ -140,12 +140,12 @@ public abstract class IterativeRecommender extends Recommender {
 			} else {
 				lRate *= 0.5;
 
-				// undo last weight changes
-				if (isUndoEnabled)
+				if (isUndoEnabled) {
+					// undo last weight changes
 					undos(iter);
-
-				// do not update last loss and errors, since we discard current loss and errors
-				return;
+					// do not update last loss and errors, since we discard current loss and errors
+					return;
+				}
 			}
 		} else if (decay > 0 && decay < 1)
 			lRate *= decay;
