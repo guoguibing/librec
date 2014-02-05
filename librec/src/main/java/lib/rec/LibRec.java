@@ -72,9 +72,11 @@ public class LibRec {
 		// prepare data
 		DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
 		rateMatrix = rateDao.readData();
-		
+
 		if (Debug.OFF) {
-			rateDao.printSpecs();
+			// rateDao.printSpecs();
+			new DataSplitter(rateMatrix).sample(2000, -1);
+
 			return;
 		}
 

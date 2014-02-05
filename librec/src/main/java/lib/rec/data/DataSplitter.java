@@ -2,9 +2,14 @@ package lib.rec.data;
 
 import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
+import happy.coding.math.Randoms;
 import happy.coding.math.Sortor;
 import happy.coding.system.Debug;
 import happy.coding.system.Systems;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import no.uib.cipr.matrix.Matrices;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
@@ -97,6 +102,48 @@ public class DataSplitter {
 		debugInfo(trainMatrix, testMatrix, -1);
 
 		return new SparseMat[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * generate a random sample of rate matrix with specified number of users
+	 * and items
+	 * 
+	 * @param numUsers
+	 *            number of users, -1 to use all users;
+	 * @param numItems
+	 *            number of items, -1 to user all items;
+	 */
+	public void sample(int numUsers, int numItems) throws Exception {
+		int rows = rateMatrix.numRows();
+		int cols = rateMatrix.numColumns();
+		int users = numUsers <= 0 || numUsers > rows ? rows : numUsers;
+		int items = numItems <= 0 || numItems > cols ? cols : numItems;
+
+		int[] userIds = Randoms.nextNoRepeatIntArray(users, rows);
+		int[] itemIds = Randoms.nextNoRepeatIntArray(items, cols);
+
+		String path = FileIO.desktop + "sample.txt";
+		FileIO.deleteFile(path);
+
+		List<String> lines = new ArrayList<>(2000);
+		int cnt = 0;
+		for (int userId : userIds) {
+			for (int itemId : itemIds) {
+				double rate = rateMatrix.get(userId, itemId);
+				if (rate > 0) {
+					lines.add((userId + 1) + " " + (itemId + 1) + " " + (float) rate);
+					cnt++;
+					if (lines.size() >= 1500) {
+						FileIO.writeList(path, lines, null, true);
+						lines.clear();
+					}
+				}
+			}
+		}
+		if (lines.size() > 0)
+			FileIO.writeList(path, lines, null, true);
+
+		Logs.debug("Sample [size: {}] has been created!", cnt);
 	}
 
 	/**
