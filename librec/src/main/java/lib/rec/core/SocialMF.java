@@ -22,7 +22,6 @@ public class SocialMF extends SocialRecommender {
 		super(trainMatrix, testMatrix, fold, path);
 
 		algoName = "SocialMF";
-
 	}
 
 	@Override
@@ -68,17 +67,17 @@ public class SocialMF extends SocialRecommender {
 				}
 			}
 
-			// lambdas
-			for (int u = 0; u < numUsers; u++)
-				for (int f = 0; f < numFactors; f++) {
+			// lambdas: code optimization: small loops outside, large loops inside
+			for (int f = 0; f < numFactors; f++)
+				for (int u = 0; u < numUsers; u++) {
 					double puf = P.get(u, f);
 					userSgds.add(u, f, regU * puf);
 
 					loss += regU * puf * puf;
 				}
-
-			for (int j = 0; j < numItems; j++)
-				for (int f = 0; f < numFactors; f++) {
+			
+			for (int f = 0; f < numFactors; f++)
+				for (int j = 0; j < numItems; j++) {
 					double qjf = Q.get(j, f);
 					itemSgds.add(j, f, regI * qjf);
 
@@ -105,6 +104,7 @@ public class SocialMF extends SocialRecommender {
 						}
 					}
 
+					// those who rated user u
 					SparseVector iuv = invSocialMatrix.getRow(u);
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
@@ -113,7 +113,7 @@ public class SocialMF extends SocialRecommender {
 						double[] sumDiffs = new double[numFactors];
 						for (int w : vv.getIndex()) {
 							for (int f = 0; f < numFactors; f++)
-								sumDiffs[f] = socialMatrix.get(v, w) * P.get(w, f);
+								sumDiffs[f] += socialMatrix.get(v, w) * P.get(w, f);
 						}
 
 						numConns = vv.getUsed();

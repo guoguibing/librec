@@ -212,8 +212,6 @@ public abstract class IterativeRecommender extends Recommender {
 			}
 		}
 
-		last_P = P.copy();
-		last_Q = Q.copy();
 	}
 
 	@Override
