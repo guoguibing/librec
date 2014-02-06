@@ -75,7 +75,7 @@ public class SocialMF extends SocialRecommender {
 
 					loss += regU * puf * puf;
 				}
-			
+
 			for (int f = 0; f < numFactors; f++)
 				for (int j = 0; j < numItems; j++) {
 					double qjf = Q.get(j, f);
@@ -119,7 +119,7 @@ public class SocialMF extends SocialRecommender {
 						numConns = vv.getUsed();
 						if (numConns > 0)
 							for (int f = 0; f < numFactors; f++)
-								userSgds.add(u, f, -regS * tvu * (P.get(v, f) - sumDiffs[f] / numConns));
+								userSgds.add(u, f, -regS * (tvu / numConns) * (P.get(v, f) - sumDiffs[f] / numConns));
 					}
 				}
 			}

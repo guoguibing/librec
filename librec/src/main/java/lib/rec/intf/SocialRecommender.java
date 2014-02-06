@@ -1,5 +1,7 @@
 package lib.rec.intf;
 
+import happy.coding.io.Strings;
+
 import java.util.List;
 
 import lib.rec.data.DataDAO;
@@ -26,11 +28,10 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	protected static List<Double> socialScales;
 
 	// social regularization
-	protected static double regS;
+	protected double regS;
 
 	// initialization
 	static {
-		regS = cf.getDouble("val.reg.social");
 		socialDao = new DataDAO(cf.getPath("dataset.social"), rateDao.getUserIds());
 
 		try {
@@ -46,6 +47,13 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	
 	public SocialRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
+		
+		regS = cf.getDouble("val.reg.social");
+	}
+	
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { initLRate, regU, regI, regS, numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }
