@@ -18,8 +18,8 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class SocialMF extends SocialRecommender {
 
-	public SocialMF(SparseMat trainMatrix, SparseMat testMatrix, int fold, String path) {
-		super(trainMatrix, testMatrix, fold, path);
+	public SocialMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SocialMF";
 	}

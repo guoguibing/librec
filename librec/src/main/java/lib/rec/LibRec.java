@@ -193,8 +193,6 @@ public class LibRec {
 	private static Recommender getRecommender(SparseMat[] data, int fold) throws Exception {
 
 		SparseMat trainMatrix = data[0], testMatrix = data[1];
-		String socialPath = cf.getPath("dataset.social");
-
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
@@ -227,7 +225,7 @@ public class LibRec {
 		case "climf":
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "socialmf":
-			return new SocialMF(trainMatrix, testMatrix, fold, socialPath);
+			return new SocialMF(trainMatrix, testMatrix, fold);
 		case "aaai-basemf":
 			return new BaseMF(trainMatrix, testMatrix, fold);
 		case "aaai-dmf":
