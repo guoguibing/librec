@@ -3,7 +3,9 @@ package lib.rec.data;
 import java.util.Arrays;
 
 import no.uib.cipr.matrix.Matrix;
+import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.CompRowMatrix;
+import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 
 public class SparseMat extends CompRowMatrix {
 
@@ -97,7 +99,13 @@ public class SparseMat extends CompRowMatrix {
 	}
 
 	/**
-	 * get a column sparse vector of a matrix
+	 * get a column sparse vector of a matrix. <br/>
+	 * 
+	 * <strong>Note:</strong> this method is time-consuming, hence if heavily calling this
+	 * method will greately decrease performance. In this case, we suggest to
+	 * first transpose the current matrix to obtain a new matrix, and then call
+	 * the {@code row} method of the new matrix instead. In other words, using
+	 * memory space to speedup programs.
 	 * 
 	 * @param col
 	 *            column id
@@ -169,6 +177,19 @@ public class SparseMat extends CompRowMatrix {
 			}
 		}
 		return sv;
+	}
+
+	/**
+	 * transpose a matrix: useful if high frequency to call {@code col} method
+	 * which is time-consuming
+	 */
+	public SparseMat transpose() {
+		FlexCompRowMatrix t = new FlexCompRowMatrix(numColumns, numRows);
+
+		for (MatrixEntry me : this)
+			t.set(me.column(), me.row(), me.get());
+
+		return new SparseMat(t);
 	}
 
 }

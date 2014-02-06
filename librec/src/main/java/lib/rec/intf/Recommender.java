@@ -61,6 +61,9 @@ public abstract class Recommender implements Runnable {
 	// Rating matrix for training and testing
 	public static SparseMat rateMatrix;
 	protected SparseMat trainMatrix, testMatrix;
+	
+	// transpose matrix of training matrix, useful if col operations required
+	// protected SparseMat trTrainMatrix;
 
 	protected UpperSymmMat corrs;
 	public Map<Measure, Double> measures;
@@ -215,15 +218,18 @@ public abstract class Recommender implements Runnable {
 		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
 		int numCount = isUser ? numUsers : numItems;
+		SparseMat tr = isUser ? null : trainMatrix.transpose();
+
 		UpperSymmMat corrs = new UpperSymmMat(numCount);
 
 		for (int i = 0; i < numCount; i++) {
-			SparseVec iv = isUser ? trainMatrix.row(i) : trainMatrix.col(i);
+			SparseVec iv = isUser ? trainMatrix.row(i) : tr.row(i);
 			if (iv.getUsed() == 0)
 				continue;
 
 			for (int j = i + 1; j < numCount; j++) {
-				SparseVec jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
+				// SparseVec jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
+				SparseVec jv = isUser ? trainMatrix.row(j) : tr.row(j);
 
 				double sim = compCorr(iv, jv);
 
