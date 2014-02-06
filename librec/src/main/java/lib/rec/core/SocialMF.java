@@ -6,6 +6,7 @@ import lib.rec.data.SparseVec;
 import lib.rec.intf.SocialRecommender;
 import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.MatrixEntry;
+import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -27,11 +28,10 @@ public class SocialMF extends SocialRecommender {
 	protected void initModel() {
 		super.initModel();
 
-		/*
-		 * invSocialMatrix = new FlexCompRowMatrix(numUsers, numUsers); for
-		 * (MatrixEntry me : socialMatrix) invSocialMatrix.set(me.column(),
-		 * me.row(), me.get());
-		 */
+		invSocialMatrix = new FlexCompRowMatrix(numUsers, numUsers);
+		for (MatrixEntry me : socialMatrix)
+			invSocialMatrix.set(me.column(), me.row(), me.get());
+
 	}
 
 	@Override
@@ -105,7 +105,8 @@ public class SocialMF extends SocialRecommender {
 					}
 
 					// those who trusted user u
-					SparseVector iuv = socialMatrix.col(u); // invSocialMatrix.getRow(u);
+					// SparseVector iuv = socialMatrix.col(u); // slower since column operations are time-consuming 
+					SparseVector iuv = invSocialMatrix.getRow(u);
 					int numVs = iuv.getUsed();
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
