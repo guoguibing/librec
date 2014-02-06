@@ -105,7 +105,7 @@ public class SocialMF extends SocialRecommender {
 					}
 
 					// those who trusted user u
-					SparseVector iuv = invSocialMatrix.getRow(u);
+					SparseVector iuv = socialMatrix.col(u); // invSocialMatrix.getRow(u);
 					int numVs = iuv.getUsed();
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
