@@ -43,7 +43,7 @@ public abstract class IterativeRecommender extends Recommender {
 	// item biases
 	protected DenseVec itemBiases, last_IB;
 
-	// learn rate 
+	// adaptive learn rate 
 	protected double lRate;
 	// training errors
 	protected double errs, last_errs = 0;
