@@ -14,22 +14,24 @@ import lib.rec.data.SparseMat;
  */
 public abstract class IterativeRecommender extends Recommender {
 
-	// learning rate 
-	protected double lRate, initLRate, momentum;
+	/************************************ Static parameters for all recommenders ***********************************/
+	// init learning rate, momentum 
+	protected static double initLRate, momentum;
 	// user and item regularization
-	protected double regU, regI;
+	protected static double regU, regI;
 	// number of factors
-	protected int numFactors;
+	protected static int numFactors;
 	// number of iterations
-	protected int maxIters;
+	protected static int maxIters;
 
 	// whether to adjust learning rate automatically
-	protected boolean isBoldDriver;
+	protected static boolean isBoldDriver;
 	// whether to undo last weight changes if negative loss observed when bold driving
-	protected boolean isUndoEnabled;
+	protected static boolean isUndoEnabled;
 	// decay of learning rate
-	protected double decay;
+	protected static double decay;
 
+	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
 	protected DenseMat P, last_P;
 
@@ -41,16 +43,16 @@ public abstract class IterativeRecommender extends Recommender {
 	// item biases
 	protected DenseVec itemBiases, last_IB;
 
+	// learn rate 
+	protected double lRate;
 	// training errors
 	protected double errs, last_errs = 0;
 	// objective loss
 	protected double loss, last_loss = 0;
 
-	public IterativeRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
-		super(trainMatrix, testMatrix, fold);
-
-		lRate = cf.getDouble("val.learn.rate");
-		initLRate = lRate; // initial learn rate
+	// initialization
+	static {
+		initLRate = cf.getDouble("val.learn.rate");
 		momentum = cf.getDouble("val.momentum");
 		regU = cf.getDouble("val.reg.user");
 		regI = cf.getDouble("val.reg.item");
@@ -62,6 +64,12 @@ public abstract class IterativeRecommender extends Recommender {
 		isUndoEnabled = cf.isOn("is.undo.change");
 
 		decay = cf.getDouble("val.decay.rate");
+	}
+
+	public IterativeRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+		super(trainMatrix, testMatrix, fold);
+
+		lRate = initLRate;
 	}
 
 	/**

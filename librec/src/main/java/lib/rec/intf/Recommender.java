@@ -36,37 +36,24 @@ import com.google.common.base.Stopwatch;
  */
 public abstract class Recommender implements Runnable {
 
-	// Algorithm's Name
-	public String algoName;
-	// current fold
-	protected int fold;
-
+	/************************************ Static parameters for all recommenders ***********************************/
 	// configer
 	public static Configer cf;
+	// matrix of rating data
+	public static SparseMat rateMatrix;
 
 	// params used for multiple runs
 	public static Map<String, List<Double>> params;
-
-	protected static double globalMean, initMean, initStd;
 
 	// verbose
 	protected static boolean verbose;
 	// is ranking/rating prediction
 	public static boolean isRankingPred;
+	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
 
-	// {raw-id, inner-id} of users/items mappings
+	// rate DAO object
 	public static DataDAO rateDao;
-
-	// Rating matrix for training and testing
-	public static SparseMat rateMatrix;
-	protected SparseMat trainMatrix, testMatrix;
-
-	// transpose matrix of training matrix, useful if col operations required
-	protected SparseMat trTrainMatrix;
-
-	protected UpperSymmMat corrs;
-	public Map<Measure, Double> measures;
 
 	// number of users, items, ratings
 	protected static int numUsers, numItems, numRates;
@@ -77,35 +64,38 @@ public abstract class Recommender implements Runnable {
 	protected static List<Double> scales;
 	// Maximum, minimum values of rating scales
 	protected static double maxRate, minRate;
+	// init mean and standard deviation
+	protected static double initMean, initStd;
 
+	/************************************ Recommender-specific parameters ****************************************/
+	// algorithm's name
+	public String algoName;
+	// current fold
+	protected int fold;
 	// fold information 
 	protected String foldInfo;
+
+	// rating matrix for training and testing
+	protected SparseMat trainMatrix, testMatrix;
+	// transpose matrix of training matrix, useful if many col operations required
+	protected SparseMat trTrainMatrix;
+
+	// upper symmetric matrix of item-item correlations
+	protected UpperSymmMat corrs;
+
+	// performance measures
+	public Map<Measure, Double> measures;
+	// global average of training rates
+	protected double globalMean;
 
 	public enum Measure {
 		MAE, RMSE, NMAE, ASYMM, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
 	}
 
-	/**
-	 * Constructor for Recommender
-	 * 
-	 * @param trainMatrix
-	 *            train matrix
-	 * @param testMatrix
-	 *            test matrix
-	 */
-	public Recommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
-		this.trainMatrix = trainMatrix;
-		this.testMatrix = testMatrix;
-		this.fold = fold;
-
+	// initialization
+	static {
 		initMean = 0.0;
 		initStd = 0.1;
-
-		// config recommender
-		if (cf == null || rateMatrix == null) {
-			Logs.error("Recommender is not well configed");
-			System.exit(-1);
-		}
 
 		scales = rateDao.getScales();
 		minRate = scales.get(0);
@@ -122,8 +112,28 @@ public abstract class Recommender implements Runnable {
 		numRecs = cf.getInt("num.reclist.len");
 		numIgnore = cf.getInt("num.ignor.items");
 
-		// initial common settings
+		// initial random seed
 		Randoms.seed(1L);
+	}
+
+	/**
+	 * Constructor for Recommender
+	 * 
+	 * @param trainMatrix
+	 *            train matrix
+	 * @param testMatrix
+	 *            test matrix
+	 */
+	public Recommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+		this.trainMatrix = trainMatrix;
+		this.testMatrix = testMatrix;
+		this.fold = fold;
+
+		// config recommender
+		if (cf == null || rateMatrix == null) {
+			Logs.error("Recommender is not well configed");
+			System.exit(-1);
+		}
 
 		// global mean
 		numRates = Matrices.cardinality(trainMatrix);
