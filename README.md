@@ -13,6 +13,7 @@ The implemented recommenders include:
   * PMF: probabilistic matrix factorization
   * SVDPlusPlus: SVD++
   * CLiMF: collaborative less-is-more filtering
+  * SocialMF
 
 
 * lib.rec.baseline
