@@ -204,8 +204,8 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
 						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%s,%s,%s,%s", measures.get(Measure.MAE), measures.get(Measure.RMSE),
-					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
+			evalInfo = String.format("%.3f,%.3f", measures.get(Measure.MAE), measures.get(Measure.RMSE));
+					// measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
 		return evalInfo;
 	}
