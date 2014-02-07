@@ -4,7 +4,6 @@ import lib.rec.data.DenseMat;
 import lib.rec.data.SparseMat;
 import lib.rec.data.SparseVec;
 import lib.rec.intf.SocialRecommender;
-import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.MatrixEntry;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
@@ -30,8 +29,8 @@ public class SocialMF extends SocialRecommender {
 			loss = 0;
 			errs = 0;
 
-			DenseMatrix userSgds = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix itemSgds = new DenseMatrix(numItems, numFactors);
+			DenseMat userSgds = new DenseMat(numUsers, numFactors);
+			DenseMat itemSgds = new DenseMat(numItems, numFactors);
 
 			// rated items
 			for (MatrixEntry me : trainMatrix) {

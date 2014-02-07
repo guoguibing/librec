@@ -1,18 +1,37 @@
 package lib.rec.data;
 
 import happy.coding.math.Randoms;
-import no.uib.cipr.matrix.DenseMatrix;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.Matrix;
 
-public class DenseMat extends DenseMatrix {
+import java.util.Arrays;
+
+import no.uib.cipr.matrix.DenseVector;
+
+/**
+ * Data Structure for DenseMat
+ * 
+ * A big reason that we do not adopt original DenseMatrix from M4J libraray is
+ * because the latter using one-dimensional array to store data, which will
+ * often cause OutOfMemory exception due to the over the maximum length of
+ * one-dimensional Java array.
+ * 
+ * @author guoguibing
+ * 
+ */
+public class DenseMat {
+
+	protected int numRows, numCols;
+	protected double[][] data;
 
 	public DenseMat(int numRows, int numColumns) {
-		super(numRows, numColumns);
+		this.numRows = numRows;
+		this.numCols = numColumns;
+		data = new double[numRows][numColumns];
 	}
 
-	public DenseMat(Matrix A) {
-		super(A);
+	public DenseMat(DenseMat A) {
+		this.numRows = A.numRows;
+		this.numCols = A.numCols;
+		data = Arrays.copyOf(A.data, A.numRows * A.numCols);
 	}
 
 	public DenseMat copy() {
@@ -27,10 +46,9 @@ public class DenseMat extends DenseMatrix {
 	 * when the number of factors is large) which can cause bad performance.
 	 */
 	public void init(double mean, double sigma) {
-
-		double[] data = super.getData();
-		for (int i = 0; i < data.length; i++)
-			data[i] = Randoms.gaussian(mean, sigma);
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numCols; j++)
+				data[i][j] = Randoms.gaussian(mean, sigma);
 	}
 
 	/**
@@ -38,22 +56,34 @@ public class DenseMat extends DenseMatrix {
 	 */
 	public void init() {
 
-		double[] data = super.getData();
-		for (int i = 0; i < data.length; i++)
-			data[i] = Randoms.uniform(0.0, 0.01);
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numCols; j++)
+				data[i][j] = Randoms.uniform(0.0, 0.01);
 	}
 
 	public DenseVector row(int row) {
 
-		DenseVector dv = new DenseVector(numColumns);
+		DenseVector dv = new DenseVector(numCols);
 
-		for (int j = 0; j < numColumns(); j++) {
-			double val = super.get(row, j);
+		for (int j = 0; j < numCols; j++) {
+			double val = data[row][j];
 			if (val != 0.0)
 				dv.set(j, val);
 		}
 
 		return dv;
+	}
+
+	public double[][] getData() {
+		return data;
+	}
+
+	public int numRows() {
+		return numRows;
+	}
+
+	public int numCols() {
+		return numCols;
 	}
 
 	/**
@@ -69,21 +99,48 @@ public class DenseMat extends DenseMatrix {
 	 *            row of the second matrix
 	 * @return inner product of two row vectors
 	 */
-	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
+	public static double rowMult(DenseMat m, int mrow, DenseMat n, int nrow) {
 
-		assert m.numColumns() == n.numColumns();
+		assert m.numCols == n.numCols;
 
 		double result = 0;
 
-		double[] mdata = m.getData();
-		double[] ndata = n.getData();
-
-		// NOTE: the data storage in DenseMatrix is column-wise
-		int mRows = m.numRows(), nRows = n.numRows();
-		for (int j = 0, k = m.numColumns(); j < k; j++)
-			result += mdata[mrow + j * mRows] * ndata[nrow + j * nRows];
+		for (int j = 0, k = m.numCols; j < k; j++)
+			result += m.get(mrow, j) * n.get(nrow, j);
 
 		return result;
+	}
+
+	public double get(int row, int col) {
+		return data[row][col];
+	}
+
+	public void set(int row, int col, double val) {
+		data[row][col] = val;
+	}
+
+	public void add(int row, int col, double val) {
+		data[row][col] += val;
+	}
+
+	public DenseMat scale(double val) {
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numCols; j++)
+				data[i][j] *= val;
+
+		return this;
+	}
+
+	public DenseMat add(DenseMat mat) {
+
+		assert numRows == mat.numRows;
+		assert numCols == mat.numCols;
+
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numCols; j++)
+				data[i][j] += mat.get(i, j);
+
+		return this;
 	}
 
 	/**
@@ -95,7 +152,7 @@ public class DenseMat extends DenseMatrix {
 	 *            value to be set
 	 */
 	public void setRow(int row, double val) {
-		for (int c = 0; c < numColumns; c++)
-			super.set(row, c, val);
+		for (int j = 0; j < numCols; j++)
+			data[row][j] = 0.0;
 	}
 }

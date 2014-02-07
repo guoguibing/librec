@@ -1,9 +1,9 @@
 package lib.rec.core;
 
+import lib.rec.data.DenseMat;
 import lib.rec.data.SparseMat;
 import lib.rec.data.SparseVec;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 
 /**
  * 
@@ -16,7 +16,7 @@ import no.uib.cipr.matrix.sparse.FlexCompRowMatrix;
 public class SlopeOne extends Recommender {
 
 	// matrices for item-item differences with number of occurrences/cardinary 
-	private FlexCompRowMatrix devMatrix, cardMatrix;
+	private DenseMat devMatrix, cardMatrix;
 
 	public SlopeOne(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -26,8 +26,8 @@ public class SlopeOne extends Recommender {
 
 	@Override
 	protected void initModel() {
-		devMatrix = new FlexCompRowMatrix(numItems, numItems);
-		cardMatrix = new FlexCompRowMatrix(numItems, numItems);
+		devMatrix = new DenseMat(numItems, numItems);
+		cardMatrix = new DenseMat(numItems, numItems);
 	}
 
 	@Override

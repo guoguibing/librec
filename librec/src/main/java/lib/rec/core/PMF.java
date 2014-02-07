@@ -1,8 +1,8 @@
 package lib.rec.core;
 
+import lib.rec.data.DenseMat;
 import lib.rec.data.SparseMat;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.DenseMatrix;
 import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
@@ -22,7 +22,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class PMF extends IterativeRecommender {
 
-	protected DenseMatrix userDeltas, itemDeltas;
+	protected DenseMat userDeltas, itemDeltas;
 
 	public PMF(SparseMat rm, SparseMat tm, int fold) {
 		super(rm, tm, fold);
@@ -37,8 +37,8 @@ public class PMF extends IterativeRecommender {
 	public void initModel() {
 		super.initModel();
 
-		userDeltas = new DenseMatrix(numUsers, numFactors);
-		itemDeltas = new DenseMatrix(numItems, numFactors);
+		userDeltas = new DenseMat(numUsers, numFactors);
+		itemDeltas = new DenseMat(numItems, numFactors);
 	}
 
 	@Override
@@ -47,8 +47,8 @@ public class PMF extends IterativeRecommender {
 		// batch updates with momentums
 		for (int iter = 1; iter <= maxIters; iter++) {
 
-			DenseMatrix userSgds = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix itemSgds = new DenseMatrix(numItems, numFactors);
+			DenseMat userSgds = new DenseMat(numUsers, numFactors);
+			DenseMat itemSgds = new DenseMat(numItems, numFactors);
 			loss = 0;
 			errs = 0;
 
@@ -81,8 +81,8 @@ public class PMF extends IterativeRecommender {
 			errs /= numRates;
 			loss /= numRates;
 
-			userDeltas = (DenseMatrix) userDeltas.scale(momentum).add(userSgds.scale(lRate / numRates));
-			itemDeltas = (DenseMatrix) itemDeltas.scale(momentum).add(itemSgds.scale(lRate / numRates));
+			userDeltas.scale(momentum).add(userSgds.scale(lRate / numRates));
+			itemDeltas.scale(momentum).add(itemSgds.scale(lRate / numRates));
 
 			P.add(userDeltas);
 			Q.add(itemDeltas);
