@@ -173,9 +173,9 @@ public abstract class IterativeRecommender extends Recommender {
 		if (Q != null)
 			last_Q = Q.copy();
 		if (userBiases != null)
-			last_UB = userBiases.copy();
+			last_UB = userBiases.clone();
 		if (itemBiases != null)
-			last_IB = itemBiases.copy();
+			last_IB = itemBiases.clone();
 	}
 
 	/**
@@ -190,9 +190,9 @@ public abstract class IterativeRecommender extends Recommender {
 		if (last_Q != null)
 			Q = last_Q.copy();
 		if (last_UB != null)
-			userBiases = last_UB.copy();
+			userBiases = last_UB.clone();
 		if (last_IB != null)
-			itemBiases = last_IB.copy();
+			itemBiases = last_IB.clone();
 	}
 
 	@Override

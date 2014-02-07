@@ -31,7 +31,10 @@ public class DenseMat {
 	public DenseMat(DenseMat A) {
 		this.numRows = A.numRows;
 		this.numCols = A.numCols;
-		data = Arrays.copyOf(A.data, A.numRows * A.numCols);
+
+		data = Arrays.copyOf(A.data, numRows);
+		//for (int i = 0; i < numRows; i++)
+		//data[i] = Arrays.copyOf(A.data[i], numCols);
 	}
 
 	public DenseMat copy() {

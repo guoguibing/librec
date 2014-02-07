@@ -1,23 +1,25 @@
 package lib.rec.data;
 
 import happy.coding.math.Randoms;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.Vector;
 
-public class DenseVec extends DenseVector {
+import java.util.Arrays;
 
-	private static final long serialVersionUID = 1L;
+public class DenseVec {
+
+	protected int size;
+	protected double[] data;
 
 	public DenseVec(int size) {
-		super(size);
+		this.size = size;
+		data = new double[size];
 	}
 
-	public DenseVec(Vector x) {
-		super(x);
+	public DenseVec(DenseVec vec) {
+		this.size = vec.size;
+		data = Arrays.copyOf(vec.data, size);
 	}
 
-	@Override
-	public DenseVec copy() {
+	public DenseVec clone() {
 		return new DenseVec(this);
 	}
 
@@ -25,9 +27,20 @@ public class DenseVec extends DenseVector {
 	 * initialize a dense vector with Gaussian values
 	 */
 	public void init(double mean, double sigma) {
-		double[] data = super.getData();
-		for (int i = 0; i < data.length; i++)
+		for (int i = 0; i < size; i++)
 			data[i] = Randoms.gaussian(mean, sigma);
+	}
+
+	public double get(int idx) {
+		return data[idx];
+	}
+
+	public void set(int idx, double val) {
+		data[idx] = val;
+	}
+
+	public void add(int idx, double val) {
+		data[idx] += val;
 	}
 
 }
