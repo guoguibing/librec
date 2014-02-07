@@ -61,9 +61,9 @@ public abstract class Recommender implements Runnable {
 	// Rating matrix for training and testing
 	public static SparseMat rateMatrix;
 	protected SparseMat trainMatrix, testMatrix;
-	
+
 	// transpose matrix of training matrix, useful if col operations required
-	// protected SparseMat trTrainMatrix;
+	protected SparseMat trTrainMatrix;
 
 	protected UpperSymmMat corrs;
 	public Map<Measure, Double> measures;
@@ -218,18 +218,18 @@ public abstract class Recommender implements Runnable {
 		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
 		int numCount = isUser ? numUsers : numItems;
-		SparseMat tr = isUser ? null : trainMatrix.transpose();
+		if (!isUser && trTrainMatrix == null)
+			trTrainMatrix = trainMatrix.transpose();
 
 		UpperSymmMat corrs = new UpperSymmMat(numCount);
 
 		for (int i = 0; i < numCount; i++) {
-			SparseVec iv = isUser ? trainMatrix.row(i) : tr.row(i);
+			SparseVec iv = isUser ? trainMatrix.row(i) : trTrainMatrix.row(i);
 			if (iv.getUsed() == 0)
 				continue;
 
 			for (int j = i + 1; j < numCount; j++) {
-				// SparseVec jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
-				SparseVec jv = isUser ? trainMatrix.row(j) : tr.row(j);
+				SparseVec jv = isUser ? trainMatrix.row(j) : trTrainMatrix.row(j);
 
 				double sim = compCorr(iv, jv);
 
@@ -440,8 +440,8 @@ public abstract class Recommender implements Runnable {
 			double RR = Measures.RR(rankedItems, correctItems);
 
 			if (isDiverseUsed) {
-				double d5 = diverseAt2(rankedItems, 5);
-				double d10 = diverseAt2(rankedItems, 10);
+				double d5 = diverseAt(rankedItems, 5);
+				double d10 = diverseAt(rankedItems, 10);
 
 				ds5.add(d5);
 				ds10.add(d10);
@@ -583,49 +583,14 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected double diverseAt(List<Integer> rankedItems, int cutoff) {
 
-		int num = 0;
-		double sum = 0.0;
-		for (int id = 0; id < cutoff; id++) {
-			int i = rankedItems.get(id);
-
-			SparseVec iv = trainMatrix.col(i);
-			SparseVec cv = corrs.row(i);
-			int[] cs = cv.getIndex();
-
-			for (int jd = id + 1; jd < cutoff; jd++) {
-				int j = rankedItems.get(jd);
-
-				double corr = 0;
-				int idx = Arrays.binarySearch(cs, j);
-
-				if (idx < 0) {
-					// if not found
-					corr = compCorr(iv, trainMatrix.col(j));
-					corrs.set(i, j, corr);
-
-					// updated vector
-					cv.set(j, corr);
-					cs = cv.getIndex(true);
-				} else
-					corr = cv.get(j);
-
-				if (!Double.isNaN(corr)) {
-					sum += (1 - corr);
-					num++;
-				}
-			}
-		}
-
-		return 0.5 * (sum / num);
-	}
-
-	protected double diverseAt2(List<Integer> rankedItems, int cutoff) {
+		if (trTrainMatrix == null)
+			trTrainMatrix = trainMatrix.transpose();
 
 		int num = 0;
 		double sum = 0.0;
 		for (int id = 0; id < cutoff; id++) {
 			int i = rankedItems.get(id);
-			SparseVec iv = trainMatrix.col(i);
+			SparseVec iv = trTrainMatrix.row(i);
 
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
@@ -633,7 +598,7 @@ public abstract class Recommender implements Runnable {
 				double corr = corrs.get(i, j);
 				if (corr == 0) {
 					// if not found
-					corr = compCorr(iv, trainMatrix.col(j));
+					corr = compCorr(iv, trTrainMatrix.row(j));
 					if (corr != 0)
 						corrs.set(i, j, corr);
 				}
