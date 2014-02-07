@@ -92,31 +92,6 @@ public abstract class Recommender implements Runnable {
 		MAE, RMSE, NMAE, ASYMM, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
 	}
 
-	// initialization
-	static {
-		initMean = 0.0;
-		initStd = 0.1;
-
-		scales = rateDao.getScales();
-		minRate = scales.get(0);
-		maxRate = scales.get(scales.size() - 1);
-
-		numUsers = rateDao.numUsers();
-		numItems = rateDao.numItems();
-
-		verbose = cf.isOn("is.verbose");
-		isRankingPred = cf.isOn("is.ranking.pred");
-		isDiverseUsed = cf.isOn("is.diverse.used");
-
-		// -1 to use as many as possible or disable
-		numRecs = cf.getInt("num.reclist.len");
-		numIgnore = cf.getInt("num.ignor.items");
-
-		// initial random seed
-		int seed = cf.getInt("num.rand.seed");
-		Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
-	}
-
 	/**
 	 * Constructor for Recommender
 	 * 
@@ -146,6 +121,31 @@ public abstract class Recommender implements Runnable {
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
 			corrs = new UpperSymmMat(numItems);
+
+		// static initialization, only done once
+		if (scales == null) {
+			initMean = 0.0;
+			initStd = 0.1;
+
+			scales = rateDao.getScales();
+			minRate = scales.get(0);
+			maxRate = scales.get(scales.size() - 1);
+
+			numUsers = rateDao.numUsers();
+			numItems = rateDao.numItems();
+
+			verbose = cf.isOn("is.verbose");
+			isRankingPred = cf.isOn("is.ranking.pred");
+			isDiverseUsed = cf.isOn("is.diverse.used");
+
+			// -1 to use as many as possible or disable
+			numRecs = cf.getInt("num.reclist.len");
+			numIgnore = cf.getInt("num.ignor.items");
+
+			// initial random seed
+			int seed = cf.getInt("num.rand.seed");
+			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
+		}
 	}
 
 	public void run() {
