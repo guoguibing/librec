@@ -113,7 +113,8 @@ public abstract class Recommender implements Runnable {
 		numIgnore = cf.getInt("num.ignor.items");
 
 		// initial random seed
-		Randoms.seed(1L);
+		int seed = cf.getInt("num.rand.seed");
+		Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
 	}
 
 	/**
