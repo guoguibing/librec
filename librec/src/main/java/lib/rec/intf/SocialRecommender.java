@@ -1,5 +1,6 @@
 package lib.rec.intf;
 
+import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import lib.rec.data.DataDAO;
 import lib.rec.data.SparseMatrix;
@@ -25,7 +26,11 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// initialization
 	static {
 		regS = cf.getDouble("val.reg.social");
-		socialDao = new DataDAO(cf.getPath("dataset.social"), rateDao.getUserIds());
+
+		String socialPath = cf.getPath("dataset.social");
+		Logs.debug("Social dataset: {}", Strings.last(socialPath, 38));
+
+		socialDao = new DataDAO(socialPath, rateDao.getUserIds());
 
 		try {
 			socialMatrix = socialDao.readData();
@@ -35,11 +40,11 @@ public abstract class SocialRecommender extends IterativeRecommender {
 			System.exit(-1);
 		}
 	}
-	
+
 	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 	}
-	
+
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { initLRate, regU, regI, regS, numFactors, maxIters, isBoldDriver }, ",");
