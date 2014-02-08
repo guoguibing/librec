@@ -31,23 +31,24 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
-	// row/col non-zero ind
-	protected int[][] rnzs, cnzs;
-
 	public SparseMatrix(int rows, int cols, int[][] rnz, int[][] cnz) {
 		numRows = rows;
 		numCols = cols;
-		rnzs = rnz;
-		cnzs = cnz;
 
 		construct(rnz, cnz);
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
-		this(mat.numRows, mat.numCols, mat.rnzs, mat.cnzs);
+		numRows = mat.numRows;
+		numCols = mat.numCols;
 
-		for (MatrixEntry me : mat)
-			this.set(me.row(), me.column(), me.get());
+		rowData = Arrays.copyOf(mat.rowData, mat.rowData.length);
+		rowPtr = Arrays.copyOf(mat.rowPtr, mat.rowPtr.length);
+		colInd = Arrays.copyOf(mat.colInd, mat.colInd.length);
+
+		colData = Arrays.copyOf(mat.colData, mat.colData.length);
+		colPtr = Arrays.copyOf(mat.colPtr, mat.colPtr.length);
+		rowInd = Arrays.copyOf(mat.rowInd, mat.rowInd.length);
 	}
 
 	public SparseMatrix clone() {
@@ -270,7 +271,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("\n");
+		sb.append(String.format("%d\t%d\n", new Object[] { rowData.length, size() }));
 
 		for (MatrixEntry me : this)
 			if (me.get() != 0)
