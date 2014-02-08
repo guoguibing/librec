@@ -10,6 +10,9 @@ import lib.rec.intf.SocialRecommender;
  * Yang et al., <strong>Social Collaborative Filtering by Trust</strong>, IJCAI
  * 2013.
  * 
+ * <strong>NOTE:</strong> to have a fair comparison with other approaches, we do
+ * not use the "weighted-lambda-regularization" as the paper did.
+ * 
  * @author guoguibing
  * 
  */
