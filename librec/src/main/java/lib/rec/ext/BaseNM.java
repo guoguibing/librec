@@ -11,24 +11,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import lib.rec.data.DenseVec;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
-import lib.rec.data.UpperSymmMat;
+import lib.rec.data.DenseVector;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
+import lib.rec.data.SymmMatrix;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 public class BaseNM extends IterativeRecommender {
 
-	protected UpperSymmMat itemCorrs, last_S;
+	protected SymmMatrix itemCorrs, last_S;
 	protected boolean isPosOnly;
 	protected double minSim;
 
 	protected String dirPath;
 	protected boolean isMem;
 
-	public BaseNM(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public BaseNM(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "BaseNM";
@@ -44,19 +43,19 @@ public class BaseNM extends IterativeRecommender {
 	protected void updates() {
 		super.updates();
 		if (itemCorrs != null)
-			last_S = itemCorrs.copy();
+			last_S = itemCorrs.clone();
 	}
 
 	@Override
 	protected void undos(int iter) {
 		super.undos(iter);
 		if (last_S != null)
-			itemCorrs = last_S.copy();
+			itemCorrs = last_S.clone();
 	}
 
 	private void initItemCorrsMem() {
 		// item correlation matrix
-		itemCorrs = new UpperSymmMat(numItems);
+		itemCorrs = new SymmMatrix(numItems);
 
 		// ignore items without any training ratings: can greatly reduce memory usage
 		Set<Integer> items = new HashSet<>();
@@ -114,8 +113,8 @@ public class BaseNM extends IterativeRecommender {
 	protected void initModel() {
 
 		// user, item biases
-		userBiases = new DenseVec(numUsers);
-		itemBiases = new DenseVec(numItems);
+		userBiases = new DenseVector(numUsers);
+		itemBiases = new DenseVector(numItems);
 
 		userBiases.init(initMean, initStd);
 		itemBiases.init(initMean, initStd);
@@ -145,7 +144,7 @@ public class BaseNM extends IterativeRecommender {
 					continue;
 
 				// a set of similar items
-				SparseVec uv = trainMatrix.row(u, j);
+				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (itemCorrs.get(j, i) > minSim)
@@ -218,14 +217,14 @@ public class BaseNM extends IterativeRecommender {
 					continue;
 
 				// a set of similar items
-				SparseVec cv = getCorrVector(j);
+				SparseVector cv = getCorrVector(j);
 
-				SparseVec uv = trainMatrix.row(u, j);
+				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 
-				Map<Integer, SparseVec> itemVectors = new HashMap<>();
+				Map<Integer, SparseVector> itemVectors = new HashMap<>();
 				for (int i : uv.getIndex()) {
-					SparseVec sv = null;
+					SparseVector sv = null;
 					double sji = i > j ? cv.get(i) : (sv = getCorrVector(i)).get(j);
 					if (sji != 0 && sji > minSim) {
 						items.add(i);
@@ -256,7 +255,7 @@ public class BaseNM extends IterativeRecommender {
 
 				// update similarity frist since bu and bj are used here
 				for (int i : items) {
-					SparseVec sv = null;
+					SparseVector sv = null;
 					double sji = i > j ? cv.get(i) : (sv = itemVectors.get(i)).get(j);
 					double rui = uv.get(i);
 					double bui = globalMean + bu + itemBiases.get(i);
@@ -295,7 +294,7 @@ public class BaseNM extends IterativeRecommender {
 		}// end of training
 	}
 
-	protected void updateCorrVector(int j, SparseVec corrVec) throws Exception {
+	protected void updateCorrVector(int j, SparseVector corrVec) throws Exception {
 		StringBuilder sb = new StringBuilder();
 
 		for (int i : corrVec.getIndex()) {
@@ -307,8 +306,8 @@ public class BaseNM extends IterativeRecommender {
 		FileIO.writeString(dirPath + j + ".txt", sb.toString());
 	}
 
-	protected SparseVec getCorrVector(int j) {
-		SparseVec iv = new SparseVec(numItems);
+	protected SparseVector getCorrVector(int j) {
+		SparseVector iv = new SparseVector(numItems);
 
 		// read data
 		BufferedReader br = null;
@@ -356,7 +355,7 @@ public class BaseNM extends IterativeRecommender {
 			cv = getCorrVector(j);
 
 		// get a number of similar items except item j
-		SparseVec uv = trainMatrix.row(u, j);
+		SparseVector uv = trainMatrix.row(u, j);
 		int[] items = uv.getIndex();
 
 		int k = 0;

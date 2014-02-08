@@ -5,8 +5,8 @@ import happy.coding.math.Stats;
 import java.util.HashMap;
 import java.util.Map;
 
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.Recommender;
 
 /**
@@ -19,7 +19,7 @@ public class ItemAverage extends Recommender {
 
 	private Map<Integer, Double> itemMeans;
 
-	public ItemAverage(SparseMat rm, SparseMat tm, int fold) {
+	public ItemAverage(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		itemMeans = new HashMap<>();
@@ -31,7 +31,7 @@ public class ItemAverage extends Recommender {
 		if (itemMeans.containsKey(j))
 			return itemMeans.get(j);
 
-		SparseVec jv = trainMatrix.col(j);
+		SparseVector jv = trainMatrix.col(j);
 		int numRated = jv.getUsed();
 		double itemMean = numRated > 0 ? Stats.sum(jv.getData()) / numRated : globalMean;
 		itemMeans.put(j, itemMean);

@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.Recommender;
 
 import com.google.common.collect.HashBasedTable;
@@ -32,7 +32,7 @@ public class Hybrid extends Recommender {
 	Map<Integer, Integer> itemDegrees = new HashMap<>();
 	double maxProb = Double.MIN_VALUE, maxHeat = Double.MIN_VALUE;
 
-	public Hybrid(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public Hybrid(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Hybrid(HeatS+ProbS)";
@@ -58,13 +58,13 @@ public class Hybrid extends Recommender {
 			heatScores.clear();
 			probScores.clear();
 
-			SparseVec uv = trainMatrix.row(u);
+			SparseVector uv = trainMatrix.row(u);
 			List<Integer> items = Lists.toList(uv.getIndex());
 
 			// distribute resources to users, including user u
 			Map<Integer, Double> userResources = new HashMap<>();
 			for (int v = 0; v < numUsers; v++) {
-				SparseVec vv = trainMatrix.row(v);
+				SparseVector vv = trainMatrix.row(v);
 				double sum = 0.0;
 				int kj = vv.getUsed();
 				for (int item : vv.getIndex())
@@ -77,7 +77,7 @@ public class Hybrid extends Recommender {
 			// redistribute resources to items
 			maxHeat = Double.MIN_VALUE;
 			for (int i = 0; i < numItems; i++) {
-				SparseVec iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.col(i);
 				double sum = 0;
 				int kj = iv.getUsed();
 				for (int user : iv.getIndex())
@@ -93,7 +93,7 @@ public class Hybrid extends Recommender {
 			// prob scores
 			userResources.clear();
 			for (int v = 0; v < numUsers; v++) {
-				SparseVec vv = trainMatrix.row(v);
+				SparseVector vv = trainMatrix.row(v);
 				double sum = 0.0;
 				for (int item : vv.getIndex())
 					sum += items.contains(item) ? 1.0 / itemDegrees.get(item) : 0.0;
@@ -103,7 +103,7 @@ public class Hybrid extends Recommender {
 
 			maxProb = Double.MIN_VALUE;
 			for (int i = 0; i < numItems; i++) {
-				SparseVec iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.col(i);
 				double score = 0;
 				for (int user : iv.getIndex())
 					score += userResources.get(user) / userDegrees.get(user);
@@ -126,13 +126,13 @@ public class Hybrid extends Recommender {
 			// new user
 			userItemRanks.clear();
 
-			SparseVec uv = trainMatrix.row(u);
+			SparseVector uv = trainMatrix.row(u);
 			List<Integer> items = Lists.toList(uv.getIndex());
 
 			// distribute resources to users, including user u
 			Map<Integer, Double> userResources = new HashMap<>();
 			for (int v = 0; v < numUsers; v++) {
-				SparseVec vv = trainMatrix.row(v);
+				SparseVector vv = trainMatrix.row(v);
 				double sum = 0;
 				int kj = vv.getUsed();
 				for (int item : vv.getIndex()) {
@@ -149,7 +149,7 @@ public class Hybrid extends Recommender {
 				if (items.contains(i))
 					continue;
 
-				SparseVec iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.col(i);
 				double sum = 0;
 				for (int user : iv.getIndex())
 					sum += userResources.containsKey(user) ? userResources.get(user) : 0.0;
@@ -171,13 +171,13 @@ public class Hybrid extends Recommender {
 
 			userItemRanks.clear();
 
-			SparseVec uv = trainMatrix.row(u);
+			SparseVector uv = trainMatrix.row(u);
 			List<Integer> items = Lists.toList(uv.getIndex());
 
 			// distribute resources to users, including user u
 			Map<Integer, Double> userResources = new HashMap<>();
 			for (int v = 0; v < numUsers; v++) {
-				SparseVec vv = trainMatrix.row(v);
+				SparseVector vv = trainMatrix.row(v);
 				double sum = 0;
 				for (int item : vv.getIndex()) {
 					if (items.contains(item))
@@ -192,7 +192,7 @@ public class Hybrid extends Recommender {
 				if (items.contains(i))
 					continue;
 
-				SparseVec iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.col(i);
 				double sum = 0;
 				for (int user : iv.getIndex())
 					sum += userResources.get(user) / userDegrees.get(user);

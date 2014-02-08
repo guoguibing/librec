@@ -21,11 +21,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import lib.rec.data.DataDAO;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
-import lib.rec.data.UpperSymmMat;
-import no.uib.cipr.matrix.Matrices;
-import no.uib.cipr.matrix.MatrixEntry;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
+import lib.rec.data.SymmMatrix;
 
 import com.google.common.base.Stopwatch;
 
@@ -40,7 +39,7 @@ public abstract class Recommender implements Runnable {
 	// configer
 	public static Configer cf;
 	// matrix of rating data
-	public static SparseMat rateMatrix;
+	public static SparseMatrix rateMatrix;
 
 	// params used for multiple runs
 	public static Map<String, List<Double>> params;
@@ -76,12 +75,10 @@ public abstract class Recommender implements Runnable {
 	protected String foldInfo;
 
 	// rating matrix for training and testing
-	protected SparseMat trainMatrix, testMatrix;
-	// transpose matrix of training matrix, useful if many col operations required
-	protected SparseMat trTrainMatrix;
+	protected SparseMatrix trainMatrix, testMatrix;
 
 	// upper symmetric matrix of item-item correlations
-	protected UpperSymmMat corrs;
+	protected SymmMatrix corrs;
 
 	// performance measures
 	public Map<Measure, Double> measures;
@@ -100,7 +97,7 @@ public abstract class Recommender implements Runnable {
 	 * @param testMatrix
 	 *            test matrix
 	 */
-	public Recommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		this.trainMatrix = trainMatrix;
 		this.testMatrix = testMatrix;
 		this.fold = fold;
@@ -112,7 +109,7 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// global mean
-		numRates = Matrices.cardinality(trainMatrix);
+		numRates = trainMatrix.size();
 		globalMean = Stats.sum(trainMatrix.getData()) / numRates;
 
 		// fold info
@@ -120,7 +117,7 @@ public abstract class Recommender implements Runnable {
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
-			corrs = new UpperSymmMat(numItems);
+			corrs = new SymmMatrix(numItems);
 
 		// static initialization, only done once
 		if (scales == null) {
@@ -225,22 +222,19 @@ public abstract class Recommender implements Runnable {
 	 * @return a upper symmetric matrix with user-user or item-item coefficients
 	 * 
 	 */
-	protected UpperSymmMat buildCorrs(boolean isUser) {
+	protected SymmMatrix buildCorrs(boolean isUser) {
 		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
 		int numCount = isUser ? numUsers : numItems;
-		if (!isUser && trTrainMatrix == null)
-			trTrainMatrix = trainMatrix.transpose();
-
-		UpperSymmMat corrs = new UpperSymmMat(numCount);
+		SymmMatrix corrs = new SymmMatrix(numCount);
 
 		for (int i = 0; i < numCount; i++) {
-			SparseVec iv = isUser ? trainMatrix.row(i) : trTrainMatrix.row(i);
+			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.col(i);
 			if (iv.getUsed() == 0)
 				continue;
 
 			for (int j = i + 1; j < numCount; j++) {
-				SparseVec jv = isUser ? trainMatrix.row(j) : trTrainMatrix.row(j);
+				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
 
 				double sim = compCorr(iv, jv);
 
@@ -261,7 +255,7 @@ public abstract class Recommender implements Runnable {
 	 *            vector j
 	 * @return the correlation between vectors i and j
 	 */
-	protected double compCorr(SparseVec iv, SparseVec jv) {
+	protected double compCorr(SparseVector iv, SparseVector jv) {
 
 		// compute similarity
 		List<Double> is = new ArrayList<>();
@@ -410,7 +404,7 @@ public abstract class Recommender implements Runnable {
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
 			// get positive items from testing data
-			SparseVec tv = testMatrix.row(u);
+			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
 			for (Integer j : tv.getIndex()) {
 				// intersect with the candidate items
@@ -430,7 +424,7 @@ public abstract class Recommender implements Runnable {
 				continue; // no testing data for user u
 
 			// get rated items from training data
-			SparseVec rv = trainMatrix.row(u);
+			SparseVector rv = trainMatrix.row(u);
 			List<Integer> ratedItems = new ArrayList<>();
 			for (Integer j : rv.getIndex()) {
 				if (candItems.contains(j))
@@ -594,14 +588,11 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected double diverseAt(List<Integer> rankedItems, int cutoff) {
 
-		if (trTrainMatrix == null)
-			trTrainMatrix = trainMatrix.transpose();
-
 		int num = 0;
 		double sum = 0.0;
 		for (int id = 0; id < cutoff; id++) {
 			int i = rankedItems.get(id);
-			SparseVec iv = trTrainMatrix.row(i);
+			SparseVector iv = trainMatrix.col(i);
 
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
@@ -609,7 +600,7 @@ public abstract class Recommender implements Runnable {
 				double corr = corrs.get(i, j);
 				if (corr == 0) {
 					// if not found
-					corr = compCorr(iv, trTrainMatrix.row(j));
+					corr = compCorr(iv, trainMatrix.col(j));
 					if (corr != 0)
 						corrs.set(i, j, corr);
 				}

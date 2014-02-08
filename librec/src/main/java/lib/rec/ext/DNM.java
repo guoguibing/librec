@@ -6,16 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import lib.rec.RecUtils;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
-import no.uib.cipr.matrix.MatrixEntry;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 
 public class DNM extends BaseNM {
 
 	// diversity parameter
 	private double alpha;
 
-	public DNM(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public DNM(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "DNM";
@@ -39,7 +39,7 @@ public class DNM extends BaseNM {
 					continue;
 
 				// a set of rated and similar items
-				SparseVec uv = trainMatrix.row( u, j);
+				SparseVector uv = trainMatrix.row( u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (itemCorrs.get(j, i) > minSim)
@@ -118,13 +118,13 @@ public class DNM extends BaseNM {
 					continue;
 				
 				// a set of rated and similar items
-				SparseVec cv = getCorrVector(j);
-				SparseVec uv = trainMatrix.row( u, j);
+				SparseVector cv = getCorrVector(j);
+				SparseVector uv = trainMatrix.row( u, j);
 				List<Integer> items = new ArrayList<>();
 				
-				Map<Integer, SparseVec> itemVecs = new HashMap<>();
+				Map<Integer, SparseVector> itemVecs = new HashMap<>();
 				for (int i : uv.getIndex()) {
-					SparseVec sv = null;
+					SparseVector sv = null;
 					double sji = i > j ? cv.get(i) : (sv = getCorrVector(i)).get(j);
 					if (sji != 0 && sji > minSim) {
 						items.add(i);
@@ -158,7 +158,7 @@ public class DNM extends BaseNM {
 				
 				// update similarity
 				for (int i : items) {
-					SparseVec sv = null;
+					SparseVector sv = null;
 					double sji = i > j ? cv.get(i) : (sv = itemVecs.get(i)).get(j);
 					double rui = uv.get(i);
 					double bi = itemBiases.get(i);

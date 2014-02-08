@@ -10,27 +10,23 @@ import happy.coding.system.Systems;
 import java.util.ArrayList;
 import java.util.List;
 
-import no.uib.cipr.matrix.Matrices;
-import no.uib.cipr.matrix.sparse.CompRowMatrix;
-import no.uib.cipr.matrix.sparse.SparseVector;
-
 public class DataSplitter {
 
 	// [row-id, col-id, rate]
-	private SparseMat rateMatrix;
+	private SparseMatrix rateMatrix;
 
 	// [row-id, col-id, fold-id]
-	private SparseMat assignMatrix;
+	private SparseMatrix assignMatrix;
 
 	private int numFold;
 
-	public DataSplitter(SparseMat rateMatrix, int kfold) {
+	public DataSplitter(SparseMatrix rateMatrix, int kfold) {
 		this.rateMatrix = rateMatrix;
 
 		splitFolds(kfold);
 	}
 
-	public DataSplitter(SparseMat rateMatrix) {
+	public DataSplitter(SparseMatrix rateMatrix) {
 		this.rateMatrix = rateMatrix;
 	}
 
@@ -43,7 +39,7 @@ public class DataSplitter {
 	private void splitFolds(int kfold) {
 		assert kfold > 0;
 
-		assignMatrix = new SparseMat(rateMatrix);
+		assignMatrix = new SparseMatrix(rateMatrix);
 
 		int numRates = rateMatrix.getData().length;
 		numFold = kfold > numRates ? numRates : kfold;
@@ -79,12 +75,12 @@ public class DataSplitter {
 	 * @param ratio
 	 *            the ratio of testing data over all the ratings.
 	 */
-	public SparseMat[] getRatio(double ratio) {
+	public SparseMatrix[] getRatio(double ratio) {
 
 		assert (ratio > 0 && ratio <= 1);
 
-		SparseMat trainMatrix = new SparseMat(rateMatrix);
-		SparseMat testMatrix = new SparseMat(rateMatrix);
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -101,7 +97,7 @@ public class DataSplitter {
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
-		return new SparseMat[] { trainMatrix, testMatrix };
+		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
 	/**
@@ -154,12 +150,12 @@ public class DataSplitter {
 	 *            The index for desired fold.
 	 * @return Rating matrices {k-th train data, k-th test data}
 	 */
-	public SparseMat[] getKthFold(int k) {
+	public SparseMatrix[] getKthFold(int k) {
 		if (k > numFold || k < 1)
 			return null;
 
-		SparseMat trainMatrix = new SparseMat(rateMatrix);
-		SparseMat testMatrix = new SparseMat(rateMatrix);
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -175,16 +171,16 @@ public class DataSplitter {
 
 		debugInfo(trainMatrix, testMatrix, k);
 
-		return new SparseMat[] { trainMatrix, testMatrix };
+		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
 	/**
 	 * print out debug information
 	 */
-	private void debugInfo(CompRowMatrix trainMatrix, CompRowMatrix testMatrix, int fold) {
+	private void debugInfo(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		String foldInfo = fold > 0 ? "Fold [" + fold + "]: " : "";
-		Logs.debug("{}training amount: {}, testing amount: {}", foldInfo, Matrices.cardinality(trainMatrix),
-				Matrices.cardinality(testMatrix));
+		Logs.debug("{}training amount: {}, testing amount: {}", foldInfo, trainMatrix.size(),
+				testMatrix.size());
 
 		if (Debug.OFF) {
 			String dir = Systems.getDesktop();

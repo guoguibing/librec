@@ -4,17 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lib.rec.RecUtils;
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
-import no.uib.cipr.matrix.MatrixEntry;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 
 public class DMF extends BaseMF {
 
 	// diversity parameter
 	private double alpha;
 
-	public DMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public DMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "DMF";
@@ -58,11 +58,11 @@ public class DMF extends BaseMF {
 				loss += regI * bj * bj;
 
 				// rated items by user u
-				SparseVec uv = trainMatrix.row(u, j);
+				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (i != j) {
-						double sji = DenseMat.rowMult(P, j, Q, i);
+						double sji = DenseMatrix.rowMult(P, j, Q, i);
 						if (sji > minSim)
 							items.add(i);
 					}
@@ -81,7 +81,7 @@ public class DMF extends BaseMF {
 						double pif = P.get(i, f);
 						sum_q += qif;
 
-						double sji = DenseMat.rowMult(P, j, Q, i);
+						double sji = DenseMatrix.rowMult(P, j, Q, i);
 						sum_s += 2 * (1 - sji) * (pjf - pif) - qif * Math.pow(pjf - pif, 2);
 					}
 

@@ -1,7 +1,7 @@
 package lib.rec.core;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.SparseMatrix;
 
 /**
  * Yang et al., <strong>Social Collaborative Filtering by Trust</strong>, IJCAI
@@ -12,9 +12,9 @@ import lib.rec.data.SparseMat;
  */
 public class TrustMF extends SocialMF {
 
-	protected DenseMat B, W;
+	protected DenseMatrix B, W;
 
-	public TrustMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public TrustMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "TrustMF";
@@ -24,20 +24,15 @@ public class TrustMF extends SocialMF {
 	protected void initModel() {
 		super.initModel();
 
-		B = new DenseMat(numUsers, numFactors);
-		W = new DenseMat(numUsers, numFactors);
+		B = new DenseMatrix(numUsers, numFactors);
+		W = new DenseMatrix(numUsers, numFactors);
 
 		B.init(initMean, initStd);
 		W.init(initMean, initStd);
 
-		for (int u = 0; u < numUsers; u++) {
+		for (int u = 0; u < numUsers; u++) 
 			if (socialMatrix.rowSize(u) == 0)
 				B.setRow(u, 0.0);
-
-			if (trSocialMatrix.rowSize(u) == 0)
-				W.setRow(u, 0.0);
-		}
-
 	}
 
 	@Override

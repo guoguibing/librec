@@ -7,15 +7,15 @@ import java.util.Map;
 
 import lib.rec.RecUtils;
 import lib.rec.core.CLiMF;
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 
 public class DRMPlus extends CLiMF {
 
 	protected double alpha;
 
-	public DRMPlus(SparseMat rm, SparseMat tm, int fold) {
+	public DRMPlus(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "DRMPlus";
@@ -34,7 +34,7 @@ public class DRMPlus extends CLiMF {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVec uv = trainMatrix.row(u);
+				SparseVector uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
 				double w = Math.sqrt(uv.getUsed());
 
@@ -89,7 +89,7 @@ public class DRMPlus extends CLiMF {
 							sgd += gd(-x) * (1.0 / (1 - g(x)) - 1.0 / (1 - g(-x))) * puf;
 
 							double qkf = Q.get(k, f);
-							double sji = DenseMat.rowMult(Q, j, Q, k);
+							double sji = DenseMatrix.rowMult(Q, j, Q, k);
 
 							double sgd_d = 2 * (1 - sji) * (qjf - qkf) - qkf * Math.pow(qjf - qkf, 2);
 							sgd += 0.5 * alpha * sgd_d / w;
@@ -125,7 +125,7 @@ public class DRMPlus extends CLiMF {
 							double fui = predict(u, i);
 							loss += Math.log(1 - g(fui - fuj));
 
-							double sji = DenseMat.rowMult(Q, j, Q, i);
+							double sji = DenseMatrix.rowMult(Q, j, Q, i);
 
 							double sum = 0;
 							for (int f = 0; f < numFactors; f++)

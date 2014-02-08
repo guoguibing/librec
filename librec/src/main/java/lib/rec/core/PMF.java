@@ -1,9 +1,9 @@
 package lib.rec.core;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * Ruslan Salakhutdinov and Andriy Mnih, <strong>Probabilistic Matrix
@@ -22,9 +22,9 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class PMF extends IterativeRecommender {
 
-	protected DenseMat userDeltas, itemDeltas;
+	protected DenseMatrix userDeltas, itemDeltas;
 
-	public PMF(SparseMat rm, SparseMat tm, int fold) {
+	public PMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "PMF";
@@ -37,8 +37,8 @@ public class PMF extends IterativeRecommender {
 	public void initModel() {
 		super.initModel();
 
-		userDeltas = new DenseMat(numUsers, numFactors);
-		itemDeltas = new DenseMat(numItems, numFactors);
+		userDeltas = new DenseMatrix(numUsers, numFactors);
+		itemDeltas = new DenseMatrix(numItems, numFactors);
 	}
 
 	@Override
@@ -47,8 +47,8 @@ public class PMF extends IterativeRecommender {
 		// batch updates with momentums
 		for (int iter = 1; iter <= maxIters; iter++) {
 
-			DenseMat userSgds = new DenseMat(numUsers, numFactors);
-			DenseMat itemSgds = new DenseMat(numItems, numFactors);
+			DenseMatrix userSgds = new DenseMatrix(numUsers, numFactors);
+			DenseMatrix itemSgds = new DenseMatrix(numItems, numFactors);
 			loss = 0;
 			errs = 0;
 

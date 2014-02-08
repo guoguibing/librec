@@ -4,23 +4,29 @@ import happy.coding.math.Randoms;
 
 import java.util.Arrays;
 
-public class DenseVec {
+/**
+ * Data Structure: dense vector
+ * 
+ * @author guoguibing
+ *
+ */
+public class DenseVector {
 
 	protected int size;
 	protected double[] data;
 
-	public DenseVec(int size) {
+	public DenseVector(int size) {
 		this.size = size;
 		data = new double[size];
 	}
 
-	public DenseVec(DenseVec vec) {
+	public DenseVector(DenseVector vec) {
 		this.size = vec.size;
-		data = Arrays.copyOf(vec.data, size);
+		data = Arrays.copyOf(vec.data, vec.data.length);
 	}
 
-	public DenseVec clone() {
-		return new DenseVec(this);
+	public DenseVector clone() {
+		return new DenseVector(this);
 	}
 
 	/**

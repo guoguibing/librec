@@ -7,14 +7,14 @@ import java.util.Map;
 
 import lib.rec.RecUtils;
 import lib.rec.core.CLiMF;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 
 public class DRM extends CLiMF {
 
 	protected double alpha;
 
-	public DRM(SparseMat rm, SparseMat tm, int fold) {
+	public DRM(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "DRM";
@@ -33,7 +33,7 @@ public class DRM extends CLiMF {
 			for (int u = 0; u < numUsers; u++) {
 
 				// all user u's ratings
-				SparseVec uv = trainMatrix.row(u);
+				SparseVector uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
 				double w = Math.sqrt(uv.getUsed());
 

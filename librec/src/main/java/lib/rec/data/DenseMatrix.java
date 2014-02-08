@@ -4,10 +4,8 @@ import happy.coding.math.Randoms;
 
 import java.util.Arrays;
 
-import no.uib.cipr.matrix.DenseVector;
-
 /**
- * Data Structure for DenseMat
+ * Data Structure: dense matrix
  * 
  * A big reason that we do not adopt original DenseMatrix from M4J libraray is
  * because the latter using one-dimensional array to store data, which will
@@ -17,28 +15,34 @@ import no.uib.cipr.matrix.DenseVector;
  * @author guoguibing
  * 
  */
-public class DenseMat {
+public class DenseMatrix {
 
 	protected int numRows, numCols;
 	protected double[][] data;
 
-	public DenseMat(int numRows, int numColumns) {
+	public DenseMatrix(int numRows, int numColumns) {
 		this.numRows = numRows;
 		this.numCols = numColumns;
+
 		data = new double[numRows][numColumns];
 	}
 
-	public DenseMat(DenseMat A) {
-		this.numRows = A.numRows;
-		this.numCols = A.numCols;
+	public DenseMatrix(double[][] array) {
+		this.numRows = array.length;
+		this.numCols = array[0].length;
 
-		data = Arrays.copyOf(A.data, numRows);
-		//for (int i = 0; i < numRows; i++)
-		//data[i] = Arrays.copyOf(A.data[i], numCols);
+		data = Arrays.copyOf(array, array.length);
 	}
 
-	public DenseMat copy() {
-		return new DenseMat(this);
+	public DenseMatrix(DenseMatrix mat) {
+		this.numRows = mat.numRows;
+		this.numCols = mat.numCols;
+
+		data = Arrays.copyOf(mat.data, mat.data.length);
+	}
+
+	public DenseMatrix clone() {
+		return new DenseMatrix(this);
 	}
 
 	/**
@@ -62,19 +66,6 @@ public class DenseMat {
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numCols; j++)
 				data[i][j] = Randoms.uniform(0.0, 0.01);
-	}
-
-	public DenseVector row(int row) {
-
-		DenseVector dv = new DenseVector(numCols);
-
-		for (int j = 0; j < numCols; j++) {
-			double val = data[row][j];
-			if (val != 0.0)
-				dv.set(j, val);
-		}
-
-		return dv;
 	}
 
 	public double[][] getData() {
@@ -102,7 +93,7 @@ public class DenseMat {
 	 *            row of the second matrix
 	 * @return inner product of two row vectors
 	 */
-	public static double rowMult(DenseMat m, int mrow, DenseMat n, int nrow) {
+	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
 
 		assert m.numCols == n.numCols;
 
@@ -126,7 +117,7 @@ public class DenseMat {
 		data[row][col] += val;
 	}
 
-	public DenseMat scale(double val) {
+	public DenseMatrix scale(double val) {
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numCols; j++)
 				data[i][j] *= val;
@@ -134,7 +125,7 @@ public class DenseMat {
 		return this;
 	}
 
-	public DenseMat add(DenseMat mat) {
+	public DenseMatrix add(DenseMatrix mat) {
 
 		assert numRows == mat.numRows;
 		assert numCols == mat.numCols;
@@ -155,7 +146,6 @@ public class DenseMat {
 	 *            value to be set
 	 */
 	public void setRow(int row, double val) {
-		for (int j = 0; j < numCols; j++)
-			data[row][j] = 0.0;
+		Arrays.fill(data[row], val);
 	}
 }

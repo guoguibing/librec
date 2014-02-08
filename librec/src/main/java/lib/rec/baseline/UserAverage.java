@@ -5,9 +5,9 @@ import happy.coding.math.Stats;
 import java.util.HashMap;
 import java.util.Map;
 
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.Recommender;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * Baseline: predict by the average of target user's ratings
@@ -19,7 +19,7 @@ public class UserAverage extends Recommender {
 
 	private Map<Integer, Double> userMeans;
 
-	public UserAverage(SparseMat rm, SparseMat tm, int fold) {
+	public UserAverage(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "UserAvg";

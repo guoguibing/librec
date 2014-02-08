@@ -29,7 +29,7 @@ import lib.rec.core.SlopeOne;
 import lib.rec.core.SocialMF;
 import lib.rec.data.DataDAO;
 import lib.rec.data.DataSplitter;
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
 import lib.rec.ext.BaseMF;
 import lib.rec.ext.BaseNM;
 import lib.rec.ext.DMF;
@@ -57,7 +57,7 @@ public class LibRec {
 	public static boolean isMultRun = false;
 
 	// rating matrix
-	private static SparseMat rateMatrix = null;
+	private static SparseMatrix rateMatrix = null;
 
 	public static void main(String[] args) throws Exception {
 		// config logger
@@ -190,9 +190,9 @@ public class LibRec {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(SparseMat[] data, int fold) throws Exception {
+	private static Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
 
-		SparseMat trainMatrix = data[0], testMatrix = data[1];
+		SparseMatrix trainMatrix = data[0], testMatrix = data[1];
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {

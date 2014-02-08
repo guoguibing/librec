@@ -1,8 +1,8 @@
 package lib.rec.core;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.Recommender;
 
 /**
@@ -16,9 +16,9 @@ import lib.rec.intf.Recommender;
 public class SlopeOne extends Recommender {
 
 	// matrices for item-item differences with number of occurrences/cardinary 
-	private DenseMat devMatrix, cardMatrix;
+	private DenseMatrix devMatrix, cardMatrix;
 
-	public SlopeOne(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public SlopeOne(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SlopeOne";
@@ -26,8 +26,8 @@ public class SlopeOne extends Recommender {
 
 	@Override
 	protected void initModel() {
-		devMatrix = new DenseMat(numItems, numItems);
-		cardMatrix = new DenseMat(numItems, numItems);
+		devMatrix = new DenseMatrix(numItems, numItems);
+		cardMatrix = new DenseMatrix(numItems, numItems);
 	}
 
 	@Override
@@ -35,7 +35,7 @@ public class SlopeOne extends Recommender {
 
 		// compute items' differences
 		for (int u = 0; u < numUsers; u++) {
-			SparseVec uv = trainMatrix.row(u);
+			SparseVector uv = trainMatrix.row(u);
 			int[] items = uv.getIndex();
 
 			for (int i : items) {
@@ -64,7 +64,7 @@ public class SlopeOne extends Recommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		SparseVec uv = trainMatrix.row(u, j);
+		SparseVector uv = trainMatrix.row(u, j);
 		double preds = 0, cards = 0;
 		for (int i : uv.getIndex()) {
 			double card = cardMatrix.get(j, i);

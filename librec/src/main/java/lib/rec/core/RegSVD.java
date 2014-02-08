@@ -1,8 +1,8 @@
 package lib.rec.core;
 
-import lib.rec.data.SparseMat;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.MatrixEntry;
 
 /**
  * Regularized SVD: <em>Arkadiusz Paterek, Improving Regularized Singular Value
@@ -14,7 +14,7 @@ import no.uib.cipr.matrix.MatrixEntry;
  */
 public class RegSVD extends IterativeRecommender {
 
-	public RegSVD(SparseMat rm, SparseMat tm, int fold) {
+	public RegSVD(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "RegSVD";

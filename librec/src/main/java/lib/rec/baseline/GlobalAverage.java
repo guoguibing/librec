@@ -1,6 +1,6 @@
 package lib.rec.baseline;
 
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
 import lib.rec.intf.Recommender;
 
 /**
@@ -11,7 +11,7 @@ import lib.rec.intf.Recommender;
  */
 public class GlobalAverage extends Recommender {
 
-	public GlobalAverage(SparseMat rm, SparseMat tm, int fold) {
+	public GlobalAverage(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		this.algoName = "GlobalAvg";

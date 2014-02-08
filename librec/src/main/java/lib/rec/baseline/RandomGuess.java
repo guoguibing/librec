@@ -1,7 +1,7 @@
 package lib.rec.baseline;
 
 import happy.coding.math.Randoms;
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
 import lib.rec.intf.Recommender;
 
 /**
@@ -12,7 +12,7 @@ import lib.rec.intf.Recommender;
  */
 public class RandomGuess extends Recommender {
 
-	public RandomGuess(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public RandomGuess(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Random";

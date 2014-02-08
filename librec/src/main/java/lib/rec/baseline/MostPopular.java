@@ -3,7 +3,7 @@ package lib.rec.baseline;
 import java.util.HashMap;
 import java.util.Map;
 
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
 import lib.rec.intf.Recommender;
 
 /**
@@ -17,7 +17,7 @@ public class MostPopular extends Recommender {
 
 	private Map<Integer, Integer> itemPops;
 
-	public MostPopular(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public MostPopular(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		// force to set as the ranking prediction method

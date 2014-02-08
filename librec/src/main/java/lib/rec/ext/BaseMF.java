@@ -3,19 +3,19 @@ package lib.rec.ext;
 import java.util.ArrayList;
 import java.util.List;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.DenseVec;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.DenseVector;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.MatrixEntry;
 
 public class BaseMF extends IterativeRecommender {
 
 	protected boolean isPosOnly;
 	protected double minSim;
 
-	public BaseMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public BaseMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "BaseMF";
@@ -28,8 +28,8 @@ public class BaseMF extends IterativeRecommender {
 	protected void initModel() {
 
 		// re-use it as another item-factor matrix
-		P = new DenseMat(numItems, numFactors);
-		Q = new DenseMat(numItems, numFactors);
+		P = new DenseMatrix(numItems, numFactors);
+		Q = new DenseMatrix(numItems, numFactors);
 
 		// initialize model
 		if (isPosOnly) {
@@ -48,8 +48,8 @@ public class BaseMF extends IterativeRecommender {
 			}
 		}
 
-		userBiases = new DenseVec(numUsers);
-		itemBiases = new DenseVec(numItems);
+		userBiases = new DenseVector(numUsers);
+		itemBiases = new DenseVector(numItems);
 
 		// initialize user bias
 		userBiases.init(initMean, initStd);
@@ -93,11 +93,11 @@ public class BaseMF extends IterativeRecommender {
 				loss += regI * bj * bj;
 
 				// rated items by user u
-				SparseVec uv = trainMatrix.row(u, j);
+				SparseVector uv = trainMatrix.row(u, j);
 				List<Integer> items = new ArrayList<>();
 				for (int i : uv.getIndex()) {
 					if (i != j) {
-						double sji = DenseMat.rowMult(P, j, Q, i);
+						double sji = DenseMatrix.rowMult(P, j, Q, i);
 						if (sji > minSim)
 							items.add(i);
 					}
@@ -154,10 +154,10 @@ public class BaseMF extends IterativeRecommender {
 
 		int k = 0;
 		double sum = 0.0f;
-		SparseVec uv = trainMatrix.row(u);
+		SparseVector uv = trainMatrix.row(u);
 		for (int i : uv.getIndex()) {
 			if (i != j) {
-				double sji = DenseMat.rowMult(P, j, Q, i);
+				double sji = DenseMatrix.rowMult(P, j, Q, i);
 				if (sji > minSim) {
 					sum += sji;
 					k++;

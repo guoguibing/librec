@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import no.uib.cipr.matrix.MatrixEntry;
-
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
@@ -32,7 +30,7 @@ public class DataDAO {
 	// path to data file
 	private String dataPath;
 	// store data as {user/item rate} matrix
-	private SparseMat rateMatrix;
+	private SparseMatrix rateMatrix;
 
 	// is item type as user
 	private boolean isItemAsUser;
@@ -136,7 +134,7 @@ public class DataDAO {
 	 * 
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMat readData() throws Exception {
+	public SparseMatrix readData() throws Exception {
 		return readData(new int[] { 0, 1, 2 });
 	}
 
@@ -147,7 +145,7 @@ public class DataDAO {
 	 *            the indexes of the relevant columns in the data file
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMat readData(int[] cols) throws Exception {
+	public SparseMatrix readData(int[] cols) throws Exception {
 
 		Table<String, String, Double> dataTable = HashBasedTable.create();
 		BufferedReader br = FileIO.getReader(dataPath);
@@ -210,13 +208,29 @@ public class DataDAO {
 			List<Integer> items = new ArrayList<>();
 			for (String item : dataTable.row(user).keySet())
 				items.add(getItemId(item));
-			Collections.sort(items);
+			// Collections.sort(items); // not necessary
 
 			for (int c = 0, cm = items.size(); c < cm; c++)
 				nz[uid][c] = items.get(c);
 		}
+		
+		int[][] cnz = new int[numCols][];
+		
+		for (int jid = 0; jid < cnz.length; jid++) {
+			String item = getItemId(jid);
+			
+			cnz[jid] = new int[dataTable.column(item).size()];
+			
+			List<Integer> users = new ArrayList<>();
+			for (String user : dataTable.column(item).keySet())
+				users.add(getUserId(user));
+			// Collections.sort(items); // not necessary
+			
+			for (int c = 0, cm = users.size(); c < cm; c++)
+				cnz[jid][c] = users.get(c);
+		}
 
-		rateMatrix = new SparseMat(numRows, numCols, nz);
+		rateMatrix = new SparseMatrix(numRows, numCols, nz, cnz);
 		for (int i = 0; i < numRows; i++) {
 			String user = getUserId(i);
 
@@ -393,7 +407,7 @@ public class DataDAO {
 		return dataPath;
 	}
 
-	public SparseMat getRateMatrix() {
+	public SparseMatrix getRateMatrix() {
 		return rateMatrix;
 	}
 

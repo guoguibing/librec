@@ -2,7 +2,7 @@ package lib.rec.intf;
 
 import happy.coding.io.Strings;
 import lib.rec.data.DataDAO;
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
 
 /**
  * Abstract class for social recommender where social information is enabled.
@@ -17,7 +17,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	// socialMatrix: social rate matrix, indicating a user is connecting to a number of other users  
 	// trSocialMatrix: inverse social matrix, indicating a user is connected by a number of other users
-	protected static SparseMat socialMatrix, trSocialMatrix;
+	protected static SparseMatrix socialMatrix;
 
 	// social regularization
 	protected static double regS;
@@ -30,15 +30,13 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		try {
 			socialMatrix = socialDao.readData();
 			numUsers = socialDao.numUsers();
-			
-			trSocialMatrix = socialMatrix.transpose();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
 	}
 	
-	public SocialRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 	}
 	

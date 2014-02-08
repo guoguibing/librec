@@ -1,10 +1,10 @@
 package lib.rec.core;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.DenseVec;
-import lib.rec.data.SparseMat;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.DenseVector;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
 import lib.rec.intf.IterativeRecommender;
-import no.uib.cipr.matrix.MatrixEntry;
 
 /**
  * Biased Matrix Factorization Models. <br/>
@@ -17,7 +17,7 @@ import no.uib.cipr.matrix.MatrixEntry;
  */
 public class BiasedMF extends IterativeRecommender {
 
-	public BiasedMF(SparseMat rm, SparseMat tm, int fold) {
+	public BiasedMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "BiasedMF";
@@ -27,8 +27,8 @@ public class BiasedMF extends IterativeRecommender {
 
 		super.initModel();
 
-		userBiases = new DenseVec(numUsers);
-		itemBiases = new DenseVec(numItems);
+		userBiases = new DenseVector(numUsers);
+		itemBiases = new DenseVector(numItems);
 
 		// initialize user bias
 		userBiases.init(initMean, initStd);
@@ -96,7 +96,7 @@ public class BiasedMF extends IterativeRecommender {
 	}
 
 	protected double predict(int u, int j) {
-		return globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMat.rowMult(P, u, Q, j);
+		return globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 
 }

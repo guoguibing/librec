@@ -2,9 +2,9 @@ package lib.rec.intf;
 
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
-import lib.rec.data.DenseMat;
-import lib.rec.data.DenseVec;
-import lib.rec.data.SparseMat;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.DenseVector;
+import lib.rec.data.SparseMatrix;
 
 /**
  * Interface class for iterative recommenders such as Matrix Factorization
@@ -33,15 +33,15 @@ public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
-	protected DenseMat P, last_P;
+	protected DenseMatrix P, last_P;
 
 	// factorized item-factor matrix
-	protected DenseMat Q, last_Q;
+	protected DenseMatrix Q, last_Q;
 
 	// user biases
-	protected DenseVec userBiases, last_UB;
+	protected DenseVector userBiases, last_UB;
 	// item biases
-	protected DenseVec itemBiases, last_IB;
+	protected DenseVector itemBiases, last_IB;
 
 	// adaptive learn rate 
 	protected double lRate;
@@ -66,7 +66,7 @@ public abstract class IterativeRecommender extends Recommender {
 		decay = cf.getDouble("val.decay.rate");
 	}
 
-	public IterativeRecommender(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		lRate = initLRate;
@@ -77,7 +77,7 @@ public abstract class IterativeRecommender extends Recommender {
 	 */
 	@Override
 	protected double predict(int u, int j) {
-		return DenseMat.rowMult(P, u, Q, j);
+		return DenseMatrix.rowMult(P, u, Q, j);
 	}
 
 	/**
@@ -169,9 +169,9 @@ public abstract class IterativeRecommender extends Recommender {
 	 */
 	protected void updates() {
 		if (P != null)
-			last_P = P.copy();
+			last_P = P.clone();
 		if (Q != null)
-			last_Q = Q.copy();
+			last_Q = Q.clone();
 		if (userBiases != null)
 			last_UB = userBiases.clone();
 		if (itemBiases != null)
@@ -186,9 +186,9 @@ public abstract class IterativeRecommender extends Recommender {
 				foldInfo, iter);
 
 		if (last_P != null)
-			P = last_P.copy();
+			P = last_P.clone();
 		if (last_Q != null)
-			Q = last_Q.copy();
+			Q = last_Q.clone();
 		if (last_UB != null)
 			userBiases = last_UB.clone();
 		if (last_IB != null)
@@ -198,8 +198,8 @@ public abstract class IterativeRecommender extends Recommender {
 	@Override
 	protected void initModel() {
 
-		P = new DenseMat(numUsers, numFactors);
-		Q = new DenseMat(numItems, numFactors);
+		P = new DenseMatrix(numUsers, numFactors);
+		Q = new DenseMatrix(numItems, numFactors);
 
 		// initialize model
 		P.init(initMean, initStd);

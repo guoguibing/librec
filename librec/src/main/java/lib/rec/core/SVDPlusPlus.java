@@ -1,10 +1,9 @@
 package lib.rec.core;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
-import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 
 /**
  * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted
@@ -15,9 +14,9 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class SVDPlusPlus extends BiasedMF {
 
-	protected DenseMat Y;
+	protected DenseMatrix Y;
 
-	public SVDPlusPlus(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public SVDPlusPlus(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SVD++";
@@ -27,7 +26,7 @@ public class SVDPlusPlus extends BiasedMF {
 	public void initModel() {
 		super.initModel();
 
-		Y = new DenseMat(numItems, numFactors);
+		Y = new DenseMatrix(numItems, numFactors);
 		Y.init(initMean, initStd);
 
 		// set factors to zero for items without training examples
@@ -60,7 +59,7 @@ public class SVDPlusPlus extends BiasedMF {
 				errs += euj * euj;
 				loss += euj * euj;
 
-				SparseVec uv = trainMatrix.row(u);
+				SparseVector uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
 				double w = Math.sqrt(items.length);
 
@@ -121,12 +120,12 @@ public class SVDPlusPlus extends BiasedMF {
 
 	@Override
 	protected double predict(int u, int j) {
-		double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMat.rowMult(P, u, Q, j);
+		double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
 		SparseVector uv = trainMatrix.row(u);
 		double w = Math.sqrt(uv.getUsed());
 		for (int k : uv.getIndex())
-			pred += DenseMat.rowMult(Y, k, Q, j) / w;
+			pred += DenseMatrix.rowMult(Y, k, Q, j) / w;
 
 		return pred;
 	}

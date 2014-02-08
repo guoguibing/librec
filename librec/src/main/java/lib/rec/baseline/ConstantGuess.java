@@ -1,6 +1,6 @@
 package lib.rec.baseline;
 
-import lib.rec.data.SparseMat;
+import lib.rec.data.SparseMatrix;
 import lib.rec.intf.Recommender;
 
 /**
@@ -13,7 +13,7 @@ public class ConstantGuess extends Recommender {
 
 	private double constant;
 
-	public ConstantGuess(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public ConstantGuess(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Constant";

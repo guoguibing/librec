@@ -1,11 +1,10 @@
 package lib.rec.core;
 
-import lib.rec.data.DenseMat;
-import lib.rec.data.SparseMat;
-import lib.rec.data.SparseVec;
+import lib.rec.data.DenseMatrix;
+import lib.rec.data.MatrixEntry;
+import lib.rec.data.SparseMatrix;
+import lib.rec.data.SparseVector;
 import lib.rec.intf.SocialRecommender;
-import no.uib.cipr.matrix.MatrixEntry;
-import no.uib.cipr.matrix.sparse.SparseVector;
 
 /**
  * Jamali and Ester, <strong>A matrix factorization technique with trust
@@ -16,7 +15,7 @@ import no.uib.cipr.matrix.sparse.SparseVector;
  */
 public class SocialMF extends SocialRecommender {
 
-	public SocialMF(SparseMat trainMatrix, SparseMat testMatrix, int fold) {
+	public SocialMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SocialMF";
@@ -29,8 +28,8 @@ public class SocialMF extends SocialRecommender {
 			loss = 0;
 			errs = 0;
 
-			DenseMat userSgds = new DenseMat(numUsers, numFactors);
-			DenseMat itemSgds = new DenseMat(numItems, numFactors);
+			DenseMatrix userSgds = new DenseMatrix(numUsers, numFactors);
+			DenseMatrix itemSgds = new DenseMatrix(numItems, numFactors);
 
 			// rated items
 			for (MatrixEntry me : trainMatrix) {
@@ -41,7 +40,7 @@ public class SocialMF extends SocialRecommender {
 				if (ruj <= 0.0)
 					continue;
 
-				double pred = DenseMat.rowMult(P, u, Q, j);
+				double pred = DenseMatrix.rowMult(P, u, Q, j);
 				double euj = ruj - (minRate + g(pred) * (maxRate - minRate));
 
 				errs += euj * euj;
@@ -75,7 +74,7 @@ public class SocialMF extends SocialRecommender {
 			// social regularization
 			if (regS != 0) {
 				for (int u = 0; u < numUsers; u++) {
-					SparseVec uv = socialMatrix.row(u);
+					SparseVector uv = socialMatrix.row(u);
 					double[] sumNNs = new double[numFactors];
 					for (int v : uv.getIndex()) {
 						for (int f = 0; f < numFactors; f++)
@@ -93,12 +92,12 @@ public class SocialMF extends SocialRecommender {
 					}
 
 					// those who trusted user u
-					SparseVector iuv = trSocialMatrix.row(u);
+					SparseVector iuv = socialMatrix.col(u);
 					int numVs = iuv.getUsed();
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
 
-						SparseVec vv = socialMatrix.row(v);
+						SparseVector vv = socialMatrix.row(v);
 						double[] sumDiffs = new double[numFactors];
 						for (int w : vv.getIndex()) {
 							for (int f = 0; f < numFactors; f++)
@@ -128,7 +127,7 @@ public class SocialMF extends SocialRecommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		double pred = DenseMat.rowMult(P, u, Q, j);
+		double pred = DenseMatrix.rowMult(P, u, Q, j);
 		return minRate + g(pred) * (maxRate - minRate);
 	}
 
