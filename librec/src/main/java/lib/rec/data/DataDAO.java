@@ -199,7 +199,6 @@ public class DataDAO {
 
 		// build rating matrix
 		int[][] rnz = new int[numRows][];
-
 		for (int rid = 0; rid < rnz.length; rid++) {
 			String user = getUserId(rid);
 

@@ -81,6 +81,15 @@ public class DenseMatrix {
 	}
 
 	/**
+	 * @param row
+	 *            row id
+	 * @return a copy of row data as a dense vector
+	 */
+	public DenseVector row(int row) {
+		return new DenseVector(data[row]);
+	}
+
+	/**
 	 * row x row of two matrix
 	 * 
 	 * @param m

@@ -8,7 +8,7 @@ import java.util.Arrays;
  * Data Structure: dense vector
  * 
  * @author guoguibing
- *
+ * 
  */
 public class DenseVector {
 
@@ -18,6 +18,11 @@ public class DenseVector {
 	public DenseVector(int size) {
 		this.size = size;
 		data = new double[size];
+	}
+
+	public DenseVector(double[] array) {
+		this.size = array.length;
+		data = Arrays.copyOf(array, array.length);
 	}
 
 	public DenseVector(DenseVector vec) {
@@ -47,6 +52,25 @@ public class DenseVector {
 
 	public void add(int idx, double val) {
 		data[idx] += val;
+	}
+
+	public DenseVector add(DenseVector vec) {
+		assert size == vec.size;
+
+		for (int i = 0; i < vec.size; i++)
+			add(i, vec.get(i));
+
+		return this;
+	}
+
+	public double inner(DenseVector vec) {
+		assert size == vec.size;
+
+		double result = 0;
+		for (int i = 0; i < vec.size; i++)
+			result += get(i) * vec.get(i);
+
+		return result;
 	}
 
 }

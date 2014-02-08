@@ -27,6 +27,7 @@ import lib.rec.core.RegSVD;
 import lib.rec.core.SVDPlusPlus;
 import lib.rec.core.SlopeOne;
 import lib.rec.core.SocialMF;
+import lib.rec.core.TrustMF;
 import lib.rec.data.DataDAO;
 import lib.rec.data.DataSplitter;
 import lib.rec.data.SparseMatrix;
@@ -226,6 +227,8 @@ public class LibRec {
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "socialmf":
 			return new SocialMF(trainMatrix, testMatrix, fold);
+		case "trustmf":
+			return new TrustMF(trainMatrix, testMatrix, fold);
 		case "aaai-basemf":
 			return new BaseMF(trainMatrix, testMatrix, fold);
 		case "aaai-dmf":

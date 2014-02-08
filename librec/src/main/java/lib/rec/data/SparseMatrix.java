@@ -271,7 +271,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%d\t%d\n", new Object[] { rowData.length, size() }));
+		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows, numCols, size() }));
 
 		for (MatrixEntry me : this)
 			if (me.get() != 0)
