@@ -107,7 +107,7 @@ public class SocialMF extends SocialRecommender {
 						numConns = vv.getUsed();
 						if (numConns > 0)
 							for (int f = 0; f < numFactors; f++)
-								userSgds.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns));
+								userSgds.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns)); //TODO: check if numVs or numConns
 					}
 				}
 			}
