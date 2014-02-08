@@ -1,6 +1,5 @@
 package lib.rec.core;
 
-import happy.coding.system.Debug;
 import lib.rec.data.DenseMatrix;
 import lib.rec.data.DenseVector;
 import lib.rec.data.SparseMatrix;
@@ -23,13 +22,7 @@ public class TrustMF extends SocialRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "TrustMF";
-
-		if (Debug.ON) {
-			model = "Tr";
-			regU = 0.001;
-			regI = 0.001;
-			regS = 1;
-		}
+		model = "Tr";
 	}
 
 	@Override
@@ -92,24 +85,26 @@ public class TrustMF extends SocialRecommender {
 			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
 			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
 
-			// update B
+			// compute B sgds
 			for (int u = 0; u < numUsers; u++) {
 
 				// rated items
-				SparseVector rv = trainMatrix.row(u);
-				for (int j : rv.getIndex()) {
-					double pred = predTr(u, j);
-					double ruj = rv.get(j);
+				if (u < trainMatrix.numRows()) {
+					SparseVector rv = trainMatrix.row(u);
+					for (int j : rv.getIndex()) {
+						double pred = predTr(u, j);
+						double ruj = rv.get(j);
 
-					double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+						double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
 
-					loss += euj * euj;
-					errs += euj * euj;
+						loss += euj * euj;
+						errs += euj * euj;
 
-					double csgd = gd(pred) * euj;
+						double csgd = gd(pred) * euj;
 
-					for (int f = 0; f < numFactors; f++)
-						BS.add(u, f, csgd * V1.get(j, f));
+						for (int f = 0; f < numFactors; f++)
+							BS.add(u, f, csgd * V1.get(j, f));
+					}
 				}
 
 				// trusted users
@@ -135,7 +130,7 @@ public class TrustMF extends SocialRecommender {
 				}
 			}
 
-			// update V
+			// compute V sgds
 			for (int j = 0; j < numItems; j++) {
 				// users who rated item j
 				SparseVector rv = trainMatrix.col(j);
@@ -158,7 +153,7 @@ public class TrustMF extends SocialRecommender {
 				}
 			}
 
-			// update W
+			// compute W sgds
 			for (int k = 0; k < numUsers; k++) {
 				// users who trusted user k
 				SparseVector tv = socialMatrix.col(k);
@@ -180,6 +175,10 @@ public class TrustMF extends SocialRecommender {
 					loss += regU * wkf * wkf;
 				}
 			}
+
+			B.add(BS.scale(-lRate));
+			V1.add(VS.scale(-lRate));
+			W.add(WS.scale(-lRate));
 
 			loss *= 0.5;
 			errs *= 0.5;
