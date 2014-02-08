@@ -157,11 +157,11 @@ public class DataDAO {
 			String item = data[cols[1]];
 			Double rate = Double.valueOf(data[cols[2]]);
 
-			/*if (cols.length >= 4) {
-				double weight = Double.parseDouble(data[cols[3]]);
-				if (rate == 0 && weight < 1)
-					continue;
-			}*/
+			/*
+			 * if (cols.length >= 4) { double weight =
+			 * Double.parseDouble(data[cols[3]]); if (rate == 0 && weight < 1)
+			 * continue; }
+			 */
 
 			scaleDist.add(rate);
 			dataTable.put(user, item, rate);
@@ -198,39 +198,30 @@ public class DataDAO {
 		}
 
 		// build rating matrix
-		int[][] nz = new int[numRows][];
+		int[][] rnz = new int[numRows][];
 
-		for (int uid = 0; uid < nz.length; uid++) {
-			String user = getUserId(uid);
+		for (int rid = 0; rid < rnz.length; rid++) {
+			String user = getUserId(rid);
 
-			nz[uid] = new int[dataTable.row(user).size()];
+			rnz[rid] = new int[dataTable.row(user).size()];
 
-			List<Integer> items = new ArrayList<>();
+			int idx = 0;
 			for (String item : dataTable.row(user).keySet())
-				items.add(getItemId(item));
-			// Collections.sort(items); // not necessary
-
-			for (int c = 0, cm = items.size(); c < cm; c++)
-				nz[uid][c] = items.get(c);
+				rnz[rid][idx++] = getItemId(item);
 		}
-		
+
 		int[][] cnz = new int[numCols][];
-		
-		for (int jid = 0; jid < cnz.length; jid++) {
-			String item = getItemId(jid);
-			
-			cnz[jid] = new int[dataTable.column(item).size()];
-			
-			List<Integer> users = new ArrayList<>();
+		for (int cid = 0; cid < cnz.length; cid++) {
+			String item = getItemId(cid);
+
+			cnz[cid] = new int[dataTable.column(item).size()];
+
+			int idx = 0;
 			for (String user : dataTable.column(item).keySet())
-				users.add(getUserId(user));
-			// Collections.sort(items); // not necessary
-			
-			for (int c = 0, cm = users.size(); c < cm; c++)
-				cnz[jid][c] = users.get(c);
+				cnz[cid][idx++] = getUserId(user);
 		}
 
-		rateMatrix = new SparseMatrix(numRows, numCols, nz, cnz);
+		rateMatrix = new SparseMatrix(numRows, numCols, rnz, cnz);
 		for (int i = 0; i < numRows; i++) {
 			String user = getUserId(i);
 
