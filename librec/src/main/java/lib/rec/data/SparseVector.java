@@ -21,20 +21,20 @@ public class SparseVector implements Iterable<VectorEntry> {
 
 	public SparseVector(int size) {
 		this.size = size;
-		data = new double[size];
+		data = new double[0];
 
 		used = 0;
-		index = new int[size];
+		index = new int[0];
 	}
 
-	public SparseVector(double[] array) {
-		size = array.length;
+	public SparseVector(int size, double[] array) {
+		this(size);
 
-		data = Arrays.copyOf(array, array.length);
-		used = size;
-		index = new int[size];
-		for (int i = 0; i < size; i++)
-			index[i] = i;
+		for (int i = 0; i < array.length; i++)
+			if (array[i] != 0)
+				this.set(i, array[i]);
+
+		System.out.println();
 	}
 
 	public SparseVector(SparseVector sv) {
@@ -68,12 +68,10 @@ public class SparseVector implements Iterable<VectorEntry> {
 		if (used == index.length)
 			return index;
 
-		// could run compact, or return subarray
-		// compact();
 		int[] indices = new int[used];
-		for (int i = 0; i < used; i++) {
+		for (int i = 0; i < used; i++)
 			indices[i] = index[i];
-		}
+
 		return indices;
 	}
 
@@ -85,6 +83,8 @@ public class SparseVector implements Iterable<VectorEntry> {
 	}
 
 	public void set(int idx, double val) {
+		check(idx);
+
 		int i = getIndex(idx);
 		data[i] = val;
 	}
@@ -103,6 +103,18 @@ public class SparseVector implements Iterable<VectorEntry> {
 		if (in >= 0)
 			return data[in];
 		return 0;
+	}
+
+	/**
+	 * @return the cardinary of a sparse vector
+	 */
+	public int size() {
+		int num = 0;
+		for (VectorEntry ve : this)
+			if (ve.get() != 0)
+				num++;
+
+		return num;
 	}
 
 	/**
@@ -157,7 +169,6 @@ public class SparseVector implements Iterable<VectorEntry> {
 		// Update pointers
 		index = newIndex;
 		data = newData;
-		size = data.length;
 
 		// Return insertion index
 		return i;
@@ -233,7 +244,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 
 	public static void main(String[] args) {
 		double[] array = { 0, 7, 8, 7, 0, 1 };
-		SparseVector vec = new SparseVector(array);
+		SparseVector vec = new SparseVector(10, array);
 
 		Logs.debug(vec);
 
