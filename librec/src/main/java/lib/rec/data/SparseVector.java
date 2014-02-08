@@ -5,6 +5,12 @@ import happy.coding.io.Logs;
 import java.util.Arrays;
 import java.util.Iterator;
 
+/**
+ * Data Structure: Sparse Vector whose implementation is modified from M4J library
+ * 
+ * @author guoguibing
+ *
+ */
 public class SparseVector implements Iterable<VectorEntry> {
 
 	// capacity
@@ -33,8 +39,6 @@ public class SparseVector implements Iterable<VectorEntry> {
 		for (int i = 0; i < array.length; i++)
 			if (array[i] != 0)
 				this.set(i, array[i]);
-
-		System.out.println();
 	}
 
 	public SparseVector(SparseVector sv) {
@@ -99,10 +103,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 	public double get(int idx) {
 		check(idx);
 
-		int in = Arrays.binarySearch(index, 0, used, idx);
-		if (in >= 0)
-			return data[in];
-		return 0;
+		int i = Arrays.binarySearch(index, 0, used, idx);
+
+		return i >= 0 ? data[i] : 0;
 	}
 
 	/**

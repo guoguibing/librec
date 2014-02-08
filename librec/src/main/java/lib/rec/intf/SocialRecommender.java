@@ -5,7 +5,7 @@ import lib.rec.data.DataDAO;
 import lib.rec.data.SparseMatrix;
 
 /**
- * Abstract class for social recommender where social information is enabled.
+ * Recommenders in which social information is used
  * 
  * @author guoguibing
  * 

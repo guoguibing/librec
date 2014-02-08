@@ -29,7 +29,7 @@ import lib.rec.data.SymmMatrix;
 import com.google.common.base.Stopwatch;
 
 /**
- * Interface class for general recommendation system.
+ * General recommenders
  * 
  * @author Guibing Guo
  */

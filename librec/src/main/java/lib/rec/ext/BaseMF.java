@@ -58,8 +58,6 @@ public class BaseMF extends IterativeRecommender {
 
 	@Override
 	protected void buildModel() {
-		last_loss = 0;
-
 		for (int iter = 1; iter <= maxIters; iter++) {
 
 			loss = 0;

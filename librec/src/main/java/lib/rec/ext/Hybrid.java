@@ -42,10 +42,6 @@ public class Hybrid extends Recommender {
 
 	@Override
 	protected void initModel() {
-		// compute user/item-degrees
-		//for (int u = 0; u < numUsers; u++)
-		//userDegrees.put(u, MatrixUtils.row(trainMatrix, u).getUsed());
-
 		for (int j = 0; j < numItems; j++)
 			itemDegrees.put(j, trainMatrix.colSize(j));
 	}

@@ -6,7 +6,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Data Structure: sparse matrix
+ * Data Structure: Sparse Matrix whose implementation is modified from M4J
+ * library
  * 
  * <ul>
  * <li>Compressed Row Storage (CRS):
@@ -270,7 +271,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n");
-		
+
 		for (MatrixEntry me : this)
 			if (me.get() != 0)
 				sb.append(String.format("%d\t%d\t%f\n", new Object[] { me.row() + 1, me.column() + 1, me.get() }));
@@ -415,10 +416,10 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		Logs.debug(mat);
 		Logs.debug(new SparseMatrix(mat));
-		
+
 		Logs.debug(mat.row(1));
 		Logs.debug(mat.rowSize(1));
-		
+
 		Logs.debug(mat.col(1));
 		Logs.debug(mat.colSize(1));
 	}

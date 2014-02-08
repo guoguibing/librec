@@ -7,7 +7,7 @@ import lib.rec.data.DenseVector;
 import lib.rec.data.SparseMatrix;
 
 /**
- * Interface class for iterative recommenders such as Matrix Factorization
+ * Recommenders using iterative learning techniques
  * 
  * @author guoguibing
  * 

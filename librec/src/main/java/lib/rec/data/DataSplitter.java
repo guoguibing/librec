@@ -10,6 +10,12 @@ import happy.coding.system.Systems;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Class to split/sample rating matrix
+ * 
+ * @author guoguibing
+ *
+ */
 public class DataSplitter {
 
 	// [row-id, col-id, rate]
