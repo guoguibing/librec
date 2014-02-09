@@ -9,8 +9,6 @@ import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
@@ -147,7 +145,9 @@ public class DataDAO {
 	 */
 	public SparseMatrix readData(int[] cols) throws Exception {
 
-		Table<String, String, Double> dataTable = HashBasedTable.create();
+		// Table {row-id, col-id, rate}
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
 		while ((line = br.readLine()) != null) {
@@ -155,7 +155,7 @@ public class DataDAO {
 
 			String user = data[cols[0]];
 			String item = data[cols[1]];
-			Double rate = Double.valueOf(data[cols[2]]);
+			Double rate = cols.length >= 3 ? Double.valueOf(data[cols[2]]) : 1.0;
 
 			/*
 			 * if (cols.length >= 4) { double weight =
@@ -164,20 +164,23 @@ public class DataDAO {
 			 */
 
 			scaleDist.add(rate);
-			dataTable.put(user, item, rate);
 
 			// inner id starting from 0
-			if (!userIds.containsKey(user))
-				userIds.put(user, userIds.size());
+			int row = userIds.containsKey(user) ? userIds.get(user) : userIds.size();
+			userIds.put(user, row);
 
-			if (!itemIds.containsKey(item))
-				itemIds.put(item, itemIds.size());
+			int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds.size();
+			itemIds.put(item, col);
+
+			dataTable.put(row, col, rate);
 		}
 		br.close();
 
 		numRates = scaleDist.size();
 		scales = new ArrayList<>(scaleDist.elementSet());
 		Collections.sort(scales);
+
+		int numRows = numUsers(), numCols = numItems();
 
 		// if min-rate = 0.0, shift upper a scale
 		double minRate = scales.get(0).doubleValue();
@@ -187,9 +190,15 @@ public class DataDAO {
 				double val = scales.get(i);
 				scales.set(i, val + epsilon);
 			}
+			// udpate data table
+			for (int row = 0; row < numRows; row++) {
+				for (int col = 0; col < numCols; col++) {
+					if (dataTable.contains(row, col))
+						dataTable.put(row, col, dataTable.get(row, col) + epsilon);
+				}
+			}
 		}
 
-		int numRows = numUsers(), numCols = numItems();
 		if (isItemAsUser) {
 			Logs.debug("User amount: {}, scales: {{}}", numRows, Strings.toString(scales, ", "));
 		} else {
@@ -198,39 +207,7 @@ public class DataDAO {
 		}
 
 		// build rating matrix
-		int[][] rnz = new int[numRows][];
-		for (int rid = 0; rid < rnz.length; rid++) {
-			String user = getUserId(rid);
-
-			rnz[rid] = new int[dataTable.row(user).size()];
-
-			int idx = 0;
-			for (String item : dataTable.row(user).keySet())
-				rnz[rid][idx++] = getItemId(item);
-		}
-
-		int[][] cnz = new int[numCols][];
-		for (int cid = 0; cid < cnz.length; cid++) {
-			String item = getItemId(cid);
-
-			cnz[cid] = new int[dataTable.column(item).size()];
-
-			int idx = 0;
-			for (String user : dataTable.column(item).keySet())
-				cnz[cid][idx++] = getUserId(user);
-		}
-
-		rateMatrix = new SparseMatrix(numRows, numCols, rnz, cnz);
-		for (int i = 0; i < numRows; i++) {
-			String user = getUserId(i);
-
-			Map<String, Double> itemRates = dataTable.row(user);
-			for (Entry<String, Double> en : itemRates.entrySet()) {
-				int j = getItemId(en.getKey());
-				double rate = en.getValue();
-				rateMatrix.set(i, j, rate + epsilon);
-			}
-		}
+		rateMatrix = new SparseMatrix(dataTable);
 
 		// release memory of data table
 		dataTable = null;

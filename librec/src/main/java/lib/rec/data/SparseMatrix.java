@@ -1,9 +1,17 @@
 package lib.rec.data;
 
 import happy.coding.io.Logs;
+import happy.coding.system.Dates;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.google.common.collect.Table.Cell;
 
 /**
  * Data Structure: Sparse Matrix whose implementation is modified from M4J
@@ -31,11 +39,11 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
-	public SparseMatrix(int rows, int cols, int[][] rnz, int[][] cnz) {
-		numRows = rows;
-		numCols = cols;
+	public SparseMatrix(Table<Integer, Integer, Double> dataTable) {
+		numRows = dataTable.rowKeySet().size();
+		numCols = dataTable.columnKeySet().size();
 
-		construct(rnz, cnz);
+		construct(dataTable);
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
@@ -76,59 +84,61 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return size;
 	}
 
-	private void construct(int[][] rnz, int[][] cnz) {
-		int nnz = 0;
-		for (int i = 0; i < rnz.length; ++i)
-			nnz += rnz[i].length;
+	private void construct(Table<Integer, Integer, Double> dataTable) {
+		int nnz = dataTable.size();
 
+		Logs.debug("CRS");
 		// CRS
 		rowPtr = new int[numRows + 1];
 		colInd = new int[nnz];
 		rowData = new double[nnz];
 
-		if (rnz.length != numRows)
-			throw new IllegalArgumentException("rnz.length != numRows");
-
-		// CRS
+		int j = 0;
 		for (int i = 1; i <= numRows; ++i) {
-			rowPtr[i] = rowPtr[i - 1] + rnz[i - 1].length;
+			Set<Integer> cols = dataTable.row(i - 1).keySet();
+			rowPtr[i] = rowPtr[i - 1] + cols.size();
 
-			for (int j = rowPtr[i - 1], k = 0; j < rowPtr[i]; ++j, ++k) {
-				colInd[j] = rnz[i - 1][k];
-				if (rnz[i - 1][k] < 0 || rnz[i - 1][k] >= numCols)
-					throw new IllegalArgumentException("rnz[" + (i - 1) + "][" + k + "]=" + rnz[i - 1][k]
+			for (int col : cols) {
+				colInd[j++] = col;
+				if (col < 0 || col >= numCols)
+					throw new IllegalArgumentException("colInd[" + j + "]=" + col
 							+ ", which is not a valid column index");
 			}
 
 			Arrays.sort(colInd, rowPtr[i - 1], rowPtr[i]);
 		}
 
+		Logs.debug("CCS");
 		// CCS
-		int cnnz = 0;
-		for (int i = 0; i < cnz.length; ++i)
-			cnnz += cnz[i].length;
-
-		if (cnnz != nnz)
-			throw new IllegalArgumentException("rnz.length != cnz.length");
-
+		Stopwatch sw = Stopwatch.createStarted();
 		colPtr = new int[numCols + 1];
 		rowInd = new int[nnz];
 		colData = new double[nnz];
 
-		if (cnz.length != numCols)
-			throw new IllegalArgumentException("cnz.length != numColumns");
-
+		j = 0;
 		for (int i = 1; i <= numCols; ++i) {
-			colPtr[i] = colPtr[i - 1] + cnz[i - 1].length;
+			Set<Integer> rows = dataTable.column(i - 1).keySet();
+			colPtr[i] = colPtr[i - 1] + rows.size();
 
-			for (int j = colPtr[i - 1], k = 0; j < colPtr[i]; ++j, ++k) {
-				rowInd[j] = cnz[i - 1][k];
-				if (cnz[i - 1][k] < 0 || cnz[i - 1][k] >= numRows)
-					throw new IllegalArgumentException("cnz[" + (i - 1) + "][" + k + "]=" + cnz[i - 1][k]
-							+ ", which is not a valid row index");
+			for (int row : rows) {
+				rowInd[j++] = row;
+				if (row < 0 || row >= numRows)
+					throw new IllegalArgumentException("rowInd[" + j + "]=" + row + ", which is not a valid row index");
 			}
 
 			Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
+		}
+		sw.start();
+		Logs.debug(Dates.parse(sw.elapsed(TimeUnit.MILLISECONDS)));
+
+		Logs.debug("Set data");
+		// set data
+		for (Cell<Integer, Integer, Double> en : dataTable.cellSet()) {
+			int row = en.getRowKey();
+			int col = en.getColumnKey();
+			double val = en.getValue();
+
+			set(row, col, val);
 		}
 	}
 
@@ -391,37 +401,36 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 	// example: http://netlib.org/linalg/html_templates/node91.html
 	public static void main(String[] args) {
-		int[][] rnz = { { 0, 4 }, { 5, 0, 1 }, { 1, 2, 3 }, { 0, 2, 3, 4 }, { 1, 3, 4, 5 }, { 1, 4, 5 } };
-		int[][] cnz = { { 0, 1, 3 }, { 1, 2, 4, 5 }, { 2, 3 }, { 2, 3, 4 }, { 0, 3, 4, 5 }, { 1, 4, 5 } };
 
-		SparseMatrix mat = new SparseMatrix(6, 6, rnz, cnz);
-		mat.set(0, 0, 10);
-		mat.set(0, 4, -2);
-		mat.set(1, 0, 3);
-		mat.set(1, 1, 9);
-		mat.set(1, 5, 3);
-		mat.set(2, 1, 7);
-		mat.set(2, 2, 8);
-		mat.set(2, 3, 7);
-		mat.set(3, 0, 3);
-		mat.set(3, 2, 8);
-		mat.set(3, 3, 7);
-		mat.set(3, 4, 5);
-		mat.set(4, 1, 8);
-		mat.set(4, 3, 9);
-		mat.set(4, 4, 9);
-		mat.set(4, 5, 13);
-		mat.set(5, 1, 4);
-		mat.set(5, 4, 2);
-		mat.set(5, 5, -1);
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+
+		dataTable.put(0, 0, 10.0);
+		dataTable.put(0, 4, -2.0);
+		dataTable.put(1, 0, 3.0);
+		dataTable.put(1, 1, 9.0);
+		dataTable.put(1, 5, 3.0);
+		dataTable.put(2, 1, 7.0);
+		dataTable.put(2, 2, 8.0);
+		dataTable.put(2, 3, 7.0);
+		dataTable.put(3, 0, 3.0);
+		dataTable.put(3, 2, 8.);
+		dataTable.put(3, 3, 7.);
+		dataTable.put(3, 4, 5.);
+		dataTable.put(4, 1, 8.);
+		dataTable.put(4, 3, 9.);
+		dataTable.put(4, 4, 9.);
+		dataTable.put(4, 5, 13.);
+		dataTable.put(5, 1, 4.);
+		dataTable.put(5, 4, 2.);
+		dataTable.put(5, 5, -1.);
+
+		SparseMatrix mat = new SparseMatrix(dataTable);
 
 		Logs.debug(mat);
 		Logs.debug(new SparseMatrix(mat));
 
 		Logs.debug(mat.row(1));
-		Logs.debug(mat.rowSize(1));
 
 		Logs.debug(mat.col(1));
-		Logs.debug(mat.colSize(1));
 	}
 }
