@@ -4,12 +4,15 @@ import happy.coding.io.Logs;
 import happy.coding.system.Dates;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
@@ -39,11 +42,12 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
-	public SparseMatrix(Table<Integer, Integer, Double> dataTable) {
-		numRows = dataTable.rowKeySet().size();
-		numCols = dataTable.columnKeySet().size();
+	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable,
+			Multimap<Integer, Integer> colsTable) {
+		numRows = rows;
+		numCols = cols;
 
-		construct(dataTable);
+		construct(dataTable, colsTable);
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
@@ -84,10 +88,9 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return size;
 	}
 
-	private void construct(Table<Integer, Integer, Double> dataTable) {
+	private void construct(Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
 		int nnz = dataTable.size();
 
-		Logs.debug("CRS");
 		// CRS
 		rowPtr = new int[numRows + 1];
 		colInd = new int[nnz];
@@ -108,7 +111,6 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			Arrays.sort(colInd, rowPtr[i - 1], rowPtr[i]);
 		}
 
-		Logs.debug("CCS");
 		// CCS
 		Stopwatch sw = Stopwatch.createStarted();
 		colPtr = new int[numCols + 1];
@@ -117,7 +119,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		j = 0;
 		for (int i = 1; i <= numCols; ++i) {
-			Set<Integer> rows = dataTable.column(i - 1).keySet();
+			Collection<Integer> rows = colMap.get(i - 1);
 			colPtr[i] = colPtr[i - 1] + rows.size();
 
 			for (int row : rows) {
@@ -128,10 +130,9 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 			Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
 		}
-		sw.start();
+		sw.stop();
 		Logs.debug(Dates.parse(sw.elapsed(TimeUnit.MILLISECONDS)));
 
-		Logs.debug("Set data");
 		// set data
 		for (Cell<Integer, Integer, Double> en : dataTable.cellSet()) {
 			int row = en.getRowKey();
@@ -398,11 +399,12 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 	}
-
+	
 	// example: http://netlib.org/linalg/html_templates/node91.html
 	public static void main(String[] args) {
 
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
 		dataTable.put(0, 0, 10.0);
 		dataTable.put(0, 4, -2.0);
@@ -424,7 +426,32 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		dataTable.put(5, 4, 2.);
 		dataTable.put(5, 5, -1.);
 
-		SparseMatrix mat = new SparseMatrix(dataTable);
+		colMap.put(0, 0);
+		colMap.put(0, 1);
+		colMap.put(0, 3);
+		
+		colMap.put(1, 1);
+		colMap.put(1, 2);
+		colMap.put(1, 4);
+		colMap.put(1, 5);
+		
+		colMap.put(2, 2);
+		colMap.put(2, 3);
+		
+		colMap.put(3, 2);
+		colMap.put(3, 3);
+		colMap.put(3, 4);
+		
+		colMap.put(4, 0);
+		colMap.put(4, 3);
+		colMap.put(4, 4);
+		colMap.put(4, 5);
+		
+		colMap.put(5, 1);
+		colMap.put(5, 4);
+		colMap.put(5, 5);
+
+		SparseMatrix mat = new SparseMatrix(6, 6, dataTable, colMap);
 
 		Logs.debug(mat);
 		Logs.debug(new SparseMatrix(mat));

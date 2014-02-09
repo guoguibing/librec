@@ -13,7 +13,9 @@ import java.util.List;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Table;
 
@@ -147,6 +149,8 @@ public class DataDAO {
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		// Map {col-id, multiple row-id}: used to fast build rate matrix
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
@@ -173,6 +177,7 @@ public class DataDAO {
 			itemIds.put(item, col);
 
 			dataTable.put(row, col, rate);
+			colMap.put(col, row);
 		}
 		br.close();
 
@@ -186,6 +191,7 @@ public class DataDAO {
 		double minRate = scales.get(0).doubleValue();
 		double epsilon = minRate == 0.0 ? scales.get(1).doubleValue() - minRate : 0;
 		if (epsilon > 0) {
+			// shift upper a scale
 			for (int i = 0, im = scales.size(); i < im; i++) {
 				double val = scales.get(i);
 				scales.set(i, val + epsilon);
@@ -207,7 +213,7 @@ public class DataDAO {
 		}
 
 		// build rating matrix
-		rateMatrix = new SparseMatrix(dataTable);
+		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
 
 		// release memory of data table
 		dataTable = null;
