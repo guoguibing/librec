@@ -23,7 +23,7 @@ public class SocialMF extends SocialRecommender {
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 0; iter < maxIters; iter++) {
+		for (int iter = 1; iter <= maxIters; iter++) {
 
 			loss = 0;
 			errs = 0;
@@ -81,7 +81,7 @@ public class SocialMF extends SocialRecommender {
 							sumNNs[f] += socialMatrix.get(u, v) * P.get(v, f);
 					}
 
-					int numConns = uv.getUsed();
+					int numConns = uv.getCount();
 					if (numConns > 0) {
 						for (int f = 0; f < numFactors; f++) {
 							double diff = P.get(u, f) - sumNNs[f] / numConns;
@@ -92,8 +92,8 @@ public class SocialMF extends SocialRecommender {
 					}
 
 					// those who trusted user u
-					SparseVector iuv = socialMatrix.col(u);
-					int numVs = iuv.getUsed();
+					SparseVector iuv = socialMatrix.column(u);
+					int numVs = iuv.getCount();
 					for (int v : iuv.getIndex()) {
 						double tvu = socialMatrix.get(v, u);
 
@@ -104,7 +104,7 @@ public class SocialMF extends SocialRecommender {
 								sumDiffs[f] += socialMatrix.get(v, w) * P.get(w, f);
 						}
 
-						numConns = vv.getUsed();
+						numConns = vv.getCount();
 						if (numConns > 0)
 							for (int f = 0; f < numFactors; f++)
 								userSgds.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns)); //TODO: check if numVs or numConns

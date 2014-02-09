@@ -300,7 +300,7 @@ public class DataDAO {
 		if (!isItemAsUser) {
 			List<Integer> itemCnts = new ArrayList<>();
 			for (int j = 0, jm = numItems(); j < jm; j++) {
-				int size = rateMatrix.colSize(j);
+				int size = rateMatrix.columnSize(j);
 				if (size > 0)
 					itemCnts.add(size);
 			}

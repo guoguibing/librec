@@ -1,7 +1,5 @@
 package lib.rec.baseline;
 
-import happy.coding.math.Stats;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,7 +11,7 @@ import lib.rec.intf.Recommender;
  * Baseline: predict by the average of target item's ratings
  * 
  * @author guoguibing
- *
+ * 
  */
 public class ItemAverage extends Recommender {
 
@@ -28,14 +26,12 @@ public class ItemAverage extends Recommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		if (itemMeans.containsKey(j))
-			return itemMeans.get(j);
+		if (!itemMeans.containsKey(j)) {
+			SparseVector jv = trainMatrix.column(j);
+			double mean = jv.getCount() > 0 ? jv.mean() : globalMean;
+			itemMeans.put(j, mean);
+		}
 
-		SparseVector jv = trainMatrix.col(j);
-		int numRated = jv.getUsed();
-		double itemMean = numRated > 0 ? Stats.sum(jv.getData()) / numRated : globalMean;
-		itemMeans.put(j, itemMean);
-
-		return itemMean;
+		return itemMeans.get(j);
 	}
 }

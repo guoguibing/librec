@@ -9,13 +9,7 @@ import lib.rec.intf.IterativeRecommender;
  * Ruslan Salakhutdinov and Andriy Mnih, <strong>Probabilistic Matrix
  * Factorization</strong>, NIPS 2008. <br/>
  * 
- * <ul>
- * <li>
- * http://blog.smellthedata.com/2009/06/netflix-prize-tribute-recommendation.
- * html</li>
- * <li>PMF is equivalent with RegSVD. This implementation provides an example of
- * batch updates with momentums</li>
- * </ul>
+ * <strong>NOTE:</strong> this implementation is modified from PREA package. 
  * 
  * @author guoguibing
  * 

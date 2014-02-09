@@ -43,7 +43,7 @@ public class Hybrid extends Recommender {
 	@Override
 	protected void initModel() {
 		for (int j = 0; j < numItems; j++)
-			itemDegrees.put(j, trainMatrix.colSize(j));
+			itemDegrees.put(j, trainMatrix.columnSize(j));
 	}
 
 	protected double ranking_basic(int u, int j) {
@@ -62,7 +62,7 @@ public class Hybrid extends Recommender {
 			for (int v = 0; v < numUsers; v++) {
 				SparseVector vv = trainMatrix.row(v);
 				double sum = 0.0;
-				int kj = vv.getUsed();
+				int kj = vv.getCount();
 				for (int item : vv.getIndex())
 					sum += items.contains(item) ? 1.0 : 0.0;
 
@@ -73,9 +73,9 @@ public class Hybrid extends Recommender {
 			// redistribute resources to items
 			maxHeat = Double.MIN_VALUE;
 			for (int i = 0; i < numItems; i++) {
-				SparseVector iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.column(i);
 				double sum = 0;
-				int kj = iv.getUsed();
+				int kj = iv.getCount();
 				for (int user : iv.getIndex())
 					sum += userResources.get(user);
 
@@ -99,7 +99,7 @@ public class Hybrid extends Recommender {
 
 			maxProb = Double.MIN_VALUE;
 			for (int i = 0; i < numItems; i++) {
-				SparseVector iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.column(i);
 				double score = 0;
 				for (int user : iv.getIndex())
 					score += userResources.get(user) / userDegrees.get(user);
@@ -130,7 +130,7 @@ public class Hybrid extends Recommender {
 			for (int v = 0; v < numUsers; v++) {
 				SparseVector vv = trainMatrix.row(v);
 				double sum = 0;
-				int kj = vv.getUsed();
+				int kj = vv.getCount();
 				for (int item : vv.getIndex()) {
 					if (items.contains(item))
 						sum += 1.0 / Math.pow(itemDegrees.get(item), lambda);
@@ -145,7 +145,7 @@ public class Hybrid extends Recommender {
 				if (items.contains(i))
 					continue;
 
-				SparseVector iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.column(i);
 				double sum = 0;
 				for (int user : iv.getIndex())
 					sum += userResources.containsKey(user) ? userResources.get(user) : 0.0;
@@ -188,7 +188,7 @@ public class Hybrid extends Recommender {
 				if (items.contains(i))
 					continue;
 
-				SparseVector iv = trainMatrix.col(i);
+				SparseVector iv = trainMatrix.column(i);
 				double sum = 0;
 				for (int user : iv.getIndex())
 					sum += userResources.get(user) / userDegrees.get(user);

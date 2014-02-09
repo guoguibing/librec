@@ -110,7 +110,7 @@ public abstract class Recommender implements Runnable {
 
 		// global mean
 		numRates = trainMatrix.size();
-		globalMean = Stats.sum(trainMatrix.getData()) / numRates;
+		globalMean = trainMatrix.sum() / numRates;
 
 		// fold info
 		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
@@ -202,7 +202,7 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
 		} else
 			evalInfo = String.format("%.3f,%.3f", measures.get(Measure.MAE), measures.get(Measure.RMSE));
-					// measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
+		// measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
 		return evalInfo;
 	}
@@ -229,12 +229,12 @@ public abstract class Recommender implements Runnable {
 		SymmMatrix corrs = new SymmMatrix(numCount);
 
 		for (int i = 0; i < numCount; i++) {
-			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.col(i);
-			if (iv.getUsed() == 0)
+			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.column(i);
+			if (iv.getCount() == 0)
 				continue;
 
 			for (int j = i + 1; j < numCount; j++) {
-				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.col(j);
+				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.column(j);
 
 				double sim = compCorr(iv, jv);
 
@@ -387,7 +387,7 @@ public abstract class Recommender implements Runnable {
 
 			Map<Integer, Integer> itemDegs = new HashMap<>();
 			for (int j : candItems)
-				itemDegs.put(j, trainMatrix.colSize(j));
+				itemDegs.put(j, trainMatrix.columnSize(j));
 			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
 			int k = 0;
 			for (KeyValPair<Integer> deg : sortedDegrees) {
@@ -592,7 +592,7 @@ public abstract class Recommender implements Runnable {
 		double sum = 0.0;
 		for (int id = 0; id < cutoff; id++) {
 			int i = rankedItems.get(id);
-			SparseVector iv = trainMatrix.col(i);
+			SparseVector iv = trainMatrix.column(i);
 
 			for (int jd = id + 1; jd < cutoff; jd++) {
 				int j = rankedItems.get(jd);
@@ -600,7 +600,7 @@ public abstract class Recommender implements Runnable {
 				double corr = corrs.get(i, j);
 				if (corr == 0) {
 					// if not found
-					corr = compCorr(iv, trainMatrix.col(j));
+					corr = compCorr(iv, trainMatrix.column(j));
 					if (corr != 0)
 						corrs.set(i, j, corr);
 				}

@@ -2,7 +2,6 @@ package lib.rec.baseline;
 
 import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
-import happy.coding.math.Stats;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,9 +33,8 @@ public class UserKNN extends Recommender {
 		userCorrs = buildCorrs(true);
 		userMeans = new DenseVector(numUsers);
 		for (int u = 0; u < numUsers; u++) {
-			SparseVector vs = trainMatrix.row(u);
-			double mean = vs.getUsed() > 0 ? Stats.sum(vs.getData()) / vs.getUsed() : globalMean;
-			userMeans.set(u, mean);
+			SparseVector uv = trainMatrix.row(u);
+			userMeans.set(u, uv.getCount() > 0 ? uv.mean() : globalMean);
 		}
 	}
 

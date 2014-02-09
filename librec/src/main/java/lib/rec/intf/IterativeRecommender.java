@@ -215,7 +215,7 @@ public abstract class IterativeRecommender extends Recommender {
 		// set to 0 for items without any ratings
 		int numTrainItems = trainMatrix.numColumns();
 		for (int j = 0, jm = Q.numRows(); j < jm; j++) {
-			if (j >= numTrainItems || trainMatrix.colSize(j) == 0) {
+			if (j >= numTrainItems || trainMatrix.columnSize(j) == 0) {
 				Q.setRow(j, 0.0);
 			}
 		}

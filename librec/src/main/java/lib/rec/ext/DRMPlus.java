@@ -36,7 +36,7 @@ public class DRMPlus extends CLiMF {
 				// all user u's ratings
 				SparseVector uv = trainMatrix.row(u);
 				int[] items = uv.getIndex();
-				double w = Math.sqrt(uv.getUsed());
+				double w = Math.sqrt(uv.getCount());
 
 				// compute sgd for user u
 				double[] sgds = new double[numFactors];

@@ -60,7 +60,7 @@ public class BaseNM extends IterativeRecommender {
 		// ignore items without any training ratings: can greatly reduce memory usage
 		Set<Integer> items = new HashSet<>();
 		for (int i = 0; i < numItems; i++)
-			if (trainMatrix.col(i).getUsed() == 0)
+			if (trainMatrix.column(i).getCount() == 0)
 				items.add(i);
 
 		for (int i = 0; i < numItems; i++) {
@@ -83,7 +83,7 @@ public class BaseNM extends IterativeRecommender {
 		// ignore items without any training ratings
 		Set<Integer> items = new HashSet<>();
 		for (int i = 0; i < numItems; i++)
-			if (trainMatrix.col(i).getUsed() == 0)
+			if (trainMatrix.column(i).getCount() == 0)
 				items.add(i);
 
 		// create fold

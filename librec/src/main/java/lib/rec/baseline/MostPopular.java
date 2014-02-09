@@ -28,10 +28,9 @@ public class MostPopular extends Recommender {
 
 	@Override
 	protected double ranking(int u, int j) {
-		if (!itemPops.containsKey(j)) {
-			int numRates = trainMatrix.col(j).getUsed();
-			itemPops.put(j, numRates);
-		}
+		if (!itemPops.containsKey(j))
+			itemPops.put(j, trainMatrix.column(j).getCount());
+
 		return itemPops.get(j);
 	}
 

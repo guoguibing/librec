@@ -1,15 +1,17 @@
 package lib.rec.data;
 
 import happy.coding.io.Logs;
+import happy.coding.math.Stats;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Data Structure: Sparse Vector whose implementation is modified from M4J library
+ * Data Structure: Sparse Vector whose implementation is modified from M4J
+ * library
  * 
  * @author guoguibing
- *
+ * 
  */
 public class SparseVector implements Iterable<VectorEntry> {
 
@@ -22,14 +24,14 @@ public class SparseVector implements Iterable<VectorEntry> {
 	// Indices to data
 	protected int[] index;
 
-	// How much has been used
-	protected int used;
+	// number of items
+	protected int count;
 
 	public SparseVector(int size) {
 		this.size = size;
 		data = new double[0];
 
-		used = 0;
+		count = 0;
 		index = new int[0];
 	}
 
@@ -44,7 +46,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 	public SparseVector(SparseVector sv) {
 		this.size = sv.size;
 		this.data = Arrays.copyOf(sv.data, sv.data.length);
-		this.used = sv.used;
+		this.count = sv.count;
 		this.index = Arrays.copyOf(sv.index, sv.index.length);
 	}
 
@@ -69,21 +71,21 @@ public class SparseVector implements Iterable<VectorEntry> {
 	 * Returns the indices
 	 */
 	public int[] getIndex() {
-		if (used == index.length)
+		if (count == index.length)
 			return index;
 
-		int[] indices = new int[used];
-		for (int i = 0; i < used; i++)
+		int[] indices = new int[count];
+		for (int i = 0; i < count; i++)
 			indices[i] = index[i];
 
 		return indices;
 	}
 
 	/**
-	 * Number of entries used in the sparse structure
+	 * Number of entries in the sparse structure
 	 */
-	public int getUsed() {
-		return used;
+	public int getCount() {
+		return count;
 	}
 
 	public void set(int idx, double val) {
@@ -103,9 +105,23 @@ public class SparseVector implements Iterable<VectorEntry> {
 	public double get(int idx) {
 		check(idx);
 
-		int i = Arrays.binarySearch(index, 0, used, idx);
+		int i = Arrays.binarySearch(index, 0, count, idx);
 
 		return i >= 0 ? data[i] : 0;
+	}
+
+	/**
+	 * @return sum of vector entries
+	 */
+	public double sum() {
+		return Stats.sum(data);
+	}
+
+	/**
+	 * @return mean of vector entries
+	 */
+	public double mean() {
+		return sum() / count;
 	}
 
 	/**
@@ -136,7 +152,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 	 */
 	private int getIndex(int idx) {
 		// Try to find column index
-		int i = Arrays.binarySearch(index, 0, used, idx);
+		int i = Arrays.binarySearch(index, 0, count, idx);
 
 		// Found
 		if (i >= 0 && index[i] == idx)
@@ -149,7 +165,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 		i = -(i + 1);
 
 		// Check available memory
-		if (++used > data.length) {
+		if (++count > data.length) {
 
 			// If zero-length, use new length of 1, else double the bandwidth
 			int newLength = data.length != 0 ? data.length << 1 : 1;
@@ -162,8 +178,8 @@ public class SparseVector implements Iterable<VectorEntry> {
 		}
 
 		// All ok, make room for insertion
-		System.arraycopy(index, i, newIndex, i + 1, used - i - 1);
-		System.arraycopy(data, i, newData, i + 1, used - i - 1);
+		System.arraycopy(index, i, newIndex, i + 1, count - i - 1);
+		System.arraycopy(data, i, newData, i + 1, count - i - 1);
 
 		// Put in new structure
 		newIndex[i] = idx;
@@ -191,7 +207,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 		private final SparseVecEntry entry = new SparseVecEntry();
 
 		public boolean hasNext() {
-			return cursor < used;
+			return cursor < count;
 		}
 
 		public VectorEntry next() {
@@ -236,7 +252,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%d\t%d\n", new Object[] { size, used }));
+		sb.append(String.format("%d\t%d\n", new Object[] { size, count }));
 
 		for (VectorEntry ve : this)
 			if (ve.get() != 0)

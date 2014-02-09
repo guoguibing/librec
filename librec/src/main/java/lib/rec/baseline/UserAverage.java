@@ -1,7 +1,5 @@
 package lib.rec.baseline;
 
-import happy.coding.math.Stats;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,14 +26,11 @@ public class UserAverage extends Recommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		if (userMeans.containsKey(u))
-			return userMeans.get(u);
+		if (!userMeans.containsKey(u)) {
+			SparseVector uv = trainMatrix.row(u);
+			userMeans.put(u, uv.getCount() > 0 ? uv.mean() : globalMean);
+		}
 
-		SparseVector uv = trainMatrix.row(u);
-		int numRated = uv.getUsed();
-		double userMean = numRated > 0 ? Stats.sum(uv.getData()) / numRated : globalMean;
-		userMeans.put(u, userMean);
-
-		return userMean;
+		return userMeans.get(u);
 	}
 }

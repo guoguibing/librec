@@ -40,7 +40,7 @@ public class TrustMF extends SocialRecommender {
 		V2.init(initMean, initStd);
 
 		for (int j = 0; j < numItems; j++)
-			if (trainMatrix.colSize(j) == 0) {
+			if (trainMatrix.columnSize(j) == 0) {
 				V1.setRow(j, 0.0);
 				V2.setRow(j, 0.0);
 			}
@@ -61,7 +61,7 @@ public class TrustMF extends SocialRecommender {
 				B2.setRow(u, 0.0);
 			}
 
-			if (socialMatrix.colSize(u) == 0) {
+			if (socialMatrix.columnSize(u) == 0) {
 				W1.setRow(u, 0.0);
 				W2.setRow(u, 0.0);
 			}
@@ -146,7 +146,7 @@ public class TrustMF extends SocialRecommender {
 			// compute V sgds
 			for (int j = 0; j < numItems; j++) {
 				// users who rated item j
-				SparseVector rv = trainMatrix.col(j);
+				SparseVector rv = trainMatrix.column(j);
 				for (int u : rv.getIndex()) {
 					double pred = predTr(u, j);
 					double ruj = rv.get(u);
@@ -169,7 +169,7 @@ public class TrustMF extends SocialRecommender {
 			// compute W sgds
 			for (int k = 0; k < numUsers; k++) {
 				// users who trusted user k
-				SparseVector tv = socialMatrix.col(k);
+				SparseVector tv = socialMatrix.column(k);
 				for (int u : tv.getIndex()) {
 					double tuk = tv.get(u);
 					double pred = DenseMatrix.rowMult(B1, u, W1, k);
@@ -237,7 +237,7 @@ public class TrustMF extends SocialRecommender {
 				}
 
 				// users who trusted user u
-				SparseVector tv = socialMatrix.col(u);
+				SparseVector tv = socialMatrix.column(u);
 				for (int k : tv.getIndex()) {
 					double tku = tv.get(k);
 					double pred = DenseMatrix.rowMult(B2, k, W2, u);
@@ -262,7 +262,7 @@ public class TrustMF extends SocialRecommender {
 			// compute V sgds
 			for (int j = 0; j < numItems; j++) {
 				// users who rated item j
-				SparseVector rv = trainMatrix.col(j);
+				SparseVector rv = trainMatrix.column(j);
 				for (int u : rv.getIndex()) {
 					double pred = predTe(u, j);
 					double ruj = rv.get(u);

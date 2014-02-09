@@ -1,6 +1,7 @@
 package lib.rec.data;
 
 import happy.coding.io.Logs;
+import happy.coding.math.Stats;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,10 +19,10 @@ import com.google.common.collect.Table.Cell;
  * library
  * 
  * <ul>
- * <li>Compressed Row Storage (CRS):
- * http://netlib.org/linalg/html_templates/node91.html</li>
- * <li>Compressed Col Storage (CCS):
- * http://netlib.org/linalg/html_templates/node92.html</li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed
+ * Row Storage (CRS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed
+ * Col Storage (CCS)</a></li>
  * </ul>
  * 
  * @author guoguibing
@@ -39,12 +40,11 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
-	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable,
-			Multimap<Integer, Integer> colsTable) {
+	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
 		numRows = rows;
 		numCols = cols;
 
-		construct(dataTable, colsTable);
+		construct(dataTable, colMap);
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
@@ -240,7 +240,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 * @return a sparse vector of {index, value}
 	 * 
 	 */
-	public SparseVector col(int col) {
+	public SparseVector column(int col) {
 
 		SparseVector sv = new SparseVector(numRows);
 
@@ -261,7 +261,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 *            col id
 	 * @return the size of non-zero elements of a row
 	 */
-	public int colSize(int col) {
+	public int columnSize(int col) {
 
 		int size = 0;
 		for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
@@ -272,6 +272,20 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 		return size;
+	}
+
+	/**
+	 * @return the sum of matrix data
+	 */
+	public double sum() {
+		return Stats.sum(rowData);
+	}
+
+	/**
+	 * @return the mean of matrix data
+	 */
+	public double mean() {
+		return sum() / size();
 	}
 
 	@Override
@@ -453,6 +467,6 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		Logs.debug(mat.row(1));
 
-		Logs.debug(mat.col(1));
+		Logs.debug(mat.column(1));
 	}
 }
