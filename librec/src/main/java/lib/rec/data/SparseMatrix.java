@@ -1,15 +1,12 @@
 package lib.rec.data;
 
 import happy.coding.io.Logs;
-import happy.coding.system.Dates;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -112,13 +109,13 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 		// CCS
-		Stopwatch sw = Stopwatch.createStarted();
 		colPtr = new int[numCols + 1];
 		rowInd = new int[nnz];
 		colData = new double[nnz];
 
 		j = 0;
 		for (int i = 1; i <= numCols; ++i) {
+			// dataTable.col(i-1) is very time-consuming
 			Collection<Integer> rows = colMap.get(i - 1);
 			colPtr[i] = colPtr[i - 1] + rows.size();
 
@@ -130,8 +127,6 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 			Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
 		}
-		sw.stop();
-		Logs.debug(Dates.parse(sw.elapsed(TimeUnit.MILLISECONDS)));
 
 		// set data
 		for (Cell<Integer, Integer, Double> en : dataTable.cellSet()) {
@@ -399,7 +394,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 	}
-	
+
 	// example: http://netlib.org/linalg/html_templates/node91.html
 	public static void main(String[] args) {
 
@@ -429,24 +424,24 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		colMap.put(0, 0);
 		colMap.put(0, 1);
 		colMap.put(0, 3);
-		
+
 		colMap.put(1, 1);
 		colMap.put(1, 2);
 		colMap.put(1, 4);
 		colMap.put(1, 5);
-		
+
 		colMap.put(2, 2);
 		colMap.put(2, 3);
-		
+
 		colMap.put(3, 2);
 		colMap.put(3, 3);
 		colMap.put(3, 4);
-		
+
 		colMap.put(4, 0);
 		colMap.put(4, 3);
 		colMap.put(4, 4);
 		colMap.put(4, 5);
-		
+
 		colMap.put(5, 1);
 		colMap.put(5, 4);
 		colMap.put(5, 5);
