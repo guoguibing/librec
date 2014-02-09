@@ -6,6 +6,7 @@ import happy.coding.io.Strings;
 import happy.coding.math.Stats;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -257,6 +258,53 @@ public class DataDAO {
 	}
 
 	/**
+	 * write rate matrix to a data file with format ".arff" which can be used by
+	 * the PREA toolkit
+	 * 
+	 * @param relation
+	 *            relation name of dataset
+	 * @param toPath
+	 *            data file path
+	 */
+	public void writeArff(String relation, String toPath) throws Exception {
+		FileIO.deleteFile(toPath);
+
+		BufferedWriter bw = FileIO.getWriter(toPath);
+
+		bw.write("@RELATION " + relation + "\n\n");
+		bw.write("@ATTRIBUTE UserId NUMERIC\n\n");
+		bw.write("@DATA\n");
+
+		StringBuilder sb = new StringBuilder();
+		int count = 0;
+		for (int u = 0, um = numUsers(); u < um; u++) {
+			sb.append("{0 " + (u + 1));
+
+			for (int j = 0, jm = numItems(); j < jm; j++) {
+				double rate = rateMatrix.get(u, j);
+				if (rate != 0)
+					sb.append(", " + (j + 1) + " " + rate);
+
+				if (j == jm - 1)
+					sb.append("}\n");
+			}
+
+			if (count++ >= 500) {
+				bw.write(sb.toString());
+				count = 0;
+				sb = new StringBuilder();
+			}
+		}
+
+		if (count > 0)
+			bw.write(sb.toString());
+
+		bw.close();
+
+		Logs.debug("Data has been exported to {}", toPath);
+	}
+
+	/**
 	 * print out specifications of the dataset
 	 */
 	public void printSpecs() throws Exception {
@@ -401,11 +449,12 @@ public class DataDAO {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String dirPath = "D:\\Java\\Datasets\\EachMovie\\";
+		String dirPath = "D:\\Java\\Datasets\\Flixster\\";
 		DataDAO dao = new DataDAO(dirPath + "ratings.txt");
 
 		dao.readData();
-		dao.printSpecs();
+		//dao.printSpecs();
 		//dao.writeData(dirPath + "ratings.txt");
+		dao.writeArff("Flixster", dirPath + "flixster.arff");
 	}
 }
