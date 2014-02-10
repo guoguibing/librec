@@ -256,10 +256,10 @@ public class TrustMF extends SocialRecommender {
 			for (int u = 0; u < numUsers; u++) {
 
 				// rated items
-				int nwu = 0;
+				int nwu = 1;
 				if (u < trainMatrix.numRows()) {
 					SparseVector rv = trainMatrix.row(u);
-					nwu = rv.getCount();
+					nwu = rv.getCount() > 0 ? rv.getCount() : 1;
 					for (int j : rv.getIndex()) {
 						double pred = predTe(u, j);
 						double ruj = rv.get(j);
@@ -278,7 +278,7 @@ public class TrustMF extends SocialRecommender {
 
 				// users who trusted user u
 				SparseVector tv = socialMatrix.column(u);
-				int mwu = tv.getCount();
+				int mwu = tv.getCount() > 0 ? tv.getCount() : 1;
 				for (int k : tv.getIndex()) {
 					double tku = tv.get(k);
 					double pred = DenseMatrix.rowMult(Be, k, We, u);
@@ -316,7 +316,8 @@ public class TrustMF extends SocialRecommender {
 				}
 
 				// lambda
-				double wlr = isWeightedLambdaReg ? rv.getCount() : 1.0;
+				int nvj = rv.getCount() > 0 ? rv.getCount() : 1;
+				double wlr = isWeightedLambdaReg ? nvj : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double vjf = Ve.get(j, f);
 					VS.add(j, f, regI * wlr * vjf);
@@ -340,7 +341,8 @@ public class TrustMF extends SocialRecommender {
 				}
 
 				// lambda
-				double wlr = isWeightedLambdaReg ? tv.getCount() : 1.0;
+				int mbk = tv.getCount() > 0 ? tv.getCount() : 1;
+				double wlr = isWeightedLambdaReg ? mbk : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double bkf = Be.get(k, f);
 					BS.add(k, f, regU * wlr * bkf);
