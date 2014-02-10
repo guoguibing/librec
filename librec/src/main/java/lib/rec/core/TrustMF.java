@@ -22,49 +22,77 @@ public class TrustMF extends SocialRecommender {
 	protected DenseMatrix Be, We, Ve;
 
 	protected String model;
+	protected boolean isWeightedLambdaReg; // is weighted-lambda-regularization enabled?
 
 	public TrustMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		model = cf.getString("TrustMF.model");
 		algoName = "TrustMF (" + model + ")";
+		
+		isWeightedLambdaReg = true;
+	}
+
+	protected void initTr() {
+		Vr = new DenseMatrix(numItems, numFactors);
+		Vr.init(initMean, initStd);
+
+		for (int j = 0; j < numItems; j++)
+			if (trainMatrix.columnSize(j) == 0)
+				Vr.setRow(j, 0.0);
+
+		Br = new DenseMatrix(numUsers, numFactors);
+		Wr = new DenseMatrix(numUsers, numFactors);
+
+		Br.init(initMean, initStd);
+		Wr.init(initMean, initStd);
+
+		for (int u = 0; u < numUsers; u++)
+			if (socialMatrix.rowSize(u) == 0) {
+				Br.setRow(u, 0.0);
+
+				if (socialMatrix.columnSize(u) == 0)
+					Wr.setRow(u, 0.0);
+			}
+	}
+
+	protected void initTe() {
+		Ve = new DenseMatrix(numItems, numFactors);
+		Ve.init(initMean, initStd);
+
+		for (int j = 0; j < numItems; j++)
+			if (trainMatrix.columnSize(j) == 0)
+				Ve.setRow(j, 0.0);
+
+		Be = new DenseMatrix(numUsers, numFactors);
+		We = new DenseMatrix(numUsers, numFactors);
+
+		Be.init(initMean, initStd);
+		We.init(initMean, initStd);
+
+		for (int u = 0; u < numUsers; u++) {
+			if (socialMatrix.rowSize(u) == 0)
+				Be.setRow(u, 0.0);
+
+			if (socialMatrix.columnSize(u) == 0)
+				We.setRow(u, 0.0);
+		}
 	}
 
 	@Override
 	protected void initModel() {
-
-		Vr = new DenseMatrix(numItems, numFactors);
-		Ve = new DenseMatrix(numItems, numFactors);
-
-		Vr.init(initMean, initStd);
-		Ve.init(initMean, initStd);
-
-		for (int j = 0; j < numItems; j++)
-			if (trainMatrix.columnSize(j) == 0) {
-				Vr.setRow(j, 0.0);
-				Ve.setRow(j, 0.0);
-			}
-
-		Br = new DenseMatrix(numUsers, numFactors);
-		Be = new DenseMatrix(numUsers, numFactors);
-		Wr = new DenseMatrix(numUsers, numFactors);
-		We = new DenseMatrix(numUsers, numFactors);
-
-		Br.init(initMean, initStd);
-		Be.init(initMean, initStd);
-		Wr.init(initMean, initStd);
-		We.init(initMean, initStd);
-
-		for (int u = 0; u < numUsers; u++) {
-			if (socialMatrix.rowSize(u) == 0) {
-				Br.setRow(u, 0.0);
-				Be.setRow(u, 0.0);
-			}
-
-			if (socialMatrix.columnSize(u) == 0) {
-				Wr.setRow(u, 0.0);
-				We.setRow(u, 0.0);
-			}
+		switch (model) {
+		case "Tr":
+			initTr();
+			break;
+		case "Te":
+			initTe();
+			break;
+		case "T":
+		default:
+			initTr();
+			initTe();
+			break;
 		}
 	}
 

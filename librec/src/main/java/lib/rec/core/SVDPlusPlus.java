@@ -80,9 +80,9 @@ public class SVDPlusPlus extends BiasedMF {
 				for (int f = 0; f < numFactors; f++) {
 					double sum_f = 0;
 					for (int k : items)
-						sum_f += Y.get(k, f) / w;
+						sum_f += Y.get(k, f);
 
-					sum_ys[f] = sum_f;
+					sum_ys[f] = w > 0 ? sum_f / w : sum_f;
 				}
 
 				for (int f = 0; f < numFactors; f++) {
