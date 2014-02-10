@@ -10,9 +10,6 @@ import lib.rec.intf.SocialRecommender;
  * Yang et al., <strong>Social Collaborative Filtering by Trust</strong>, IJCAI
  * 2013.
  * 
- * <strong>NOTE:</strong> to have a fair comparison with other approaches, we do
- * not use the "weighted-lambda-regularization" as the paper did.
- * 
  * @author guoguibing
  * 
  */
@@ -37,7 +34,8 @@ public class TrustMF extends SocialRecommender {
 
 	protected void initTr() {
 		Vr = new DenseMatrix(numItems, numFactors);
-		Vr.init(initMean, initStd);
+		//Vr.init(initMean, initStd);
+		Vr.init();
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
@@ -46,8 +44,10 @@ public class TrustMF extends SocialRecommender {
 		Br = new DenseMatrix(numUsers, numFactors);
 		Wr = new DenseMatrix(numUsers, numFactors);
 
-		Br.init(initMean, initStd);
-		Wr.init(initMean, initStd);
+		//Br.init(initMean, initStd);
+		//Wr.init(initMean, initStd);
+		Br.init();
+		Wr.init();
 
 		for (int u = 0; u < numUsers; u++)
 			if (socialMatrix.rowSize(u) == 0) {
@@ -60,7 +60,8 @@ public class TrustMF extends SocialRecommender {
 
 	protected void initTe() {
 		Ve = new DenseMatrix(numItems, numFactors);
-		Ve.init(initMean, initStd);
+		//Ve.init(initMean, initStd);
+		Ve.init();
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
@@ -69,8 +70,10 @@ public class TrustMF extends SocialRecommender {
 		Be = new DenseMatrix(numUsers, numFactors);
 		We = new DenseMatrix(numUsers, numFactors);
 
-		Be.init(initMean, initStd);
-		We.init(initMean, initStd);
+		//Be.init(initMean, initStd);
+		//We.init(initMean, initStd);
+		Be.init();
+		We.init();
 
 		for (int u = 0; u < numUsers; u++) {
 			if (socialMatrix.rowSize(u) == 0)
