@@ -20,16 +20,11 @@ public class TrustMF extends SocialRecommender {
 
 	protected String model;
 
-	// is weighted-lambda-regularization enabled
-	protected boolean isWeightedLambdaReg;
-
 	public TrustMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		model = cf.getString("TrustMF.model");
 		algoName = "TrustMF (" + model + ")";
-
-		isWeightedLambdaReg = cf.isOn("is.TrustMF.wlr");
 	}
 
 	protected void initTr() {
@@ -49,13 +44,13 @@ public class TrustMF extends SocialRecommender {
 		Br.init();
 		Wr.init();
 
-		for (int u = 0; u < numUsers; u++)
-			if (socialMatrix.rowSize(u) == 0) {
+		for (int u = 0; u < numUsers; u++) {
+			if (socialMatrix.rowSize(u) == 0)
 				Br.setRow(u, 0.0);
 
-				if (socialMatrix.columnSize(u) == 0)
-					Wr.setRow(u, 0.0);
-			}
+			if (socialMatrix.columnSize(u) == 0)
+				Wr.setRow(u, 0.0);
+		}
 	}
 
 	protected void initTe() {
@@ -171,10 +166,9 @@ public class TrustMF extends SocialRecommender {
 				}
 
 				// lambda
-				double wlr = isWeightedLambdaReg ? nbu + mbu : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double buf = Br.get(u, f);
-					BS.add(u, f, regU * wlr * buf);
+					BS.add(u, f, regU * (nbu + mbu) * buf);
 
 					loss += regU * buf * buf;
 				}
@@ -196,10 +190,9 @@ public class TrustMF extends SocialRecommender {
 
 				// lambda
 				int nvj = rv.getCount() > 0 ? rv.getCount() : 1;
-				double wlr = isWeightedLambdaReg ? nvj : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double vjf = Vr.get(j, f);
-					VS.add(j, f, regI * wlr * vjf);
+					VS.add(j, f, regI * nvj * vjf);
 
 					loss += regI * vjf * vjf;
 				}
@@ -221,10 +214,9 @@ public class TrustMF extends SocialRecommender {
 
 				// lambda
 				int mwk = tv.getCount() > 0 ? tv.getCount() : 1;
-				double wlr = isWeightedLambdaReg ? mwk : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double wkf = Wr.get(k, f);
-					WS.add(k, f, regU * wlr * wkf);
+					WS.add(k, f, regU * mwk * wkf);
 
 					loss += regU * wkf * wkf;
 				}
@@ -295,10 +287,9 @@ public class TrustMF extends SocialRecommender {
 				}
 
 				// lambda
-				double wlr = isWeightedLambdaReg ? nwu + mwu : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double wuf = We.get(u, f);
-					WS.add(u, f, regU * wlr * wuf);
+					WS.add(u, f, regU * (nwu + mwu) * wuf);
 
 					loss += regU * wuf * wuf;
 				}
@@ -320,10 +311,9 @@ public class TrustMF extends SocialRecommender {
 
 				// lambda
 				int nvj = rv.getCount() > 0 ? rv.getCount() : 1;
-				double wlr = isWeightedLambdaReg ? nvj : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double vjf = Ve.get(j, f);
-					VS.add(j, f, regI * wlr * vjf);
+					VS.add(j, f, regI * nvj * vjf);
 
 					loss += regI * vjf * vjf;
 				}
@@ -345,10 +335,9 @@ public class TrustMF extends SocialRecommender {
 
 				// lambda
 				int mbk = tv.getCount() > 0 ? tv.getCount() : 1;
-				double wlr = isWeightedLambdaReg ? mbk : 1.0;
 				for (int f = 0; f < numFactors; f++) {
 					double bkf = Be.get(k, f);
-					BS.add(k, f, regU * wlr * bkf);
+					BS.add(k, f, regU * mbk * bkf);
 
 					loss += regU * bkf * bkf;
 				}
@@ -396,10 +385,4 @@ public class TrustMF extends SocialRecommender {
 
 		return minRate + g(pred) * (maxRate - minRate);
 	}
-
-	@Override
-	public String toString() {
-		return super.toString() + "," + isWeightedLambdaReg;
-	}
-
 }
