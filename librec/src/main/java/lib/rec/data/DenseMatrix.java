@@ -59,13 +59,20 @@ public class DenseMatrix {
 	}
 
 	/**
-	 * initialize a dense matrix with small random values
+	 * initialize a dense matrix with small random values in (0, range)
 	 */
-	public void init() {
+	public void init(double range) {
 
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numCols; j++)
-				data[i][j] = Randoms.uniform(0.0, 0.01);
+				data[i][j] = Randoms.uniform(0, range);
+	}
+
+	/**
+	 * initialize a dense matrix with small random values in (0, 1)
+	 */
+	public void init() {
+		init(1.0);
 	}
 
 	public double[][] getData() {

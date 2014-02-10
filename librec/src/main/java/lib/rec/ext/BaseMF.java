@@ -33,8 +33,8 @@ public class BaseMF extends IterativeRecommender {
 
 		// initialize model
 		if (isPosOnly) {
-			P.init();
-			Q.init();
+			P.init(0.01);
+			Q.init(0.01);
 		} else {
 			P.init(initMean, initStd);
 			Q.init(initMean, initStd);
