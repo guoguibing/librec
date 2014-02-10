@@ -23,7 +23,7 @@ public class SVDPlusPlus extends BiasedMF {
 	}
 
 	@Override
-	public void initModel() {
+	protected void initModel() {
 		super.initModel();
 
 		Y = new DenseMatrix(numItems, numFactors);
@@ -38,7 +38,7 @@ public class SVDPlusPlus extends BiasedMF {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 
 		for (int iter = 1; iter <= maxIters; iter++) {
 

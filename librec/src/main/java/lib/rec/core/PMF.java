@@ -28,7 +28,7 @@ public class PMF extends IterativeRecommender {
 	}
 
 	@Override
-	public void initModel() {
+	protected void initModel() {
 		super.initModel();
 
 		userDeltas = new DenseMatrix(numUsers, numFactors);
@@ -36,7 +36,7 @@ public class PMF extends IterativeRecommender {
 	}
 
 	@Override
-	public void buildModel() {
+	protected void buildModel() {
 
 		// batch updates with momentums
 		for (int iter = 1; iter <= maxIters; iter++) {
