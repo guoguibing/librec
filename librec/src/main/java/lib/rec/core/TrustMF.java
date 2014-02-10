@@ -138,7 +138,8 @@ public class TrustMF extends SocialRecommender {
 						double pred = predTr(u, j);
 						double ruj = rv.get(j);
 
-						double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+						//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+						double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
 
 						loss += euj * euj;
 						errs += euj * euj;
@@ -181,7 +182,8 @@ public class TrustMF extends SocialRecommender {
 				for (int u : rv.getIndex()) {
 					double pred = predTr(u, j);
 					double ruj = rv.get(u);
-					double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+					//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+					double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
@@ -259,7 +261,7 @@ public class TrustMF extends SocialRecommender {
 						double pred = predTe(u, j);
 						double ruj = rv.get(j);
 
-						double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+						double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
 
 						loss += euj * euj;
 						errs += euj * euj;
@@ -302,7 +304,7 @@ public class TrustMF extends SocialRecommender {
 				for (int u : rv.getIndex()) {
 					double pred = predTe(u, j);
 					double ruj = rv.get(u);
-					double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+					double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
@@ -364,6 +366,18 @@ public class TrustMF extends SocialRecommender {
 	}
 
 	@Override
+	protected void updateLRate(int iter) {
+		if (iter == 10)
+			lRate = 0.03;
+		else if (iter == 30)
+			lRate = 0.01;
+		else if (iter == 100)
+			lRate = 0.005;
+
+		last_loss = loss;
+		last_errs = errs;
+	}
+
 	protected double predict(int u, int j) {
 
 		double pred = 0.0;

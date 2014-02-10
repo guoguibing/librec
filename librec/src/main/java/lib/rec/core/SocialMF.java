@@ -41,7 +41,7 @@ public class SocialMF extends SocialRecommender {
 					continue;
 
 				double pred = DenseMatrix.rowMult(P, u, Q, j);
-				double euj = ruj - (minRate + g(pred) * (maxRate - minRate));
+				double euj = (ruj - minRate) / (maxRate - minRate) - g(pred);
 
 				errs += euj * euj;
 				loss += euj * euj;
