@@ -18,52 +18,52 @@ import lib.rec.intf.SocialRecommender;
  */
 public class TrustMF extends SocialRecommender {
 
-	protected DenseMatrix B1, W1, V1;
-	protected DenseMatrix B2, W2, V2;
+	protected DenseMatrix Br, Wr, Vr;
+	protected DenseMatrix Be, We, Ve;
 
 	protected String model;
 
 	public TrustMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		model = cf.getString("TrustMF.model").toLowerCase();
-		algoName = "TrustMF-" + model;
+		model = cf.getString("TrustMF.model");
+		algoName = "TrustMF (" + model + ")";
 	}
 
 	@Override
 	protected void initModel() {
 
-		V1 = new DenseMatrix(numItems, numFactors);
-		V2 = new DenseMatrix(numItems, numFactors);
+		Vr = new DenseMatrix(numItems, numFactors);
+		Ve = new DenseMatrix(numItems, numFactors);
 
-		V1.init(initMean, initStd);
-		V2.init(initMean, initStd);
+		Vr.init(initMean, initStd);
+		Ve.init(initMean, initStd);
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0) {
-				V1.setRow(j, 0.0);
-				V2.setRow(j, 0.0);
+				Vr.setRow(j, 0.0);
+				Ve.setRow(j, 0.0);
 			}
 
-		B1 = new DenseMatrix(numUsers, numFactors);
-		B2 = new DenseMatrix(numUsers, numFactors);
-		W1 = new DenseMatrix(numUsers, numFactors);
-		W2 = new DenseMatrix(numUsers, numFactors);
+		Br = new DenseMatrix(numUsers, numFactors);
+		Be = new DenseMatrix(numUsers, numFactors);
+		Wr = new DenseMatrix(numUsers, numFactors);
+		We = new DenseMatrix(numUsers, numFactors);
 
-		B1.init(initMean, initStd);
-		B2.init(initMean, initStd);
-		W1.init(initMean, initStd);
-		W2.init(initMean, initStd);
+		Br.init(initMean, initStd);
+		Be.init(initMean, initStd);
+		Wr.init(initMean, initStd);
+		We.init(initMean, initStd);
 
 		for (int u = 0; u < numUsers; u++) {
 			if (socialMatrix.rowSize(u) == 0) {
-				B1.setRow(u, 0.0);
-				B2.setRow(u, 0.0);
+				Br.setRow(u, 0.0);
+				Be.setRow(u, 0.0);
 			}
 
 			if (socialMatrix.columnSize(u) == 0) {
-				W1.setRow(u, 0.0);
-				W2.setRow(u, 0.0);
+				Wr.setRow(u, 0.0);
+				We.setRow(u, 0.0);
 			}
 		}
 	}
@@ -71,13 +71,13 @@ public class TrustMF extends SocialRecommender {
 	@Override
 	protected void buildModel() {
 		switch (model) {
-		case "truster":
+		case "Tr":
 			TrusterMF();
 			break;
-		case "trustee":
+		case "Te":
 			TrusteeMF();
 			break;
-		case "trust":
+		case "T":
 		default:
 			TrusterMF();
 			TrusteeMF();
@@ -86,7 +86,7 @@ public class TrustMF extends SocialRecommender {
 	}
 
 	/**
-	 * Build TrusterMF model: B1*V1
+	 * Build TrusterMF model: Br*Vr
 	 */
 	protected void TrusterMF() {
 		for (int iter = 1; iter <= maxIters; iter++) {
@@ -116,7 +116,7 @@ public class TrustMF extends SocialRecommender {
 						double csgd = gd(pred) * euj;
 
 						for (int f = 0; f < numFactors; f++)
-							BS.add(u, f, csgd * V1.get(j, f));
+							BS.add(u, f, csgd * Vr.get(j, f));
 					}
 				}
 
@@ -124,19 +124,19 @@ public class TrustMF extends SocialRecommender {
 				SparseVector tv = socialMatrix.row(u);
 				for (int k : tv.getIndex()) {
 					double tuk = tv.get(k);
-					double pred = DenseMatrix.rowMult(B1, u, W1, k);
+					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
 					double euj = g(pred) - tuk;
 
 					loss += regS * euj * euj;
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
-						BS.add(u, f, regS * csgd * W1.get(k, f));
+						BS.add(u, f, regS * csgd * Wr.get(k, f));
 				}
 
 				// lambda
 				for (int f = 0; f < numFactors; f++) {
-					double buf = B1.get(u, f);
+					double buf = Br.get(u, f);
 					BS.add(u, f, regU * buf);
 
 					loss += regU * buf * buf;
@@ -154,12 +154,12 @@ public class TrustMF extends SocialRecommender {
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
-						VS.add(j, f, csgd * B1.get(u, f));
+						VS.add(j, f, csgd * Br.get(u, f));
 				}
 
 				// lambda
 				for (int f = 0; f < numFactors; f++) {
-					double vjf = V1.get(j, f);
+					double vjf = Vr.get(j, f);
 					VS.add(j, f, regI * vjf);
 
 					loss += regI * vjf * vjf;
@@ -172,26 +172,26 @@ public class TrustMF extends SocialRecommender {
 				SparseVector tv = socialMatrix.column(k);
 				for (int u : tv.getIndex()) {
 					double tuk = tv.get(u);
-					double pred = DenseMatrix.rowMult(B1, u, W1, k);
+					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
 					double euj = g(pred) - tuk;
 					double csgd = gd(pred) * euj;
 
 					for (int f = 0; f < numFactors; f++)
-						WS.add(k, f, regS * csgd * B1.get(u, f));
+						WS.add(k, f, regS * csgd * Br.get(u, f));
 				}
 
 				// lambda
 				for (int f = 0; f < numFactors; f++) {
-					double wkf = W1.get(k, f);
+					double wkf = Wr.get(k, f);
 					WS.add(k, f, regU * wkf);
 
 					loss += regU * wkf * wkf;
 				}
 			}
 
-			B1.add(BS.scale(-lRate));
-			V1.add(VS.scale(-lRate));
-			W1.add(WS.scale(-lRate));
+			Br.add(BS.scale(-lRate));
+			Vr.add(VS.scale(-lRate));
+			Wr.add(WS.scale(-lRate));
 
 			loss *= 0.5;
 			errs *= 0.5;
@@ -202,7 +202,7 @@ public class TrustMF extends SocialRecommender {
 	}
 
 	/**
-	 * Build TrusteeMF model: W2*V2
+	 * Build TrusteeMF model: We*Ve
 	 */
 	protected void TrusteeMF() {
 		for (int iter = 1; iter <= maxIters; iter++) {
@@ -232,7 +232,7 @@ public class TrustMF extends SocialRecommender {
 						double csgd = gd(pred) * euj;
 
 						for (int f = 0; f < numFactors; f++)
-							WS.add(u, f, csgd * V2.get(j, f));
+							WS.add(u, f, csgd * Ve.get(j, f));
 					}
 				}
 
@@ -240,19 +240,19 @@ public class TrustMF extends SocialRecommender {
 				SparseVector tv = socialMatrix.column(u);
 				for (int k : tv.getIndex()) {
 					double tku = tv.get(k);
-					double pred = DenseMatrix.rowMult(B2, k, W2, u);
+					double pred = DenseMatrix.rowMult(Be, k, We, u);
 					double euj = g(pred) - tku;
 
 					loss += regS * euj * euj;
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
-						WS.add(u, f, regS * csgd * B2.get(k, f));
+						WS.add(u, f, regS * csgd * Be.get(k, f));
 				}
 
 				// lambda
 				for (int f = 0; f < numFactors; f++) {
-					double wuf = W2.get(u, f);
+					double wuf = We.get(u, f);
 					WS.add(u, f, regU * wuf);
 
 					loss += regU * wuf * wuf;
@@ -270,12 +270,12 @@ public class TrustMF extends SocialRecommender {
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
-						VS.add(j, f, csgd * W2.get(u, f));
+						VS.add(j, f, csgd * We.get(u, f));
 				}
 
 				// lambda
 				for (int f = 0; f < numFactors; f++) {
-					double vjf = V2.get(j, f);
+					double vjf = Ve.get(j, f);
 					VS.add(j, f, regI * vjf);
 
 					loss += regI * vjf * vjf;
@@ -288,26 +288,26 @@ public class TrustMF extends SocialRecommender {
 				SparseVector tv = socialMatrix.row(k);
 				for (int u : tv.getIndex()) {
 					double tku = tv.get(u);
-					double pred = DenseMatrix.rowMult(B2, k, W2, u);
+					double pred = DenseMatrix.rowMult(Be, k, We, u);
 					double euj = g(pred) - tku;
 					double csgd = gd(pred) * euj;
 
 					for (int f = 0; f < numFactors; f++)
-						BS.add(k, f, regS * csgd * B2.get(u, f));
+						BS.add(k, f, regS * csgd * Be.get(u, f));
 				}
 
 				// lambda
 				for (int f = 0; f < numFactors; f++) {
-					double bkf = B2.get(k, f);
+					double bkf = Be.get(k, f);
 					BS.add(k, f, regU * bkf);
 
 					loss += regU * bkf * bkf;
 				}
 			}
 
-			B2.add(BS.scale(-lRate));
-			V2.add(VS.scale(-lRate));
-			W2.add(WS.scale(-lRate));
+			Be.add(BS.scale(-lRate));
+			Ve.add(VS.scale(-lRate));
+			We.add(WS.scale(-lRate));
 
 			loss *= 0.5;
 			errs *= 0.5;
@@ -318,11 +318,11 @@ public class TrustMF extends SocialRecommender {
 	}
 
 	protected double predTr(int u, int j) {
-		return DenseMatrix.rowMult(B1, u, V1, j);
+		return DenseMatrix.rowMult(Br, u, Vr, j);
 	}
 
 	protected double predTe(int u, int j) {
-		return DenseMatrix.rowMult(W2, u, V2, j);
+		return DenseMatrix.rowMult(We, u, Ve, j);
 	}
 
 	@Override
@@ -330,16 +330,16 @@ public class TrustMF extends SocialRecommender {
 
 		double pred = 0.0;
 		switch (model) {
-		case "truster":
+		case "Tr":
 			pred = predTr(u, j);
 			break;
-		case "trustee":
+		case "Te":
 			pred = predTe(u, j);
 			break;
-		case "trust":
+		case "T":
 		default:
-			DenseVector uv = B1.row(u).add(W2.row(u));
-			DenseVector jv = V1.row(j).add(V2.row(j));
+			DenseVector uv = Br.row(u).add(We.row(u));
+			DenseVector jv = Vr.row(j).add(Ve.row(j));
 
 			pred = uv.inner(jv);
 			break;
