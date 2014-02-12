@@ -35,15 +35,15 @@ public class NMF extends IterativeRecommender {
 		W = new DenseMatrix(numUsers, numFactors);
 		H = new DenseMatrix(numFactors, numItems);
 
-		W.init();
-		H.init();
+		W.init(0.01);
+		H.init(0.01);
 
 		V = trainMatrix;
 	}
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 1; iter < maxIters; iter++) {
+		for (int iter = 1; iter <= maxIters; iter++) {
 
 			// update W by fixing H
 			for (int u = 0; u < W.numRows(); u++) {
@@ -94,23 +94,27 @@ public class NMF extends IterativeRecommender {
 				int j = me.column();
 				double ruj = me.get();
 
-				if (ruj <= 0)
-					continue;
+				if (ruj > 0) {
+					double euj = predict(u, j) - ruj;
 
-				double pred = predict(u, j);
-				double euj = pred - ruj;
-
-				errs += euj * euj;
-				loss += euj * euj;
+					errs += euj * euj;
+					loss += euj * euj;
+				}
 			}
+
+			errs *= 0.5;
+			loss *= 0.5;
 
 			if (isConverged(iter))
 				break;
 		}
 	}
 
+	/**
+	 * Why buildingModel2 that follows the paper instructions does not work?
+	 */
 	protected void buildModel2() {
-		for (int iter = 1; iter < maxIters; iter++) {
+		for (int iter = 1; iter <= maxIters; iter++) {
 
 			// Step 1: update W by fixing H
 			DenseMatrix trH = H.transpose();
@@ -177,7 +181,6 @@ public class NMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { regU, regI, numFactors,
-				maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { numFactors, maxIters }, ",");
 	}
 }

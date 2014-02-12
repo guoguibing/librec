@@ -88,7 +88,7 @@ public class DenseMatrix {
 	}
 
 	/**
-	 * @param row
+	 * @param rowId
 	 *            row id
 	 * @return a copy of row data as a dense vector
 	 */
@@ -96,6 +96,14 @@ public class DenseMatrix {
 		return row(rowId, true);
 	}
 
+	/**
+	 * 
+	 * @param rowId
+	 *            row id
+	 * @param deep
+	 *            whether to copy data or only shallow copy
+	 * @return a vector of a specific row
+	 */
 	public DenseVector row(int rowId, boolean deep) {
 		return new DenseVector(data[rowId], deep);
 	}

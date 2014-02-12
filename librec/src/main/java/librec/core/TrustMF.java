@@ -29,7 +29,7 @@ public class TrustMF extends SocialRecommender {
 
 	protected void initTr() {
 		Vr = new DenseMatrix(numItems, numFactors);
-		//Vr.init(initMean, initStd);
+		// Vr.init(initMean, initStd);
 		Vr.init();
 
 		for (int j = 0; j < numItems; j++)
@@ -39,8 +39,8 @@ public class TrustMF extends SocialRecommender {
 		Br = new DenseMatrix(numUsers, numFactors);
 		Wr = new DenseMatrix(numUsers, numFactors);
 
-		//Br.init(initMean, initStd);
-		//Wr.init(initMean, initStd);
+		// Br.init(initMean, initStd);
+		// Wr.init(initMean, initStd);
 		Br.init();
 		Wr.init();
 
@@ -55,7 +55,7 @@ public class TrustMF extends SocialRecommender {
 
 	protected void initTe() {
 		Ve = new DenseMatrix(numItems, numFactors);
-		//Ve.init(initMean, initStd);
+		// Ve.init(initMean, initStd);
 		Ve.init();
 
 		for (int j = 0; j < numItems; j++)
@@ -65,8 +65,8 @@ public class TrustMF extends SocialRecommender {
 		Be = new DenseMatrix(numUsers, numFactors);
 		We = new DenseMatrix(numUsers, numFactors);
 
-		//Be.init(initMean, initStd);
-		//We.init(initMean, initStd);
+		// Be.init(initMean, initStd);
+		// We.init(initMean, initStd);
 		Be.init();
 		We.init();
 
@@ -127,28 +127,24 @@ public class TrustMF extends SocialRecommender {
 			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
 
 			// compute B sgds
-			for (int u = 0; u < numUsers; u++) {
+			for (int u = 0; u < trainMatrix.numRows(); u++) {
 
 				// rated items
-				int nbu = 1;
-				if (u < trainMatrix.numRows()) {
-					SparseVector rv = trainMatrix.row(u);
-					nbu = rv.getCount() > 0 ? rv.getCount() : 1;
-					for (int j : rv.getIndex()) {
-						double pred = predTr(u, j);
-						double ruj = rv.get(j);
+				SparseVector rv = trainMatrix.row(u);
+				int nbu = rv.getCount() > 0 ? rv.getCount() : 1;
+				for (int j : rv.getIndex()) {
+					double pred = predTr(u, j);
+					double ruj = rv.get(j);
 
-						//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
-						double euj = g(pred) - ruj / maxRate;
+					double euj = g(pred) - ruj / maxRate;
 
-						loss += euj * euj;
-						errs += euj * euj;
+					loss += euj * euj;
+					errs += euj * euj;
 
-						double csgd = gd(pred) * euj;
+					double csgd = gd(pred) * euj;
 
-						for (int f = 0; f < numFactors; f++)
-							BS.add(u, f, csgd * Vr.get(j, f));
-					}
+					for (int f = 0; f < numFactors; f++)
+						BS.add(u, f, csgd * Vr.get(j, f));
 				}
 
 				// trusted users
@@ -182,7 +178,8 @@ public class TrustMF extends SocialRecommender {
 				for (int u : rv.getIndex()) {
 					double pred = predTr(u, j);
 					double ruj = rv.get(u);
-					//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+					// double euj = minRate + g(pred) * (maxRate - minRate) -
+					// ruj;
 					double euj = g(pred) - ruj / maxRate;
 
 					double csgd = gd(pred) * euj;
@@ -389,14 +386,13 @@ public class TrustMF extends SocialRecommender {
 			break;
 		case "T":
 		default:
-			DenseVector uv = Br.row(u).add(We.row(u));
-			DenseVector jv = Vr.row(j).add(Ve.row(j));
+			DenseVector uv = Br.row(u).add(We.row(u, false));
+			DenseVector jv = Vr.row(j).add(Ve.row(j, false));
 
 			pred = uv.scale(0.5).inner(jv.scale(0.5));
 			break;
 		}
 
 		return g(pred) * maxRate;
-		//return minRate + g(pred) * (maxRate - minRate);
 	}
 }
