@@ -253,7 +253,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		return sv;
 	}
-
+	
 	/**
 	 * query the size of a specific col
 	 * 

@@ -110,6 +110,9 @@ public class DenseMatrix {
 		return vec;
 	}
 
+	/**
+	 * @return the matrix norm-2
+	 */
 	public double norm() {
 		double result = 0;
 
@@ -145,21 +148,111 @@ public class DenseMatrix {
 		return result;
 	}
 
+	/**
+	 * dot product of row x col between two matrices
+	 * 
+	 * @param m
+	 *            the first matrix
+	 * @param mrow
+	 *            row id of the first matrix
+	 * @param n
+	 *            the second matrix
+	 * @param ncol
+	 *            column id of the second matrix
+	 * @return dot product of row of the first matrix and column of the second
+	 *         matrix
+	 */
+	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
+		assert m.numCols == n.numRows;
+
+		double result = 0;
+		for (int j = 0; j < m.numCols; j++)
+			result += m.get(mrow, j) * n.get(j, ncol);
+
+		return result;
+	}
+
+	/**
+	 * Matrix multiplication with a dense matrix
+	 * 
+	 * @param mat
+	 *            a dense matrix
+	 * @return a dense matrix with results of matrix multiplication
+	 */
 	public DenseMatrix mult(DenseMatrix mat) {
 		assert this.numCols == mat.numRows;
 
 		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
 
 		for (int i = 0; i < result.numRows; i++) {
-			DenseVector row = this.row(i);
 			for (int j = 0; j < result.numCols; j++) {
-				DenseVector col = mat.column(j);
 
-				result.set(i, j, row.inner(col));
+				double product = 0;
+				for (int k = 0; k < this.numCols; k++)
+					product += data[i][k] * mat.data[k][j];
+
+				result.set(i, j, product);
 			}
 		}
 
 		return result;
+	}
+
+	/**
+	 * Matrix multiplication with a sparse matrix
+	 * 
+	 * @param mat
+	 *            a sparse matrix
+	 * @return a dense matrix with results of matrix multiplication
+	 */
+	public DenseMatrix mult(SparseMatrix mat) {
+		assert this.numCols == mat.numRows;
+
+		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
+
+		for (int i = 0; i < result.numRows; i++) {
+			for (int j = 0; j < result.numCols; j++) {
+
+				double product = 0;
+				SparseVector col = mat.column(j);
+				for (int k : col.getIndex())
+					product += data[i][k] * col.get(k);
+
+				result.set(i, j, product);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Matrix multiplication of a sparse matrix by a dense matrix
+	 * 
+	 * @param sm
+	 *            a sparse matrix
+	 * @param dm
+	 *            a dense matrix
+	 * @return a dense matrix with the results of matrix multiplication
+	 */
+	public static DenseMatrix mult(SparseMatrix sm, DenseMatrix dm) {
+		assert sm.numCols == dm.numRows;
+
+		DenseMatrix result = new DenseMatrix(sm.numRows, dm.numCols);
+
+		for (int i = 0; i < result.numRows; i++) {
+			SparseVector row = sm.row(i);
+			for (int j = 0; j < result.numCols; j++) {
+
+				double product = 0;
+				for (int k : row.getIndex())
+					product += row.get(k) * dm.data[k][j];
+
+				result.set(i, j, product);
+			}
+		}
+
+		return result;
+
 	}
 
 	public double get(int row, int col) {
