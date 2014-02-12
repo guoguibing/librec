@@ -54,6 +54,13 @@ public class DenseVector {
 		data[idx] += val;
 	}
 
+	public DenseVector scale(double val) {
+		for (int i = 0; i < size; i++)
+			data[i] *= val;
+
+		return this;
+	}
+
 	public DenseVector add(DenseVector vec) {
 		assert size == vec.size;
 

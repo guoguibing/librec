@@ -138,8 +138,8 @@ public class TrustMF extends SocialRecommender {
 						double pred = predTr(u, j);
 						double ruj = rv.get(j);
 
-						//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
-						double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
+						double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+						//double euj = g(pred) - ruj / maxRate;
 
 						loss += euj * euj;
 						errs += euj * euj;
@@ -171,7 +171,7 @@ public class TrustMF extends SocialRecommender {
 					double buf = Br.get(u, f);
 					BS.add(u, f, regU * (nbu + mbu) * buf);
 
-					loss += regU * buf * buf;
+					loss += regU * (nbu + mbu) * buf * buf;
 				}
 			}
 
@@ -182,8 +182,8 @@ public class TrustMF extends SocialRecommender {
 				for (int u : rv.getIndex()) {
 					double pred = predTr(u, j);
 					double ruj = rv.get(u);
-					//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
-					double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
+					double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+					//double euj = g(pred) - ruj / maxRate;
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
@@ -196,7 +196,7 @@ public class TrustMF extends SocialRecommender {
 					double vjf = Vr.get(j, f);
 					VS.add(j, f, regI * nvj * vjf);
 
-					loss += regI * vjf * vjf;
+					loss += regI * nvj * vjf * vjf;
 				}
 			}
 
@@ -220,7 +220,7 @@ public class TrustMF extends SocialRecommender {
 					double wkf = Wr.get(k, f);
 					WS.add(k, f, regU * mwk * wkf);
 
-					loss += regU * wkf * wkf;
+					loss += regU * mwk * wkf * wkf;
 				}
 			}
 
@@ -293,7 +293,7 @@ public class TrustMF extends SocialRecommender {
 					double wuf = We.get(u, f);
 					WS.add(u, f, regU * (nwu + mwu) * wuf);
 
-					loss += regU * wuf * wuf;
+					loss += regU * (nwu + mwu) * wuf * wuf;
 				}
 			}
 
@@ -317,7 +317,7 @@ public class TrustMF extends SocialRecommender {
 					double vjf = Ve.get(j, f);
 					VS.add(j, f, regI * nvj * vjf);
 
-					loss += regI * vjf * vjf;
+					loss += regI * nvj * vjf * vjf;
 				}
 			}
 
@@ -341,7 +341,7 @@ public class TrustMF extends SocialRecommender {
 					double bkf = Be.get(k, f);
 					BS.add(k, f, regU * mbk * bkf);
 
-					loss += regU * bkf * bkf;
+					loss += regU * mbk * bkf * bkf;
 				}
 			}
 
@@ -365,8 +365,7 @@ public class TrustMF extends SocialRecommender {
 		return DenseMatrix.rowMult(We, u, Ve, j);
 	}
 
-	@Override
-	protected void updateLRate(int iter) {
+	protected void updateLRate2(int iter) {
 		if (iter == 10)
 			lRate = 0.03;
 		else if (iter == 30)
@@ -393,10 +392,11 @@ public class TrustMF extends SocialRecommender {
 			DenseVector uv = Br.row(u).add(We.row(u));
 			DenseVector jv = Vr.row(j).add(Ve.row(j));
 
-			pred = uv.inner(jv);
+			pred = uv.scale(0.5).inner(jv.scale(0.5));
 			break;
 		}
 
+		//return g(pred) * maxRate;
 		return minRate + g(pred) * (maxRate - minRate);
 	}
 }
