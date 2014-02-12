@@ -2,8 +2,10 @@ package librec.ext;
 
 import happy.coding.io.Strings;
 import librec.data.DenseMatrix;
+import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
+import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
 
 /**
@@ -41,6 +43,72 @@ public class NMF extends IterativeRecommender {
 
 	@Override
 	protected void buildModel() {
+		for (int iter = 1; iter < maxIters; iter++) {
+
+			// update W by fixing H
+			for (int u = 0; u < W.numRows(); u++) {
+				SparseVector uv = V.row(u);
+
+				if (uv.getCount() > 0) {
+					SparseVector euv = new SparseVector(V.numColumns());
+
+					for (int j : uv.getIndex())
+						euv.set(j, predict(u, j));
+
+					for (int f = 0; f < W.numCols(); f++) {
+						DenseVector fv = H.column(f);
+						double real = fv.inner(uv);
+						double estm = fv.inner(euv) + 1e-9;
+
+						W.set(u, f, W.get(u, f) * (real / estm));
+					}
+				}
+			}
+
+			// update H by fixing W
+			for (int j = 0; j < H.numCols(); j++) {
+				SparseVector jv = V.column(j);
+
+				if (jv.getCount() > 0) {
+					SparseVector ejv = new SparseVector(V.numRows());
+
+					for (int u : jv.getIndex())
+						ejv.set(u, predict(u, j));
+
+					for (int f = 0; f < H.numRows(); f++) {
+						DenseVector fv = W.column(f);
+						double real = fv.inner(jv);
+						double estm = fv.inner(ejv) + 1e-9;
+
+						W.set(f, j, W.get(j, f) * (real / estm));
+					}
+				}
+			}
+
+			// compute errors
+			loss = 0;
+			errs = 0;
+			for (MatrixEntry me : V) {
+				int u = me.row();
+				int j = me.column();
+				double ruj = me.get();
+
+				if (ruj <= 0)
+					continue;
+
+				double pred = predict(u, j);
+				double euj = pred - ruj;
+
+				errs += euj * euj;
+				loss += euj * euj;
+			}
+
+			if (isConverged(iter))
+				break;
+		}
+	}
+
+	protected void buildModel2() {
 		for (int iter = 1; iter < maxIters; iter++) {
 			loss = 0;
 			errs = 0;
@@ -93,7 +161,8 @@ public class NMF extends IterativeRecommender {
 				loss += euj * euj;
 			}
 
-			loss += regU * Math.pow(W.norm(), 2) + regI * Math.pow(H.norm(), 2);
+			// loss += regU * Math.pow(W.norm(), 2) + regI * Math.pow(H.norm(),
+			// 2);
 
 			errs *= 0.5;
 			loss *= 0.5;
