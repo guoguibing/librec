@@ -23,6 +23,9 @@ public class NMF extends IterativeRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "NMF";
+
+		// no need to update learning rate
+		lRate = -1;
 	}
 
 	@Override
@@ -42,7 +45,7 @@ public class NMF extends IterativeRecommender {
 			loss = 0;
 			errs = 0;
 
-			/* update H */
+			// transpose of W
 			DenseMatrix trW = W.transpose();
 
 			// trW * V
@@ -51,14 +54,7 @@ public class NMF extends IterativeRecommender {
 			// trW * W * H
 			DenseMatrix trW_W_H = trW.mult(W).mult(H);
 
-			// update: H_ij = H_ij * (trW_V)_ij / (trW_W_H)_ij
-			for (int i = 0; i < H.numRows(); i++)
-				for (int j = 0; j < H.numCols(); j++) {
-					double denorm = trW_W_H.get(i, j) + 1e-9;
-					H.set(i, j, H.get(i, j) * (trW_V.get(i, j) / denorm));
-				}
-
-			/* update W */
+			// transpose of H
 			DenseMatrix trH = H.transpose();
 
 			// V * trH
@@ -66,6 +62,13 @@ public class NMF extends IterativeRecommender {
 
 			// W * H * trH
 			DenseMatrix W_H_trH = W.mult(H.mult(trH));
+
+			// update: H_ij = H_ij * (trW_V)_ij / (trW_W_H)_ij
+			for (int i = 0; i < H.numRows(); i++)
+				for (int j = 0; j < H.numCols(); j++) {
+					double denorm = trW_W_H.get(i, j) + 1e-9;
+					H.set(i, j, H.get(i, j) * (trW_V.get(i, j) / denorm));
+				}
 
 			// update: W_ij = W_ij * (V_trH)_ij / (W_H_trH)_ij
 			for (int i = 0; i < W.numRows(); i++)
@@ -107,6 +110,7 @@ public class NMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { regU, regI, numFactors, maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { regU, regI, numFactors,
+				maxIters, isBoldDriver }, ",");
 	}
 }

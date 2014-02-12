@@ -15,7 +15,7 @@ import librec.data.SparseMatrix;
 public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
-	// init learning rate, momentum 
+	// init learning rate, momentum
 	protected static double initLRate, momentum;
 	// user and item regularization
 	protected static double regU, regI;
@@ -26,7 +26,8 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// whether to adjust learning rate automatically
 	protected static boolean isBoldDriver;
-	// whether to undo last weight changes if negative loss observed when bold driving
+	// whether to undo last weight changes if negative loss observed when bold
+	// driving
 	protected static boolean isUndoEnabled;
 	// decay of learning rate
 	protected static double decay;
@@ -43,7 +44,7 @@ public abstract class IterativeRecommender extends Recommender {
 	// item biases
 	protected DenseVector itemBiases, last_IB;
 
-	// adaptive learn rate 
+	// adaptive learn rate
 	protected double lRate;
 	// training errors
 	protected double errs, last_errs = 0;
@@ -66,7 +67,8 @@ public abstract class IterativeRecommender extends Recommender {
 		decay = cf.getDouble("val.decay.rate");
 	}
 
-	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public IterativeRecommender(SparseMatrix trainMatrix,
+			SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		lRate = initLRate;
@@ -99,9 +101,12 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// print out debug info
 		if (verbose) {
-			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
-					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
-							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
+			Logs.debug(
+					"{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
+					new Object[] { algoName, foldInfo, iter, (float) errs,
+							(float) (last_errs - errs), (float) loss,
+							(float) (Math.abs(last_loss) - Math.abs(loss)),
+							(float) lRate });
 		}
 
 		if (!(isBoldDriver && isUndoEnabled) && Double.isNaN(loss)) {
@@ -115,7 +120,7 @@ public abstract class IterativeRecommender extends Recommender {
 		boolean converged = cond1 || cond2;
 
 		// if not converged, update learning rate
-		if (!converged)
+		if (!converged && lRate > 0)
 			updateLRate(iter);
 
 		return converged;
@@ -151,7 +156,8 @@ public abstract class IterativeRecommender extends Recommender {
 				if (isUndoEnabled) {
 					// undo last weight changes
 					undos(iter);
-					// do not update last loss and errors, since we discard current loss and errors
+					// do not update last loss and errors, since we discard
+					// current loss and errors
 					return;
 				}
 			}
@@ -182,8 +188,9 @@ public abstract class IterativeRecommender extends Recommender {
 	 * undo last weight changes
 	 */
 	protected void undos(int iter) {
-		Logs.debug("{}{} iter {}: undo last weight changes and sharply decrease the learning rate !", algoName,
-				foldInfo, iter);
+		Logs.debug(
+				"{}{} iter {}: undo last weight changes and sharply decrease the learning rate !",
+				algoName, foldInfo, iter);
 
 		if (last_P != null)
 			P = last_P.clone();
@@ -224,7 +231,8 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, regU, regI,
+				numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }
