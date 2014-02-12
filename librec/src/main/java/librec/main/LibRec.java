@@ -37,6 +37,7 @@ import librec.ext.DNM;
 import librec.ext.DRM;
 import librec.ext.DRMPlus;
 import librec.ext.Hybrid;
+import librec.ext.NMF;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
@@ -197,6 +198,7 @@ public class LibRec {
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
+		/* baselines */
 		case "globalavg":
 			return new GlobalAverage(trainMatrix, testMatrix, fold);
 		case "useravg":
@@ -209,12 +211,12 @@ public class LibRec {
 			return new ConstantGuess(trainMatrix, testMatrix, fold);
 		case "mostpop":
 			return new MostPopular(trainMatrix, testMatrix, fold);
+
+			/* cores */
 		case "userknn":
 			return new UserKNN(trainMatrix, testMatrix, fold);
 		case "itemknn":
 			return new ItemKNN(trainMatrix, testMatrix, fold);
-		case "slopeone":
-			return new SlopeOne(trainMatrix, testMatrix, fold);
 		case "regsvd":
 			return new RegSVD(trainMatrix, testMatrix, fold);
 		case "biasedmf":
@@ -229,6 +231,14 @@ public class LibRec {
 			return new SocialMF(trainMatrix, testMatrix, fold);
 		case "trustmf":
 			return new TrustMF(trainMatrix, testMatrix, fold);
+
+			/* extension */
+		case "nmf":
+			return new NMF(trainMatrix, testMatrix, fold);
+		case "hybrid":
+			return new Hybrid(trainMatrix, testMatrix, fold);
+		case "slopeone":
+			return new SlopeOne(trainMatrix, testMatrix, fold);
 		case "aaai-basemf":
 			return new BaseMF(trainMatrix, testMatrix, fold);
 		case "aaai-dmf":
@@ -241,8 +251,6 @@ public class LibRec {
 			return new DRM(trainMatrix, testMatrix, fold);
 		case "aaai-drmplus":
 			return new DRMPlus(trainMatrix, testMatrix, fold);
-		case "hybrid":
-			return new Hybrid(trainMatrix, testMatrix, fold);
 		default:
 			throw new Exception("No recommender is specified!");
 		}
