@@ -111,4 +111,9 @@ public class NMF extends IterativeRecommender {
 				break;
 		}
 	}
+
+	@Override
+	protected double predict(int u, int j) {
+		return W.row(u).inner(H.column(j));
+	}
 }
