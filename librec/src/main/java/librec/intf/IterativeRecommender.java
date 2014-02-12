@@ -123,6 +123,9 @@ public abstract class IterativeRecommender extends Recommender {
 		if (!converged && lRate > 0)
 			updateLRate(iter);
 
+		last_loss = loss;
+		last_errs = errs;
+
 		return converged;
 	}
 
@@ -165,9 +168,6 @@ public abstract class IterativeRecommender extends Recommender {
 			lRate *= decay;
 		else if (decay == 0)
 			lRate = initLRate / (1 + initLRate * ((regU + regI) / 2.0) * iter);
-
-		last_loss = loss;
-		last_errs = errs;
 	}
 
 	/**
