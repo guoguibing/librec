@@ -92,8 +92,12 @@ public class DenseMatrix {
 	 *            row id
 	 * @return a copy of row data as a dense vector
 	 */
-	public DenseVector row(int row) {
-		return new DenseVector(data[row]);
+	public DenseVector row(int rowId) {
+		return row(rowId, true);
+	}
+
+	public DenseVector row(int rowId, boolean deep) {
+		return new DenseVector(data[rowId], deep);
 	}
 
 	/**
@@ -136,7 +140,8 @@ public class DenseMatrix {
 	 *            row of the second matrix
 	 * @return inner product of two row vectors
 	 */
-	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
+	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n,
+			int nrow) {
 
 		assert m.numCols == n.numCols;
 
@@ -162,7 +167,8 @@ public class DenseMatrix {
 	 * @return dot product of row of the first matrix and column of the second
 	 *         matrix
 	 */
-	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
+	public static double product(DenseMatrix m, int mrow, DenseMatrix n,
+			int ncol) {
 		assert m.numCols == n.numRows;
 
 		double result = 0;

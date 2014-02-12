@@ -21,8 +21,12 @@ public class DenseVector {
 	}
 
 	public DenseVector(double[] array) {
+		this(array, true);
+	}
+
+	public DenseVector(double[] array, boolean deep) {
 		this.size = array.length;
-		data = Arrays.copyOf(array, array.length);
+		data = deep ? Arrays.copyOf(array, array.length) : array;
 	}
 
 	public DenseVector(DenseVector vec) {

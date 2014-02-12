@@ -56,7 +56,7 @@ public class NMF extends IterativeRecommender {
 						euv.set(j, predict(u, j));
 
 					for (int f = 0; f < W.numCols(); f++) {
-						DenseVector fv = H.row(f);
+						DenseVector fv = H.row(f, false);
 						double real = fv.inner(uv);
 						double estm = fv.inner(euv) + 1e-9;
 
@@ -66,6 +66,7 @@ public class NMF extends IterativeRecommender {
 			}
 
 			// update H by fixing W
+			DenseMatrix trW = W.transpose();
 			for (int j = 0; j < H.numCols(); j++) {
 				SparseVector jv = V.column(j);
 
@@ -76,11 +77,11 @@ public class NMF extends IterativeRecommender {
 						ejv.set(u, predict(u, j));
 
 					for (int f = 0; f < H.numRows(); f++) {
-						DenseVector fv = W.column(f);
+						DenseVector fv = trW.row(f, false);
 						double real = fv.inner(jv);
 						double estm = fv.inner(ejv) + 1e-9;
 
-						W.set(f, j, W.get(j, f) * (real / estm));
+						H.set(f, j, H.get(f, j) * (real / estm));
 					}
 				}
 			}
@@ -110,8 +111,6 @@ public class NMF extends IterativeRecommender {
 
 	protected void buildModel2() {
 		for (int iter = 1; iter < maxIters; iter++) {
-			loss = 0;
-			errs = 0;
 
 			// Step 1: update W by fixing H
 			DenseMatrix trH = H.transpose();
@@ -146,6 +145,8 @@ public class NMF extends IterativeRecommender {
 				}
 
 			// compute errors
+			loss = 0;
+			errs = 0;
 			for (MatrixEntry me : V) {
 				int u = me.row();
 				int j = me.column();
@@ -160,9 +161,6 @@ public class NMF extends IterativeRecommender {
 				errs += euj * euj;
 				loss += euj * euj;
 			}
-
-			// loss += regU * Math.pow(W.norm(), 2) + regI * Math.pow(H.norm(),
-			// 2);
 
 			errs *= 0.5;
 			loss *= 0.5;
