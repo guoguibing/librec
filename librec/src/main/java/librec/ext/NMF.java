@@ -56,7 +56,7 @@ public class NMF extends IterativeRecommender {
 						euv.set(j, predict(u, j));
 
 					for (int f = 0; f < W.numCols(); f++) {
-						DenseVector fv = H.column(f);
+						DenseVector fv = H.row(f);
 						double real = fv.inner(uv);
 						double estm = fv.inner(euv) + 1e-9;
 
