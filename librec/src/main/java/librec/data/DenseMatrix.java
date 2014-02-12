@@ -97,6 +97,30 @@ public class DenseMatrix {
 	}
 
 	/**
+	 * @param col
+	 *            column id
+	 * @return a copy of column data as a dense vector
+	 */
+	public DenseVector column(int col) {
+		DenseVector vec = new DenseVector(numRows);
+
+		for (int i = 0; i < numRows; i++)
+			vec.set(i, get(i, col));
+
+		return vec;
+	}
+
+	public double norm() {
+		double result = 0;
+
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numCols; j++)
+				result += Math.pow(data[i][j], 2);
+
+		return Math.sqrt(result);
+	}
+
+	/**
 	 * row x row of two matrix
 	 * 
 	 * @param m
@@ -117,6 +141,23 @@ public class DenseMatrix {
 
 		for (int j = 0, k = m.numCols; j < k; j++)
 			result += m.get(mrow, j) * n.get(nrow, j);
+
+		return result;
+	}
+
+	public DenseMatrix mult(DenseMatrix mat) {
+		assert this.numCols == mat.numRows;
+
+		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
+
+		for (int i = 0; i < result.numRows; i++) {
+			DenseVector row = this.row(i);
+			for (int j = 0; j < result.numCols; j++) {
+				DenseVector col = mat.column(j);
+
+				result.set(i, j, row.inner(col));
+			}
+		}
 
 		return result;
 	}
@@ -151,6 +192,17 @@ public class DenseMatrix {
 				data[i][j] += mat.get(i, j);
 
 		return this;
+	}
+
+	// generate a new transposed matrix
+	public DenseMatrix transpose() {
+		DenseMatrix mat = new DenseMatrix(numCols, numRows);
+
+		for (int i = 0; i < mat.numRows; i++)
+			for (int j = 0; j < mat.numCols; j++)
+				mat.set(i, j, get(j, i));
+
+		return mat;
 	}
 
 	/**

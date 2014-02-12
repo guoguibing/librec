@@ -138,8 +138,8 @@ public class TrustMF extends SocialRecommender {
 						double pred = predTr(u, j);
 						double ruj = rv.get(j);
 
-						double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
-						//double euj = g(pred) - ruj / maxRate;
+						//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+						double euj = g(pred) - ruj / maxRate;
 
 						loss += euj * euj;
 						errs += euj * euj;
@@ -182,8 +182,8 @@ public class TrustMF extends SocialRecommender {
 				for (int u : rv.getIndex()) {
 					double pred = predTr(u, j);
 					double ruj = rv.get(u);
-					double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
-					//double euj = g(pred) - ruj / maxRate;
+					//double euj = minRate + g(pred) * (maxRate - minRate) - ruj;
+					double euj = g(pred) - ruj / maxRate;
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
@@ -261,7 +261,7 @@ public class TrustMF extends SocialRecommender {
 						double pred = predTe(u, j);
 						double ruj = rv.get(j);
 
-						double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
+						double euj = g(pred) - ruj / maxRate;
 
 						loss += euj * euj;
 						errs += euj * euj;
@@ -304,7 +304,7 @@ public class TrustMF extends SocialRecommender {
 				for (int u : rv.getIndex()) {
 					double pred = predTe(u, j);
 					double ruj = rv.get(u);
-					double euj = g(pred) - (ruj - minRate) / (maxRate - minRate);
+					double euj = g(pred) - ruj / maxRate;
 
 					double csgd = gd(pred) * euj;
 					for (int f = 0; f < numFactors; f++)
@@ -396,7 +396,7 @@ public class TrustMF extends SocialRecommender {
 			break;
 		}
 
-		//return g(pred) * maxRate;
-		return minRate + g(pred) * (maxRate - minRate);
+		return g(pred) * maxRate;
+		//return minRate + g(pred) * (maxRate - minRate);
 	}
 }

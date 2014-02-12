@@ -80,4 +80,12 @@ public class DenseVector {
 		return result;
 	}
 
+	public double inner(SparseVector vec) {
+		double result = 0;
+		for (int j : vec.getIndex())
+			result += vec.get(j) * get(j);
+
+		return result;
+	}
+
 }

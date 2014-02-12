@@ -110,6 +110,16 @@ public class SparseVector implements Iterable<VectorEntry> {
 		return i >= 0 ? data[i] : 0;
 	}
 
+	public double inner(SparseVector vec) {
+		double result = 0;
+		for (int idx : this.getIndex()) {
+			if (vec.contains(idx))
+				result += get(idx) * vec.get(idx);
+		}
+
+		return result;
+	}
+
 	/**
 	 * @return sum of vector entries
 	 */
