@@ -58,21 +58,6 @@ public class SocialMF extends SocialRecommender {
 				}
 			}
 
-			// lambdas: code optimization: small loops outside, large loops inside
-			/*
-			 * for (int f = 0; f < numFactors; f++) for (int u = 0; u <
-			 * numUsers; u++) { double puf = P.get(u, f); userSgds.add(u, f,
-			 * regU * puf);
-			 * 
-			 * loss += regU * puf * puf; }
-			 * 
-			 * for (int f = 0; f < numFactors; f++) for (int j = 0; j <
-			 * numItems; j++) { double qjf = Q.get(j, f); itemSgds.add(j, f,
-			 * regI * qjf);
-			 * 
-			 * loss += regI * qjf * qjf; }
-			 */
-
 			// social regularization
 			if (regS != 0) {
 				for (int u = 0; u < numUsers; u++) {
@@ -110,7 +95,7 @@ public class SocialMF extends SocialRecommender {
 						numConns = vv.getCount();
 						if (numConns > 0)
 							for (int f = 0; f < numFactors; f++)
-								PS.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns)); //TODO: check if numVs or numConns
+								PS.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns)); 
 					}
 				}
 			}

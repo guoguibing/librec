@@ -42,7 +42,7 @@ import librec.ongoing.DNM;
 import librec.ongoing.DRM;
 
 /**
- * Main Class for Matrix-based Recommender Systems
+ * Main Class of the LibRec Library
  * 
  * @author guoguibing
  * 
@@ -56,6 +56,9 @@ public class LibRec {
 	// params for multiple runs at once
 	public static int paramIdx;
 	public static boolean isMultRun = false;
+
+	// rate DAO object
+	private static DataDAO rateDao;
 
 	// rating matrix
 	private static SparseMatrix rateMatrix = null;
@@ -71,7 +74,7 @@ public class LibRec {
 		debugInfo();
 
 		// prepare data
-		DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+		rateDao = new DataDAO(cf.getPath("dataset.training"));
 		rateMatrix = rateDao.readData();
 
 		if (Debug.OFF) {
@@ -114,7 +117,11 @@ public class LibRec {
 	}
 
 	private static void runAlgorithm() throws Exception {
-		if (cf.isOn("is.cross.validation"))
+		String testPath = cf.getPath("dataset.testing");
+
+		if (!testPath.equals("-1"))
+			runTestFile(testPath);
+		else if (cf.isOn("is.cross.validation"))
 			runCrossValidation();
 		else
 			runRatio();
@@ -162,7 +169,7 @@ public class LibRec {
 	}
 
 	/**
-	 * interface to run ratio-validation approach
+	 * Interface to run ratio-validation approach
 	 */
 	private static void runRatio() throws Exception {
 
@@ -170,6 +177,21 @@ public class LibRec {
 		double ratio = cf.getDouble("val.ratio");
 
 		Recommender algo = getRecommender(ds.getRatio(ratio), -1);
+		algo.execute();
+
+		printEvalInfo(algo, algo.measures);
+	}
+
+	/**
+	 * Interface to run testing using data from an input file
+	 * 
+	 */
+	private static void runTestFile(String path) throws Exception {
+		
+		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
+		SparseMatrix testMatrix = testDao.readData();
+
+		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
 		algo.execute();
 
 		printEvalInfo(algo, algo.measures);
@@ -259,8 +281,15 @@ public class LibRec {
 	private static void debugInfo() {
 		String cv = "kFold: " + cf.getInt("num.kfold")
 				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
-		String datasetInfo = String.format("Dataset: %s, %s", Strings.last(cf.getPath("dataset.ratings"), 38),
-				cf.isOn("is.cross.validation") ? cv : "ratio: " + (float) cf.getDouble("val.ratio"));
+		String cvInfo = cf.isOn("is.cross.validation") ? cv : "ratio: " + (float) cf.getDouble("val.ratio");
+
+		String testPath = cf.getPath("dataset.testing");
+		boolean isTestingFlie = !testPath.equals("-1");
+		String datasetInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38),
+				isTestingFlie ? "" : cvInfo);
 		Logs.info(datasetInfo);
+
+		if (isTestingFlie)
+			Logs.info("Testing:: {}.", Strings.last(testPath, 38));
 	}
 }
