@@ -5,7 +5,10 @@ import librec.intf.IterativeRecommender;
 
 /**
  * Salakhutdinov and Mnih, <strong>Bayesian Probabilistic Matrix Factorization
- * using Markov Chain Monte Carlo</strong>, ICML 2008.
+ * using Markov Chain Monte Carlo</strong>, ICML 2008. <br/>
+ * 
+ * Matlab version is provided by the authors via <a
+ * href="http://www.utstat.toronto.edu/~rsalakhu/BPMF.html">this link</a>.
  * 
  * @author guoguibing
  * 

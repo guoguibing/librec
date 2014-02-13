@@ -473,8 +473,17 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 	}
 
-	// example: http://netlib.org/linalg/html_templates/node91.html
 	public static void main(String[] args) {
+		// test data matrix        
+		//		{10, 0, 0, 0, -2,  0},   
+		//		{ 3, 9, 0, 0,  0,  3},   
+		//		{ 0, 7, 8, 7,  0,  0},
+		//		{ 3, 0, 8, 7,  5,  0},
+		//		{ 0, 8, 0, 9,  9, 13}, 
+		//		{ 0, 4, 0, 0,  2, -1}
+		//     val = {10, -2, 3, 9, 3, 7, 8, 7, 3, 8, 7, 5, 8, 9, 9, 13, 4, 2, -1}
+		// col_ind = {1, 5, 1, 2, 6, 2, 3, 4, 1, 3, 4, 5, 2, 4, 5, 6, 2, 5, 6}
+		//  row_pt = {1, 3, 6, 9, 13, 17, 20}
 
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
@@ -524,7 +533,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		colMap.put(5, 4);
 		colMap.put(5, 5);
 
-		SparseMatrix mat = new SparseMatrix(6, 6, dataTable, null);
+		SparseMatrix mat = new SparseMatrix(6, 6, dataTable);
 		SparseMatrix mat2 = new SparseMatrix(6, 6, dataTable, colMap);
 
 		Logs.debug(mat);

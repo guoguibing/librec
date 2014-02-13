@@ -30,16 +30,16 @@ import librec.core.UserKNN;
 import librec.data.DataDAO;
 import librec.data.DataSplitter;
 import librec.data.SparseMatrix;
-import librec.ext.BaseMF;
-import librec.ext.BaseNM;
-import librec.ext.DMF;
-import librec.ext.DNM;
-import librec.ext.DRM;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
+import librec.ongoing.BaseMF;
+import librec.ongoing.BaseNM;
+import librec.ongoing.DMF;
+import librec.ongoing.DNM;
+import librec.ongoing.DRM;
 
 /**
  * Main Class for Matrix-based Recommender Systems
