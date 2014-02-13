@@ -1,5 +1,6 @@
 package librec.core;
 
+import happy.coding.system.Debug;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -97,8 +98,8 @@ public class TrustMF extends SocialRecommender {
 
 			// gradients of B, V, W
 			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
 			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
+			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
 
 			// rate matrix
 			for (MatrixEntry me : trainMatrix) {
@@ -108,7 +109,7 @@ public class TrustMF extends SocialRecommender {
 				double ruj = me.get();
 				if (ruj > 0) {
 					double pred = predict(u, j);
-					double euj = g(pred) - ruj / maxRate;
+					double euj = g(pred) - normalize(ruj);
 
 					loss += euj * euj;
 					errs += euj * euj;
@@ -118,6 +119,9 @@ public class TrustMF extends SocialRecommender {
 					for (int f = 0; f < numFactors; f++) {
 						BS.add(u, f, csgd * Vr.get(j, f) + regU * Br.get(u, f));
 						VS.add(j, f, csgd * Br.get(u, f) + regI * Vr.get(j, f));
+
+						loss += regU * Br.get(u, f) * Br.get(u, f);
+						loss += regI * Vr.get(j, f) * Vr.get(j, f);
 					}
 				}
 			}
@@ -140,6 +144,9 @@ public class TrustMF extends SocialRecommender {
 					for (int f = 0; f < numFactors; f++) {
 						BS.add(u, f, regS * csgd * Wr.get(k, f) + regU * Br.get(u, f));
 						WS.add(k, f, regS * csgd * Br.get(u, f) + regU * Wr.get(k, f));
+
+						loss += regU * Br.get(u, f) * Br.get(u, f);
+						loss += regU * Wr.get(u, f) * Wr.get(u, f);
 					}
 				}
 			}
@@ -166,8 +173,8 @@ public class TrustMF extends SocialRecommender {
 
 			// gradients of B, V, W
 			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
 			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
+			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
 
 			// rate matrix
 			for (MatrixEntry me : trainMatrix) {
@@ -177,7 +184,7 @@ public class TrustMF extends SocialRecommender {
 				double ruj = me.get();
 				if (ruj > 0) {
 					double pred = predict(u, j);
-					double euj = g(pred) - ruj / maxRate;
+					double euj = g(pred) - normalize(ruj);
 
 					loss += euj * euj;
 					errs += euj * euj;
@@ -187,6 +194,9 @@ public class TrustMF extends SocialRecommender {
 					for (int f = 0; f < numFactors; f++) {
 						WS.add(u, f, csgd * Ve.get(j, f) + regU * We.get(u, f));
 						VS.add(j, f, csgd * We.get(u, f) + regI * Ve.get(j, f));
+
+						loss += regU * We.get(u, f) * We.get(u, f);
+						loss += regI * Ve.get(j, f) * Ve.get(j, f);
 					}
 				}
 			}
@@ -209,6 +219,9 @@ public class TrustMF extends SocialRecommender {
 					for (int f = 0; f < numFactors; f++) {
 						WS.add(u, f, regS * csgd * Be.get(k, f) + regU * We.get(u, f));
 						BS.add(k, f, regS * csgd * We.get(u, f) + regU * Be.get(k, f));
+
+						loss += regU * We.get(u, f) * We.get(u, f);
+						loss += regU * Be.get(k, f) * Be.get(k, f);
 					}
 				}
 			}
@@ -232,6 +245,13 @@ public class TrustMF extends SocialRecommender {
 			lRate = 0.01;
 		else if (iter == 100)
 			lRate = 0.005;
+	}
+
+	protected double normalize(double rate) {
+		if (Debug.ON)
+			return (rate - minRate) / (maxRate - minRate);
+
+		return rate / maxRate;
 	}
 
 	protected double predict(int u, int j) {
