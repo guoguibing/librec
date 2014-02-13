@@ -626,7 +626,7 @@ public abstract class Recommender implements Runnable {
 	 * gradient value of logistic function g(x)
 	 */
 	protected double gd(double x) {
-		return g(x) * g(-x); // also = g(x)(1-g(x))
+		return Math.exp(-x) / Math.pow(1 + Math.exp(-x), 2);
 	}
 
 	/**

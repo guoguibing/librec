@@ -40,11 +40,24 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
+	// is CCS enabled
+	protected boolean isCCSUsed = false;
+
+	/**
+	 * Construct a sparse matrix with both CRS and CCS structures
+	 */
 	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
 		numRows = rows;
 		numCols = cols;
 
 		construct(dataTable, colMap);
+	}
+
+	/**
+	 * Construct a sparse matrix with only CRS structures
+	 */
+	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable) {
+		this(rows, cols, dataTable, null);
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
@@ -55,9 +68,11 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		rowPtr = Arrays.copyOf(mat.rowPtr, mat.rowPtr.length);
 		colInd = Arrays.copyOf(mat.colInd, mat.colInd.length);
 
-		colData = Arrays.copyOf(mat.colData, mat.colData.length);
-		colPtr = Arrays.copyOf(mat.colPtr, mat.colPtr.length);
-		rowInd = Arrays.copyOf(mat.rowInd, mat.rowInd.length);
+		if (mat.isCCSUsed) {
+			colData = Arrays.copyOf(mat.colData, mat.colData.length);
+			colPtr = Arrays.copyOf(mat.colPtr, mat.colPtr.length);
+			rowInd = Arrays.copyOf(mat.rowInd, mat.rowInd.length);
+		}
 	}
 
 	public SparseMatrix clone() {
@@ -109,23 +124,27 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 		// CCS
-		colPtr = new int[numCols + 1];
-		rowInd = new int[nnz];
-		colData = new double[nnz];
+		if (colMap != null) {
+			colPtr = new int[numCols + 1];
+			rowInd = new int[nnz];
+			colData = new double[nnz];
+			isCCSUsed = true;
 
-		j = 0;
-		for (int i = 1; i <= numCols; ++i) {
-			// dataTable.col(i-1) is very time-consuming
-			Collection<Integer> rows = colMap.get(i - 1);
-			colPtr[i] = colPtr[i - 1] + rows.size();
+			j = 0;
+			for (int i = 1; i <= numCols; ++i) {
+				// dataTable.col(i-1) is very time-consuming
+				Collection<Integer> rows = colMap.get(i - 1);
+				colPtr[i] = colPtr[i - 1] + rows.size();
 
-			for (int row : rows) {
-				rowInd[j++] = row;
-				if (row < 0 || row >= numRows)
-					throw new IllegalArgumentException("rowInd[" + j + "]=" + row + ", which is not a valid row index");
+				for (int row : rows) {
+					rowInd[j++] = row;
+					if (row < 0 || row >= numRows)
+						throw new IllegalArgumentException("rowInd[" + j + "]=" + row
+								+ ", which is not a valid row index");
+				}
+
+				Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
 			}
-
-			Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
 		}
 
 		// set data
@@ -154,16 +173,20 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		int index = getCRSIndex(row, col);
 		rowData[index] = val;
 
-		index = getCCSIndex(row, col);
-		colData[index] = val;
+		if (isCCSUsed) {
+			index = getCCSIndex(row, col);
+			colData[index] = val;
+		}
 	}
 
 	public void add(int row, int col, double val) {
 		int index = getCRSIndex(row, col);
 		rowData[index] += val;
 
-		getCCSIndex(row, col);
-		colData[index] += val;
+		if (isCCSUsed) {
+			index = getCCSIndex(row, col);
+			colData[index] += val;
+		}
 	}
 
 	public double get(int row, int col) {
@@ -244,16 +267,24 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		SparseVector sv = new SparseVector(numRows);
 
-		for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
-			int row = rowInd[j];
-			double val = get(row, col);
-			if (val != 0.0)
-				sv.set(row, val);
+		if (isCCSUsed) {
+			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+				int row = rowInd[j];
+				double val = get(row, col);
+				if (val != 0.0)
+					sv.set(row, val);
+			}
+		} else {
+			for (int row = 0; row < numRows; row++) {
+				double val = get(row, col);
+				if (val != 0.0)
+					sv.set(row, val);
+			}
 		}
 
 		return sv;
 	}
-	
+
 	/**
 	 * query the size of a specific col
 	 * 
@@ -264,11 +295,20 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	public int columnSize(int col) {
 
 		int size = 0;
-		for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
-			int row = rowInd[j];
-			double val = get(row, col);
-			if (val != 0.0)
-				size++;
+
+		if (isCCSUsed) {
+			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+				int row = rowInd[j];
+				double val = get(row, col);
+				if (val != 0.0)
+					size++;
+			}
+		} else {
+			for (int row = 0; row < numRows; row++) {
+				double val = get(row, col);
+				if (val != 0.0)
+					size++;
+			}
 		}
 
 		return size;
@@ -460,13 +500,16 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		colMap.put(5, 4);
 		colMap.put(5, 5);
 
-		SparseMatrix mat = new SparseMatrix(6, 6, dataTable, colMap);
+		SparseMatrix mat = new SparseMatrix(6, 6, dataTable, null);
+		SparseMatrix mat2 = new SparseMatrix(6, 6, dataTable, colMap);
 
 		Logs.debug(mat);
-		Logs.debug(new SparseMatrix(mat));
+		Logs.debug(mat2);
 
 		Logs.debug(mat.row(1));
+		Logs.debug(mat2.row(1));
 
 		Logs.debug(mat.column(1));
+		Logs.debug(mat2.column(1));
 	}
 }
