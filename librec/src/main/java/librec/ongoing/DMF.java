@@ -1,59 +1,24 @@
-package librec.flyinair;
+package librec.ongoing;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import librec.data.DenseMatrix;
-import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
-import librec.intf.IterativeRecommender;
+import librec.main.RecUtils;
 
-public class BaseMF extends IterativeRecommender {
+public class DMF extends BaseMF {
 
-	protected boolean isPosOnly;
-	protected double minSim;  
+	// diversity parameter
+	private double alpha;
 
-	public BaseMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public DMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "BaseMF";
-
-		isPosOnly = cf.isOn("is.similarity.pos");
-		minSim = isPosOnly ? 0.0 : Double.NEGATIVE_INFINITY;
-	}
-
-	@Override
-	protected void initModel() {
-
-		// re-use it as another item-factor matrix
-		P = new DenseMatrix(numItems, numFactors);
-		Q = new DenseMatrix(numItems, numFactors);
-
-		// initialize model
-		if (isPosOnly) {
-			P.init(0.01);
-			Q.init(0.01);
-		} else {
-			P.init(initMean, initStd);
-			Q.init(initMean, initStd);
-		}
-
-		// set to 0 for items without any ratings
-		for (int j = 0, jm = numItems; j < jm; j++) {
-			if (trainMatrix.columnSize(j) == 0) {
-				P.setRow(j, 0.0);
-				Q.setRow(j, 0.0);
-			}
-		}
-
-		userBiases = new DenseVector(numUsers);
-		itemBiases = new DenseVector(numItems);
-
-		// initialize user bias
-		userBiases.init(initMean, initStd);
-		itemBiases.init(initMean, initStd);
+		algoName = "DMF";
+		alpha = RecUtils.getMKey(params, "val.diverse.alpha");
 	}
 
 	@Override
@@ -67,7 +32,7 @@ public class BaseMF extends IterativeRecommender {
 				int u = me.row(); // user
 				int j = me.column(); // item
 
-				double ruj = me.get(); // rate
+				double ruj = me.get();
 				if (ruj <= 0.0)
 					continue;
 
@@ -106,12 +71,20 @@ public class BaseMF extends IterativeRecommender {
 				double[] sgds = new double[numFactors];
 				for (int f = 0; f < numFactors; f++) {
 					double pjf = P.get(j, f);
+					sgds[f] = -regU * pjf;
 
-					double sum = 0.0;
-					for (int i : items)
-						sum += Q.get(i, f);
+					double sum_q = 0.0, sum_s = 0.0;
+					for (int i : items) {
+						double qif = Q.get(i, f);
+						double pif = P.get(i, f);
+						sum_q += qif;
 
-					sgds[f] = euj * (w > 0.0 ? sum / w : 0.0) - regU * pjf;
+						double sji = DenseMatrix.rowMult(P, j, Q, i);
+						sum_s += 2 * (1 - sji) * (pjf - pif) - qif * Math.pow(pjf - pif, 2);
+					}
+
+					if (w > 0)
+						sgds[f] += euj * (sum_q / w) + 0.5 * alpha * (sum_s / w);
 
 					loss += regU * pjf * pjf;
 				}
@@ -123,6 +96,8 @@ public class BaseMF extends IterativeRecommender {
 						double qif = Q.get(i, f);
 
 						sgd = euj * pjf - regI * qif;
+
+						sgd += -0.5 * alpha * pjf * Math.pow(pjf - P.get(i, f), 2);
 						Q.add(i, f, lRate * sgd);
 
 						loss += regI * qif * qif;
@@ -146,31 +121,8 @@ public class BaseMF extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
-
-		double pred = userBiases.get(u) + itemBiases.get(j);
-
-		int k = 0;
-		double sum = 0.0f;
-		SparseVector uv = trainMatrix.row(u);
-		for (int i : uv.getIndex()) {
-			if (i != j) {
-				double sji = DenseMatrix.rowMult(P, j, Q, i);
-				if (sji > minSim) {
-					sum += sji;
-					k++;
-				}
-			}
-		}
-		if (k > 0)
-			pred += sum / Math.sqrt(k);
-
-		return pred;
-	}
-
-	@Override
 	public String toString() {
-		return super.toString() + "," + isPosOnly;
+		return super.toString() + "," + (float) alpha;
 	}
 
 }
