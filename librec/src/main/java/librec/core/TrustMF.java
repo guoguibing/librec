@@ -272,7 +272,7 @@ public class TrustMF extends SocialRecommender {
 				double ruj = me.get();
 
 				if (ruj > 0) {
-					double pred = predTr(u, j);
+					double pred = predTr2(u, j);
 					double euj = g(pred) - ruj / maxRate;
 
 					loss += euj * euj;
@@ -292,7 +292,7 @@ public class TrustMF extends SocialRecommender {
 				SparseVector tv = socialMatrix.row(u);
 				for (int k : tv.getIndex()) {
 					double tuk = tv.get(k);
-					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
+					double pred = DenseMatrix.colMult(Br, u, Wr, k);
 					double euj = g(pred) - tuk;
 
 					loss += regS * euj * euj;
@@ -444,6 +444,10 @@ public class TrustMF extends SocialRecommender {
 	protected double predTr(int u, int j) {
 		return DenseMatrix.rowMult(Br, u, Vr, j);
 	}
+	
+	protected double predTr2(int u, int j) {
+		return DenseMatrix.colMult(Br, u, Vr, j);
+	}
 
 	protected double predTe(int u, int j) {
 		return DenseMatrix.rowMult(We, u, Ve, j);
@@ -466,7 +470,7 @@ public class TrustMF extends SocialRecommender {
 		double pred = 0.0;
 		switch (model) {
 		case "Tr":
-			pred = predTr(u, j);
+			pred = predTr2(u, j);
 			break;
 		case "Te":
 			pred = predTe(u, j);

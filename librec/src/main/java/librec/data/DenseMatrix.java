@@ -160,6 +160,19 @@ public class DenseMatrix {
 
 		return result;
 	}
+	
+	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n,
+			int ncol) {
+		
+		assert m.numRows == n.numRows;
+		
+		double result = 0;
+		
+		for (int j = 0, k = m.numRows; j < k; j++)
+			result += m.get(j, mcol) * n.get(j, ncol);
+		
+		return result;
+	}
 
 	/**
 	 * dot product of row x col between two matrices
