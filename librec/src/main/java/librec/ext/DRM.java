@@ -11,11 +11,11 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.main.RecUtils;
 
-public class DRMPlus extends CLiMF {
+public class DRM extends CLiMF {
 
 	protected double alpha;
 
-	public DRMPlus(SparseMatrix rm, SparseMatrix tm, int fold) {
+	public DRM(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
 		algoName = "DRMPlus";
