@@ -33,13 +33,13 @@ import librec.data.SparseMatrix;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
 import librec.ext.SlopeOne;
+import librec.flyinair.BaseMF;
+import librec.flyinair.BaseNM;
+import librec.flyinair.DMF;
+import librec.flyinair.DNM;
+import librec.flyinair.DRM;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
-import librec.ongoing.BaseMF;
-import librec.ongoing.BaseNM;
-import librec.ongoing.DMF;
-import librec.ongoing.DNM;
-import librec.ongoing.DRM;
 
 /**
  * Main Class for Matrix-based Recommender Systems
