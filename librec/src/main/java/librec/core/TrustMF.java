@@ -57,6 +57,20 @@ public class TrustMF extends SocialRecommender {
 		}
 	}
 
+	protected void initTr2() {
+		Vr = new DenseMatrix(numFactors, numItems);
+		// Vr.init(initMean, initStd);
+		Vr.init();
+
+		Br = new DenseMatrix(numFactors, numUsers);
+		Wr = new DenseMatrix(numFactors, numUsers);
+
+		// Br.init(initMean, initStd);
+		// Wr.init(initMean, initStd);
+		Br.init();
+		Wr.init();
+	}
+
 	protected void initTe() {
 		Ve = new DenseMatrix(numItems, numFactors);
 		// Ve.init(initMean, initStd);
@@ -87,7 +101,7 @@ public class TrustMF extends SocialRecommender {
 	protected void initModel() {
 		switch (model) {
 		case "Tr":
-			initTr();
+			initTr2();
 			break;
 		case "Te":
 			initTe();
@@ -435,7 +449,7 @@ public class TrustMF extends SocialRecommender {
 		return DenseMatrix.rowMult(We, u, Ve, j);
 	}
 
-	protected void updateLRate2(int iter) {
+	protected void updateLRate(int iter) {
 		if (iter == 10)
 			lRate = 0.03;
 		else if (iter == 30)
