@@ -32,7 +32,6 @@ public class TrustMF extends SocialRecommender {
 		Br = new DenseMatrix(numUsers, numFactors);
 		Wr = new DenseMatrix(numUsers, numFactors);
 
-		// intialization has a great impact on MF performance
 		Vr.init();
 		Br.init();
 		Wr.init();
