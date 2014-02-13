@@ -148,8 +148,7 @@ public class DenseMatrix {
 	 *            row of the second matrix
 	 * @return inner product of two row vectors
 	 */
-	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n,
-			int nrow) {
+	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
 
 		assert m.numCols == n.numCols;
 
@@ -160,17 +159,28 @@ public class DenseMatrix {
 
 		return result;
 	}
-	
-	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n,
-			int ncol) {
-		
+
+	/**
+	 * column x column of two matrix
+	 * 
+	 * @param m
+	 *            the first matrix
+	 * @param mcol
+	 *            column of the first matrix
+	 * @param n
+	 *            the second matrix
+	 * @param ncol
+	 *            column of the second matrix
+	 * @return inner product of two column vectors
+	 */
+	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n, int ncol) {
+
 		assert m.numRows == n.numRows;
-		
+
 		double result = 0;
-		
 		for (int j = 0, k = m.numRows; j < k; j++)
 			result += m.get(j, mcol) * n.get(j, ncol);
-		
+
 		return result;
 	}
 
@@ -188,8 +198,7 @@ public class DenseMatrix {
 	 * @return dot product of row of the first matrix and column of the second
 	 *         matrix
 	 */
-	public static double product(DenseMatrix m, int mrow, DenseMatrix n,
-			int ncol) {
+	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
 		assert m.numCols == n.numRows;
 
 		double result = 0;

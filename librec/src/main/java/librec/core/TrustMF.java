@@ -304,9 +304,9 @@ public class TrustMF extends SocialRecommender {
 			SparseMatrix H = new SparseMatrix(numUsers, numUsers, dataTable);
 
 			// compute gradients
-			BS = Vr.mult(F.transpose()).add(Wr.mult(H.transpose()).scale(regS)).add(BS.scale(regU));
-			VS = Br.mult(F).add(Vr.scale(regI));
-			WS = Br.mult(H).scale(regS).add(Wr.scale(regU));
+			BS = Vr.mult(F.transpose()).add(Wr.mult(H.transpose()).scale(regS)).add(Br.clone().scale(regU));
+			VS = Br.mult(F).add(Vr.clone().scale(regI));
+			WS = Br.mult(H).scale(regS).add(Wr.clone().scale(regU));
 
 			Br.add(BS.scale(-lRate));
 			Vr.add(VS.scale(-lRate));
@@ -444,7 +444,7 @@ public class TrustMF extends SocialRecommender {
 	protected double predTr(int u, int j) {
 		return DenseMatrix.rowMult(Br, u, Vr, j);
 	}
-	
+
 	protected double predTr2(int u, int j) {
 		return DenseMatrix.colMult(Br, u, Vr, j);
 	}
