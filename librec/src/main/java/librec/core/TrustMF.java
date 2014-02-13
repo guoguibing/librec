@@ -1,6 +1,5 @@
 package librec.core;
 
-import happy.coding.system.Debug;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -32,7 +31,7 @@ public class TrustMF extends SocialRecommender {
 		Vr = new DenseMatrix(numItems, numFactors);
 		Br = new DenseMatrix(numUsers, numFactors);
 		Wr = new DenseMatrix(numUsers, numFactors);
-		
+
 		// V.init(initMean, initStd);
 		Vr.init();
 
@@ -53,28 +52,28 @@ public class TrustMF extends SocialRecommender {
 				Wr.setRow(u, 0.0);
 		}
 	}
-	
+
 	protected void initTe() {
 		Ve = new DenseMatrix(numItems, numFactors);
 		Be = new DenseMatrix(numUsers, numFactors);
 		We = new DenseMatrix(numUsers, numFactors);
-		
+
 		// V.init(initMean, initStd);
 		Ve.init();
-		
+
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
 				Ve.setRow(j, 0.0);
-		
+
 		// B.init(initMean, initStd);
 		// W.init(initMean, initStd);
 		Be.init();
 		We.init();
-		
+
 		for (int u = 0; u < numUsers; u++) {
 			if (socialMatrix.rowSize(u) == 0)
 				Be.setRow(u, 0.0);
-			
+
 			if (socialMatrix.columnSize(u) == 0)
 				We.setRow(u, 0.0);
 		}
@@ -83,14 +82,14 @@ public class TrustMF extends SocialRecommender {
 	@Override
 	protected void initModel() {
 		switch (model) {
-		case "Tr":			
+		case "Tr":
 			initTr();
 			break;
-			
+
 		case "Te":
 			initTe();
 			break;
-			
+
 		case "T":
 		default:
 			initTr();
@@ -136,7 +135,7 @@ public class TrustMF extends SocialRecommender {
 				int j = me.column();
 				double ruj = me.get();
 				if (ruj > 0) {
-					double pred = predict(u, j);
+					double pred = predict(u, j, false);
 					double euj = g(pred) - normalize(ruj);
 
 					loss += euj * euj;
@@ -211,7 +210,7 @@ public class TrustMF extends SocialRecommender {
 				int j = me.column();
 				double ruj = me.get();
 				if (ruj > 0) {
-					double pred = predict(u, j);
+					double pred = predict(u, j, false);
 					double euj = g(pred) - normalize(ruj);
 
 					loss += euj * euj;
@@ -276,13 +275,10 @@ public class TrustMF extends SocialRecommender {
 	}
 
 	protected double normalize(double rate) {
-		if (Debug.ON)
-			return (rate - minRate) / (maxRate - minRate);
-
-		return rate / maxRate;
+		return (rate - minRate) / (maxRate - minRate);
 	}
 
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j, boolean normalized) {
 
 		double pred = 0.0;
 		switch (model) {
@@ -301,6 +297,9 @@ public class TrustMF extends SocialRecommender {
 			break;
 		}
 
-		return g(pred) * maxRate;
+		if (normalized)
+			return minRate + g(pred) * (maxRate - minRate);
+
+		return pred;
 	}
 }
