@@ -34,21 +34,8 @@ public class TrustMF extends SocialRecommender {
 
 		// intialization has a great impact on MF performance
 		Vr.init();
-
-		for (int j = 0; j < numItems; j++)
-			if (trainMatrix.columnSize(j) == 0)
-				Vr.setRow(j, 0.0);
-
 		Br.init();
 		Wr.init();
-
-		for (int u = 0; u < numUsers; u++) {
-			if (socialMatrix.rowSize(u) == 0)
-				Br.setRow(u, 0.0);
-
-			if (socialMatrix.columnSize(u) == 0)
-				Wr.setRow(u, 0.0);
-		}
 	}
 
 	protected void initTe() {
@@ -57,21 +44,8 @@ public class TrustMF extends SocialRecommender {
 		We = new DenseMatrix(numUsers, numFactors);
 
 		Ve.init();
-
-		for (int j = 0; j < numItems; j++)
-			if (trainMatrix.columnSize(j) == 0)
-				Ve.setRow(j, 0.0);
-
 		Be.init();
 		We.init();
-
-		for (int u = 0; u < numUsers; u++) {
-			if (socialMatrix.rowSize(u) == 0)
-				Be.setRow(u, 0.0);
-
-			if (socialMatrix.columnSize(u) == 0)
-				We.setRow(u, 0.0);
-		}
 	}
 
 	@Override
@@ -260,6 +234,9 @@ public class TrustMF extends SocialRecommender {
 		}
 	}
 
+	/**
+	 * This is the method used by the paper authors
+	 */
 	protected void updateLRate(int iter) {
 		if (iter == 10)
 			lRate = 0.03;
@@ -289,7 +266,7 @@ public class TrustMF extends SocialRecommender {
 		}
 
 		if (bounded)
-			return denormalize(pred);
+			return denormalize(g(pred));
 
 		return pred;
 	}
