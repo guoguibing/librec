@@ -28,45 +28,73 @@ public class TrustMF extends SocialRecommender {
 		algoName = "TrustMF (" + model + ")";
 	}
 
-	protected void init(DenseMatrix B, DenseMatrix W, DenseMatrix V) {
-		V = new DenseMatrix(numItems, numFactors);
+	protected void initTr() {
+		Vr = new DenseMatrix(numItems, numFactors);
+		Br = new DenseMatrix(numUsers, numFactors);
+		Wr = new DenseMatrix(numUsers, numFactors);
+		
 		// V.init(initMean, initStd);
-		V.init();
+		Vr.init();
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
-				V.setRow(j, 0.0);
-
-		B = new DenseMatrix(numUsers, numFactors);
-		W = new DenseMatrix(numUsers, numFactors);
+				Vr.setRow(j, 0.0);
 
 		// B.init(initMean, initStd);
 		// W.init(initMean, initStd);
-		B.init();
-		W.init();
+		Br.init();
+		Wr.init();
 
 		for (int u = 0; u < numUsers; u++) {
 			if (socialMatrix.rowSize(u) == 0)
-				B.setRow(u, 0.0);
+				Br.setRow(u, 0.0);
 
 			if (socialMatrix.columnSize(u) == 0)
-				W.setRow(u, 0.0);
+				Wr.setRow(u, 0.0);
+		}
+	}
+	
+	protected void initTe() {
+		Ve = new DenseMatrix(numItems, numFactors);
+		Be = new DenseMatrix(numUsers, numFactors);
+		We = new DenseMatrix(numUsers, numFactors);
+		
+		// V.init(initMean, initStd);
+		Ve.init();
+		
+		for (int j = 0; j < numItems; j++)
+			if (trainMatrix.columnSize(j) == 0)
+				Ve.setRow(j, 0.0);
+		
+		// B.init(initMean, initStd);
+		// W.init(initMean, initStd);
+		Be.init();
+		We.init();
+		
+		for (int u = 0; u < numUsers; u++) {
+			if (socialMatrix.rowSize(u) == 0)
+				Be.setRow(u, 0.0);
+			
+			if (socialMatrix.columnSize(u) == 0)
+				We.setRow(u, 0.0);
 		}
 	}
 
 	@Override
 	protected void initModel() {
 		switch (model) {
-		case "Tr":
-			init(Br, Wr, Vr);
+		case "Tr":			
+			initTr();
 			break;
+			
 		case "Te":
-			init(Be, We, Ve);
+			initTe();
 			break;
+			
 		case "T":
 		default:
-			init(Br, Wr, Vr);
-			init(Be, We, Ve);
+			initTr();
+			initTe();
 			break;
 		}
 	}
