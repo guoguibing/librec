@@ -1,5 +1,8 @@
 package librec.core;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -101,7 +104,7 @@ public class TrustMF extends SocialRecommender {
 	protected void initModel() {
 		switch (model) {
 		case "Tr":
-			initTr2();
+			initTr();
 			break;
 		case "Te":
 			initTe();
@@ -118,7 +121,7 @@ public class TrustMF extends SocialRecommender {
 	protected void buildModel() {
 		switch (model) {
 		case "Tr":
-			TrusterMF2();
+			TrusterMF();
 			break;
 		case "Te":
 			TrusteeMF();
@@ -139,108 +142,98 @@ public class TrustMF extends SocialRecommender {
 			loss = 0;
 			errs = 0;
 
-			// gradients of B, V, W
-			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
-			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
+			// compute F
+			Table<Integer, Integer, Double> F = HashBasedTable.create();
+			for (MatrixEntry me : trainMatrix) {
 
-			// compute B sgds
-			for (int u = 0; u < numUsers; u++) {
+				int u = me.row();
+				int j = me.column();
+				double ruj = me.get();
+				if (ruj > 0) {
+					double pred = predTr(u, j);
+					double euj = g(pred) - ruj / maxRate;
 
-				// rated items
-				int nbu = 1;
-				if (u < trainMatrix.numRows()) {
-					SparseVector rv = trainMatrix.row(u);
-					nbu = rv.getCount() > 0 ? rv.getCount() : 1;
-					for (int j : rv.getIndex()) {
-						double pred = predTr(u, j);
-						double ruj = rv.get(j);
+					loss += euj * euj;
+					errs += euj * euj;
 
-						double euj = g(pred) - ruj / maxRate;
-
-						loss += euj * euj;
-						errs += euj * euj;
-
-						double csgd = gd(pred) * euj;
-
-						for (int f = 0; f < numFactors; f++)
-							BS.add(u, f, csgd * Vr.get(j, f));
-					}
+					F.put(u, j, gd(pred) * euj);
 				}
+			}
 
-				// trusted users
-				SparseVector tv = socialMatrix.row(u);
-				int mbu = tv.getCount() > 0 ? tv.getCount() : 1;
-				for (int k : tv.getIndex()) {
-					double tuk = tv.get(k);
+			// compute H
+			Table<Integer, Integer, Double> H = HashBasedTable.create();
+			for (MatrixEntry me : socialMatrix) {
+
+				int u = me.row();
+				int k = me.column();
+				double tuk = me.get();
+
+				if (tuk > 0) {
 					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
 					double euj = g(pred) - tuk;
 
 					loss += regS * euj * euj;
 
-					double csgd = gd(pred) * euj;
-					for (int f = 0; f < numFactors; f++)
-						BS.add(u, f, regS * csgd * Wr.get(k, f));
+					H.put(u, k, gd(pred) * euj);
+				}
+			}
+
+			loss += regU * Math.pow(Br.norm(), 2);
+			loss += regU * Math.pow(Wr.norm(), 2);
+			loss += regI * Math.pow(Vr.norm(), 2);
+
+			// gradients of B, V, W
+			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
+			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
+			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
+
+			for (int u = 0; u < numUsers; u++) {
+				Map<Integer, Double> usgd = F.row(u);
+
+				for (Entry<Integer, Double> en : usgd.entrySet()) {
+					int j = en.getKey();
+					double sgd = en.getValue();
+
+					for (int f = 0; f < numFactors; f++) {
+						BS.add(u, f, sgd * Vr.get(j, f));
+						VS.add(j, f, sgd * Br.get(u, f));
+					}
 				}
 
-				// lambda
+				Map<Integer, Double> tsgd = H.row(u);
+				for (Entry<Integer, Double> en : tsgd.entrySet()) {
+					int k = en.getKey();
+					double sgd = en.getValue();
+
+					for (int f = 0; f < numFactors; f++) {
+						BS.add(u, f, sgd * Wr.get(k, f));
+						WS.add(k, f, regS * sgd * Br.get(u, f));
+					}
+				}
+
 				for (int f = 0; f < numFactors; f++) {
 					double buf = Br.get(u, f);
-					BS.add(u, f, regU * (nbu + mbu) * buf);
+					BS.add(u, f, regU * buf);
 
-					loss += regU * (nbu + mbu) * buf * buf;
+					loss += regU * buf * buf;
 				}
 			}
 
-			// compute V sgds
-			for (int j = 0; j < numItems; j++) {
-				// users who rated item j
-				SparseVector rv = trainMatrix.column(j);
-				for (int u : rv.getIndex()) {
-					double pred = predTr(u, j);
-					double ruj = rv.get(u);
-					// double euj = minRate + g(pred) * (maxRate - minRate) -
-					// ruj;
-					double euj = g(pred) - ruj / maxRate;
-
-					double csgd = gd(pred) * euj;
-					for (int f = 0; f < numFactors; f++)
-						VS.add(j, f, csgd * Br.get(u, f));
-				}
-
-				// lambda
-				int nvj = rv.getCount() > 0 ? rv.getCount() : 1;
-				for (int f = 0; f < numFactors; f++) {
+			for (int f = 0; f < numFactors; f++)
+				for (int j = 0; j < numItems; j++) {
 					double vjf = Vr.get(j, f);
-					VS.add(j, f, regI * nvj * vjf);
+					VS.add(j, f, regI * vjf);
 
-					loss += regI * nvj * vjf * vjf;
-				}
-			}
-
-			// compute W sgds
-			for (int k = 0; k < numUsers; k++) {
-				// users who trusted user k
-				SparseVector tv = socialMatrix.column(k);
-				for (int u : tv.getIndex()) {
-					double tuk = tv.get(u);
-					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
-					double euj = g(pred) - tuk;
-					double csgd = gd(pred) * euj;
-
-					for (int f = 0; f < numFactors; f++)
-						WS.add(k, f, regS * csgd * Br.get(u, f));
+					loss += regI * vjf * vjf;
 				}
 
-				// lambda
-				int mwk = tv.getCount() > 0 ? tv.getCount() : 1;
-				for (int f = 0; f < numFactors; f++) {
+			for (int f = 0; f < numFactors; f++)
+				for (int k = 0; k < numUsers; k++) {
 					double wkf = Wr.get(k, f);
-					WS.add(k, f, regU * mwk * wkf);
+					WS.add(k, f, regU * wkf);
 
-					loss += regU * mwk * wkf * wkf;
+					loss += regU * wkf * wkf;
 				}
-			}
 
 			Br.add(BS.scale(-lRate));
 			Vr.add(VS.scale(-lRate));
@@ -465,7 +458,7 @@ public class TrustMF extends SocialRecommender {
 		double pred = 0.0;
 		switch (model) {
 		case "Tr":
-			pred = predTr2(u, j);
+			pred = predTr(u, j);
 			break;
 		case "Te":
 			pred = predTe(u, j);
