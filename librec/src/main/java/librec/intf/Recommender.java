@@ -630,6 +630,21 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
+	 * normalize a rating to the region (0, 1)
+	 */
+	protected double normalize(double rate) {
+		return (rate - minRate) / (maxRate - minRate);
+	}
+
+	/**
+	 * 
+	 * denormalize a prediction to the region (minRate, maxRate)
+	 */
+	protected double denormalize(double pred) {
+		return minRate + pred * (maxRate - minRate);
+	}
+
+	/**
 	 * useful to print out specific recommender's settings
 	 */
 	@Override

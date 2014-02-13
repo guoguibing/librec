@@ -32,15 +32,13 @@ public class TrustMF extends SocialRecommender {
 		Br = new DenseMatrix(numUsers, numFactors);
 		Wr = new DenseMatrix(numUsers, numFactors);
 
-		// V.init(initMean, initStd);
+		// intialization has a great impact on MF performance
 		Vr.init();
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
 				Vr.setRow(j, 0.0);
 
-		// B.init(initMean, initStd);
-		// W.init(initMean, initStd);
 		Br.init();
 		Wr.init();
 
@@ -58,15 +56,12 @@ public class TrustMF extends SocialRecommender {
 		Be = new DenseMatrix(numUsers, numFactors);
 		We = new DenseMatrix(numUsers, numFactors);
 
-		// V.init(initMean, initStd);
 		Ve.init();
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
 				Ve.setRow(j, 0.0);
 
-		// B.init(initMean, initStd);
-		// W.init(initMean, initStd);
 		Be.init();
 		We.init();
 
@@ -274,11 +269,7 @@ public class TrustMF extends SocialRecommender {
 			lRate = 0.005;
 	}
 
-	protected double normalize(double rate) {
-		return (rate - minRate) / (maxRate - minRate);
-	}
-
-	protected double predict(int u, int j, boolean normalized) {
+	protected double predict(int u, int j, boolean bounded) {
 
 		double pred = 0.0;
 		switch (model) {
@@ -297,8 +288,8 @@ public class TrustMF extends SocialRecommender {
 			break;
 		}
 
-		if (normalized)
-			return minRate + g(pred) * (maxRate - minRate);
+		if (bounded)
+			return denormalize(pred);
 
 		return pred;
 	}

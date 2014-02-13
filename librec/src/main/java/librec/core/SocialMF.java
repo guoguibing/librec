@@ -19,6 +19,7 @@ public class SocialMF extends SocialRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "SocialMF";
+		initByNorm = false;
 	}
 
 	@Override

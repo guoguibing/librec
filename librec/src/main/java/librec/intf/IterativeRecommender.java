@@ -51,6 +51,9 @@ public abstract class IterativeRecommender extends Recommender {
 	// objective loss
 	protected double loss, last_loss = 0;
 
+	// initial models using normal distribution
+	protected boolean initByNorm;
+
 	// initialization
 	static {
 		initLRate = cf.getDouble("val.learn.rate");
@@ -67,11 +70,11 @@ public abstract class IterativeRecommender extends Recommender {
 		decay = cf.getDouble("val.decay.rate");
 	}
 
-	public IterativeRecommender(SparseMatrix trainMatrix,
-			SparseMatrix testMatrix, int fold) {
+	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		lRate = initLRate;
+		initByNorm = true;
 	}
 
 	/**
@@ -101,12 +104,9 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// print out debug info
 		if (verbose) {
-			Logs.debug(
-					"{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
-					new Object[] { algoName, foldInfo, iter, (float) errs,
-							(float) (last_errs - errs), (float) loss,
-							(float) (Math.abs(last_loss) - Math.abs(loss)),
-							(float) lRate });
+			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
+					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
+							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
 		}
 
 		if (!(isBoldDriver && isUndoEnabled) && Double.isNaN(loss)) {
@@ -188,9 +188,8 @@ public abstract class IterativeRecommender extends Recommender {
 	 * undo last weight changes
 	 */
 	protected void undos(int iter) {
-		Logs.debug(
-				"{}{} iter {}: undo last weight changes and sharply decrease the learning rate !",
-				algoName, foldInfo, iter);
+		Logs.debug("{}{} iter {}: undo last weight changes and sharply decrease the learning rate !", algoName,
+				foldInfo, iter);
 
 		if (last_P != null)
 			P = last_P.clone();
@@ -209,8 +208,13 @@ public abstract class IterativeRecommender extends Recommender {
 		Q = new DenseMatrix(numItems, numFactors);
 
 		// initialize model
-		P.init(initMean, initStd);
-		Q.init(initMean, initStd);
+		if (initByNorm) {
+			P.init(initMean, initStd);
+			Q.init(initMean, initStd);
+		} else {
+			P.init();
+			Q.init();
+		}
 
 		// set to 0 for users without any ratings
 		int numTrainUsers = trainMatrix.numRows();
@@ -231,8 +235,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, regU, regI,
-				numFactors, maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }

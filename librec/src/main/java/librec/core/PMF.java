@@ -9,8 +9,6 @@ import librec.intf.IterativeRecommender;
  * Ruslan Salakhutdinov and Andriy Mnih, <strong>Probabilistic Matrix
  * Factorization</strong>, NIPS 2008. <br/>
  * 
- * <strong>NOTE:</strong> this implementation is modified from PREA package. 
- * 
  * @author guoguibing
  * 
  */
