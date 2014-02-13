@@ -2,6 +2,7 @@ package librec.core;
 
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
+import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.intf.SocialRecommender;
@@ -103,7 +104,7 @@ public class TrustMF extends SocialRecommender {
 	protected void buildModel() {
 		switch (model) {
 		case "Tr":
-			TrusterMF();
+			TrusterMF2();
 			break;
 		case "Te":
 			TrusteeMF();
@@ -251,32 +252,30 @@ public class TrustMF extends SocialRecommender {
 
 			// compute F
 			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-			for (int u = 0; u < numUsers; u++) {
+			for (MatrixEntry me : trainMatrix) {
+				int u = me.row();
+				int j = me.column();
+				double ruj = me.get();
 
-				// rated items
-				int nbu = 1;
-				if (u < trainMatrix.numRows()) {
-					SparseVector rv = trainMatrix.row(u);
-					nbu = rv.getCount() > 0 ? rv.getCount() : 1;
-					for (int j : rv.getIndex()) {
-						double pred = predTr(u, j);
-						double ruj = rv.get(j);
+				if (ruj > 0) {
+					double pred = predTr(u, j);
+					double euj = g(pred) - ruj / maxRate;
 
-						double euj = g(pred) - ruj / maxRate;
+					loss += euj * euj;
+					errs += euj * euj;
 
-						loss += euj * euj;
-						errs += euj * euj;
-
-						double csgd = gd(pred) * euj;
-
-						for (int f = 0; f < numFactors; f++)
-							BS.add(u, f, csgd * Vr.get(j, f));
-					}
+					dataTable.put(u, j, gd(pred) * euj);
 				}
+			}
+
+			SparseMatrix F = new SparseMatrix(numUsers, numItems, dataTable);
+
+			// compute H
+			dataTable.clear();
+			for (int u = 0; u < numUsers; u++) {
 
 				// trusted users
 				SparseVector tv = socialMatrix.row(u);
-				int mbu = tv.getCount() > 0 ? tv.getCount() : 1;
 				for (int k : tv.getIndex()) {
 					double tuk = tv.get(k);
 					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
@@ -284,69 +283,16 @@ public class TrustMF extends SocialRecommender {
 
 					loss += regS * euj * euj;
 
-					double csgd = gd(pred) * euj;
-					for (int f = 0; f < numFactors; f++)
-						BS.add(u, f, regS * csgd * Wr.get(k, f));
-				}
-
-				// lambda
-				for (int f = 0; f < numFactors; f++) {
-					double buf = Br.get(u, f);
-					BS.add(u, f, regU * (nbu + mbu) * buf);
-
-					loss += regU * (nbu + mbu) * buf * buf;
+					dataTable.put(u, k, gd(pred) * euj);
 				}
 			}
 
-			// compute V sgds
-			for (int j = 0; j < numItems; j++) {
-				// users who rated item j
-				SparseVector rv = trainMatrix.column(j);
-				for (int u : rv.getIndex()) {
-					double pred = predTr(u, j);
-					double ruj = rv.get(u);
-					// double euj = minRate + g(pred) * (maxRate - minRate) -
-					// ruj;
-					double euj = g(pred) - ruj / maxRate;
+			SparseMatrix H = new SparseMatrix(numUsers, numUsers, dataTable);
 
-					double csgd = gd(pred) * euj;
-					for (int f = 0; f < numFactors; f++)
-						VS.add(j, f, csgd * Br.get(u, f));
-				}
-
-				// lambda
-				int nvj = rv.getCount() > 0 ? rv.getCount() : 1;
-				for (int f = 0; f < numFactors; f++) {
-					double vjf = Vr.get(j, f);
-					VS.add(j, f, regI * nvj * vjf);
-
-					loss += regI * nvj * vjf * vjf;
-				}
-			}
-
-			// compute W sgds
-			for (int k = 0; k < numUsers; k++) {
-				// users who trusted user k
-				SparseVector tv = socialMatrix.column(k);
-				for (int u : tv.getIndex()) {
-					double tuk = tv.get(u);
-					double pred = DenseMatrix.rowMult(Br, u, Wr, k);
-					double euj = g(pred) - tuk;
-					double csgd = gd(pred) * euj;
-
-					for (int f = 0; f < numFactors; f++)
-						WS.add(k, f, regS * csgd * Br.get(u, f));
-				}
-
-				// lambda
-				int mwk = tv.getCount() > 0 ? tv.getCount() : 1;
-				for (int f = 0; f < numFactors; f++) {
-					double wkf = Wr.get(k, f);
-					WS.add(k, f, regU * mwk * wkf);
-
-					loss += regU * mwk * wkf * wkf;
-				}
-			}
+			// compute gradients
+			BS = Vr.mult(F.transpose()).add(Wr.mult(H.transpose()).scale(regS)).add(BS.scale(regU));
+			VS = Br.mult(F).add(Vr.scale(regI));
+			WS = Br.mult(H).scale(regS).add(Wr.scale(regU));
 
 			Br.add(BS.scale(-lRate));
 			Vr.add(VS.scale(-lRate));

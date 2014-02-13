@@ -79,6 +79,30 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return new SparseMatrix(this);
 	}
 
+	public SparseMatrix transpose() {
+		if (isCCSUsed) {
+			SparseMatrix tr = clone();
+
+			tr.numRows = numCols;
+			tr.numCols = numRows;
+
+			tr.colData = Arrays.copyOf(rowData, rowData.length);
+			tr.colPtr = Arrays.copyOf(rowPtr, rowPtr.length);
+			tr.rowInd = Arrays.copyOf(colInd, colInd.length);
+
+			tr.rowData = Arrays.copyOf(colData, colData.length);
+			tr.rowPtr = Arrays.copyOf(colPtr, colPtr.length);
+			tr.colInd = Arrays.copyOf(rowInd, rowInd.length);
+
+			return tr;
+		} else {
+			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+			for (MatrixEntry me : this)
+				dataTable.put(me.column(), me.row(), me.get());
+			return new SparseMatrix(numCols, numRows, dataTable);
+		}
+	}
+
 	public int[] getRowPointers() {
 		return rowPtr;
 	}
@@ -504,7 +528,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		SparseMatrix mat2 = new SparseMatrix(6, 6, dataTable, colMap);
 
 		Logs.debug(mat);
-		Logs.debug(mat2);
+		Logs.debug(mat.transpose());
+		Logs.debug(mat2.transpose());
 
 		Logs.debug(mat.row(1));
 		Logs.debug(mat2.row(1));
