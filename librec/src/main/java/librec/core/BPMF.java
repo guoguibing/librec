@@ -1,4 +1,4 @@
-package librec.impl;
+package librec.core;
 
 import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
