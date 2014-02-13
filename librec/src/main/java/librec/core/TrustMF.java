@@ -1,8 +1,5 @@
 package librec.core;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -142,8 +139,12 @@ public class TrustMF extends SocialRecommender {
 			loss = 0;
 			errs = 0;
 
-			// compute F
-			Table<Integer, Integer, Double> F = HashBasedTable.create();
+			// gradients of B, V, W
+			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
+			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
+			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
+
+			// rate matrix
 			for (MatrixEntry me : trainMatrix) {
 
 				int u = me.row();
@@ -156,12 +157,16 @@ public class TrustMF extends SocialRecommender {
 					loss += euj * euj;
 					errs += euj * euj;
 
-					F.put(u, j, gd(pred) * euj);
+					double csgd = gd(pred) * euj;
+
+					for (int f = 0; f < numFactors; f++) {
+						BS.add(u, f, csgd * Vr.get(j, f) + regU * Br.get(u, f));
+						VS.add(j, f, csgd * Br.get(u, f) + regI * Vr.get(j, f));
+					}
 				}
 			}
 
-			// compute H
-			Table<Integer, Integer, Double> H = HashBasedTable.create();
+			// social matrix
 			for (MatrixEntry me : socialMatrix) {
 
 				int u = me.row();
@@ -174,66 +179,14 @@ public class TrustMF extends SocialRecommender {
 
 					loss += regS * euj * euj;
 
-					H.put(u, k, gd(pred) * euj);
-				}
-			}
-
-			loss += regU * Math.pow(Br.norm(), 2);
-			loss += regU * Math.pow(Wr.norm(), 2);
-			loss += regI * Math.pow(Vr.norm(), 2);
-
-			// gradients of B, V, W
-			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix VS = new DenseMatrix(numItems, numFactors);
-			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
-
-			for (int u = 0; u < numUsers; u++) {
-				Map<Integer, Double> usgd = F.row(u);
-
-				for (Entry<Integer, Double> en : usgd.entrySet()) {
-					int j = en.getKey();
-					double sgd = en.getValue();
+					double csgd = gd(pred) * euj;
 
 					for (int f = 0; f < numFactors; f++) {
-						BS.add(u, f, sgd * Vr.get(j, f));
-						VS.add(j, f, sgd * Br.get(u, f));
+						BS.add(u, f, regS * csgd * Wr.get(k, f) + regU * Br.get(u, f));
+						WS.add(k, f, regS * csgd * Br.get(u, f) + regU * Wr.get(k, f));
 					}
-				}
-
-				Map<Integer, Double> tsgd = H.row(u);
-				for (Entry<Integer, Double> en : tsgd.entrySet()) {
-					int k = en.getKey();
-					double sgd = en.getValue();
-
-					for (int f = 0; f < numFactors; f++) {
-						BS.add(u, f, sgd * Wr.get(k, f));
-						WS.add(k, f, regS * sgd * Br.get(u, f));
-					}
-				}
-
-				for (int f = 0; f < numFactors; f++) {
-					double buf = Br.get(u, f);
-					BS.add(u, f, regU * buf);
-
-					loss += regU * buf * buf;
 				}
 			}
-
-			for (int f = 0; f < numFactors; f++)
-				for (int j = 0; j < numItems; j++) {
-					double vjf = Vr.get(j, f);
-					VS.add(j, f, regI * vjf);
-
-					loss += regI * vjf * vjf;
-				}
-
-			for (int f = 0; f < numFactors; f++)
-				for (int k = 0; k < numUsers; k++) {
-					double wkf = Wr.get(k, f);
-					WS.add(k, f, regU * wkf);
-
-					loss += regU * wkf * wkf;
-				}
 
 			Br.add(BS.scale(-lRate));
 			Vr.add(VS.scale(-lRate));
