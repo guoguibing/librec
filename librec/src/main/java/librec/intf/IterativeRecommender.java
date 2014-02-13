@@ -217,7 +217,7 @@ public abstract class IterativeRecommender extends Recommender {
 		}
 
 		// set to 0 for users without any ratings
-		/* TODO: This will decrease performance of some approaches */
+		/* TODO: This will decrease performance of some approaches 
 		int numTrainUsers = trainMatrix.numRows();
 		for (int u = 0, um = P.numRows(); u < um; u++) {
 			if (u >= numTrainUsers || trainMatrix.rowSize(u) == 0) {
@@ -230,7 +230,7 @@ public abstract class IterativeRecommender extends Recommender {
 			if (j >= numTrainItems || trainMatrix.columnSize(j) == 0) {
 				Q.setRow(j, 0.0);
 			}
-		}
+		}*/
 
 	}
 
