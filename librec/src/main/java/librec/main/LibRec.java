@@ -34,7 +34,6 @@ import librec.ext.BaseMF;
 import librec.ext.BaseNM;
 import librec.ext.DMF;
 import librec.ext.DNM;
-import librec.ext.DRM;
 import librec.ext.DRMPlus;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
@@ -247,8 +246,6 @@ public class LibRec {
 			return new BaseNM(trainMatrix, testMatrix, fold);
 		case "aaai-dnm":
 			return new DNM(trainMatrix, testMatrix, fold);
-		case "aaai-drm":
-			return new DRM(trainMatrix, testMatrix, fold);
 		case "aaai-drmplus":
 			return new DRMPlus(trainMatrix, testMatrix, fold);
 		default:
