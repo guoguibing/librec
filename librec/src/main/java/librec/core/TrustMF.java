@@ -259,11 +259,6 @@ public class TrustMF extends SocialRecommender {
 			loss = 0;
 			errs = 0;
 
-			// gradients of B, V, W
-			DenseMatrix BS = new DenseMatrix(numFactors, numUsers);
-			DenseMatrix VS = new DenseMatrix(numFactors, numItems);
-			DenseMatrix WS = new DenseMatrix(numFactors, numUsers);
-
 			// compute F
 			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 			for (MatrixEntry me : trainMatrix) {
@@ -286,12 +281,12 @@ public class TrustMF extends SocialRecommender {
 
 			// compute H
 			dataTable.clear();
-			for (int u = 0; u < numUsers; u++) {
+			for (MatrixEntry me : socialMatrix) {
 
-				// trusted users
-				SparseVector tv = socialMatrix.row(u);
-				for (int k : tv.getIndex()) {
-					double tuk = tv.get(k);
+				int u = me.row();
+				int k = me.column();
+				double tuk = me.get();
+				if (tuk > 0) {
 					double pred = DenseMatrix.colMult(Br, u, Wr, k);
 					double euj = g(pred) - tuk;
 
@@ -304,9 +299,9 @@ public class TrustMF extends SocialRecommender {
 			SparseMatrix H = new SparseMatrix(numUsers, numUsers, dataTable);
 
 			// compute gradients
-			BS = Vr.mult(F.transpose()).add(Wr.mult(H.transpose()).scale(regS)).add(Br.clone().scale(regU));
-			VS = Br.mult(F).add(Vr.clone().scale(regI));
-			WS = Br.mult(H).scale(regS).add(Wr.clone().scale(regU));
+			DenseMatrix BS = Vr.mult(F.transpose()).add(Wr.mult(H.transpose()).scale(regS)).add(Br.clone().scale(regU));
+			DenseMatrix VS = Br.mult(F).add(Vr.clone().scale(regI));
+			DenseMatrix WS = Br.mult(H).scale(regS).add(Wr.clone().scale(regU));
 
 			Br.add(BS.scale(-lRate));
 			Vr.add(VS.scale(-lRate));
