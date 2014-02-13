@@ -27,55 +27,29 @@ public class TrustMF extends SocialRecommender {
 		algoName = "TrustMF (" + model + ")";
 	}
 
-	protected void initTr() {
-		Vr = new DenseMatrix(numItems, numFactors);
-		// Vr.init(initMean, initStd);
-		Vr.init();
+	protected void init(DenseMatrix B, DenseMatrix W, DenseMatrix V) {
+		V = new DenseMatrix(numItems, numFactors);
+		// V.init(initMean, initStd);
+		V.init();
 
 		for (int j = 0; j < numItems; j++)
 			if (trainMatrix.columnSize(j) == 0)
-				Vr.setRow(j, 0.0);
+				V.setRow(j, 0.0);
 
-		Br = new DenseMatrix(numUsers, numFactors);
-		Wr = new DenseMatrix(numUsers, numFactors);
+		B = new DenseMatrix(numUsers, numFactors);
+		W = new DenseMatrix(numUsers, numFactors);
 
-		// Br.init(initMean, initStd);
-		// Wr.init(initMean, initStd);
-		Br.init();
-		Wr.init();
-
-		for (int u = 0; u < numUsers; u++) {
-			if (socialMatrix.rowSize(u) == 0)
-				Br.setRow(u, 0.0);
-
-			if (socialMatrix.columnSize(u) == 0)
-				Wr.setRow(u, 0.0);
-		}
-	}
-
-	protected void initTe() {
-		Ve = new DenseMatrix(numItems, numFactors);
-		// Ve.init(initMean, initStd);
-		Ve.init();
-
-		for (int j = 0; j < numItems; j++)
-			if (trainMatrix.columnSize(j) == 0)
-				Ve.setRow(j, 0.0);
-
-		Be = new DenseMatrix(numUsers, numFactors);
-		We = new DenseMatrix(numUsers, numFactors);
-
-		// Be.init(initMean, initStd);
-		// We.init(initMean, initStd);
-		Be.init();
-		We.init();
+		// B.init(initMean, initStd);
+		// W.init(initMean, initStd);
+		B.init();
+		W.init();
 
 		for (int u = 0; u < numUsers; u++) {
 			if (socialMatrix.rowSize(u) == 0)
-				Be.setRow(u, 0.0);
+				B.setRow(u, 0.0);
 
 			if (socialMatrix.columnSize(u) == 0)
-				We.setRow(u, 0.0);
+				W.setRow(u, 0.0);
 		}
 	}
 
@@ -83,15 +57,15 @@ public class TrustMF extends SocialRecommender {
 	protected void initModel() {
 		switch (model) {
 		case "Tr":
-			initTr();
+			init(Br, Wr, Vr);
 			break;
 		case "Te":
-			initTe();
+			init(Be, We, Ve);
 			break;
 		case "T":
 		default:
-			initTr();
-			initTe();
+			init(Br, Wr, Vr);
+			init(Be, We, Ve);
 			break;
 		}
 	}
@@ -133,7 +107,7 @@ public class TrustMF extends SocialRecommender {
 				int j = me.column();
 				double ruj = me.get();
 				if (ruj > 0) {
-					double pred = predTr(u, j);
+					double pred = predict(u, j);
 					double euj = g(pred) - ruj / maxRate;
 
 					loss += euj * euj;
@@ -202,7 +176,7 @@ public class TrustMF extends SocialRecommender {
 				int j = me.column();
 				double ruj = me.get();
 				if (ruj > 0) {
-					double pred = predTr(u, j);
+					double pred = predict(u, j);
 					double euj = g(pred) - ruj / maxRate;
 
 					loss += euj * euj;
@@ -251,14 +225,6 @@ public class TrustMF extends SocialRecommender {
 		}
 	}
 
-	protected double predTr(int u, int j) {
-		return DenseMatrix.rowMult(Br, u, Vr, j);
-	}
-
-	protected double predTe(int u, int j) {
-		return DenseMatrix.rowMult(We, u, Ve, j);
-	}
-
 	protected void updateLRate(int iter) {
 		if (iter == 10)
 			lRate = 0.03;
@@ -273,10 +239,10 @@ public class TrustMF extends SocialRecommender {
 		double pred = 0.0;
 		switch (model) {
 		case "Tr":
-			pred = predTr(u, j);
+			pred = DenseMatrix.rowMult(Br, u, Vr, j);
 			break;
 		case "Te":
-			pred = predTe(u, j);
+			pred = DenseMatrix.rowMult(We, u, Ve, j);
 			break;
 		case "T":
 		default:
