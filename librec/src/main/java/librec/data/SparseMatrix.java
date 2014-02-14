@@ -62,12 +62,13 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			Table<Integer, Integer, Double> dataTable) {
 		this(rows, cols, dataTable, null);
 	}
-	
+
 	/**
-	 * Define a sparse matrix without data, only use for {@code transpose} method
+	 * Define a sparse matrix without data, only use for {@code transpose}
+	 * method
 	 * 
 	 */
-	private SparseMatrix(int rows, int cols){
+	private SparseMatrix(int rows, int cols) {
 		numRows = rows;
 		numCols = cols;
 	}
@@ -122,6 +123,26 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 				dataTable.put(me.column(), me.row(), me.get());
 			return new SparseMatrix(numCols, numRows, dataTable);
 		}
+	}
+
+	/**
+	 * make a sparse identity matrix
+	 */
+	public static SparseMatrix eye(int dim) {
+		SparseMatrix mat = new SparseMatrix(dim, dim);
+		mat.rowData = new double[dim];
+		Arrays.fill(mat.rowData, 1.0);
+
+		mat.rowPtr = new int[dim + 1];
+		mat.colInd = new int[dim];
+		for (int i = 0; i < dim; i++) {
+			mat.rowPtr[i] = i;
+			mat.colInd[i] = i;
+		}
+
+		mat.rowPtr[dim] = dim;
+
+		return mat;
 	}
 
 	public int[] getRowPointers() {
@@ -570,5 +591,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		Logs.debug(mat.column(1));
 		Logs.debug(mat2.column(1));
+
+		Logs.debug(SparseMatrix.eye(5));
 	}
 }

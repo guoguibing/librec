@@ -130,7 +130,7 @@ public class DataDAO {
 	}
 
 	/**
-	 * default relevant columns {0: user column, 1: item column, 2: rate
+	 * Default relevant columns {0: user column, 1: item column, 2: rate
 	 * column}; otherwise try {@code readData(int[] rels)}
 	 * 
 	 * 
@@ -140,12 +140,15 @@ public class DataDAO {
 		return readData(true);
 	}
 
+	/**
+	 * @param whether to construct CCS structures while reading data
+	 */
 	public SparseMatrix readData(boolean isCCSUsed) throws Exception {
 		return readData(new int[] { 0, 1, 2 }, isCCSUsed);
 	}
 
 	/**
-	 * read data from the data file
+	 * Read data from the data file
 	 * 
 	 * @param cols
 	 *            the indexes of the relevant columns in the data file
@@ -228,7 +231,7 @@ public class DataDAO {
 					Strings.toString(scales, ", "));
 		} else {
 			Logs.debug("User amount: {}, item amount: {}", numRows, numCols);
-			Logs.debug("Rating amount: {}, scales: {{}}", numRates,
+			Logs.debug("Rate amount: {}, scales: {{}}", numRates,
 					Strings.toString(scales, ", "));
 		}
 
@@ -272,14 +275,14 @@ public class DataDAO {
 	}
 
 	/**
-	 * default sep=" " is adopted
+	 * Default sep=" " is adopted
 	 */
 	public void writeData(String toPath) throws Exception {
 		writeData(toPath, " ");
 	}
 
 	/**
-	 * write rate matrix to a data file with format ".arff" which can be used by
+	 * Write rate matrix to a data file with format ".arff" which can be used by
 	 * the PREA toolkit
 	 * 
 	 * @param relation
@@ -330,7 +333,7 @@ public class DataDAO {
 	 */
 	public void printSpecs() throws Exception {
 		if (rateMatrix == null)
-			readData();
+			readData(false);
 
 		List<String> sps = new ArrayList<>();
 
@@ -474,7 +477,7 @@ public class DataDAO {
 		String dirPath = "D:\\Java\\Datasets\\Flixster\\";
 		DataDAO dao = new DataDAO(dirPath + "ratings.txt");
 
-		dao.readData();
+		dao.readData(false);
 		// dao.printSpecs();
 		// dao.writeData(dirPath + "ratings.txt");
 		dao.writeArff("Flixster", dirPath + "flixster.arff");

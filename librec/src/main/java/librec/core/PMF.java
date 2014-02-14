@@ -1,8 +1,8 @@
 package librec.core;
 
 import librec.data.DenseMatrix;
+import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
-import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
 
 /**
@@ -44,13 +44,11 @@ public class PMF extends IterativeRecommender {
 			loss = 0;
 			errs = 0;
 
-			for (int u = 0; u < numUsers; u++) {
-
-				SparseVector uv = trainMatrix.row(u);
-				int[] items = uv.getIndex();
-
-				for (int j : items) {
-					double rate = uv.get(j);
+			for (MatrixEntry me : trainMatrix) {
+				int u = me.row();
+				int j = me.column();
+				double rate = me.get();
+				if (rate > 0) {
 					double pred = predict(u, j);
 					double euj = rate - pred;
 					loss += euj * euj;
