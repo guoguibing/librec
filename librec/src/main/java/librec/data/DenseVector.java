@@ -1,6 +1,7 @@
 package librec.data;
 
 import happy.coding.math.Randoms;
+import happy.coding.math.Stats;
 
 import java.util.Arrays;
 
@@ -50,12 +51,38 @@ public class DenseVector {
 		return data[idx];
 	}
 
+	public double[] getData() {
+		return data;
+	}
+
+	public double mean() {
+		return Stats.mean(data);
+	}
+
 	public void set(int idx, double val) {
 		data[idx] = val;
 	}
 
 	public void add(int idx, double val) {
 		data[idx] += val;
+	}
+
+	public void sub(int idx, double val) {
+		data[idx] -= val;
+	}
+
+	public DenseVector add(double val) {
+		for (int i = 0; i < size; i++)
+			data[i] += val;
+
+		return this;
+	}
+
+	public DenseVector sub(double val) {
+		for (int i = 0; i < size; i++)
+			data[i] -= val;
+
+		return this;
 	}
 
 	public DenseVector scale(double val) {
@@ -69,7 +96,16 @@ public class DenseVector {
 		assert size == vec.size;
 
 		for (int i = 0; i < vec.size; i++)
-			add(i, vec.get(i));
+			data[i] += vec.data[i];
+
+		return this;
+	}
+
+	public DenseVector sub(DenseVector vec) {
+		assert size == vec.size;
+
+		for (int i = 0; i < vec.size; i++)
+			data[i] -= vec.data[i];
 
 		return this;
 	}
@@ -90,6 +126,16 @@ public class DenseVector {
 			result += vec.get(j) * get(j);
 
 		return result;
+	}
+
+	public DenseMatrix outer(DenseVector vec) {
+		DenseMatrix mat = new DenseMatrix(this.size, vec.size);
+
+		for (int i = 0; i < mat.numRows; i++)
+			for (int j = 0; j < mat.numCols; j++)
+				mat.set(i, j, get(i) * vec.get(j));
+
+		return mat;
 	}
 
 }

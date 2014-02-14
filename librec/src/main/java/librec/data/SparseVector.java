@@ -16,7 +16,7 @@ import java.util.Iterator;
 public class SparseVector implements Iterable<VectorEntry> {
 
 	// capacity
-	protected int size;
+	protected int capacity;
 
 	// data
 	protected double[] data;
@@ -27,16 +27,16 @@ public class SparseVector implements Iterable<VectorEntry> {
 	// number of items
 	protected int count;
 
-	public SparseVector(int size) {
-		this.size = size;
+	public SparseVector(int capcity) {
+		this.capacity = capcity;
 		data = new double[0];
 
 		count = 0;
 		index = new int[0];
 	}
 
-	public SparseVector(int size, double[] array) {
-		this(size);
+	public SparseVector(int capcity, double[] array) {
+		this(capcity);
 
 		for (int i = 0; i < array.length; i++)
 			if (array[i] != 0)
@@ -44,7 +44,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 	}
 
 	public SparseVector(SparseVector sv) {
-		this.size = sv.size;
+		this.capacity = sv.capacity;
 		this.data = Arrays.copyOf(sv.data, sv.data.length);
 		this.count = sv.count;
 		this.index = Arrays.copyOf(sv.index, sv.index.length);
@@ -151,9 +151,11 @@ public class SparseVector implements Iterable<VectorEntry> {
 	 */
 	protected void check(int idx) {
 		if (idx < 0)
-			throw new IndexOutOfBoundsException("index is negative (" + idx + ")");
-		if (idx >= size)
-			throw new IndexOutOfBoundsException("index >= size (" + idx + " >= " + size + ")");
+			throw new IndexOutOfBoundsException("index is negative (" + idx
+					+ ")");
+		if (idx >= capacity)
+			throw new IndexOutOfBoundsException("index >= size (" + idx
+					+ " >= " + capacity + ")");
 	}
 
 	/**
@@ -262,11 +264,12 @@ public class SparseVector implements Iterable<VectorEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%d\t%d\n", new Object[] { size, count }));
+		sb.append(String.format("%d\t%d\n", new Object[] { capacity, count }));
 
 		for (VectorEntry ve : this)
 			if (ve.get() != 0)
-				sb.append(String.format("%d\t%f\n", new Object[] { ve.index(), ve.get() }));
+				sb.append(String.format("%d\t%f\n", new Object[] { ve.index(),
+						ve.get() }));
 
 		return sb.toString();
 	}

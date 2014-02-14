@@ -1,5 +1,7 @@
 package librec.data;
 
+import happy.coding.io.Logs;
+import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
 import java.util.Arrays;
@@ -43,6 +45,14 @@ public class DenseMatrix {
 
 	public DenseMatrix clone() {
 		return new DenseMatrix(this);
+	}
+
+	public static DenseMatrix eye(int dim) {
+		DenseMatrix mat = new DenseMatrix(dim, dim);
+		for (int i = 0; i < mat.numRows; i++)
+			mat.set(i, i, 1.0);
+
+		return mat;
 	}
 
 	/**
@@ -148,7 +158,8 @@ public class DenseMatrix {
 	 *            row of the second matrix
 	 * @return inner product of two row vectors
 	 */
-	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
+	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n,
+			int nrow) {
 
 		assert m.numCols == n.numCols;
 
@@ -173,7 +184,8 @@ public class DenseMatrix {
 	 *            column of the second matrix
 	 * @return inner product of two column vectors
 	 */
-	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n, int ncol) {
+	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n,
+			int ncol) {
 
 		assert m.numRows == n.numRows;
 
@@ -198,7 +210,8 @@ public class DenseMatrix {
 	 * @return dot product of row of the first matrix and column of the second
 	 *         matrix
 	 */
-	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
+	public static double product(DenseMatrix m, int mrow, DenseMatrix n,
+			int ncol) {
 		assert m.numCols == n.numRows;
 
 		double result = 0;
@@ -257,6 +270,16 @@ public class DenseMatrix {
 				result.set(i, j, product);
 			}
 		}
+
+		return result;
+	}
+
+	public DenseVector mult(DenseVector vec) {
+		assert this.numCols == vec.size;
+
+		DenseVector result = new DenseVector(this.numRows);
+		for (int i = 0; i < this.numRows; i++)
+			result.set(i, row(i, false).inner(vec));
 
 		return result;
 	}
@@ -323,6 +346,38 @@ public class DenseMatrix {
 		return this;
 	}
 
+	/**
+	 * @return the Cholesky decomposition of the current matrix
+	 */
+	public DenseMatrix cholesky() {
+		if (this.numRows != this.numCols)
+			throw new RuntimeException("Matrix is not square");
+
+		DenseMatrix A = this;
+
+		int n = numRows;
+		DenseMatrix L = new DenseMatrix(n, n);
+
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j <= i; j++) {
+				double sum = 0.0;
+				for (int k = 0; k < j; k++)
+					sum += L.get(i, k) * L.get(j, k);
+
+				if (i == j)
+					L.set(i, i, Math.sqrt(A.get(i, i) - sum));
+				else
+					L.set(i, j, 1.0 / L.get(j, j) * (A.get(i, j) - sum));
+
+			}
+			if (Double.isNaN(L.get(i, i)))
+				return null;
+
+		}
+
+		return L.transpose();
+	}
+
 	// generate a new transposed matrix
 	public DenseMatrix transpose() {
 		DenseMatrix mat = new DenseMatrix(numCols, numRows);
@@ -330,6 +385,131 @@ public class DenseMatrix {
 		for (int i = 0; i < mat.numRows; i++)
 			for (int j = 0; j < mat.numCols; j++)
 				mat.set(i, j, get(j, i));
+
+		return mat;
+	}
+
+	/**
+	 * @return a covariance matrix of the current matrix
+	 */
+	public DenseMatrix cov() {
+		DenseMatrix mat = new DenseMatrix(numCols, numCols);
+
+		for (int i = 0; i < numCols; i++) {
+			for (int j = i; j < numCols; j++) {
+				DenseVector xi = this.column(i);
+				DenseVector yi = this.column(j);
+
+				double val = xi.sub(xi.mean()).inner(yi.sub(yi.mean()));
+				val /= xi.size - 1;
+
+				mat.set(i, j, val);
+				mat.set(j, i, val);
+			}
+		}
+
+		return mat;
+	}
+
+	/**
+	 * Compute the inverse of a matrix by LU decomposition
+	 * 
+	 * @return the inverse matrix of current matrix
+	 */
+	public DenseMatrix inv() throws Exception {
+		if (numRows != numCols)
+			throw new Exception("Only square matrix can do inversion");
+
+		int n = numRows;
+		DenseMatrix mat = new DenseMatrix(this);
+
+		if (n == 1) {
+			mat.set(0, 0, 1.0 / mat.get(0, 0));
+			return mat;
+		}
+
+		int row[] = new int[n];
+		int col[] = new int[n];
+		double temp[] = new double[n];
+		int hold, I_pivot, J_pivot;
+		double pivot, abs_pivot;
+
+		// set up row and column interchange vectors
+		for (int k = 0; k < n; k++) {
+			row[k] = k;
+			col[k] = k;
+		}
+		// begin main reduction loop
+		for (int k = 0; k < n; k++) {
+			// find largest element for pivot
+			pivot = mat.get(row[k], col[k]);
+			I_pivot = k;
+			J_pivot = k;
+			for (int i = k; i < n; i++) {
+				for (int j = k; j < n; j++) {
+					abs_pivot = Math.abs(pivot);
+					if (Math.abs(mat.get(row[i], col[j])) > abs_pivot) {
+						I_pivot = i;
+						J_pivot = j;
+						pivot = mat.get(row[i], col[j]);
+					}
+				}
+			}
+			if (Math.abs(pivot) < 1.0E-10)
+				throw new Exception("Matrix is singular !");
+
+			hold = row[k];
+			row[k] = row[I_pivot];
+			row[I_pivot] = hold;
+			hold = col[k];
+			col[k] = col[J_pivot];
+			col[J_pivot] = hold;
+
+			// reduce about pivot
+			mat.set(row[k], col[k], 1.0 / pivot);
+			for (int j = 0; j < n; j++) {
+				if (j != k) {
+					mat.set(row[k], col[j],
+							mat.get(row[k], col[j]) * mat.get(row[k], col[k]));
+				}
+			}
+			// inner reduction loop
+			for (int i = 0; i < n; i++) {
+				if (k != i) {
+					for (int j = 0; j < n; j++) {
+						if (k != j) {
+
+							double val = mat.get(row[i], col[j])
+									- mat.get(row[i], col[k])
+									* mat.get(row[k], col[j]);
+							mat.set(row[i], col[j], val);
+						}
+					}
+					mat.set(row[i], col[k],
+							-mat.get(row[i], col[k]) * mat.get(row[k], col[k]));
+				}
+			}
+		}
+		// end main reduction loop
+
+		// unscramble rows
+		for (int j = 0; j < n; j++) {
+			for (int i = 0; i < n; i++)
+				temp[col[i]] = mat.get(row[i], j);
+
+			for (int i = 0; i < n; i++)
+				mat.set(i, j, temp[i]);
+
+		}
+
+		// unscramble columns
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++)
+				temp[row[j]] = mat.get(i, col[j]);
+
+			for (int j = 0; j < n; j++)
+				mat.set(i, j, temp[j]);
+		}
 
 		return mat;
 	}
@@ -344,5 +524,30 @@ public class DenseMatrix {
 	 */
 	public void setRow(int row, double val) {
 		Arrays.fill(data[row], val);
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(data);
+	}
+
+	public static void main(String[] args) throws Exception {
+		double[][] data = { { 4, 2, 0.6 }, { 4.2, 2.1, .59 },
+				{ 3.9, 2.0, .58 }, { 4.3, 2.1, .62 }, { 4.1, 2.2, .63 } };
+
+		// expected cov results: {{0.025, 0.0075, 0.00175}, {0.0075, 0.0070,
+		// 0.00135}, {0.00175, 0.00135, 0.00043}}
+
+		DenseMatrix mat = new DenseMatrix(data);
+		Logs.debug(mat);
+		Logs.debug(mat.cov());
+
+		// matrix inversion
+		data = new double[][] { { 1, 0, 4 }, { 1, 1, 6 }, { -3, 0, -10 } };
+		mat = new DenseMatrix(data);
+
+		// expected invert results: {{-5, 0, -2}, {-4, 1, -1}, {1.5, 0, 0.5}}
+		Logs.debug(mat);
+		Logs.debug(mat.inv());
 	}
 }

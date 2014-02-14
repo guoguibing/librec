@@ -18,6 +18,7 @@ import librec.baseline.ItemAverage;
 import librec.baseline.MostPopular;
 import librec.baseline.RandomGuess;
 import librec.baseline.UserAverage;
+import librec.core.BPMF;
 import librec.core.BiasedMF;
 import librec.core.CLiMF;
 import librec.core.ItemKNN;
@@ -113,7 +114,8 @@ public class LibRec {
 		}
 
 		// collect results
-		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"), cf.isOn("is.email.notify"));
+		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"),
+				cf.isOn("is.email.notify"));
 	}
 
 	private static void runAlgorithm() throws Exception {
@@ -160,7 +162,8 @@ public class LibRec {
 		for (Recommender algo : algos) {
 			for (Entry<Measure, Double> en : algo.measures.entrySet()) {
 				Measure m = en.getKey();
-				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
+				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m)
+						: 0.0;
 				avgMeasure.put(m, val + en.getValue() / kFold);
 			}
 		}
@@ -187,11 +190,13 @@ public class LibRec {
 	 * 
 	 */
 	private static void runTestFile(String path) throws Exception {
-		
-		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
+
+		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(),
+				rateDao.getItemIds());
 		SparseMatrix testMatrix = testDao.readData(false);
 
-		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
+		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix,
+				testMatrix }, -1);
 		algo.execute();
 
 		printEvalInfo(algo, algo.measures);
@@ -205,7 +210,8 @@ public class LibRec {
 		String result = Recommender.getEvalInfo(ms, Recommender.isRankingPred);
 		String time = Dates.parse(ms.get(Measure.TrainTime).longValue()) + ","
 				+ Dates.parse(ms.get(Measure.TestTime).longValue());
-		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result, algo.toString(), time);
+		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result,
+				algo.toString(), time);
 
 		Logs.info(evalInfo);
 	}
@@ -213,7 +219,8 @@ public class LibRec {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
+	private static Recommender getRecommender(SparseMatrix[] data, int fold)
+			throws Exception {
 
 		SparseMatrix trainMatrix = data[0], testMatrix = data[1];
 		algorithm = cf.getString("recommender");
@@ -246,6 +253,8 @@ public class LibRec {
 			return new SVDPlusPlus(trainMatrix, testMatrix, fold);
 		case "pmf":
 			return new PMF(trainMatrix, testMatrix, fold);
+		case "bpmf":
+			return new BPMF(trainMatrix, testMatrix, fold);
 		case "climf":
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "socialmf":
@@ -279,14 +288,18 @@ public class LibRec {
 	 * print out debug information
 	 */
 	private static void debugInfo() {
-		String cv = "kFold: " + cf.getInt("num.kfold")
-				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
-		String cvInfo = cf.isOn("is.cross.validation") ? cv : "ratio: " + (float) cf.getDouble("val.ratio");
+		String cv = "kFold: "
+				+ cf.getInt("num.kfold")
+				+ (cf.isOn("is.parallel.folds") ? " [Parallel]"
+						: " [Singleton]");
+		String cvInfo = cf.isOn("is.cross.validation") ? cv : "ratio: "
+				+ (float) cf.getDouble("val.ratio");
 
 		String testPath = cf.getPath("dataset.testing");
 		boolean isTestingFlie = !testPath.equals("-1");
-		String datasetInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38),
-				isTestingFlie ? "" : cvInfo);
+		String datasetInfo = String.format("Training: %s, %s", Strings.last(
+				cf.getPath("dataset.training"), 38), isTestingFlie ? ""
+				: cvInfo);
 		Logs.info(datasetInfo);
 
 		if (isTestingFlie)
