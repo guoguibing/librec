@@ -30,7 +30,12 @@ public class SymmMatrix {
 	public SymmMatrix(SymmMatrix mat) {
 		dim = mat.dim;
 
-		data = Arrays.copyOf(mat.data, mat.data.length);
+		data = new double[dim][];
+		for (int i = 0; i < dim; i++) {
+			data[i] = new double[i + 1];
+			for (int j = 0; j < data[i].length; j++)
+				data[i][j] = mat.data[i][j];
+		}
 	}
 
 	public SymmMatrix clone() {
