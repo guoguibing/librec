@@ -46,7 +46,9 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	/**
 	 * Construct a sparse matrix with both CRS and CCS structures
 	 */
-	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
+	public SparseMatrix(int rows, int cols,
+			Table<Integer, Integer, Double> dataTable,
+			Multimap<Integer, Integer> colMap) {
 		numRows = rows;
 		numCols = cols;
 
@@ -56,11 +58,33 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	/**
 	 * Construct a sparse matrix with only CRS structures
 	 */
-	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable) {
+	public SparseMatrix(int rows, int cols,
+			Table<Integer, Integer, Double> dataTable) {
 		this(rows, cols, dataTable, null);
+	}
+	
+	/**
+	 * Define a sparse matrix without data, only use for {@code transpose} method
+	 * 
+	 */
+	private SparseMatrix(int rows, int cols){
+		numRows = rows;
+		numCols = cols;
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
+		this(mat, true);
+	}
+
+	/**
+	 * Construct a sparse matrix from another sparse matrix
+	 * 
+	 * @param mat
+	 *            the original sparse matrix
+	 * @param deap
+	 *            whether to copy the CCS structures
+	 */
+	public SparseMatrix(SparseMatrix mat, boolean deap) {
 		numRows = mat.numRows;
 		numCols = mat.numCols;
 
@@ -68,7 +92,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		rowPtr = Arrays.copyOf(mat.rowPtr, mat.rowPtr.length);
 		colInd = Arrays.copyOf(mat.colInd, mat.colInd.length);
 
-		if (mat.isCCSUsed) {
+		if (deap && mat.isCCSUsed) {
 			colData = Arrays.copyOf(mat.colData, mat.colData.length);
 			colPtr = Arrays.copyOf(mat.colPtr, mat.colPtr.length);
 			rowInd = Arrays.copyOf(mat.rowInd, mat.rowInd.length);
@@ -81,10 +105,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 	public SparseMatrix transpose() {
 		if (isCCSUsed) {
-			SparseMatrix tr = clone();
-
-			tr.numRows = numCols;
-			tr.numCols = numRows;
+			SparseMatrix tr = new SparseMatrix(numCols, numRows);
 
 			tr.colData = Arrays.copyOf(rowData, rowData.length);
 			tr.colPtr = Arrays.copyOf(rowPtr, rowPtr.length);
@@ -124,7 +145,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return size;
 	}
 
-	private void construct(Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
+	private void construct(Table<Integer, Integer, Double> dataTable,
+			Multimap<Integer, Integer> colMap) {
 		int nnz = dataTable.size();
 
 		// CRS
@@ -140,8 +162,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			for (int col : cols) {
 				colInd[j++] = col;
 				if (col < 0 || col >= numCols)
-					throw new IllegalArgumentException("colInd[" + j + "]=" + col
-							+ ", which is not a valid column index");
+					throw new IllegalArgumentException("colInd[" + j + "]="
+							+ col + ", which is not a valid column index");
 			}
 
 			Arrays.sort(colInd, rowPtr[i - 1], rowPtr[i]);
@@ -163,8 +185,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 				for (int row : rows) {
 					rowInd[j++] = row;
 					if (row < 0 || row >= numRows)
-						throw new IllegalArgumentException("rowInd[" + j + "]=" + row
-								+ ", which is not a valid row index");
+						throw new IllegalArgumentException("rowInd[" + j + "]="
+								+ row + ", which is not a valid row index");
 				}
 
 				Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
@@ -215,7 +237,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 	public double get(int row, int col) {
 
-		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], col);
+		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1],
+				col);
 
 		if (index >= 0)
 			return rowData[index];
@@ -355,11 +378,13 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows, numCols, size() }));
+		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows,
+				numCols, size() }));
 
 		for (MatrixEntry me : this)
 			if (me.get() != 0)
-				sb.append(String.format("%d\t%d\t%f\n", new Object[] { me.row() + 1, me.column() + 1, me.get() }));
+				sb.append(String.format("%d\t%d\t%f\n", new Object[] {
+						me.row() + 1, me.column() + 1, me.get() }));
 
 		return sb.toString();
 	}
@@ -373,8 +398,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		if (i >= 0 && colInd[i] == col)
 			return i;
 		else
-			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", " + (col + 1)
-					+ ") is not in the matrix structure");
+			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", "
+					+ (col + 1) + ") is not in the matrix structure");
 	}
 
 	/**
@@ -386,8 +411,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		if (i >= 0 && rowInd[i] == row)
 			return i;
 		else
-			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", " + (col + 1)
-					+ ") is not in the matrix structure");
+			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", "
+					+ (col + 1) + ") is not in the matrix structure");
 	}
 
 	public Iterator<MatrixEntry> iterator() {
@@ -474,16 +499,16 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	}
 
 	public static void main(String[] args) {
-		// test data matrix        
-		//		{10, 0, 0, 0, -2,  0},   
-		//		{ 3, 9, 0, 0,  0,  3},   
-		//		{ 0, 7, 8, 7,  0,  0},
-		//		{ 3, 0, 8, 7,  5,  0},
-		//		{ 0, 8, 0, 9,  9, 13}, 
-		//		{ 0, 4, 0, 0,  2, -1}
-		//     val = {10, -2, 3, 9, 3, 7, 8, 7, 3, 8, 7, 5, 8, 9, 9, 13, 4, 2, -1}
+		// test data matrix
+		// {10, 0, 0, 0, -2, 0},
+		// { 3, 9, 0, 0, 0, 3},
+		// { 0, 7, 8, 7, 0, 0},
+		// { 3, 0, 8, 7, 5, 0},
+		// { 0, 8, 0, 9, 9, 13},
+		// { 0, 4, 0, 0, 2, -1}
+		// val = {10, -2, 3, 9, 3, 7, 8, 7, 3, 8, 7, 5, 8, 9, 9, 13, 4, 2, -1}
 		// col_ind = {1, 5, 1, 2, 6, 2, 3, 4, 1, 3, 4, 5, 2, 4, 5, 6, 2, 5, 6}
-		//  row_pt = {1, 3, 6, 9, 13, 17, 20}
+		// row_pt = {1, 3, 6, 9, 13, 17, 20}
 
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		Multimap<Integer, Integer> colMap = HashMultimap.create();

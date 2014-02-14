@@ -45,7 +45,7 @@ public class DataSplitter {
 	private void splitFolds(int kfold) {
 		assert kfold > 0;
 
-		assignMatrix = new SparseMatrix(rateMatrix);
+		assignMatrix = new SparseMatrix(rateMatrix, false);
 
 		int numRates = rateMatrix.getData().length;
 		numFold = kfold > numRates ? numRates : kfold;
@@ -85,8 +85,10 @@ public class DataSplitter {
 
 		assert (ratio > 0 && ratio <= 1);
 
+		// keep both CRS and CCS for training matrix
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+		// keep only CRS for testing matrix
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -161,7 +163,7 @@ public class DataSplitter {
 			return null;
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
