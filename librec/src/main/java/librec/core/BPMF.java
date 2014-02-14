@@ -25,6 +25,7 @@ public class BPMF extends IterativeRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "BayesianPMF";
+		lRate = -1;
 	}
 
 	@Override
@@ -90,7 +91,7 @@ public class BPMF extends IterativeRecommender {
 				DenseMatrix wishrnd_u = wishart(WI_post, df_upost);
 				if (wishrnd_u != null)
 					alpha_u = wishrnd_u;
-				mu_temp = (mu0_u.scale(b0_u).add(x_bar.scale(M)))
+				mu_temp = mu0_u.scale(b0_u).add(x_bar.scale(M))
 						.scale(1 / (b0_u + M + 0.0));
 				lam = alpha_u.scale(b0_u + M).inv().cholesky();
 
@@ -286,9 +287,9 @@ public class BPMF extends IterativeRecommender {
 			// rest of diagonal:
 			for (int j = 1; j < p; j++) {
 				SparseVector zz = new SparseVector(j);
-				for (int k = 0; k < j; k++) {
+				for (int k = 0; k < j; k++) 
 					zz.set(k, z.get(k, j));
-				}
+				
 				B.set(j, j, y.get(j) + zz.inner(zz));
 			}
 
@@ -317,6 +318,11 @@ public class BPMF extends IterativeRecommender {
 		}
 
 		return A.transpose().mult(B).mult(A);
+	}
+
+	@Override
+	protected double predict(int u, int j) {
+		return globalMean + DenseMatrix.rowMult(P, u, Q, j);
 	}
 
 	@Override
