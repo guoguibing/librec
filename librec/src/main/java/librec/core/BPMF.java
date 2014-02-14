@@ -1,5 +1,6 @@
 package librec.core;
 
+import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -79,17 +80,16 @@ public class BPMF extends IterativeRecommender {
 				S_bar = P.cov();
 
 				DenseVector mu0_u_x_bar = mu0_u.sub(x_bar);
-				DenseMatrix e1e2 = mu0_u_x_bar.outer(mu0_u_x_bar).scale(
-						M * b0_u / (b0_u + M + 0.0));
+				DenseMatrix e1e2 = mu0_u_x_bar.outer(mu0_u_x_bar).scale(M * b0_u / (b0_u + M + 0.0));
 				WI_post = WI_u.inv().add(S_bar.scale(M)).add(e1e2);
 				WI_post = WI_post.inv();
+				WI_post = WI_post.add(WI_post.transpose()).scale(0.5);
 
 				df_upost = df_u + M;
 				DenseMatrix wishrnd_u = wishart(WI_post, df_upost);
 				if (wishrnd_u != null)
 					alpha_u = wishrnd_u;
-				mu_temp = ((mu0_u.scale(b0_u)).add(x_bar.scale(M)))
-						.scale(1 / (b0_u + M + 0.0));
+				mu_temp = (mu0_u.scale(b0_u).add(x_bar.scale(M))).scale(1 / (b0_u + M + 0.0));
 				lam = alpha_u.scale(b0_u + M).inv().cholesky();
 
 				if (lam != null) {
@@ -110,18 +110,16 @@ public class BPMF extends IterativeRecommender {
 				S_bar = Q.cov();
 
 				DenseVector mu0_m_x_bar = mu0_m.sub(x_bar);
-				DenseMatrix e3e4 = mu0_m_x_bar.outer(mu0_m_x_bar).scale(
-						N * b0_m / (b0_m + N + 0.0));
+				DenseMatrix e3e4 = mu0_m_x_bar.outer(mu0_m_x_bar).scale(N * b0_m / (b0_m + N + 0.0));
 				WI_post = WI_m.inv().add(S_bar.scale(N)).add(e3e4);
 				WI_post = WI_post.inv();
-				WI_post = (WI_post.add(WI_post.transpose())).scale(0.5);
+				WI_post = WI_post.add(WI_post.transpose()).scale(0.5);
 
 				df_mpost = df_m + N;
 				DenseMatrix wishrnd_m = wishart(WI_post, df_mpost);
 				if (wishrnd_m != null)
 					alpha_m = wishrnd_m;
-				mu_temp = ((mu0_m.scale(b0_m)).add(x_bar.scale(N)))
-						.scale(1 / (b0_m + N + 0.0));
+				mu_temp = (mu0_m.scale(b0_m).add(x_bar.scale(N))).scale(1 / (b0_m + N + 0.0));
 				lam = alpha_m.scale(b0_m + N).inv().cholesky();
 
 				if (lam != null) {
@@ -139,7 +137,7 @@ public class BPMF extends IterativeRecommender {
 				for (int gibbs = 1; gibbs < 2; gibbs++) {
 					// Infer posterior distribution over all user feature
 					// vectors
-					for (int uu = 1; uu <= numUsers; uu++) {
+					for (int uu = 0; uu < numUsers; uu++) {
 						// list of items rated by user uu:
 						int[] ff = trainMatrix.row(uu).getIndex();
 
@@ -165,8 +163,7 @@ public class BPMF extends IterativeRecommender {
 							idx++;
 						}
 
-						DenseMatrix covar = (alpha_u.add((MM.transpose()
-								.mult(MM)).scale(beta))).inv();
+						DenseMatrix covar = (alpha_u.add((MM.transpose().mult(MM)).scale(beta))).inv();
 						DenseVector a = MM.transpose().mult(rr).scale(beta);
 						DenseVector b = alpha_u.mult(mu_u);
 						DenseVector mean_u = covar.mult(a.add(b));
@@ -177,8 +174,7 @@ public class BPMF extends IterativeRecommender {
 							for (int f = 0; f < numFactors; f++)
 								normalRdn.set(f, Randoms.gaussian(0, 1));
 
-							DenseVector w1_P1_uu = lam.mult(normalRdn).add(
-									mean_u);
+							DenseVector w1_P1_uu = lam.mult(normalRdn).add(mean_u);
 
 							for (int f = 0; f < numFactors; f++)
 								P.set(uu, f, w1_P1_uu.get(f));
@@ -187,7 +183,7 @@ public class BPMF extends IterativeRecommender {
 
 					// Infer posterior distribution over all movie feature
 					// vectors
-					for (int ii = 1; ii <= numItems; ii++) {
+					for (int ii = 0; ii < numItems; ii++) {
 						// list of users who rated item ii:
 						int[] ff = trainMatrix.column(ii).getIndex();
 
@@ -213,8 +209,7 @@ public class BPMF extends IterativeRecommender {
 							idx++;
 						}
 
-						DenseMatrix covar = (alpha_m.add((MM.transpose()
-								.mult(MM)).scale(beta))).inv();
+						DenseMatrix covar = alpha_m.add((MM.transpose().mult(MM)).scale(beta)).inv();
 						DenseVector a = MM.transpose().mult(rr).scale(beta);
 						DenseVector b = alpha_m.mult(mu_m);
 						DenseVector mean_m = covar.mult(a.add(b));
@@ -225,8 +220,7 @@ public class BPMF extends IterativeRecommender {
 							for (int f = 0; f < numFactors; f++)
 								normalRdn.set(f, Randoms.gaussian(0, 1));
 
-							DenseVector w1_M1_ii = lam.mult(normalRdn).add(
-									mean_m);
+							DenseVector w1_M1_ii = lam.mult(normalRdn).add(mean_m);
 
 							for (int f = 0; f < numFactors; f++)
 								Q.set(ii, f, w1_M1_ii.get(f));
@@ -320,13 +314,17 @@ public class BPMF extends IterativeRecommender {
 						zki.set(k, z.get(k, i));
 						zkj.set(k, z.get(k, j));
 					}
-					B.set(i, j,
-							z.get(i, j) * Math.sqrt(y.get(i)) + zki.inner(zkj));
+					B.set(i, j, z.get(i, j) * Math.sqrt(y.get(i)) + zki.inner(zkj));
 					B.set(j, i, B.get(i, j)); // mirror
 				}
 			}
 		}
 
 		return A.transpose().mult(B).mult(A);
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { numFactors, maxIters }, ",");
 	}
 }
