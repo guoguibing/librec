@@ -1,7 +1,5 @@
 package librec.data;
 
-import java.util.Arrays;
-
 /**
  * Data Structure, Lower Symmetric Matrix
  * 
