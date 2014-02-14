@@ -416,7 +416,7 @@ public class DenseMatrix {
 	 * 
 	 * @return the inverse matrix of current matrix
 	 */
-	public DenseMatrix inv() throws Exception {
+	public DenseMatrix inverse() throws Exception {
 		if (numRows != numCols)
 			throw new Exception("Only square matrix can do inversion");
 
@@ -514,7 +514,7 @@ public class DenseMatrix {
 		return mat;
 	}
 
-	public DenseMatrix inverse() {
+	public DenseMatrix inv() {
 		if (this.numRows != this.numCols)
 			throw new RuntimeException("Dimensions disagree");
 

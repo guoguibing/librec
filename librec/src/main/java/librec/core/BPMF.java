@@ -16,8 +16,6 @@ import librec.intf.IterativeRecommender;
  * Matlab version is provided by the authors via <a
  * href="http://www.utstat.toronto.edu/~rsalakhu/BPMF.html">this link</a>.
  * 
- * TODO: This class has not been completed, as matrix inversion may not be reliable. 
- * 
  * @author guoguibing
  * 
  */
