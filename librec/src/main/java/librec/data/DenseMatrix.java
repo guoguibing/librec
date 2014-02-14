@@ -30,17 +30,17 @@ public class DenseMatrix {
 	}
 
 	public DenseMatrix(double[][] array) {
-		this.numRows = array.length;
-		this.numCols = array[0].length;
+		this(array.length, array[0].length);
 
-		data = Arrays.copyOf(array, array.length);
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numCols; j++)
+				data[i][j] = array[i][j];
+		// data = Arrays.copyOf(array, array.length); does not work, as it
+		// produces a shallow copy
 	}
 
 	public DenseMatrix(DenseMatrix mat) {
-		this.numRows = mat.numRows;
-		this.numCols = mat.numCols;
-
-		data = Arrays.copyOf(mat.data, mat.data.length);
+		this(mat.data);
 	}
 
 	public DenseMatrix clone() {
@@ -514,6 +514,80 @@ public class DenseMatrix {
 		return mat;
 	}
 
+	public DenseMatrix inverse() {
+		if (this.numRows != this.numCols)
+			throw new RuntimeException("Dimensions disagree");
+
+		int n = this.numRows;
+
+		DenseMatrix mat = DenseMatrix.eye(n);
+
+		if (n == 1) {
+			mat.set(0, 0, 1 / this.get(0, 0));
+			return mat;
+		}
+
+		DenseMatrix b = new DenseMatrix(this);
+
+		for (int i = 0; i < n; i++) {
+			// find pivot:
+			double mag = 0;
+			int pivot = -1;
+
+			for (int j = i; j < n; j++) {
+				double mag2 = Math.abs(b.get(j, i));
+				if (mag2 > mag) {
+					mag = mag2;
+					pivot = j;
+				}
+			}
+
+			// no pivot (error):
+			if (pivot == -1 || mag == 0)
+				return mat;
+
+			// move pivot row into position:
+			if (pivot != i) {
+				double temp;
+				for (int j = i; j < n; j++) {
+					temp = b.get(i, j);
+					b.set(i, j, b.get(pivot, j));
+					b.set(pivot, j, temp);
+				}
+
+				for (int j = 0; j < n; j++) {
+					temp = mat.get(i, j);
+					mat.set(i, j, mat.get(pivot, j));
+					mat.set(pivot, j, temp);
+				}
+			}
+
+			// normalize pivot row:
+			mag = b.get(i, i);
+			for (int j = i; j < n; j++)
+				b.set(i, j, b.get(i, j) / mag);
+
+			for (int j = 0; j < n; j++)
+				mat.set(i, j, mat.get(i, j) / mag);
+
+			// eliminate pivot row component from other rows:
+			for (int k = 0; k < n; k++) {
+				if (k == i)
+					continue;
+
+				double mag2 = b.get(k, i);
+
+				for (int j = i; j < n; j++)
+					b.set(k, j, b.get(k, j) - mag2 * b.get(i, j));
+
+				for (int j = 0; j < n; j++)
+					mat.set(k, j, mat.get(k, j) - mag2 * mat.get(i, j));
+			}
+		}
+
+		return mat;
+	}
+
 	/**
 	 * set one value to the whole row
 	 * 
@@ -540,6 +614,9 @@ public class DenseMatrix {
 
 		DenseMatrix mat = new DenseMatrix(data);
 		Logs.debug(mat);
+		data[1][2] = 100000;
+		Logs.debug(mat);
+
 		Logs.debug(mat.cov());
 
 		// matrix inversion
@@ -549,5 +626,6 @@ public class DenseMatrix {
 		// expected invert results: {{-5, 0, -2}, {-4, 1, -1}, {1.5, 0, 0.5}}
 		Logs.debug(mat);
 		Logs.debug(mat.inv());
+		Logs.debug(mat.inverse());
 	}
 }

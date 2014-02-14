@@ -3,8 +3,6 @@ package librec.data;
 import happy.coding.math.Randoms;
 import happy.coding.math.Stats;
 
-import java.util.Arrays;
-
 /**
  * Data Structure: dense vector
  * 
@@ -27,12 +25,17 @@ public class DenseVector {
 
 	public DenseVector(double[] array, boolean deep) {
 		this.size = array.length;
-		data = deep ? Arrays.copyOf(array, array.length) : array;
+		if (deep) {
+			data = new double[array.length];
+			for (int i = 0; i < size; i++)
+				data[i] = array[i];
+		} else {
+			data = array;
+		}
 	}
 
 	public DenseVector(DenseVector vec) {
-		this.size = vec.size;
-		data = Arrays.copyOf(vec.data, vec.data.length);
+		this(vec.data);
 	}
 
 	public DenseVector clone() {

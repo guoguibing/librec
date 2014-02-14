@@ -89,15 +89,38 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		numRows = mat.numRows;
 		numCols = mat.numCols;
 
-		rowData = Arrays.copyOf(mat.rowData, mat.rowData.length);
-		rowPtr = Arrays.copyOf(mat.rowPtr, mat.rowPtr.length);
-		colInd = Arrays.copyOf(mat.colInd, mat.colInd.length);
+		copyCRS(mat.rowData, mat.rowPtr, mat.colInd);
 
-		if (deap && mat.isCCSUsed) {
-			colData = Arrays.copyOf(mat.colData, mat.colData.length);
-			colPtr = Arrays.copyOf(mat.colPtr, mat.colPtr.length);
-			rowInd = Arrays.copyOf(mat.rowInd, mat.rowInd.length);
-		}
+		if (deap && mat.isCCSUsed)
+			copyCCS(mat.colData, mat.colPtr, mat.rowInd);
+	}
+
+	private void copyCRS(double[] data, int[] ptr, int[] idx) {
+		rowData = new double[data.length];
+		for (int i = 0; i < rowData.length; i++)
+			rowData[i] = data[i];
+
+		rowPtr = new int[ptr.length];
+		for (int i = 0; i < rowPtr.length; i++)
+			rowPtr[i] = ptr[i];
+
+		colInd = new int[idx.length];
+		for (int i = 0; i < colInd.length; i++)
+			colInd[i] = idx[i];
+	}
+
+	private void copyCCS(double[] data, int[] ptr, int[] idx) {
+		colData = new double[data.length];
+		for (int i = 0; i < colData.length; i++)
+			colData[i] = data[i];
+
+		colPtr = new int[ptr.length];
+		for (int i = 0; i < colPtr.length; i++)
+			colPtr[i] = ptr[i];
+
+		rowInd = new int[idx.length];
+		for (int i = 0; i < rowInd.length; i++)
+			rowInd[i] = idx[i];
 	}
 
 	public SparseMatrix clone() {
@@ -108,14 +131,9 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		if (isCCSUsed) {
 			SparseMatrix tr = new SparseMatrix(numCols, numRows);
 
-			tr.colData = Arrays.copyOf(rowData, rowData.length);
-			tr.colPtr = Arrays.copyOf(rowPtr, rowPtr.length);
-			tr.rowInd = Arrays.copyOf(colInd, colInd.length);
-
-			tr.rowData = Arrays.copyOf(colData, colData.length);
-			tr.rowPtr = Arrays.copyOf(colPtr, colPtr.length);
-			tr.colInd = Arrays.copyOf(rowInd, rowInd.length);
-
+			tr.copyCRS(this.rowData, this.rowPtr, this.colInd);
+			tr.copyCCS(this.colData, this.colPtr, this.rowInd);
+			
 			return tr;
 		} else {
 			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();

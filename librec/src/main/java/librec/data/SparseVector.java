@@ -44,10 +44,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 	}
 
 	public SparseVector(SparseVector sv) {
-		this.capacity = sv.capacity;
-		this.data = Arrays.copyOf(sv.data, sv.data.length);
-		this.count = sv.count;
-		this.index = Arrays.copyOf(sv.index, sv.index.length);
+		this(sv.capacity, sv.data);
 	}
 
 	/**
