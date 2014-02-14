@@ -61,7 +61,8 @@ public class DataDAO {
 	 * @param itemIds
 	 *            item: {raw id, inner id} map
 	 */
-	public DataDAO(String path, BiMap<String, Integer> userIds, BiMap<String, Integer> itemIds) {
+	public DataDAO(String path, BiMap<String, Integer> userIds,
+			BiMap<String, Integer> itemIds) {
 		dataPath = path;
 
 		if (userIds == null)
@@ -136,7 +137,11 @@ public class DataDAO {
 	 * @return a sparse matrix storing all the relevant data
 	 */
 	public SparseMatrix readData() throws Exception {
-		return readData(new int[] { 0, 1, 2 });
+		return readData(true);
+	}
+
+	public SparseMatrix readData(boolean isCCSUsed) throws Exception {
+		return readData(new int[] { 0, 1, 2 }, isCCSUsed);
 	}
 
 	/**
@@ -144,14 +149,19 @@ public class DataDAO {
 	 * 
 	 * @param cols
 	 *            the indexes of the relevant columns in the data file
+	 * @param isCCSUsed
+	 *            whether to store the CCS structures of the rating matrix
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMatrix readData(int[] cols) throws Exception {
+	public SparseMatrix readData(int[] cols, boolean isCCSUsed)
+			throws Exception {
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		// Map {col-id, multiple row-id}: used to fast build rate matrix
-		Multimap<Integer, Integer> colMap = HashMultimap.create();
+		Multimap<Integer, Integer> colMap = null;
+		if (isCCSUsed)
+			colMap = HashMultimap.create();
 
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
@@ -160,7 +170,8 @@ public class DataDAO {
 
 			String user = data[cols[0]];
 			String item = data[cols[1]];
-			Double rate = cols.length >= 3 ? Double.valueOf(data[cols[2]]) : 1.0;
+			Double rate = cols.length >= 3 ? Double.valueOf(data[cols[2]])
+					: 1.0;
 
 			/*
 			 * if (cols.length >= 4) { double weight =
@@ -171,14 +182,18 @@ public class DataDAO {
 			scaleDist.add(rate);
 
 			// inner id starting from 0
-			int row = userIds.containsKey(user) ? userIds.get(user) : userIds.size();
+			int row = userIds.containsKey(user) ? userIds.get(user) : userIds
+					.size();
 			userIds.put(user, row);
 
-			int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds.size();
+			int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds
+					.size();
 			itemIds.put(item, col);
 
 			dataTable.put(row, col, rate);
-			colMap.put(col, row);
+
+			if (isCCSUsed)
+				colMap.put(col, row);
 		}
 		br.close();
 
@@ -190,7 +205,8 @@ public class DataDAO {
 
 		// if min-rate = 0.0, shift upper a scale
 		double minRate = scales.get(0).doubleValue();
-		double epsilon = minRate == 0.0 ? scales.get(1).doubleValue() - minRate : 0;
+		double epsilon = minRate == 0.0 ? scales.get(1).doubleValue() - minRate
+				: 0;
 		if (epsilon > 0) {
 			// shift upper a scale
 			for (int i = 0, im = scales.size(); i < im; i++) {
@@ -201,16 +217,19 @@ public class DataDAO {
 			for (int row = 0; row < numRows; row++) {
 				for (int col = 0; col < numCols; col++) {
 					if (dataTable.contains(row, col))
-						dataTable.put(row, col, dataTable.get(row, col) + epsilon);
+						dataTable.put(row, col, dataTable.get(row, col)
+								+ epsilon);
 				}
 			}
 		}
 
 		if (isItemAsUser) {
-			Logs.debug("User amount: {}, scales: {{}}", numRows, Strings.toString(scales, ", "));
+			Logs.debug("User amount: {}, scales: {{}}", numRows,
+					Strings.toString(scales, ", "));
 		} else {
 			Logs.debug("User amount: {}, item amount: {}", numRows, numCols);
-			Logs.debug("Rating amount: {}, scales: {{}}", numRates, Strings.toString(scales, ", "));
+			Logs.debug("Rating amount: {}, scales: {{}}", numRates,
+					Strings.toString(scales, ", "));
 		}
 
 		// build rating matrix
@@ -235,7 +254,9 @@ public class DataDAO {
 
 		List<String> lines = new ArrayList<>(1500);
 		for (MatrixEntry me : rateMatrix) {
-			String line = Strings.toString(new Object[] { me.row() + 1, me.column() + 1, (float) me.get() }, sep);
+			String line = Strings.toString(
+					new Object[] { me.row() + 1, me.column() + 1,
+							(float) me.get() }, sep);
 			lines.add(line);
 
 			if (lines.size() >= 1000) {
@@ -322,7 +343,8 @@ public class DataDAO {
 			sps.add("Item amount: " + items + ", " + FileIO.formatSize(items));
 		sps.add("Rate amount: " + numRates + ", " + FileIO.formatSize(numRates));
 		sps.add("Scales dist: " + scaleDist.toString());
-		sps.add(String.format("Data density: %.6f", numRates / (users * items + 0.0)));
+		sps.add(String.format("Data density: %.6f", numRates
+				/ (users * items + 0.0)));
 
 		// user/item mean
 		double[] data = rateMatrix.getData();
@@ -453,8 +475,8 @@ public class DataDAO {
 		DataDAO dao = new DataDAO(dirPath + "ratings.txt");
 
 		dao.readData();
-		//dao.printSpecs();
-		//dao.writeData(dirPath + "ratings.txt");
+		// dao.printSpecs();
+		// dao.writeData(dirPath + "ratings.txt");
 		dao.writeArff("Flixster", dirPath + "flixster.arff");
 	}
 }
