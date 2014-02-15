@@ -71,11 +71,11 @@ public class PMF extends IterativeRecommender {
 			errs /= numRates;
 			loss /= numRates;
 
-			userDeltas.scale(momentum).add(userSgds.scale(lRate / numRates));
-			itemDeltas.scale(momentum).add(itemSgds.scale(lRate / numRates));
+			userDeltas = userDeltas.scale(momentum).add(userSgds.scale(lRate / numRates));
+			itemDeltas = itemDeltas.scale(momentum).add(itemSgds.scale(lRate / numRates));
 
-			P.add(userDeltas);
-			Q.add(itemDeltas);
+			P = P.add(userDeltas);
+			Q = Q.add(itemDeltas);
 
 			if (isConverged(iter))
 				break;

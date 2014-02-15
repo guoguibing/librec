@@ -101,8 +101,8 @@ public class SocialMF extends SocialRecommender {
 			}
 
 			// update user factors
-			P.add(PS.scale(-lRate));
-			Q.add(QS.scale(-lRate));
+			P = P.add(PS.scale(-lRate));
+			Q = Q.add(QS.scale(-lRate));
 
 			errs *= 0.5;
 			loss *= 0.5;

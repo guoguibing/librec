@@ -146,9 +146,9 @@ public class TrustMF extends SocialRecommender {
 				}
 			}
 
-			Br.add(BS.scale(-lRate));
-			Vr.add(VS.scale(-lRate));
-			Wr.add(WS.scale(-lRate));
+			Br = Br.add(BS.scale(-lRate));
+			Vr = Vr.add(VS.scale(-lRate));
+			Wr = Wr.add(WS.scale(-lRate));
 
 			loss *= 0.5;
 			errs *= 0.5;
@@ -221,9 +221,9 @@ public class TrustMF extends SocialRecommender {
 				}
 			}
 
-			Be.add(BS.scale(-lRate));
-			Ve.add(VS.scale(-lRate));
-			We.add(WS.scale(-lRate));
+			Be = Be.add(BS.scale(-lRate));
+			Ve = Ve.add(VS.scale(-lRate));
+			We = We.add(WS.scale(-lRate));
 
 			loss *= 0.5;
 			errs *= 0.5;
