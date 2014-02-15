@@ -22,7 +22,7 @@ public class PMF extends IterativeRecommender {
 		algoName = "PMF";
 
 		// disable bold driver
-		isBoldDriver = false;
+		isBoldDriver = false; 
 	}
 
 	@Override
