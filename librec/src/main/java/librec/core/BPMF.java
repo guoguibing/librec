@@ -14,7 +14,8 @@ import librec.intf.IterativeRecommender;
  * using Markov Chain Monte Carlo</strong>, ICML 2008. <br/>
  * 
  * Matlab version is provided by the authors via <a
- * href="http://www.utstat.toronto.edu/~rsalakhu/BPMF.html">this link</a>.
+ * href="http://www.utstat.toronto.edu/~rsalakhu/BPMF.html">this link</a>. This
+ * implementation is modified from the BayesianPMF by the PREA package.
  * 
  * @author guoguibing
  * 
@@ -70,13 +71,13 @@ public class BPMF extends IterativeRecommender {
 		DenseVector mu_temp;
 		double df_upost, df_mpost;
 
-		for (int iter = 1; iter <= maxIters; iter++) {
-			// Sample from user hyper parameters:
-			int M = numUsers;
+		int M = numUsers, N = numItems;
 
+		for (int iter = 1; iter <= maxIters; iter++) {
+
+			// Sample from user hyper parameters:
 			for (int f = 0; f < numFactors; f++)
 				x_bar.set(f, P.columnMean(f));
-
 			S_bar = P.cov();
 
 			DenseVector mu0_u_x_bar = mu0_u.sub(x_bar);
@@ -102,8 +103,6 @@ public class BPMF extends IterativeRecommender {
 			}
 
 			// Sample from item hyper parameters:
-			int N = numItems;
-
 			for (int f = 0; f < numFactors; f++)
 				x_bar.set(f, Q.columnMean(f));
 			S_bar = Q.cov();
@@ -130,27 +129,26 @@ public class BPMF extends IterativeRecommender {
 				mu_m = lam.mult(normalRdn).add(mu_temp);
 			}
 
-			// Gibbs updates over user and item feature vectors given hyper
-			// parameters:
+			// Gibbs updates over user and item feature vectors given hyper parameters:
+			// NOTE: in PREA, only 1 iter for gibbs where in the original Matlab code, 2 iters are used. 
 			for (int gibbs = 0; gibbs < 2; gibbs++) {
-				// Infer posterior distribution over all user feature
-				// vectors
-				for (int uu = 0; uu < numUsers; uu++) {
+				// Infer posterior distribution over all user feature vectors
+				for (int u = 0; u < numUsers; u++) {
 					// list of items rated by user uu:
-					SparseVector rv = trainMatrix.row(uu);
-					int cnt = rv.getCount();
+					SparseVector rv = trainMatrix.row(u);
+					int count = rv.getCount();
 
-					if (cnt == 0)
+					if (count == 0)
 						continue;
 
 					// features of items rated by user uu:
-					DenseMatrix MM = new DenseMatrix(cnt, numFactors);
-					DenseVector rr = new DenseVector(cnt);
+					DenseMatrix MM = new DenseMatrix(count, numFactors);
+					DenseVector rr = new DenseVector(count);
 					int idx = 0;
-					for (int i : rv.getIndex()) {
-						rr.set(idx, rv.get(i) - globalMean);
+					for (int j : rv.getIndex()) {
+						rr.set(idx, rv.get(j) - globalMean);
 						for (int f = 0; f < numFactors; f++)
-							MM.set(idx, f, Q.get(i, f));
+							MM.set(idx, f, Q.get(j, f));
 
 						idx++;
 					}
@@ -166,28 +164,27 @@ public class BPMF extends IterativeRecommender {
 						for (int f = 0; f < numFactors; f++)
 							normalRdn.set(f, Randoms.gaussian(0, 1));
 
-						DenseVector w1_P1_uu = lam.mult(normalRdn).add(mean_u);
+						DenseVector w1_P1_u = lam.mult(normalRdn).add(mean_u);
 
 						for (int f = 0; f < numFactors; f++)
-							P.set(uu, f, w1_P1_uu.get(f));
+							P.set(u, f, w1_P1_u.get(f));
 					}
 				}
 
-				// Infer posterior distribution over all movie feature
-				// vectors
-				for (int ii = 0; ii < numItems; ii++) {
+				// Infer posterior distribution over all movie feature vectors
+				for (int j = 0; j < numItems; j++) {
 					// list of users who rated item ii:
-					SparseVector iv = trainMatrix.column(ii);
-					int cnt = iv.getCount();
-					if (cnt == 0)
+					SparseVector jv = trainMatrix.column(j);
+					int count = jv.getCount();
+					if (count == 0)
 						continue;
 
 					// features of users who rated item ii:
-					DenseMatrix MM = new DenseMatrix(cnt, numFactors);
-					DenseVector rr = new DenseVector(cnt);
+					DenseMatrix MM = new DenseMatrix(count, numFactors);
+					DenseVector rr = new DenseVector(count);
 					int idx = 0;
-					for (int u : iv.getIndex()) {
-						rr.set(idx, iv.get(u) - globalMean);
+					for (int u : jv.getIndex()) {
+						rr.set(idx, jv.get(u) - globalMean);
 						for (int f = 0; f < numFactors; f++)
 							MM.set(idx, f, P.get(u, f));
 
@@ -205,13 +202,13 @@ public class BPMF extends IterativeRecommender {
 						for (int f = 0; f < numFactors; f++)
 							normalRdn.set(f, Randoms.gaussian(0, 1));
 
-						DenseVector w1_M1_ii = lam.mult(normalRdn).add(mean_m);
+						DenseVector w1_M1_j = lam.mult(normalRdn).add(mean_m);
 
 						for (int f = 0; f < numFactors; f++)
-							Q.set(ii, f, w1_M1_ii.get(f));
+							Q.set(j, f, w1_M1_j.get(f));
 					}
 				}
-			}
+			} // end of gibbs
 
 			errs = 0;
 			loss = 0;

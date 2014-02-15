@@ -7,11 +7,11 @@ import happy.coding.math.Randoms;
 import java.util.Arrays;
 
 /**
- * Data Structure: dense matrix
+ * Data Structure: dense matrix <br/>
  * 
  * A big reason that we do not adopt original DenseMatrix from M4J libraray is
  * because the latter using one-dimensional array to store data, which will
- * often cause OutOfMemory exception due to the over the maximum length of
+ * often cause OutOfMemory exception due to the limit of maximum length of a
  * one-dimensional Java array.
  * 
  * @author guoguibing
@@ -19,34 +19,62 @@ import java.util.Arrays;
  */
 public class DenseMatrix {
 
-	protected int numRows, numCols;
+	protected int numRows, numColumns;
 	protected double[][] data;
 
+	/**
+	 * Construct a dense matrix with specified dimensions
+	 * 
+	 * @param numRows
+	 *            number of rows
+	 * @param numColumns
+	 *            number of columns
+	 */
 	public DenseMatrix(int numRows, int numColumns) {
 		this.numRows = numRows;
-		this.numCols = numColumns;
+		this.numColumns = numColumns;
 
 		data = new double[numRows][numColumns];
 	}
 
+	/**
+	 * Construct a dense matrix by copying data from a given 2D array
+	 * 
+	 * @param array
+	 *            data array
+	 */
 	public DenseMatrix(double[][] array) {
 		this(array.length, array[0].length);
 
 		for (int i = 0; i < numRows; i++)
-			for (int j = 0; j < numCols; j++)
+			for (int j = 0; j < numColumns; j++)
 				data[i][j] = array[i][j];
-		// data = Arrays.copyOf(array, array.length); does not work, as it
-		// produces a shallow copy
 	}
 
+	/**
+	 * Construct a dense matrix by copying data from a given matrix
+	 * 
+	 * @param mat
+	 *            input matrix
+	 */
 	public DenseMatrix(DenseMatrix mat) {
 		this(mat.data);
 	}
 
+	/**
+	 * Make a deep copy of current matrix
+	 */
 	public DenseMatrix clone() {
 		return new DenseMatrix(this);
 	}
 
+	/**
+	 * Construct an identity matrix
+	 * 
+	 * @param dim
+	 *            dimension
+	 * @return an identity matrix
+	 */
 	public static DenseMatrix eye(int dim) {
 		DenseMatrix mat = new DenseMatrix(dim, dim);
 		for (int i = 0; i < mat.numRows; i++)
@@ -56,7 +84,7 @@ public class DenseMatrix {
 	}
 
 	/**
-	 * initialize a dense matrix with small Guassian values <br/>
+	 * Initialize a dense matrix with small Guassian values <br/>
 	 * 
 	 * <strong>NOTE:</strong> small initial values make it easier to train a
 	 * model; otherwise a very small learning rate may be needed (especially
@@ -64,7 +92,7 @@ public class DenseMatrix {
 	 */
 	public void init(double mean, double sigma) {
 		for (int i = 0; i < numRows; i++)
-			for (int j = 0; j < numCols; j++)
+			for (int j = 0; j < numColumns; j++)
 				data[i][j] = Randoms.gaussian(mean, sigma);
 	}
 
@@ -74,7 +102,7 @@ public class DenseMatrix {
 	public void init(double range) {
 
 		for (int i = 0; i < numRows; i++)
-			for (int j = 0; j < numCols; j++)
+			for (int j = 0; j < numColumns; j++)
 				data[i][j] = Randoms.uniform(0, range);
 	}
 
@@ -85,16 +113,18 @@ public class DenseMatrix {
 		init(1.0);
 	}
 
-	public double[][] getData() {
-		return data;
-	}
-
+	/**
+	 * @return number of rows
+	 */
 	public int numRows() {
 		return numRows;
 	}
 
-	public int numCols() {
-		return numCols;
+	/**
+	 * @return number of columns
+	 */
+	public int numColumns() {
+		return numColumns;
 	}
 
 	/**
@@ -111,7 +141,8 @@ public class DenseMatrix {
 	 * @param rowId
 	 *            row id
 	 * @param deep
-	 *            whether to copy data or only shallow copy
+	 *            whether to copy data or only shallow copy for executing
+	 *            speedup purpose
 	 * @return a vector of a specific row
 	 */
 	public DenseVector row(int rowId, boolean deep) {
@@ -119,15 +150,15 @@ public class DenseMatrix {
 	}
 
 	/**
-	 * @param col
+	 * @param column
 	 *            column id
 	 * @return a copy of column data as a dense vector
 	 */
-	public DenseVector column(int col) {
+	public DenseVector column(int column) {
 		DenseVector vec = new DenseVector(numRows);
 
 		for (int i = 0; i < numRows; i++)
-			vec.set(i, get(i, col));
+			vec.set(i, data[i][column]);
 
 		return vec;
 	}
@@ -135,15 +166,15 @@ public class DenseMatrix {
 	/**
 	 * Compute mean of a column of the current matrix
 	 * 
-	 * @param col
+	 * @param column
 	 *            column id
 	 * @return mean of a column of the current matrix
 	 */
-	public double columnMean(int col) {
+	public double columnMean(int column) {
 		double sum = 0.0;
 
 		for (int i = 0; i < numRows; i++)
-			sum += data[i][col];
+			sum += data[i][column];
 
 		return sum / numRows;
 	}
@@ -155,7 +186,7 @@ public class DenseMatrix {
 		double result = 0;
 
 		for (int i = 0; i < numRows; i++)
-			for (int j = 0; j < numCols; j++)
+			for (int j = 0; j < numColumns; j++)
 				result += data[i][j] * data[i][j];
 
 		return Math.sqrt(result);
@@ -175,12 +206,10 @@ public class DenseMatrix {
 	 * @return inner product of two row vectors
 	 */
 	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
-
-		assert m.numCols == n.numCols;
+		assert m.numColumns == n.numColumns;
 
 		double result = 0;
-
-		for (int j = 0, k = m.numCols; j < k; j++)
+		for (int j = 0, k = m.numColumns; j < k; j++)
 			result += m.get(mrow, j) * n.get(nrow, j);
 
 		return result;
@@ -200,7 +229,6 @@ public class DenseMatrix {
 	 * @return inner product of two column vectors
 	 */
 	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n, int ncol) {
-
 		assert m.numRows == n.numRows;
 
 		double result = 0;
@@ -225,10 +253,10 @@ public class DenseMatrix {
 	 *         matrix
 	 */
 	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
-		assert m.numCols == n.numRows;
+		assert m.numColumns == n.numRows;
 
 		double result = 0;
-		for (int j = 0; j < m.numCols; j++)
+		for (int j = 0; j < m.numColumns; j++)
 			result += m.get(mrow, j) * n.get(j, ncol);
 
 		return result;
@@ -242,15 +270,14 @@ public class DenseMatrix {
 	 * @return a dense matrix with results of matrix multiplication
 	 */
 	public DenseMatrix mult(DenseMatrix mat) {
-		assert this.numCols == mat.numRows;
+		assert this.numColumns == mat.numRows;
 
-		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
-
+		DenseMatrix result = new DenseMatrix(this.numRows, mat.numColumns);
 		for (int i = 0; i < result.numRows; i++) {
-			for (int j = 0; j < result.numCols; j++) {
+			for (int j = 0; j < result.numColumns; j++) {
 
 				double product = 0;
-				for (int k = 0; k < this.numCols; k++)
+				for (int k = 0; k < this.numColumns; k++)
 					product += data[i][k] * mat.data[k][j];
 
 				result.set(i, j, product);
@@ -268,12 +295,12 @@ public class DenseMatrix {
 	 * @return a dense matrix with results of matrix multiplication
 	 */
 	public DenseMatrix mult(SparseMatrix mat) {
-		assert this.numCols == mat.numRows;
+		assert this.numColumns == mat.numRows;
 
 		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
 
 		for (int i = 0; i < result.numRows; i++) {
-			for (int j = 0; j < result.numCols; j++) {
+			for (int j = 0; j < result.numColumns; j++) {
 
 				double product = 0;
 				SparseVector col = mat.column(j);
@@ -287,8 +314,13 @@ public class DenseMatrix {
 		return result;
 	}
 
+	/**
+	 * Do {@code matrix x vector} between current matrix and a given vector
+	 * 
+	 * @return a dense vector with the results of {@code matrix x vector}
+	 */
 	public DenseVector mult(DenseVector vec) {
-		assert this.numCols == vec.size;
+		assert this.numColumns == vec.size;
 
 		DenseVector result = new DenseVector(this.numRows);
 		for (int i = 0; i < this.numRows; i++)
@@ -309,11 +341,11 @@ public class DenseMatrix {
 	public static DenseMatrix mult(SparseMatrix sm, DenseMatrix dm) {
 		assert sm.numCols == dm.numRows;
 
-		DenseMatrix result = new DenseMatrix(sm.numRows, dm.numCols);
+		DenseMatrix result = new DenseMatrix(sm.numRows, dm.numColumns);
 
 		for (int i = 0; i < result.numRows; i++) {
 			SparseVector row = sm.row(i);
-			for (int j = 0; j < result.numCols; j++) {
+			for (int j = 0; j < result.numColumns; j++) {
 
 				double product = 0;
 				for (int k : row.getIndex())
@@ -327,35 +359,52 @@ public class DenseMatrix {
 
 	}
 
-	public double get(int row, int col) {
-		return data[row][col];
+	/**
+	 * Get the value at entry [row, column]
+	 */
+	public double get(int row, int column) {
+		return data[row][column];
 	}
 
-	public void set(int row, int col, double val) {
-		data[row][col] = val;
+	/**
+	 * Set a value to entry [row, column]
+	 */
+	public void set(int row, int column, double val) {
+		data[row][column] = val;
 	}
 
-	public void add(int row, int col, double val) {
-		data[row][col] += val;
+	/**
+	 * Add a value to entry [row, column]
+	 */
+	public void add(int row, int column, double val) {
+		data[row][column] += val;
 	}
 
+	/**
+	 * @return a new matrix by scaling the current matrix
+	 */
 	public DenseMatrix scale(double val) {
-		DenseMatrix mat = new DenseMatrix(numRows, numCols);
+		DenseMatrix mat = new DenseMatrix(numRows, numColumns);
 		for (int i = 0; i < numRows; i++)
-			for (int j = 0; j < numCols; j++)
+			for (int j = 0; j < numColumns; j++)
 				mat.data[i][j] = this.data[i][j] * val;
 
 		return mat;
 	}
 
+	/**
+	 * Do {@code A + B} matrix operation
+	 * 
+	 * @return a matrix with results of {@code C = A + B}
+	 */
 	public DenseMatrix add(DenseMatrix mat) {
 		assert numRows == mat.numRows;
-		assert numCols == mat.numCols;
+		assert numColumns == mat.numColumns;
 
-		DenseMatrix result = new DenseMatrix(numRows, numCols);
+		DenseMatrix result = new DenseMatrix(numRows, numColumns);
 
 		for (int i = 0; i < numRows; i++)
-			for (int j = 0; j < numCols; j++)
+			for (int j = 0; j < numColumns; j++)
 				result.data[i][j] = data[i][j] + mat.data[i][j];
 
 		return result;
@@ -365,7 +414,7 @@ public class DenseMatrix {
 	 * @return the Cholesky decomposition of the current matrix
 	 */
 	public DenseMatrix cholesky() {
-		if (this.numRows != this.numCols)
+		if (this.numRows != this.numColumns)
 			throw new RuntimeException("Matrix is not square");
 
 		int n = numRows;
@@ -387,13 +436,15 @@ public class DenseMatrix {
 		return L.transpose();
 	}
 
-	// generate a new transposed matrix
+	/**
+	 * @return a transposed matrix of current matrix
+	 */
 	public DenseMatrix transpose() {
-		DenseMatrix mat = new DenseMatrix(numCols, numRows);
+		DenseMatrix mat = new DenseMatrix(numColumns, numRows);
 
 		for (int i = 0; i < mat.numRows; i++)
-			for (int j = 0; j < mat.numCols; j++)
-				mat.set(i, j, get(j, i));
+			for (int j = 0; j < mat.numColumns; j++)
+				mat.set(i, j, this.data[j][i]);
 
 		return mat;
 	}
@@ -402,15 +453,17 @@ public class DenseMatrix {
 	 * @return a covariance matrix of the current matrix
 	 */
 	public DenseMatrix cov() {
-		DenseMatrix mat = new DenseMatrix(numCols, numCols);
+		DenseMatrix mat = new DenseMatrix(numColumns, numColumns);
 
-		for (int i = 0; i < numCols; i++) {
-			for (int j = i; j < numCols; j++) {
-				DenseVector xi = this.column(i);
+		for (int i = 0; i < numColumns; i++) {
+			DenseVector xi = this.column(i);
+			xi = xi.sub(xi.mean());
+
+			mat.set(i, i, xi.inner(xi) / (xi.size - 1));
+
+			for (int j = i + 1; j < numColumns; j++) {
 				DenseVector yi = this.column(j);
-
-				double val = xi.sub(xi.mean()).inner(yi.sub(yi.mean()));
-				val /= xi.size - 1;
+				double val = xi.inner(yi.sub(yi.mean())) / (xi.size - 1);
 
 				mat.set(i, j, val);
 				mat.set(j, i, val);
@@ -424,9 +477,10 @@ public class DenseMatrix {
 	 * Compute the inverse of a matrix by LU decomposition
 	 * 
 	 * @return the inverse matrix of current matrix
+	 * @deprecated use {@code inv} instead which is slightly faster
 	 */
 	public DenseMatrix inverse() {
-		if (numRows != numCols)
+		if (numRows != numColumns)
 			throw new RuntimeException("Only square matrix can do inversion");
 
 		int n = numRows;
@@ -519,12 +573,17 @@ public class DenseMatrix {
 		return mat;
 	}
 
+	/**
+	 * NOTE: this implementation (adopted from PREA package) is slightly faster
+	 * than {@code inverse}, especailly when {@code numRows} is large.
+	 * 
+	 * @return the inverse matrix of current matrix
+	 */
 	public DenseMatrix inv() {
-		if (this.numRows != this.numCols)
+		if (this.numRows != this.numColumns)
 			throw new RuntimeException("Dimensions disagree");
 
 		int n = this.numRows;
-
 		DenseMatrix mat = DenseMatrix.eye(n);
 
 		if (n == 1) {
@@ -533,7 +592,6 @@ public class DenseMatrix {
 		}
 
 		DenseMatrix b = new DenseMatrix(this);
-
 		for (int i = 0; i < n; i++) {
 			// find pivot:
 			double mag = 0;
@@ -618,8 +676,6 @@ public class DenseMatrix {
 
 		DenseMatrix mat = new DenseMatrix(data);
 		Logs.debug(mat);
-		data[1][2] = 100000;
-		Logs.debug(mat);
 
 		Logs.debug(mat.cov());
 
@@ -629,6 +685,7 @@ public class DenseMatrix {
 
 		// expected invert results: {{-5, 0, -2}, {-4, 1, -1}, {1.5, 0, 0.5}}
 		Logs.debug(mat);
+
 		Logs.debug(mat.inv());
 		Logs.debug(mat.inverse());
 	}
