@@ -75,42 +75,51 @@ public class DenseVector {
 	}
 
 	public DenseVector add(double val) {
-		for (int i = 0; i < size; i++)
-			data[i] += val;
+		DenseVector result = new DenseVector(size);
 
-		return this;
+		for (int i = 0; i < size; i++)
+			result.data[i] = this.data[i] + val;
+
+		return result;
 	}
 
 	public DenseVector sub(double val) {
-		for (int i = 0; i < size; i++)
-			data[i] -= val;
 
-		return this;
+		DenseVector result = new DenseVector(size);
+
+		for (int i = 0; i < size; i++)
+			result.data[i] = this.data[i] - val;
+
+		return result;
 	}
 
 	public DenseVector scale(double val) {
-		for (int i = 0; i < size; i++)
-			data[i] *= val;
 
-		return this;
+		DenseVector result = new DenseVector(size);
+		for (int i = 0; i < size; i++)
+			result.data[i] = this.data[i] * val;
+
+		return result;
 	}
 
 	public DenseVector add(DenseVector vec) {
 		assert size == vec.size;
 
-		for (int i = 0; i < vec.size; i++)
-			data[i] += vec.data[i];
+		DenseVector result = new DenseVector(size);
+		for (int i = 0; i < result.size; i++)
+			result.data[i] = this.data[i] + vec.data[i];
 
-		return this;
+		return result;
 	}
 
 	public DenseVector sub(DenseVector vec) {
 		assert size == vec.size;
 
+		DenseVector result = new DenseVector(size);
 		for (int i = 0; i < vec.size; i++)
-			data[i] -= vec.data[i];
+			result.data[i] = this.data[i] - vec.data[i];
 
-		return this;
+		return result;
 	}
 
 	public double inner(DenseVector vec) {

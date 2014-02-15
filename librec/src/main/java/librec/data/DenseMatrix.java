@@ -133,6 +133,22 @@ public class DenseMatrix {
 	}
 
 	/**
+	 * Compute mean of a column of the current matrix
+	 * 
+	 * @param col
+	 *            column id
+	 * @return mean of a column of the current matrix
+	 */
+	public double columnMean(int col) {
+		double sum = 0.0;
+
+		for (int i = 0; i < numRows; i++)
+			sum += data[i][col];
+
+		return sum / numRows;
+	}
+
+	/**
 	 * @return the matrix norm-2
 	 */
 	public double norm() {
@@ -140,7 +156,7 @@ public class DenseMatrix {
 
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numCols; j++)
-				result += Math.pow(data[i][j], 2);
+				result += data[i][j] * data[i][j];
 
 		return Math.sqrt(result);
 	}
@@ -158,8 +174,7 @@ public class DenseMatrix {
 	 *            row of the second matrix
 	 * @return inner product of two row vectors
 	 */
-	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n,
-			int nrow) {
+	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
 
 		assert m.numCols == n.numCols;
 
@@ -184,8 +199,7 @@ public class DenseMatrix {
 	 *            column of the second matrix
 	 * @return inner product of two column vectors
 	 */
-	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n,
-			int ncol) {
+	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n, int ncol) {
 
 		assert m.numRows == n.numRows;
 
@@ -210,8 +224,7 @@ public class DenseMatrix {
 	 * @return dot product of row of the first matrix and column of the second
 	 *         matrix
 	 */
-	public static double product(DenseMatrix m, int mrow, DenseMatrix n,
-			int ncol) {
+	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
 		assert m.numCols == n.numRows;
 
 		double result = 0;
@@ -327,23 +340,25 @@ public class DenseMatrix {
 	}
 
 	public DenseMatrix scale(double val) {
+		DenseMatrix mat = new DenseMatrix(numRows, numCols);
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numCols; j++)
-				data[i][j] *= val;
+				mat.data[i][j] = this.data[i][j] * val;
 
-		return this;
+		return mat;
 	}
 
 	public DenseMatrix add(DenseMatrix mat) {
-
 		assert numRows == mat.numRows;
 		assert numCols == mat.numCols;
 
+		DenseMatrix result = new DenseMatrix(numRows, numCols);
+
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numCols; j++)
-				data[i][j] += mat.get(i, j);
+				result.data[i][j] = data[i][j] + mat.data[i][j];
 
-		return this;
+		return result;
 	}
 
 	/**
@@ -352,8 +367,6 @@ public class DenseMatrix {
 	public DenseMatrix cholesky() {
 		if (this.numRows != this.numCols)
 			throw new RuntimeException("Matrix is not square");
-
-		DenseMatrix A = this;
 
 		int n = numRows;
 		DenseMatrix L = new DenseMatrix(n, n);
@@ -364,15 +377,11 @@ public class DenseMatrix {
 				for (int k = 0; k < j; k++)
 					sum += L.get(i, k) * L.get(j, k);
 
-				if (i == j)
-					L.set(i, i, Math.sqrt(A.get(i, i) - sum));
-				else
-					L.set(i, j, 1.0 / L.get(j, j) * (A.get(i, j) - sum));
-
+				double val = i == j ? Math.sqrt(data[i][i] - sum) : (data[i][j] - sum) / L.get(j, j);
+				L.set(i, j, val);
 			}
 			if (Double.isNaN(L.get(i, i)))
 				return null;
-
 		}
 
 		return L.transpose();
@@ -416,9 +425,9 @@ public class DenseMatrix {
 	 * 
 	 * @return the inverse matrix of current matrix
 	 */
-	public DenseMatrix inverse() throws Exception {
+	public DenseMatrix inverse() {
 		if (numRows != numCols)
-			throw new Exception("Only square matrix can do inversion");
+			throw new RuntimeException("Only square matrix can do inversion");
 
 		int n = numRows;
 		DenseMatrix mat = new DenseMatrix(this);
@@ -456,7 +465,7 @@ public class DenseMatrix {
 				}
 			}
 			if (Math.abs(pivot) < 1.0E-10)
-				throw new Exception("Matrix is singular !");
+				throw new RuntimeException("Matrix is singular !");
 
 			hold = row[k];
 			row[k] = row[I_pivot];
@@ -469,8 +478,7 @@ public class DenseMatrix {
 			mat.set(row[k], col[k], 1.0 / pivot);
 			for (int j = 0; j < n; j++) {
 				if (j != k) {
-					mat.set(row[k], col[j],
-							mat.get(row[k], col[j]) * mat.get(row[k], col[k]));
+					mat.set(row[k], col[j], mat.get(row[k], col[j]) * mat.get(row[k], col[k]));
 				}
 			}
 			// inner reduction loop
@@ -479,14 +487,11 @@ public class DenseMatrix {
 					for (int j = 0; j < n; j++) {
 						if (k != j) {
 
-							double val = mat.get(row[i], col[j])
-									- mat.get(row[i], col[k])
-									* mat.get(row[k], col[j]);
+							double val = mat.get(row[i], col[j]) - mat.get(row[i], col[k]) * mat.get(row[k], col[j]);
 							mat.set(row[i], col[j], val);
 						}
 					}
-					mat.set(row[i], col[k],
-							-mat.get(row[i], col[k]) * mat.get(row[k], col[k]));
+					mat.set(row[i], col[k], -mat.get(row[i], col[k]) * mat.get(row[k], col[k]));
 				}
 			}
 		}
@@ -606,8 +611,7 @@ public class DenseMatrix {
 	}
 
 	public static void main(String[] args) throws Exception {
-		double[][] data = { { 4, 2, 0.6 }, { 4.2, 2.1, .59 },
-				{ 3.9, 2.0, .58 }, { 4.3, 2.1, .62 }, { 4.1, 2.2, .63 } };
+		double[][] data = { { 4, 2, 0.6 }, { 4.2, 2.1, .59 }, { 3.9, 2.0, .58 }, { 4.3, 2.1, .62 }, { 4.1, 2.2, .63 } };
 
 		// expected cov results: {{0.025, 0.0075, 0.00175}, {0.0075, 0.0070,
 		// 0.00135}, {0.00175, 0.00135, 0.00043}}

@@ -46,9 +46,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	/**
 	 * Construct a sparse matrix with both CRS and CCS structures
 	 */
-	public SparseMatrix(int rows, int cols,
-			Table<Integer, Integer, Double> dataTable,
-			Multimap<Integer, Integer> colMap) {
+	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
 		numRows = rows;
 		numCols = cols;
 
@@ -58,8 +56,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	/**
 	 * Construct a sparse matrix with only CRS structures
 	 */
-	public SparseMatrix(int rows, int cols,
-			Table<Integer, Integer, Double> dataTable) {
+	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable) {
 		this(rows, cols, dataTable, null);
 	}
 
@@ -133,7 +130,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 			tr.copyCRS(this.rowData, this.rowPtr, this.colInd);
 			tr.copyCCS(this.colData, this.colPtr, this.rowInd);
-			
+
 			return tr;
 		} else {
 			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
@@ -141,26 +138,6 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 				dataTable.put(me.column(), me.row(), me.get());
 			return new SparseMatrix(numCols, numRows, dataTable);
 		}
-	}
-
-	/**
-	 * make a sparse identity matrix
-	 */
-	public static SparseMatrix eye(int dim) {
-		SparseMatrix mat = new SparseMatrix(dim, dim);
-		mat.rowData = new double[dim];
-		Arrays.fill(mat.rowData, 1.0);
-
-		mat.rowPtr = new int[dim + 1];
-		mat.colInd = new int[dim];
-		for (int i = 0; i < dim; i++) {
-			mat.rowPtr[i] = i;
-			mat.colInd[i] = i;
-		}
-
-		mat.rowPtr[dim] = dim;
-
-		return mat;
 	}
 
 	public int[] getRowPointers() {
@@ -184,8 +161,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return size;
 	}
 
-	private void construct(Table<Integer, Integer, Double> dataTable,
-			Multimap<Integer, Integer> colMap) {
+	private void construct(Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
 		int nnz = dataTable.size();
 
 		// CRS
@@ -201,8 +177,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			for (int col : cols) {
 				colInd[j++] = col;
 				if (col < 0 || col >= numCols)
-					throw new IllegalArgumentException("colInd[" + j + "]="
-							+ col + ", which is not a valid column index");
+					throw new IllegalArgumentException("colInd[" + j + "]=" + col
+							+ ", which is not a valid column index");
 			}
 
 			Arrays.sort(colInd, rowPtr[i - 1], rowPtr[i]);
@@ -224,8 +200,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 				for (int row : rows) {
 					rowInd[j++] = row;
 					if (row < 0 || row >= numRows)
-						throw new IllegalArgumentException("rowInd[" + j + "]="
-								+ row + ", which is not a valid row index");
+						throw new IllegalArgumentException("rowInd[" + j + "]=" + row
+								+ ", which is not a valid row index");
 				}
 
 				Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
@@ -276,8 +252,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 	public double get(int row, int col) {
 
-		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1],
-				col);
+		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], col);
 
 		if (index >= 0)
 			return rowData[index];
@@ -417,13 +392,11 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows,
-				numCols, size() }));
+		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows, numCols, size() }));
 
 		for (MatrixEntry me : this)
 			if (me.get() != 0)
-				sb.append(String.format("%d\t%d\t%f\n", new Object[] {
-						me.row() + 1, me.column() + 1, me.get() }));
+				sb.append(String.format("%d\t%d\t%f\n", new Object[] { me.row() + 1, me.column() + 1, me.get() }));
 
 		return sb.toString();
 	}
@@ -437,8 +410,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		if (i >= 0 && colInd[i] == col)
 			return i;
 		else
-			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", "
-					+ (col + 1) + ") is not in the matrix structure");
+			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", " + (col + 1)
+					+ ") is not in the matrix structure");
 	}
 
 	/**
@@ -450,8 +423,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		if (i >= 0 && rowInd[i] == row)
 			return i;
 		else
-			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", "
-					+ (col + 1) + ") is not in the matrix structure");
+			throw new IndexOutOfBoundsException("Entry (" + (row + 1) + ", " + (col + 1)
+					+ ") is not in the matrix structure");
 	}
 
 	public Iterator<MatrixEntry> iterator() {
@@ -610,6 +583,5 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		Logs.debug(mat.column(1));
 		Logs.debug(mat2.column(1));
 
-		Logs.debug(SparseMatrix.eye(5));
 	}
 }

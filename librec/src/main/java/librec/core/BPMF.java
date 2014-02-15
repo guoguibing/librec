@@ -55,201 +55,185 @@ public class BPMF extends IterativeRecommender {
 		Q.init(0, 1);
 
 		for (int f = 0; f < numFactors; f++) {
-			mu_u.set(f, P.column(f).mean());
-			mu_m.set(f, Q.column(f).mean());
+			mu_u.set(f, P.columnMean(f));
+			mu_m.set(f, Q.columnMean(f));
 		}
 
-		try {
-			DenseMatrix alpha_u = P.cov().inv();
-			DenseMatrix alpha_m = Q.cov().inv();
+		DenseMatrix alpha_u = P.cov().inv();
+		DenseMatrix alpha_m = Q.cov().inv();
 
-			// Iteration:
-			DenseVector x_bar = new DenseVector(numFactors);
-			DenseVector normalRdn = new DenseVector(numFactors);
+		// Iteration:
+		DenseVector x_bar = new DenseVector(numFactors);
+		DenseVector normalRdn = new DenseVector(numFactors);
 
-			DenseMatrix S_bar, WI_post, lam;
-			DenseVector mu_temp;
-			double df_upost, df_mpost;
+		DenseMatrix S_bar, WI_post, lam;
+		DenseVector mu_temp;
+		double df_upost, df_mpost;
 
-			for (int iter = 1; iter < maxIters; iter++) {
-				// Sample from user hyper parameters:
-				int M = numUsers;
+		for (int iter = 1; iter <= maxIters; iter++) {
+			// Sample from user hyper parameters:
+			int M = numUsers;
 
-				for (int f = 0; f < numFactors; f++)
-					x_bar.set(f, P.column(f).mean());
+			for (int f = 0; f < numFactors; f++)
+				x_bar.set(f, P.columnMean(f));
 
-				S_bar = P.cov();
+			S_bar = P.cov();
 
-				DenseVector mu0_u_x_bar = mu0_u.sub(x_bar);
-				DenseMatrix e1e2 = mu0_u_x_bar.outer(mu0_u_x_bar).scale(
-						M * b0_u / (b0_u + M + 0.0));
-				WI_post = WI_u.inv().add(S_bar.scale(M)).add(e1e2);
-				WI_post = WI_post.inv();
-				WI_post = WI_post.add(WI_post.transpose()).scale(0.5);
+			DenseVector mu0_u_x_bar = mu0_u.sub(x_bar);
+			DenseMatrix e1e2 = mu0_u_x_bar.outer(mu0_u_x_bar).scale(M * b0_u / (b0_u + M + 0.0));
+			WI_post = WI_u.inv().add(S_bar.scale(M)).add(e1e2);
+			WI_post = WI_post.inv();
+			WI_post = WI_post.add(WI_post.transpose()).scale(0.5);
 
-				df_upost = df_u + M;
-				DenseMatrix wishrnd_u = wishart(WI_post, df_upost);
-				if (wishrnd_u != null)
-					alpha_u = wishrnd_u;
-				mu_temp = mu0_u.scale(b0_u).add(x_bar.scale(M))
-						.scale(1 / (b0_u + M + 0.0));
-				lam = alpha_u.scale(b0_u + M).inv().cholesky();
+			df_upost = df_u + M;
+			DenseMatrix wishrnd_u = wishart(WI_post, df_upost);
+			if (wishrnd_u != null)
+				alpha_u = wishrnd_u;
+			mu_temp = mu0_u.scale(b0_u).add(x_bar.scale(M)).scale(1 / (b0_u + M + 0.0));
+			lam = alpha_u.scale(b0_u + M).inv().cholesky();
 
-				if (lam != null) {
-					lam = lam.transpose();
-
-					normalRdn = new DenseVector(numFactors);
-					for (int f = 0; f < numFactors; f++)
-						normalRdn.set(f, Randoms.gaussian(0, 1));
-
-					mu_u = lam.mult(normalRdn).add(mu_temp);
-				}
-
-				// Sample from item hyper parameters:
-				int N = numItems;
+			if (lam != null) {
+				lam = lam.transpose();
 
 				for (int f = 0; f < numFactors; f++)
-					x_bar.set(f, Q.column(f).mean());
-				S_bar = Q.cov();
+					normalRdn.set(f, Randoms.gaussian(0, 1));
 
-				DenseVector mu0_m_x_bar = mu0_m.sub(x_bar);
-				DenseMatrix e3e4 = mu0_m_x_bar.outer(mu0_m_x_bar).scale(
-						N * b0_m / (b0_m + N + 0.0));
-				WI_post = WI_m.inv().add(S_bar.scale(N)).add(e3e4);
-				WI_post = WI_post.inv();
-				WI_post = WI_post.add(WI_post.transpose()).scale(0.5);
-
-				df_mpost = df_m + N;
-				DenseMatrix wishrnd_m = wishart(WI_post, df_mpost);
-				if (wishrnd_m != null)
-					alpha_m = wishrnd_m;
-				mu_temp = mu0_m.scale(b0_m).add(x_bar.scale(N))
-						.scale(1 / (b0_m + N + 0.0));
-				lam = alpha_m.scale(b0_m + N).inv().cholesky();
-
-				if (lam != null) {
-					lam = lam.transpose();
-
-					normalRdn = new DenseVector(numFactors);
-					for (int f = 0; f < numFactors; f++)
-						normalRdn.set(f, Randoms.gaussian(0, 1));
-
-					mu_m = lam.mult(normalRdn).add(mu_temp);
-				}
-
-				// Gibbs updates over user and item feature vectors given hyper
-				// parameters:
-				for (int gibbs = 0; gibbs < 2; gibbs++) {
-					// Infer posterior distribution over all user feature
-					// vectors
-					for (int uu = 0; uu < numUsers; uu++) {
-						// list of items rated by user uu:
-						SparseVector rv = trainMatrix.row(uu);
-						int cnt = rv.getCount();
-
-						if (cnt == 0)
-							continue;
-
-						// features of items rated by user uu:
-						DenseMatrix MM = new DenseMatrix(cnt, numFactors);
-						DenseVector rr = new DenseVector(cnt);
-						int idx = 0;
-						for (int i : rv.getIndex()) {
-							rr.set(idx, rv.get(i) - globalMean);
-							for (int f = 0; f < numFactors; f++)
-								MM.set(idx, f, Q.get(i, f));
-
-							idx++;
-						}
-
-						DenseMatrix covar = alpha_u.add(
-								(MM.transpose().mult(MM)).scale(beta)).inv();
-						DenseVector a = MM.transpose().mult(rr).scale(beta);
-						DenseVector b = alpha_u.mult(mu_u);
-						DenseVector mean_u = covar.mult(a.add(b));
-						lam = covar.cholesky();
-
-						if (lam != null) {
-							lam = lam.transpose();
-							for (int f = 0; f < numFactors; f++)
-								normalRdn.set(f, Randoms.gaussian(0, 1));
-
-							DenseVector w1_P1_uu = lam.mult(normalRdn).add(
-									mean_u);
-
-							for (int f = 0; f < numFactors; f++)
-								P.set(uu, f, w1_P1_uu.get(f));
-						}
-					}
-
-					// Infer posterior distribution over all movie feature
-					// vectors
-					for (int ii = 0; ii < numItems; ii++) {
-						// list of users who rated item ii:
-						SparseVector iv = trainMatrix.column(ii);
-						int cnt = iv.getCount();
-						if (cnt == 0)
-							continue;
-
-						// features of users who rated item ii:
-						DenseMatrix MM = new DenseMatrix(cnt, numFactors);
-						DenseVector rr = new DenseVector(cnt);
-						int idx = 0;
-						for (int u : iv.getIndex()) {
-							rr.set(idx, iv.get(u) - globalMean);
-							for (int f = 0; f < numFactors; f++)
-								MM.set(idx, f, P.get(u, f));
-
-							idx++;
-						}
-
-						DenseMatrix covar = alpha_m.add(
-								(MM.transpose().mult(MM)).scale(beta)).inv();
-						DenseVector a = MM.transpose().mult(rr).scale(beta);
-						DenseVector b = alpha_m.mult(mu_m);
-						DenseVector mean_m = covar.mult(a.add(b));
-						lam = covar.cholesky();
-
-						if (lam != null) {
-							lam = lam.transpose();
-							for (int f = 0; f < numFactors; f++)
-								normalRdn.set(f, Randoms.gaussian(0, 1));
-
-							DenseVector w1_M1_ii = lam.mult(normalRdn).add(
-									mean_m);
-
-							for (int f = 0; f < numFactors; f++)
-								Q.set(ii, f, w1_M1_ii.get(f));
-						}
-					}
-				}
-
-				errs = 0;
-				loss = 0;
-				for (MatrixEntry me : trainMatrix) {
-					int u = me.row();
-					int j = me.column();
-					double ruj = me.get();
-					if (ruj > 0) {
-						double pred = predict(u, j);
-						double euj = ruj - pred;
-
-						errs += euj * euj;
-						loss += euj * euj;
-					}
-
-				}
-				errs *= 0.5;
-				loss *= 0.5;
-
-				if (isConverged(iter))
-					break;
+				mu_u = lam.mult(normalRdn).add(mu_temp);
 			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			// Sample from item hyper parameters:
+			int N = numItems;
 
+			for (int f = 0; f < numFactors; f++)
+				x_bar.set(f, Q.columnMean(f));
+			S_bar = Q.cov();
+
+			DenseVector mu0_m_x_bar = mu0_m.sub(x_bar);
+			DenseMatrix e3e4 = mu0_m_x_bar.outer(mu0_m_x_bar).scale(N * b0_m / (b0_m + N + 0.0));
+			WI_post = WI_m.inv().add(S_bar.scale(N)).add(e3e4);
+			WI_post = WI_post.inv();
+			WI_post = WI_post.add(WI_post.transpose()).scale(0.5);
+
+			df_mpost = df_m + N;
+			DenseMatrix wishrnd_m = wishart(WI_post, df_mpost);
+			if (wishrnd_m != null)
+				alpha_m = wishrnd_m;
+			mu_temp = mu0_m.scale(b0_m).add(x_bar.scale(N)).scale(1 / (b0_m + N + 0.0));
+			lam = alpha_m.scale(b0_m + N).inv().cholesky();
+
+			if (lam != null) {
+				lam = lam.transpose();
+
+				for (int f = 0; f < numFactors; f++)
+					normalRdn.set(f, Randoms.gaussian(0, 1));
+
+				mu_m = lam.mult(normalRdn).add(mu_temp);
+			}
+
+			// Gibbs updates over user and item feature vectors given hyper
+			// parameters:
+			for (int gibbs = 0; gibbs < 2; gibbs++) {
+				// Infer posterior distribution over all user feature
+				// vectors
+				for (int uu = 0; uu < numUsers; uu++) {
+					// list of items rated by user uu:
+					SparseVector rv = trainMatrix.row(uu);
+					int cnt = rv.getCount();
+
+					if (cnt == 0)
+						continue;
+
+					// features of items rated by user uu:
+					DenseMatrix MM = new DenseMatrix(cnt, numFactors);
+					DenseVector rr = new DenseVector(cnt);
+					int idx = 0;
+					for (int i : rv.getIndex()) {
+						rr.set(idx, rv.get(i) - globalMean);
+						for (int f = 0; f < numFactors; f++)
+							MM.set(idx, f, Q.get(i, f));
+
+						idx++;
+					}
+
+					DenseMatrix covar = alpha_u.add((MM.transpose().mult(MM)).scale(beta)).inv();
+					DenseVector a = MM.transpose().mult(rr).scale(beta);
+					DenseVector b = alpha_u.mult(mu_u);
+					DenseVector mean_u = covar.mult(a.add(b));
+					lam = covar.cholesky();
+
+					if (lam != null) {
+						lam = lam.transpose();
+						for (int f = 0; f < numFactors; f++)
+							normalRdn.set(f, Randoms.gaussian(0, 1));
+
+						DenseVector w1_P1_uu = lam.mult(normalRdn).add(mean_u);
+
+						for (int f = 0; f < numFactors; f++)
+							P.set(uu, f, w1_P1_uu.get(f));
+					}
+				}
+
+				// Infer posterior distribution over all movie feature
+				// vectors
+				for (int ii = 0; ii < numItems; ii++) {
+					// list of users who rated item ii:
+					SparseVector iv = trainMatrix.column(ii);
+					int cnt = iv.getCount();
+					if (cnt == 0)
+						continue;
+
+					// features of users who rated item ii:
+					DenseMatrix MM = new DenseMatrix(cnt, numFactors);
+					DenseVector rr = new DenseVector(cnt);
+					int idx = 0;
+					for (int u : iv.getIndex()) {
+						rr.set(idx, iv.get(u) - globalMean);
+						for (int f = 0; f < numFactors; f++)
+							MM.set(idx, f, P.get(u, f));
+
+						idx++;
+					}
+
+					DenseMatrix covar = alpha_m.add((MM.transpose().mult(MM)).scale(beta)).inv();
+					DenseVector a = MM.transpose().mult(rr).scale(beta);
+					DenseVector b = alpha_m.mult(mu_m);
+					DenseVector mean_m = covar.mult(a.add(b));
+					lam = covar.cholesky();
+
+					if (lam != null) {
+						lam = lam.transpose();
+						for (int f = 0; f < numFactors; f++)
+							normalRdn.set(f, Randoms.gaussian(0, 1));
+
+						DenseVector w1_M1_ii = lam.mult(normalRdn).add(mean_m);
+
+						for (int f = 0; f < numFactors; f++)
+							Q.set(ii, f, w1_M1_ii.get(f));
+					}
+				}
+			}
+
+			errs = 0;
+			loss = 0;
+			for (MatrixEntry me : trainMatrix) {
+				int u = me.row();
+				int j = me.column();
+				double ruj = me.get();
+				if (ruj > 0) {
+					double pred = predict(u, j);
+					double euj = ruj - pred;
+
+					errs += euj * euj;
+					loss += euj * euj;
+				}
+
+			}
+			errs *= 0.5;
+			loss *= 0.5;
+
+			if (isConverged(iter))
+				break;
+		}
 	}
 
 	/**
@@ -287,9 +271,9 @@ public class BPMF extends IterativeRecommender {
 			// rest of diagonal:
 			for (int j = 1; j < p; j++) {
 				SparseVector zz = new SparseVector(j);
-				for (int k = 0; k < j; k++) 
+				for (int k = 0; k < j; k++)
 					zz.set(k, z.get(k, j));
-				
+
 				B.set(j, j, y.get(j) + zz.inner(zz));
 			}
 
@@ -310,8 +294,7 @@ public class BPMF extends IterativeRecommender {
 						zki.set(k, z.get(k, i));
 						zkj.set(k, z.get(k, j));
 					}
-					B.set(i, j,
-							z.get(i, j) * Math.sqrt(y.get(i)) + zki.inner(zkj));
+					B.set(i, j, z.get(i, j) * Math.sqrt(y.get(i)) + zki.inner(zkj));
 					B.set(j, i, B.get(i, j)); // mirror
 				}
 			}
