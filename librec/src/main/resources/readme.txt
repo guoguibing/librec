@@ -12,9 +12,7 @@ The format of configuration file used in HappyCoding Projects:
               rating.lins=/home/gguo1/ratings.txt
    
 How to run: 
-    java -jar recsys.jar &
+    java -jar librec.jar &
     
 How to check out source codes: 
-
-    1) hg clone https://guoguibing@code.google.com/p/happy-coding-projects.happy-coding/  (dependent package)
-    2) hg clone https://guoguibing@code.google.com/p/happy-coding-projects.cf-rs/  (main package)
+	https://github.com/guoguibing/librec
