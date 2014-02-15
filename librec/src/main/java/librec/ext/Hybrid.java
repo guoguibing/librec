@@ -35,7 +35,7 @@ public class Hybrid extends Recommender {
 	public Hybrid(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "Hybrid(HeatS+ProbS)";
+		algoName = "Hybrid (HeatS+ProbS)";
 		isRankingPred = true; 
 		lambda = cf.getDouble("Hybrid.lambda"); 
 	}

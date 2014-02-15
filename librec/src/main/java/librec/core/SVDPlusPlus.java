@@ -29,12 +29,12 @@ public class SVDPlusPlus extends BiasedMF {
 		Y = new DenseMatrix(numItems, numFactors);
 		Y.init(initMean, initStd);
 
-		// set factors to zero for items without training examples
-		int numCols = trainMatrix.numColumns();
-		for (int j = 0; j < numItems; j++) {
-			if (j >= numCols || trainMatrix.columnSize(j) == 0)
-				Y.setRow(j, 0.0);
-		}
+//		// set factors to zero for items without training examples
+//		int numCols = trainMatrix.numColumns();
+//		for (int j = 0; j < numItems; j++) {
+//			if (j >= numCols || trainMatrix.columnSize(j) == 0)
+//				Y.setRow(j, 0.0);
+//		}
 	}
 
 	@Override

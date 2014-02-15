@@ -50,7 +50,7 @@ import librec.ongoing.DRM;
  */
 public class LibRec {
 
-	// configuration
+	// configuration 
 	private static Configer cf;
 	private static String algorithm;
 
