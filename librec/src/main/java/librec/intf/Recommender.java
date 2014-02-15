@@ -225,18 +225,18 @@ public abstract class Recommender implements Runnable {
 	protected SymmMatrix buildCorrs(boolean isUser) {
 		Logs.debug("Build {} similarity matrix ...", isUser ? "user" : "item");
 
-		int numCount = isUser ? numUsers : numItems;
-		SymmMatrix corrs = new SymmMatrix(numCount);
+		int count = isUser ? numUsers : numItems;
+		SymmMatrix corrs = new SymmMatrix(count);
 
-		for (int i = 0; i < numCount; i++) {
+		for (int i = 0; i < count; i++) {
 			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.column(i);
 			if (iv.getCount() == 0)
 				continue;
-
-			for (int j = i + 1; j < numCount; j++) {
+			// user/item itself exclusive
+			for (int j = i + 1; j < count; j++) {
 				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.column(j);
 
-				double sim = compCorr(iv, jv);
+				double sim = correlation(iv, jv);
 
 				if (sim != 0.0)
 					corrs.set(i, j, sim);
@@ -255,16 +255,16 @@ public abstract class Recommender implements Runnable {
 	 *            vector j
 	 * @return the correlation between vectors i and j
 	 */
-	protected double compCorr(SparseVector iv, SparseVector jv) {
+	protected double correlation(SparseVector iv, SparseVector jv) {
 
 		// compute similarity
 		List<Double> is = new ArrayList<>();
 		List<Double> js = new ArrayList<>();
 
-		for (Integer item : jv.getIndex()) {
-			if (iv.contains(item)) {
-				is.add(iv.get(item));
-				js.add(jv.get(item));
+		for (Integer idx : jv.getIndex()) {
+			if (iv.contains(idx)) {
+				is.add(iv.get(idx));
+				js.add(jv.get(idx));
 			}
 		}
 
@@ -600,7 +600,7 @@ public abstract class Recommender implements Runnable {
 				double corr = corrs.get(i, j);
 				if (corr == 0) {
 					// if not found
-					corr = compCorr(iv, trainMatrix.column(j));
+					corr = correlation(iv, trainMatrix.column(j));
 					if (corr != 0)
 						corrs.set(i, j, corr);
 				}

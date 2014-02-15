@@ -14,6 +14,12 @@ import librec.data.SparseVector;
 import librec.data.SymmMatrix;
 import librec.intf.Recommender;
 
+/**
+ * User-based Collaborative Filtering
+ * 
+ * @author guoguibing
+ *
+ */
 public class UserKNN extends Recommender {
 
 	// user: nearest neighborhood

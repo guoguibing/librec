@@ -1,5 +1,8 @@
 package librec.data;
 
+import happy.coding.io.Logs;
+import happy.coding.io.Strings;
+
 /**
  * Data Structure, Lower Symmetric Matrix
  * 
@@ -12,10 +15,7 @@ public class SymmMatrix {
 	protected double[][] data;
 
 	/**
-	 * Constructor for Symmetric Matrix
-	 * 
-	 * @param dim
-	 *            dimension size
+	 * Construct a symmetric matrix
 	 */
 	public SymmMatrix(int dim) {
 		this.dim = dim;
@@ -25,6 +25,9 @@ public class SymmMatrix {
 			data[i] = new double[i + 1];
 	}
 
+	/**
+	 * Construct a symmetric matrix by deeply copying data from a given matrix
+	 */
 	public SymmMatrix(SymmMatrix mat) {
 		dim = mat.dim;
 
@@ -36,30 +39,22 @@ public class SymmMatrix {
 		}
 	}
 
+	/**
+	 * Make a deep copy of current matrix
+	 */
 	public SymmMatrix clone() {
 		return new SymmMatrix(this);
 	}
 
 	/**
-	 * get a specific value at (row, col) of a Symmetric (upper) matrix
-	 * 
-	 * @param row
-	 *            row id
-	 * @param col
-	 *            col id
-	 * @return a value at (row, col) if row<col; otherwise at (col, row)
+	 * Get a value at entry (row, col)	
 	 */
 	public double get(int row, int col) {
 		return row >= col ? data[row][col] : data[col][row];
 	}
 
 	/**
-	 * set a specific value at (row, col) of a Symmetric (upper) matrix
-	 * 
-	 * @param row
-	 *            row id
-	 * @param col
-	 *            col id
+	 * set a value to entry (row, col) 
 	 */
 	public void set(int row, int col, double val) {
 		if (row >= col)
@@ -69,12 +64,7 @@ public class SymmMatrix {
 	}
 
 	/**
-	 * add a specific value at (row, col) of a Symmetric (upper) matrix
-	 * 
-	 * @param row
-	 *            row id
-	 * @param col
-	 *            col id
+	 * add a value to entry (row, col)	 
 	 */
 	public void add(int row, int col, double val) {
 		if (row >= col)
@@ -84,11 +74,7 @@ public class SymmMatrix {
 	}
 
 	/**
-	 * find a complete row of items
-	 * 
-	 * @param row
-	 *            row id
-	 * @return a sparse vector
+	 * Retrieve a complete row of similar items	 
 	 */
 	public SparseVector row(int row) {
 		SparseVector nv = new SparseVector(dim);
@@ -99,5 +85,21 @@ public class SymmMatrix {
 		}
 
 		return nv;
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(data);
+	}
+
+	public static void main(String[] args) {
+		SymmMatrix mat = new SymmMatrix(3);
+		mat.set(0, 0, 1);
+		mat.set(0, 1, 2);
+		mat.set(1, 1, 3);
+		mat.set(0, 2, 4);
+		mat.set(1, 2, 5);
+		mat.set(2, 2, 6);
+		Logs.debug(mat);
 	}
 }
