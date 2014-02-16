@@ -40,6 +40,7 @@ import librec.ongoing.BaseNM;
 import librec.ongoing.DMF;
 import librec.ongoing.DNM;
 import librec.ongoing.DRM;
+import librec.ongoing.TrustSVD;
 
 /**
  * Main Class of the LibRec Library
@@ -48,10 +49,11 @@ import librec.ongoing.DRM;
  * 
  */
 public class LibRec {
-	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
+	// version: MAJOR version (significant changes), followed by MINOR version
+	// (small changes, bug fixes)
 	private static String version = "1.0";
 
-	// configuration 
+	// configuration
 	private static Configer cf;
 	private static String algorithm;
 
@@ -107,7 +109,8 @@ public class LibRec {
 		}
 
 		// collect results
-		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"), cf.isOn("is.email.notify"));
+		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"),
+				cf.isOn("is.email.notify"));
 	}
 
 	private static void runAlgorithm() throws Exception {
@@ -154,7 +157,8 @@ public class LibRec {
 		for (Recommender algo : algos) {
 			for (Entry<Measure, Double> en : algo.measures.entrySet()) {
 				Measure m = en.getKey();
-				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
+				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m)
+						: 0.0;
 				avgMeasure.put(m, val + en.getValue() / kFold);
 			}
 		}
@@ -182,10 +186,12 @@ public class LibRec {
 	 */
 	private static void runTestFile(String path) throws Exception {
 
-		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
+		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(),
+				rateDao.getItemIds());
 		SparseMatrix testMatrix = testDao.readData(false);
 
-		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
+		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix,
+				testMatrix }, -1);
 		algo.execute();
 
 		printEvalInfo(algo, algo.measures);
@@ -199,7 +205,8 @@ public class LibRec {
 		String result = Recommender.getEvalInfo(ms, Recommender.isRankingPred);
 		String time = Dates.parse(ms.get(Measure.TrainTime).longValue()) + ","
 				+ Dates.parse(ms.get(Measure.TestTime).longValue());
-		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result, algo.toString(), time);
+		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result,
+				algo.toString(), time);
 
 		Logs.info(evalInfo);
 	}
@@ -207,7 +214,8 @@ public class LibRec {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
+	private static Recommender getRecommender(SparseMatrix[] data, int fold)
+			throws Exception {
 
 		SparseMatrix trainMatrix = data[0], testMatrix = data[1];
 		algorithm = cf.getString("recommender");
@@ -256,6 +264,10 @@ public class LibRec {
 			return new Hybrid(trainMatrix, testMatrix, fold);
 		case "slopeone":
 			return new SlopeOne(trainMatrix, testMatrix, fold);
+
+			/* ongoing */
+		case "trustsvd":
+			return new TrustSVD(trainMatrix, testMatrix, fold);
 		case "aaai-basemf":
 			return new BaseMF(trainMatrix, testMatrix, fold);
 		case "aaai-dmf":
@@ -266,6 +278,7 @@ public class LibRec {
 			return new DNM(trainMatrix, testMatrix, fold);
 		case "aaai-drm":
 			return new DRM(trainMatrix, testMatrix, fold);
+
 		default:
 			throw new Exception("No recommender is specified!");
 		}
@@ -275,14 +288,18 @@ public class LibRec {
 	 * Print out debug information
 	 */
 	private static void debugInfo() {
-		String cv = "kFold: " + cf.getInt("num.kfold")
-				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
-		String cvInfo = cf.isOn("is.cross.validation") ? cv : "ratio: " + (float) cf.getDouble("val.ratio");
+		String cv = "kFold: "
+				+ cf.getInt("num.kfold")
+				+ (cf.isOn("is.parallel.folds") ? " [Parallel]"
+						: " [Singleton]");
+		String cvInfo = cf.isOn("is.cross.validation") ? cv : "ratio: "
+				+ (float) cf.getDouble("val.ratio");
 
 		String testPath = cf.getPath("dataset.testing");
 		boolean isTestingFlie = !testPath.equals("-1");
-		String datasetInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38),
-				isTestingFlie ? "" : cvInfo);
+		String datasetInfo = String.format("Training: %s, %s", Strings.last(
+				cf.getPath("dataset.training"), 38), isTestingFlie ? ""
+				: cvInfo);
 		Logs.info(datasetInfo);
 
 		if (isTestingFlie)
@@ -293,10 +310,12 @@ public class LibRec {
 	 * Print out software information
 	 */
 	public static String readme() {
-		return "\nLibRec " + version + " Copyright (C) 2014 Guibing Guo \n\n"
+		return "\nLibRec "
+				+ version
+				+ " Copyright (C) 2014 Guibing Guo \n\n"
 
-		/* Description */
-		+ "LibRec is free software: you can redistribute it and/or modify \n"
+				/* Description */
+				+ "LibRec is free software: you can redistribute it and/or modify \n"
 				+ "it under the terms of the GNU General Public License as published by \n"
 				+ "the Free Software Foundation, either version 3 of the License, \n"
 				+ "or (at your option) any later version. \n\n"
