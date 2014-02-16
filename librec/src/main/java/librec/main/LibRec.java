@@ -35,12 +35,12 @@ import librec.ext.NMF;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
-import librec.ongoing.BaseMF;
-import librec.ongoing.BaseNM;
-import librec.ongoing.DMF;
-import librec.ongoing.DNM;
-import librec.ongoing.DRM;
-import librec.ongoing.TrustSVD;
+import librec.undefined.BaseMF;
+import librec.undefined.BaseNM;
+import librec.undefined.DMF;
+import librec.undefined.DNM;
+import librec.undefined.DRM;
+import librec.undefined.TrustSVD;
 
 /**
  * Main Class of the LibRec Library
