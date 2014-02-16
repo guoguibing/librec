@@ -5,7 +5,6 @@ import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.system.Dates;
-import happy.coding.system.Debug;
 
 import java.util.HashMap;
 import java.util.List;
@@ -67,9 +66,6 @@ public class LibRec {
 	private static SparseMatrix rateMatrix = null;
 
 	public static void main(String[] args) throws Exception {
-		// config logger
-		Logs.config(FileIO.getResource("log4j.properties"), false);
-
 		// Logs.debug(LibRec.readme());
 
 		// get configuration file
@@ -81,13 +77,6 @@ public class LibRec {
 		// prepare data
 		rateDao = new DataDAO(cf.getPath("dataset.training"));
 		rateMatrix = rateDao.readData();
-
-		if (Debug.OFF) {
-			// rateDao.printSpecs();
-			new DataSplitter(rateMatrix).sample(2000, -1);
-
-			return;
-		}
 
 		// config general recommender
 		Recommender.cf = cf;
