@@ -17,6 +17,10 @@ LibRec
 * **Core**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, CLiMF, BPMF, SocialMF, TrustMF
 * **Extension**: NMF, SlopeOne, Hybrid
 
+### Download
+
+The first version of the LibRec library is available to [download](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip) now. 
+
 ### GPL License
 
 LibRec Copyright (C) 2014 [Guibing Guo](http://trust.sce.ntu.edu.sg/~gguo1/)
