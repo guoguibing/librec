@@ -1,5 +1,8 @@
 package librec.undefined;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -16,7 +19,6 @@ import librec.intf.SocialRecommender;
 public class TrustSVD extends SocialRecommender {
 
 	private DenseMatrix Tr, Te, Y;
-	private DenseVector userRates, itemRates, userTrs, userTes;
 	private String model;
 
 	public TrustSVD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -43,21 +45,6 @@ public class TrustSVD extends SocialRecommender {
 		Tr.init(initMean, initStd);
 		Te.init(initMean, initStd);
 		Y.init(initMean, initStd);
-
-		userRates = new DenseVector(numUsers);
-		userTrs = new DenseVector(numUsers);
-		userTes = new DenseVector(numUsers);
-		
-		for (int u = 0; u < numUsers; u++) {
-			userRates.set(u, trainMatrix.rowSize(u));
-			userTrs.set(u, socialMatrix.rowSize(u));
-			userTes.set(u, socialMatrix.columnSize(u));
-		}
-
-		itemRates = new DenseVector(numItems);
-		for (int i = 0; i < numItems; i++)
-			itemRates.set(i, trainMatrix.columnSize(i));
-
 	}
 
 	private void TrusterSVD() {
@@ -88,21 +75,18 @@ public class TrustSVD extends SocialRecommender {
 				int[] tu = tr.getIndex();
 				double w_tu = Math.sqrt(tu.length);
 
-				int wlr_u = nu.length;
-				int wlr_j = (int) itemRates.get(j);
-
 				// update factors
 				double bu = userBiases.get(u);
-				double sgd = euj - regU * wlr_u * bu;
+				double sgd = euj - regU * bu;
 				userBiases.add(u, lRate * sgd);
 
-				loss += regU * wlr_u * bu * bu;
+				loss += regU * bu * bu;
 
 				double bj = itemBiases.get(j);
-				sgd = euj - regI * wlr_j * bj;
+				sgd = euj - regI * bj;
 				itemBiases.add(j, lRate * sgd);
 
-				loss += regI * wlr_j * bj * bj;
+				loss += regI * bj * bj;
 
 				double[] sum_ys = new double[numFactors];
 				for (int f = 0; f < numFactors; f++) {
@@ -126,32 +110,30 @@ public class TrustSVD extends SocialRecommender {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
 
-					double delta_u = euj * qjf - regU * wlr_u * puf;
-					double delta_j = euj * (puf + sum_ys[f] + sum_ts[f]) - regI * wlr_j * qjf;
+					double delta_u = euj * qjf - regU * puf;
+					double delta_j = euj * (puf + sum_ys[f] + sum_ts[f]) - regI * qjf;
 
 					P.add(u, f, lRate * delta_u);
 					Q.add(j, f, lRate * delta_j);
 
-					loss += regU * wlr_u * puf * puf + regI * wlr_j * qjf * qjf;
+					loss += regU * puf * puf + regI * qjf * qjf;
 
 					for (int i : nu) {
 						double yif = Y.get(i, f);
-						int wlr_i = (int) itemRates.get(i);
 
-						double delta_y = euj * qjf / w_nu - regU * wlr_i * yif;
+						double delta_y = euj * qjf / w_nu - regU * yif;
 						Y.add(i, f, lRate * delta_y);
 
-						loss += regU * wlr_i * yif * yif;
+						loss += regU * yif * yif;
 					}
 
 					for (int v : tu) {
 						double tvf = Tr.get(v, f);
-						int wlr_v = (int) userTes.get(v);
 
-						double delta_t = euj * qjf / w_tu - regS * wlr_v * tvf;
+						double delta_t = euj * qjf / w_tu - regS * tvf;
 						Tr.add(v, f, lRate * delta_t);
 
-						loss += regS * wlr_v * tvf * tvf;
+						loss += regS * tvf * tvf;
 					}
 				}
 
@@ -385,6 +367,118 @@ public class TrustSVD extends SocialRecommender {
 		}// end of training
 	}
 
+	private void TrTeSVD2() {
+		for (int iter = 1; iter <= maxIters; iter++) {
+
+			loss = 0;
+			errs = 0;
+			for (MatrixEntry me : trainMatrix) {
+
+				int u = me.row(); // user
+				int j = me.column(); // item
+
+				double ruj = me.get();
+				if (ruj <= 0.0)
+					continue;
+
+				double pred = predict(u, j);
+				double euj = ruj - pred;
+
+				errs += euj * euj;
+				loss += euj * euj;
+
+				SparseVector ur = trainMatrix.row(u);
+				int[] nu = ur.getIndex();
+				double w_nu = Math.sqrt(nu.length);
+
+				SparseVector tr = socialMatrix.row(u);
+				SparseVector te = socialMatrix.column(u);
+
+				List<Integer> tns = new ArrayList<>();
+				for (int v : tr.getIndex()) {
+					if (!tns.contains(v))
+						tns.add(v);
+				}
+
+				for (int k : te.getIndex()) {
+					if (!tns.contains(k))
+						tns.add(k);
+				}
+
+				double w_tn = Math.sqrt(tns.size());
+
+				// update factors
+				double bu = userBiases.get(u);
+				double sgd = euj - regU * bu;
+				userBiases.add(u, lRate * sgd);
+
+				loss += regU * bu * bu;
+
+				double bj = itemBiases.get(j);
+				sgd = euj - regI * bj;
+				itemBiases.add(j, lRate * sgd);
+
+				loss += regI * bj * bj;
+
+				double[] sum_ys = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					double sum = 0;
+					for (int i : nu)
+						sum += Y.get(i, f);
+
+					sum_ys[f] = w_nu > 0 ? sum / w_nu : sum;
+				}
+
+				double[] sum_tns = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					double sum = 0;
+					for (int v : tns)
+						sum += Tr.get(v, f);
+
+					sum_tns[f] = w_tn > 0 ? sum / w_tn : sum;
+				}
+
+				for (int f = 0; f < numFactors; f++) {
+					double puf = P.get(u, f);
+					double qjf = Q.get(j, f);
+
+					double delta_u = euj * qjf - regU * puf;
+					double delta_j = euj * (puf + sum_ys[f] + sum_tns[f]) - regI * qjf;
+
+					P.add(u, f, lRate * delta_u);
+					Q.add(j, f, lRate * delta_j);
+
+					loss += regU * puf * puf + regI * qjf * qjf;
+
+					for (int i : nu) {
+						double yif = Y.get(i, f);
+						double delta_y = euj * qjf / w_nu - regU * yif;
+						Y.add(i, f, lRate * delta_y);
+
+						loss += regU * yif * yif;
+					}
+
+					for (int v : tns) {
+						double tvf = Tr.get(v, f);
+						double delta_t = euj * qjf / w_tn - regS * tvf;
+						Tr.add(v, f, lRate * delta_t);
+
+						loss += regS * tvf * tvf;
+					}
+
+				}
+
+			}
+
+			errs *= 0.5;
+			loss *= 0.5;
+
+			if (isConverged(iter))
+				break;
+
+		}// end of training
+	}
+
 	@Override
 	protected void buildModel() {
 		switch (model) {
@@ -393,6 +487,9 @@ public class TrustSVD extends SocialRecommender {
 			break;
 		case "Te":
 			TrusteeSVD();
+			break;
+		case "TrTe":
+			TrTeSVD2();
 			break;
 		case "T":
 		default:
@@ -435,17 +532,58 @@ public class TrustSVD extends SocialRecommender {
 		return pred;
 	}
 
+	private double predictTrTe2(int u, int j) {
+
+		double pred = 0.0;
+		SparseVector tr = socialMatrix.row(u);
+		SparseVector te = socialMatrix.column(u);
+
+		List<Integer> tns = new ArrayList<>();
+		for (int v : tr.getIndex())
+			if (!tns.contains(v))
+				tns.add(v);
+
+		for (int k : te.getIndex())
+			if (!tns.contains(k))
+				tns.add(k);
+
+		int count = tns.size();
+
+		if (count > 0) {
+			double sum = 0.0;
+			for (int w : tns)
+				sum += DenseMatrix.rowMult(Tr, w, Q, j);
+
+			pred = sum / Math.sqrt(count);
+		}
+
+		return pred;
+	}
+
 	@Override
 	protected double predict(int u, int j) {
-		double pred = globalMean + userBiases.get(u) + itemBiases.get(j);
-		pred += DenseMatrix.rowMult(P, u, Q, j);
+		double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
+		// Y
+		SparseVector uv = trainMatrix.row(u);
+		if (uv.getCount() > 0) {
+			double sum = 0;
+			for (int k : uv.getIndex())
+				sum += DenseMatrix.rowMult(Y, k, Q, j);
+
+			pred += sum / Math.sqrt(uv.getCount());
+		}
+
+		// T
 		switch (model) {
 		case "Tr":
 			pred += predictTr(u, j);
 			break;
 		case "Te":
 			pred += predictTe(u, j);
+			break;
+		case "TrTe":
+			pred += predictTrTe2(u, j);
 			break;
 		case "T":
 		default:
