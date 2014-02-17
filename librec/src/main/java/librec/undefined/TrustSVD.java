@@ -107,28 +107,32 @@ public class TrustSVD extends SocialRecommender {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
 
-					double delta_u = euj * qjf - regU * puf;
-					double delta_j = euj * (puf + sum_ys[f] + sum_ts[f]) - regI * qjf;
+					int wlr_u = nu.length;
+					int wlr_j = trainMatrix.columnSize(j);
+					double delta_u = euj * qjf - regU * wlr_u * puf;
+					double delta_j = euj * (puf + sum_ys[f] + sum_ts[f]) - regI * wlr_j * qjf;
 
 					P.add(u, f, lRate * delta_u);
 					Q.add(j, f, lRate * delta_j);
 
-					loss += regU * puf * puf + regI * qjf * qjf;
+					loss += regU * wlr_u * puf * puf + regI * wlr_j * qjf * qjf;
 
 					for (int i : nu) {
 						double yif = Y.get(i, f);
-						double delta_y = euj * qjf / w_nu - regU * yif;
+						int wlr_i = trainMatrix.columnSize(i);
+						double delta_y = euj * qjf / w_nu - regU * wlr_i * yif;
 						Y.add(i, f, lRate * delta_y);
 
-						loss += regU * yif * yif;
+						loss += regU * wlr_i * yif * yif;
 					}
 
 					for (int v : tu) {
 						double tvf = Tr.get(v, f);
-						double delta_t = euj * qjf / w_tu - regS * tvf;
+						int wlr_v = socialMatrix.columnSize(v);
+						double delta_t = euj * qjf / w_tu - regS * wlr_v * tvf;
 						Tr.add(v, f, lRate * delta_t);
 
-						loss += regS * tvf * tvf;
+						loss += regS * wlr_v * tvf * tvf;
 					}
 				}
 
