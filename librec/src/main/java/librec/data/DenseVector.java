@@ -66,11 +66,19 @@ public class DenseVector {
 	}
 
 	/**
-	 * initialize a dense vector with Gaussian values
+	 * Initialize a dense vector with Gaussian values
 	 */
 	public void init(double mean, double sigma) {
 		for (int i = 0; i < size; i++)
 			data[i] = Randoms.gaussian(mean, sigma);
+	}
+	
+	/**
+	 * Initialize a dense vector with Uniform values in (0, 1)
+	 */
+	public void init(){
+		for(int i=0; i<size; i++)
+			data[i] = Randoms.uniform();
 	}
 
 	/**
