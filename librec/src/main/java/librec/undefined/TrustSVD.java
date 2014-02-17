@@ -37,7 +37,7 @@ public class TrustSVD extends SocialRecommender {
 
 		Tr = new DenseMatrix(numUsers, numFactors);
 		Te = new DenseMatrix(numUsers, numFactors);
-		Y = new DenseMatrix(numUsers, numFactors);
+		Y = new DenseMatrix(numItems, numFactors);
 
 		Tr.init(initMean, initStd);
 		Te.init(initMean, initStd);
@@ -100,7 +100,7 @@ public class TrustSVD extends SocialRecommender {
 					for (int v : tu)
 						sum += Tr.get(v, f);
 
-					sum_ys[f] = w_tu > 0 ? sum / w_tu : sum;
+					sum_ts[f] = w_tu > 0 ? sum / w_tu : sum;
 				}
 
 				for (int f = 0; f < numFactors; f++) {
@@ -122,12 +122,12 @@ public class TrustSVD extends SocialRecommender {
 
 						loss += regU * yif * yif;
 					}
-					
+
 					for (int v : tu) {
 						double tvf = Tr.get(v, f);
 						double delta_t = euj * qjf / w_tu - regS * tvf;
 						Tr.add(v, f, lRate * delta_t);
-						
+
 						loss += regS * tvf * tvf;
 					}
 				}
@@ -163,9 +163,13 @@ public class TrustSVD extends SocialRecommender {
 				errs += euj * euj;
 				loss += euj * euj;
 
-				SparseVector tr = socialMatrix.column(u);
-				int[] tns = tr.getIndex();
-				double w = Math.sqrt(tns.length);
+				SparseVector ur = trainMatrix.row(u);
+				int[] nu = ur.getIndex();
+				double w_nu = Math.sqrt(nu.length);
+
+				SparseVector te = socialMatrix.column(u);
+				int[] tu = te.getIndex();
+				double w_tu = Math.sqrt(tu.length);
 
 				// update factors
 				double bu = userBiases.get(u);
@@ -182,31 +186,48 @@ public class TrustSVD extends SocialRecommender {
 
 				double[] sum_ys = new double[numFactors];
 				for (int f = 0; f < numFactors; f++) {
-					double sum_f = 0;
-					for (int k : tns)
-						sum_f += Te.get(k, f);
+					double sum = 0;
+					for (int i : nu)
+						sum += Y.get(i, f);
 
-					sum_ys[f] = w > 0 ? sum_f / w : sum_f;
+					sum_ys[f] = w_nu > 0 ? sum / w_nu : sum;
+				}
+
+				double[] sum_ts = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					double sum = 0;
+					for (int v : tu)
+						sum += Te.get(v, f);
+
+					sum_ts[f] = w_tu > 0 ? sum / w_tu : sum;
 				}
 
 				for (int f = 0; f < numFactors; f++) {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
 
-					double sgd_u = euj * qjf - regU * puf;
-					double sgd_j = euj * (puf + sum_ys[f]) - regI * qjf;
+					double delta_u = euj * qjf - regU * puf;
+					double delta_j = euj * (puf + sum_ys[f] + sum_ts[f]) - regI * qjf;
 
-					P.add(u, f, lRate * sgd_u);
-					Q.add(j, f, lRate * sgd_j);
+					P.add(u, f, lRate * delta_u);
+					Q.add(j, f, lRate * delta_j);
 
 					loss += regU * puf * puf + regI * qjf * qjf;
 
-					for (int k : tns) {
-						double ykf = Te.get(k, f);
-						double delta_y = euj * qjf / w - regU * ykf;
-						Te.add(k, f, lRate * delta_y);
+					for (int i : nu) {
+						double yif = Y.get(i, f);
+						double delta_y = euj * qjf / w_nu - regU * yif;
+						Y.add(i, f, lRate * delta_y);
 
-						loss += regU * ykf * ykf;
+						loss += regU * yif * yif;
+					}
+
+					for (int v : tu) {
+						double tvf = Te.get(v, f);
+						double delta_t = euj * qjf / w_tu - regS * tvf;
+						Te.add(v, f, lRate * delta_t);
+
+						loss += regS * tvf * tvf;
 					}
 				}
 
@@ -241,13 +262,17 @@ public class TrustSVD extends SocialRecommender {
 				errs += euj * euj;
 				loss += euj * euj;
 
+				SparseVector ur = trainMatrix.row(u);
+				int[] nu = ur.getIndex();
+				double w_nu = Math.sqrt(nu.length);
+
 				SparseVector tr = socialMatrix.row(u);
-				int[] trns = tr.getIndex();
-				double trw = Math.sqrt(trns.length);
+				int[] tru = tr.getIndex();
+				double w_tru = Math.sqrt(tru.length);
 
 				SparseVector te = socialMatrix.column(u);
-				int[] tens = te.getIndex();
-				double tew = Math.sqrt(tens.length);
+				int[] teu = te.getIndex();
+				double w_teu = Math.sqrt(teu.length);
 
 				// update factors
 				double bu = userBiases.get(u);
@@ -262,48 +287,67 @@ public class TrustSVD extends SocialRecommender {
 
 				loss += regI * bj * bj;
 
+				double[] sum_ys = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					double sum = 0;
+					for (int i : nu)
+						sum += Y.get(i, f);
+
+					sum_ys[f] = w_nu > 0 ? sum / w_nu : sum;
+				}
+
 				double[] sum_trs = new double[numFactors];
+				for (int f = 0; f < numFactors; f++) {
+					double sum = 0;
+					for (int v : tru)
+						sum += Tr.get(v, f);
+
+					sum_trs[f] = w_tru > 0 ? sum / w_tru : sum;
+				}
+
 				double[] sum_tes = new double[numFactors];
 				for (int f = 0; f < numFactors; f++) {
-					double sum_f = 0;
-					for (int k : trns)
-						sum_f += Tr.get(k, f);
+					double sum = 0;
+					for (int k : tru)
+						sum += Te.get(k, f);
 
-					sum_trs[f] = trw > 0 ? sum_f / trw : sum_f;
-
-					sum_f = 0;
-					for (int k : trns)
-						sum_f += Te.get(k, f);
-
-					sum_tes[f] = tew > 0 ? sum_f / tew : sum_f;
+					sum_tes[f] = w_teu > 0 ? sum / w_teu : sum;
 				}
 
 				for (int f = 0; f < numFactors; f++) {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
 
-					double sgd_u = euj * qjf - regU * puf;
-					double sgd_j = euj * (puf + sum_trs[f] + sum_tes[f]) - regI * qjf;
+					double delta_u = euj * qjf - regU * puf;
+					double delta_j = euj * (puf + sum_ys[f] + sum_trs[f] + sum_tes[f]) - regI * qjf;
 
-					P.add(u, f, lRate * sgd_u);
-					Q.add(j, f, lRate * sgd_j);
+					P.add(u, f, lRate * delta_u);
+					Q.add(j, f, lRate * delta_j);
 
 					loss += regU * puf * puf + regI * qjf * qjf;
 
-					for (int k : trns) {
-						double ykf = Tr.get(k, f);
-						double delta_y = euj * qjf / trw - regU * ykf;
-						Tr.add(k, f, lRate * delta_y);
+					for (int i : nu) {
+						double yif = Y.get(i, f);
+						double delta_y = euj * qjf / w_nu - regU * yif;
+						Y.add(i, f, lRate * delta_y);
 
-						loss += regU * ykf * ykf;
+						loss += regU * yif * yif;
 					}
 
-					for (int k : tens) {
-						double ykf = Te.get(k, f);
-						double delta_y = euj * qjf / trw - regU * ykf;
-						Te.add(k, f, lRate * delta_y);
+					for (int v : tru) {
+						double tvf = Tr.get(v, f);
+						double delta_t = euj * qjf / w_tru - regS * tvf;
+						Tr.add(v, f, lRate * delta_t);
 
-						loss += regU * ykf * ykf;
+						loss += regS * tvf * tvf;
+					}
+
+					for (int k : teu) {
+						double tkf = Te.get(k, f);
+						double delta_t = euj * qjf / w_teu - regS * tkf;
+						Te.add(k, f, lRate * delta_t);
+
+						loss += regS * tkf * tkf;
 					}
 				}
 
