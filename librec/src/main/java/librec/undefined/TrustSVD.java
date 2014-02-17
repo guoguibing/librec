@@ -16,6 +16,7 @@ import librec.intf.SocialRecommender;
 public class TrustSVD extends SocialRecommender {
 
 	private DenseMatrix Tr, Te, Y;
+	private DenseVector userRates, itemRates, userTrs, userTes;
 	private String model;
 
 	public TrustSVD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -42,6 +43,21 @@ public class TrustSVD extends SocialRecommender {
 		Tr.init(initMean, initStd);
 		Te.init(initMean, initStd);
 		Y.init(initMean, initStd);
+
+		userRates = new DenseVector(numUsers);
+		userTrs = new DenseVector(numUsers);
+		userTes = new DenseVector(numUsers);
+		
+		for (int u = 0; u < numUsers; u++) {
+			userRates.set(u, trainMatrix.rowSize(u));
+			userTrs.set(u, socialMatrix.rowSize(u));
+			userTes.set(u, socialMatrix.columnSize(u));
+		}
+
+		itemRates = new DenseVector(numItems);
+		for (int i = 0; i < numItems; i++)
+			itemRates.set(i, trainMatrix.columnSize(i));
+
 	}
 
 	private void TrusterSVD() {
@@ -73,7 +89,7 @@ public class TrustSVD extends SocialRecommender {
 				double w_tu = Math.sqrt(tu.length);
 
 				int wlr_u = nu.length;
-				int wlr_j = trainMatrix.columnSize(j);
+				int wlr_j = (int) itemRates.get(j);
 
 				// update factors
 				double bu = userBiases.get(u);
@@ -120,8 +136,8 @@ public class TrustSVD extends SocialRecommender {
 
 					for (int i : nu) {
 						double yif = Y.get(i, f);
-						int wlr_i = trainMatrix.columnSize(i);
-						
+						int wlr_i = (int) itemRates.get(i);
+
 						double delta_y = euj * qjf / w_nu - regU * wlr_i * yif;
 						Y.add(i, f, lRate * delta_y);
 
@@ -130,8 +146,8 @@ public class TrustSVD extends SocialRecommender {
 
 					for (int v : tu) {
 						double tvf = Tr.get(v, f);
-						int wlr_v = socialMatrix.columnSize(v);
-						
+						int wlr_v = (int) userTes.get(v);
+
 						double delta_t = euj * qjf / w_tu - regS * wlr_v * tvf;
 						Tr.add(v, f, lRate * delta_t);
 
