@@ -72,18 +72,21 @@ public class TrustSVD extends SocialRecommender {
 				int[] tu = tr.getIndex();
 				double w_tu = Math.sqrt(tu.length);
 
+				int wlr_u = nu.length;
+				int wlr_j = trainMatrix.columnSize(j);
+
 				// update factors
 				double bu = userBiases.get(u);
-				double sgd = euj - regU * bu;
+				double sgd = euj - regU * wlr_u * bu;
 				userBiases.add(u, lRate * sgd);
 
-				loss += regU * bu * bu;
+				loss += regU * wlr_u * bu * bu;
 
 				double bj = itemBiases.get(j);
-				sgd = euj - regI * bj;
+				sgd = euj - regI * wlr_j * bj;
 				itemBiases.add(j, lRate * sgd);
 
-				loss += regI * bj * bj;
+				loss += regI * wlr_j * bj * bj;
 
 				double[] sum_ys = new double[numFactors];
 				for (int f = 0; f < numFactors; f++) {
@@ -107,8 +110,6 @@ public class TrustSVD extends SocialRecommender {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
 
-					int wlr_u = nu.length;
-					int wlr_j = trainMatrix.columnSize(j);
 					double delta_u = euj * qjf - regU * wlr_u * puf;
 					double delta_j = euj * (puf + sum_ys[f] + sum_ts[f]) - regI * wlr_j * qjf;
 
@@ -120,6 +121,7 @@ public class TrustSVD extends SocialRecommender {
 					for (int i : nu) {
 						double yif = Y.get(i, f);
 						int wlr_i = trainMatrix.columnSize(i);
+						
 						double delta_y = euj * qjf / w_nu - regU * wlr_i * yif;
 						Y.add(i, f, lRate * delta_y);
 
@@ -129,6 +131,7 @@ public class TrustSVD extends SocialRecommender {
 					for (int v : tu) {
 						double tvf = Tr.get(v, f);
 						int wlr_v = socialMatrix.columnSize(v);
+						
 						double delta_t = euj * qjf / w_tu - regS * wlr_v * tvf;
 						Tr.add(v, f, lRate * delta_t);
 
