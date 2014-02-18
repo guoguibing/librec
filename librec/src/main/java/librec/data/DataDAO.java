@@ -140,8 +140,8 @@ public class DataDAO {
 	}
 
 	/**
-	 * @param whether
-	 *            to construct CCS structures while reading data
+	 * @param isCCSUsed
+	 *            whether to construct CCS structures while reading data
 	 */
 	public SparseMatrix readData(boolean isCCSUsed) throws Exception {
 		return readData(new int[] { 0, 1, 2 }, isCCSUsed);
