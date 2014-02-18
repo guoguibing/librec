@@ -58,8 +58,10 @@ public abstract class IterativeRecommender extends Recommender {
 	static {
 		initLRate = cf.getDouble("val.learn.rate");
 		momentum = cf.getDouble("val.momentum");
-		regU = cf.getDouble("val.reg.user");
-		regI = cf.getDouble("val.reg.item");
+		
+		// to support multiple tests in one time in future
+		regU = cf.getRange("val.reg.user").get(0);
+		regI = cf.getRange("val.reg.item").get(0);
 
 		numFactors = cf.getInt("num.factors");
 		maxIters = cf.getInt("num.max.iter");

@@ -25,7 +25,8 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	// initialization
 	static {
-		regS = cf.getDouble("val.reg.social");
+		// to support multiple tests in one time in future
+		regS = cf.getRange("val.reg.social").get(0);
 
 		String socialPath = cf.getPath("dataset.social");
 		Logs.debug("Social dataset: {}", Strings.last(socialPath, 38));
