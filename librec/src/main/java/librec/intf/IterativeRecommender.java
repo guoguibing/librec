@@ -222,7 +222,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, regU, regI, numFactors, maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, (float)regU, (float)regI, numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 }
