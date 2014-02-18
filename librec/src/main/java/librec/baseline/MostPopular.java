@@ -7,8 +7,7 @@ import librec.data.SparseMatrix;
 import librec.intf.Recommender;
 
 /**
- * Ranking-based Baseline: items are weighted by the number of ratings they
- * received.
+ * Baseline: items are weighted by the number of ratings they received.
  * 
  * @author guoguibing
  * 

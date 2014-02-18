@@ -1,6 +1,5 @@
 package librec.data;
 
-import happy.coding.io.Logs;
 import happy.coding.math.Stats;
 
 import java.util.Arrays;
@@ -9,7 +8,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
@@ -30,6 +28,7 @@ import com.google.common.collect.Table.Cell;
  */
 public class SparseMatrix implements Iterable<MatrixEntry> {
 
+	// matrix dimension
 	protected int numRows, numCols;
 
 	// Compressed Row Storage (CRS)
@@ -120,10 +119,16 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			rowInd[i] = idx[i];
 	}
 
+	/**
+	 * Make a deep clone of current matrix
+	 */
 	public SparseMatrix clone() {
 		return new SparseMatrix(this);
 	}
 
+	/**
+	 * @return the transpose of current matrix
+	 */
 	public SparseMatrix transpose() {
 		if (isCCSUsed) {
 			SparseMatrix tr = new SparseMatrix(numCols, numRows);
@@ -140,10 +145,16 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 	}
 
+	/**
+	 * @return the row pointers of CRS structure
+	 */
 	public int[] getRowPointers() {
 		return rowPtr;
 	}
 
+	/**
+	 * @return the column indices of CCS structure
+	 */
 	public int[] getColumnIndices() {
 		return colInd;
 	}
@@ -161,7 +172,15 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return size;
 	}
 
-	private void construct(Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
+	/**
+	 * Construct a sparse matrix
+	 * 
+	 * @param dataTable
+	 *            data table
+	 * @param columnStructure
+	 *            column structure
+	 */
+	private void construct(Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> columnStructure) {
 		int nnz = dataTable.size();
 
 		// CRS
@@ -185,7 +204,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 		// CCS
-		if (colMap != null) {
+		if (columnStructure != null) {
 			colPtr = new int[numCols + 1];
 			rowInd = new int[nnz];
 			colData = new double[nnz];
@@ -194,7 +213,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			j = 0;
 			for (int i = 1; i <= numCols; ++i) {
 				// dataTable.col(i-1) is very time-consuming
-				Collection<Integer> rows = colMap.get(i - 1);
+				Collection<Integer> rows = columnStructure.get(i - 1);
 				colPtr[i] = colPtr[i - 1] + rows.size();
 
 				for (int row : rows) {
@@ -218,41 +237,79 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 	}
 
+	/**
+	 * @return number of rows
+	 */
 	public int numRows() {
 		return numRows;
 	}
 
+	/**
+	 * @return number of columns
+	 */
 	public int numColumns() {
 		return numCols;
 	}
 
+	/**
+	 * @return referce to the data of current matrix
+	 */
 	public double[] getData() {
 		return rowData;
 	}
 
-	public void set(int row, int col, double val) {
-		int index = getCRSIndex(row, col);
+	/**
+	 * Set a value to entry [row, column]
+	 * 
+	 * @param row
+	 *            row id
+	 * @param column
+	 *            column id
+	 * @param val
+	 *            value to set
+	 */
+	public void set(int row, int column, double val) {
+		int index = getCRSIndex(row, column);
 		rowData[index] = val;
 
 		if (isCCSUsed) {
-			index = getCCSIndex(row, col);
+			index = getCCSIndex(row, column);
 			colData[index] = val;
 		}
 	}
 
-	public void add(int row, int col, double val) {
-		int index = getCRSIndex(row, col);
+	/**
+	 * Add a value to entry [row, column]
+	 * 
+	 * @param row
+	 *            row id
+	 * @param column
+	 *            column id
+	 * @param val
+	 *            value to add
+	 */
+	public void add(int row, int column, double val) {
+		int index = getCRSIndex(row, column);
 		rowData[index] += val;
 
 		if (isCCSUsed) {
-			index = getCCSIndex(row, col);
+			index = getCCSIndex(row, column);
 			colData[index] += val;
 		}
 	}
 
-	public double get(int row, int col) {
+	/**
+	 * Retrieve value at entry [row, column]
+	 * 
+	 * @param row
+	 *            row id
+	 * @param column
+	 *            column id
+	 * @return value at entry [row, column]
+	 */
+	public double get(int row, int column) {
 
-		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], col);
+		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], column);
 
 		if (index >= 0)
 			return rowData[index];
@@ -282,6 +339,16 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return sv;
 	}
 
+	/**
+	 * get a row sparse vector of a matrix
+	 * 
+	 * @param row
+	 *            row id
+	 * @param except
+	 *            row id to be excluded
+	 * @return a sparse vector of {index, value}
+	 * 
+	 */
 	public SparseVector row(int row, int except) {
 
 		SparseVector sv = new SparseVector(numCols);
@@ -376,14 +443,14 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	}
 
 	/**
-	 * @return the sum of matrix data
+	 * @return sum of matrix data
 	 */
 	public double sum() {
 		return Stats.sum(rowData);
 	}
 
 	/**
-	 * @return the mean of matrix data
+	 * @return mean of matrix data
 	 */
 	public double mean() {
 		return sum() / size();
@@ -507,81 +574,6 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		public void remove() {
 			entry.set(0);
 		}
-
-	}
-
-	public static void main(String[] args) {
-		// test data matrix
-		// {10, 0, 0, 0, -2, 0},
-		// { 3, 9, 0, 0, 0, 3},
-		// { 0, 7, 8, 7, 0, 0},
-		// { 3, 0, 8, 7, 5, 0},
-		// { 0, 8, 0, 9, 9, 13},
-		// { 0, 4, 0, 0, 2, -1}
-		// val = {10, -2, 3, 9, 3, 7, 8, 7, 3, 8, 7, 5, 8, 9, 9, 13, 4, 2, -1}
-		// col_ind = {1, 5, 1, 2, 6, 2, 3, 4, 1, 3, 4, 5, 2, 4, 5, 6, 2, 5, 6}
-		// row_pt = {1, 3, 6, 9, 13, 17, 20}
-
-		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-		Multimap<Integer, Integer> colMap = HashMultimap.create();
-
-		dataTable.put(0, 0, 10.0);
-		dataTable.put(0, 4, -2.0);
-		dataTable.put(1, 0, 3.0);
-		dataTable.put(1, 1, 9.0);
-		dataTable.put(1, 5, 3.0);
-		dataTable.put(2, 1, 7.0);
-		dataTable.put(2, 2, 8.0);
-		dataTable.put(2, 3, 7.0);
-		dataTable.put(3, 0, 3.0);
-		dataTable.put(3, 2, 8.);
-		dataTable.put(3, 3, 7.);
-		dataTable.put(3, 4, 5.);
-		dataTable.put(4, 1, 8.);
-		dataTable.put(4, 3, 9.);
-		dataTable.put(4, 4, 9.);
-		dataTable.put(4, 5, 13.);
-		dataTable.put(5, 1, 4.);
-		dataTable.put(5, 4, 2.);
-		dataTable.put(5, 5, -1.);
-
-		colMap.put(0, 0);
-		colMap.put(0, 1);
-		colMap.put(0, 3);
-
-		colMap.put(1, 1);
-		colMap.put(1, 2);
-		colMap.put(1, 4);
-		colMap.put(1, 5);
-
-		colMap.put(2, 2);
-		colMap.put(2, 3);
-
-		colMap.put(3, 2);
-		colMap.put(3, 3);
-		colMap.put(3, 4);
-
-		colMap.put(4, 0);
-		colMap.put(4, 3);
-		colMap.put(4, 4);
-		colMap.put(4, 5);
-
-		colMap.put(5, 1);
-		colMap.put(5, 4);
-		colMap.put(5, 5);
-
-		SparseMatrix mat = new SparseMatrix(6, 6, dataTable);
-		SparseMatrix mat2 = new SparseMatrix(6, 6, dataTable, colMap);
-
-		Logs.debug(mat);
-		Logs.debug(mat.transpose());
-		Logs.debug(mat2.transpose());
-
-		Logs.debug(mat.row(1));
-		Logs.debug(mat2.row(1));
-
-		Logs.debug(mat.column(1));
-		Logs.debug(mat2.column(1));
 
 	}
 }

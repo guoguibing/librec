@@ -1,6 +1,5 @@
 package librec.data;
 
-import happy.coding.io.Logs;
 import happy.coding.math.Stats;
 
 import java.util.Arrays;
@@ -27,6 +26,12 @@ public class SparseVector implements Iterable<VectorEntry> {
 	// number of items
 	protected int count;
 
+	/**
+	 * Construct a sparse vector with its maximum capacity
+	 * 
+	 * @param capcity
+	 *            maximum size of the sparse vector
+	 */
 	public SparseVector(int capcity) {
 		this.capacity = capcity;
 		data = new double[0];
@@ -35,6 +40,15 @@ public class SparseVector implements Iterable<VectorEntry> {
 		index = new int[0];
 	}
 
+	/**
+	 * Construct a sparse vector with its maximum capacity, filled with given
+	 * data array
+	 * 
+	 * @param capcity
+	 *            maximum size of the sparse vector
+	 * @param array
+	 *            input data
+	 */
 	public SparseVector(int capcity, double[] array) {
 		this(capcity);
 
@@ -43,6 +57,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 				this.set(i, array[i]);
 	}
 
+	/**
+	 * Construct a sparse vecto by deeply copying another vector
+	 */
 	public SparseVector(SparseVector sv) {
 		this(sv.capacity, sv.data);
 	}
@@ -85,6 +102,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 		return count;
 	}
 
+	/**
+	 * Set a value to entry [idx]
+	 */
 	public void set(int idx, double val) {
 		check(idx);
 
@@ -92,6 +112,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 		data[i] = val;
 	}
 
+	/**
+	 * Add a value to entry [idx]
+	 */
 	public void add(int idx, double val) {
 		check(idx);
 
@@ -99,6 +122,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 		data[i] += val;
 	}
 
+	/**
+	 * Retrieve a value at entry [idx]
+	 */
 	public double get(int idx) {
 		check(idx);
 
@@ -107,6 +133,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 		return i >= 0 ? data[i] : 0;
 	}
 
+	/**
+	 * @return inner product with a given sparse vector
+	 */
 	public double inner(SparseVector vec) {
 		double result = 0;
 		for (int idx : this.getIndex()) {
@@ -148,11 +177,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 	 */
 	protected void check(int idx) {
 		if (idx < 0)
-			throw new IndexOutOfBoundsException("index is negative (" + idx
-					+ ")");
+			throw new IndexOutOfBoundsException("index is negative (" + idx + ")");
 		if (idx >= capacity)
-			throw new IndexOutOfBoundsException("index >= size (" + idx
-					+ " >= " + capacity + ")");
+			throw new IndexOutOfBoundsException("index >= size (" + idx + " >= " + capacity + ")");
 	}
 
 	/**
@@ -265,20 +292,9 @@ public class SparseVector implements Iterable<VectorEntry> {
 
 		for (VectorEntry ve : this)
 			if (ve.get() != 0)
-				sb.append(String.format("%d\t%f\n", new Object[] { ve.index(),
-						ve.get() }));
+				sb.append(String.format("%d\t%f\n", new Object[] { ve.index(), ve.get() }));
 
 		return sb.toString();
 	}
 
-	public static void main(String[] args) {
-		double[] array = { 0, 7, 8, 7, 0, 1 };
-		SparseVector vec = new SparseVector(10, array);
-
-		Logs.debug(vec);
-
-		vec.set(6, 10);
-		vec.set(9, 11);
-		Logs.debug(vec);
-	}
 }

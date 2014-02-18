@@ -1,6 +1,5 @@
 package librec.data;
 
-import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 
 /**
@@ -11,7 +10,9 @@ import happy.coding.io.Strings;
  */
 public class SymmMatrix {
 
+	// matrix dimension
 	protected int dim;
+	// matrix data
 	protected double[][] data;
 
 	/**
@@ -92,14 +93,4 @@ public class SymmMatrix {
 		return Strings.toString(data);
 	}
 
-	public static void main(String[] args) {
-		SymmMatrix mat = new SymmMatrix(3);
-		mat.set(0, 0, 1);
-		mat.set(0, 1, 2);
-		mat.set(1, 1, 3);
-		mat.set(0, 2, 4);
-		mat.set(1, 2, 5);
-		mat.set(2, 2, 6);
-		Logs.debug(mat);
-	}
 }

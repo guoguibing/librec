@@ -14,7 +14,7 @@ import java.util.List;
  * Class to split/sample rating matrix
  * 
  * @author guoguibing
- *
+ * 
  */
 public class DataSplitter {
 
@@ -24,14 +24,29 @@ public class DataSplitter {
 	// [row-id, col-id, fold-id]
 	private SparseMatrix assignMatrix;
 
+	// number of folds
 	private int numFold;
 
+	/**
+	 * Construct a data splitter to split a given matrix into kfolds
+	 * 
+	 * @param rateMatrix
+	 *            data matrix
+	 * @param kfold
+	 *            number of folds to split
+	 */
 	public DataSplitter(SparseMatrix rateMatrix, int kfold) {
 		this.rateMatrix = rateMatrix;
 
 		splitFolds(kfold);
 	}
 
+	/**
+	 * Construct a data splitter with data source of a given rate matrix
+	 * 
+	 * @param rateMatrix
+	 *            data source
+	 */
 	public DataSplitter(SparseMatrix rateMatrix) {
 		this.rateMatrix = rateMatrix;
 	}
@@ -187,8 +202,7 @@ public class DataSplitter {
 	 */
 	private void debugInfo(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		String foldInfo = fold > 0 ? "Fold [" + fold + "]: " : "";
-		Logs.debug("{}training amount: {}, testing amount: {}", foldInfo, trainMatrix.size(),
-				testMatrix.size());
+		Logs.debug("{}training amount: {}, testing amount: {}", foldInfo, trainMatrix.size(), testMatrix.size());
 
 		if (Debug.OFF) {
 			String dir = Systems.getDesktop();

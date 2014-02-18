@@ -1,6 +1,5 @@
 package librec.data;
 
-import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
@@ -19,7 +18,9 @@ import java.util.Arrays;
  */
 public class DenseMatrix {
 
+	// dimension
 	protected int numRows, numColumns;
+	// read data
 	protected double[][] data;
 
 	/**
@@ -668,25 +669,4 @@ public class DenseMatrix {
 		return Strings.toString(data);
 	}
 
-	public static void main(String[] args) throws Exception {
-		double[][] data = { { 4, 2, 0.6 }, { 4.2, 2.1, .59 }, { 3.9, 2.0, .58 }, { 4.3, 2.1, .62 }, { 4.1, 2.2, .63 } };
-
-		// expected cov results: {{0.025, 0.0075, 0.00175}, {0.0075, 0.0070,
-		// 0.00135}, {0.00175, 0.00135, 0.00043}}
-
-		DenseMatrix mat = new DenseMatrix(data);
-		Logs.debug(mat);
-
-		Logs.debug(mat.cov());
-
-		// matrix inversion
-		data = new double[][] { { 1, 0, 4 }, { 1, 1, 6 }, { -3, 0, -10 } };
-		mat = new DenseMatrix(data);
-
-		// expected invert results: {{-5, 0, -2}, {-4, 1, -1}, {1.5, 0, 0.5}}
-		Logs.debug(mat);
-
-		Logs.debug(mat.inv());
-		Logs.debug(mat.inverse());
-	}
 }

@@ -36,8 +36,8 @@ public class Hybrid extends Recommender {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Hybrid (HeatS+ProbS)";
-		isRankingPred = true; 
-		lambda = cf.getDouble("Hybrid.lambda"); 
+		isRankingPred = true;
+		lambda = cf.getDouble("Hybrid.lambda");
 	}
 
 	@Override
@@ -67,7 +67,6 @@ public class Hybrid extends Recommender {
 					sum += items.contains(item) ? 1.0 : 0.0;
 
 				userResources.put(v, kj > 0 ? sum / kj : 0.0);
-
 			}
 
 			// redistribute resources to items

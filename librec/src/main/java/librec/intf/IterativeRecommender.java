@@ -8,7 +8,7 @@ import librec.data.SparseMatrix;
 
 /**
  * Recommenders using iterative learning techniques
- * 
+ *  
  * @author guoguibing
  * 
  */

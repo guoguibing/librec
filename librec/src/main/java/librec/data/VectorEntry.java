@@ -1,7 +1,7 @@
 package librec.data;
 
 /**
- * An entry of a vector. Returned by the iterators over a vector structure
+ * An entry of a vector. 
  */
 public interface VectorEntry {
 

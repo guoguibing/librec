@@ -35,12 +35,6 @@ import librec.ext.NMF;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
-import librec.undefined.BaseMF;
-import librec.undefined.BaseNM;
-import librec.undefined.DMF;
-import librec.undefined.DNM;
-import librec.undefined.DRM;
-import librec.undefined.TrustSVD;
 
 /**
  * Main Class of the LibRec Library
@@ -202,7 +196,7 @@ public class LibRec {
 	 */
 	private static void printEvalInfo(Recommender algo, Map<Measure, Double> ms) {
 
-		String result = Recommender.getEvalInfo(ms, Recommender.isRankingPred);
+		String result = Recommender.getEvalInfo(ms);
 		String time = Dates.parse(ms.get(Measure.TrainTime).longValue()) + ","
 				+ Dates.parse(ms.get(Measure.TestTime).longValue());
 		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result,
@@ -264,20 +258,6 @@ public class LibRec {
 			return new Hybrid(trainMatrix, testMatrix, fold);
 		case "slopeone":
 			return new SlopeOne(trainMatrix, testMatrix, fold);
-
-			/* ongoing */
-		case "trustsvd":
-			return new TrustSVD(trainMatrix, testMatrix, fold);
-		case "aaai-basemf":
-			return new BaseMF(trainMatrix, testMatrix, fold);
-		case "aaai-dmf":
-			return new DMF(trainMatrix, testMatrix, fold);
-		case "aaai-basenm":
-			return new BaseNM(trainMatrix, testMatrix, fold);
-		case "aaai-dnm":
-			return new DNM(trainMatrix, testMatrix, fold);
-		case "aaai-drm":
-			return new DRM(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");

@@ -1,7 +1,7 @@
 package librec.data;
 
 /**
- * An entry of a matrix. Returned by the iterators over a matrix structure
+ * An entry of a matrix. 
  */
 public interface MatrixEntry {
 

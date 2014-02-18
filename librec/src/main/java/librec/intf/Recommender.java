@@ -171,7 +171,7 @@ public abstract class Recommender implements Runnable {
 		if (verbose)
 			Logs.debug("{}{}: evaluate testing data ... ", algoName, foldStr);
 		measures = isRankingPred ? evalRankings() : evalRatings();
-		String result = getEvalInfo(measures, isRankingPred);
+		String result = getEvalInfo(measures);
 		sw.stop();
 		long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
 
@@ -186,7 +186,10 @@ public abstract class Recommender implements Runnable {
 			Logs.debug(evalInfo);
 	}
 
-	public static String getEvalInfo(Map<Measure, Double> measures, boolean isRankingPred) {
+	/**
+	 * @return the evaluation information of a recommend
+	 */
+	public static String getEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
@@ -305,8 +308,7 @@ public abstract class Recommender implements Runnable {
 	 * method. Default implementation is useful for memory-based methods.
 	 * 
 	 */
-	protected void buildModel() {
-	}
+	protected void buildModel() {}
 
 	/**
 	 * @return the evaluation results of rating predictions
