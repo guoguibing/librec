@@ -238,11 +238,11 @@ public class TrustMF extends SocialRecommender {
 	 */
 	protected void updateLRate(int iter) {
 		if (iter == 10)
-			lRate = 0.03;
+			lRate *= 0.6;
 		else if (iter == 30)
-			lRate = 0.01;
+			lRate *= 0.333;
 		else if (iter == 100)
-			lRate = 0.005;
+			lRate *= 0.5;
 	}
 
 	protected double predict(int u, int j, boolean bounded) {
