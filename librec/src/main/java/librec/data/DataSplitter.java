@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -150,7 +150,7 @@ public class DataSplitter {
 	 * @param numItems
 	 *            number of items, -1 to user all items;
 	 */
-	public void sample(int numUsers, int numItems) throws Exception {
+	public void getSample(int numUsers, int numItems) throws Exception {
 		int rows = rateMatrix.numRows();
 		int cols = rateMatrix.numColumns();
 		int users = numUsers <= 0 || numUsers > rows ? rows : numUsers;
@@ -181,6 +181,31 @@ public class DataSplitter {
 			FileIO.writeList(path, lines, null, true);
 
 		Logs.debug("Sample [size: {}] has been created!", cnt);
+	}
+
+	public SparseMatrix[] getDataView(String view) {
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+
+		switch (view.toLowerCase()) {
+		case "cold-start":
+			for (int u = 0, um = rateMatrix.numRows; u < um; u++) {
+				SparseVector uv = rateMatrix.row(u);
+				if (uv.getCount() < 5) {
+					for (int i : uv.getIndex())
+						trainMatrix.set(u, i, 0.0);
+
+				} else {
+					for (int i : uv.getIndex())
+						testMatrix.set(u, i, 0.0);
+				}
+			}
+			break;
+		default:
+			return null;
+		}
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
 	/**
