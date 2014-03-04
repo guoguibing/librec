@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -68,6 +68,8 @@ public abstract class Recommender implements Runnable {
 	public static boolean isRankingPred;
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
+	// view of rating predictions
+	protected static String view;
 
 	// rate DAO object
 	public static DataDAO rateDao;
@@ -152,6 +154,7 @@ public abstract class Recommender implements Runnable {
 			verbose = cf.isOn("is.verbose");
 			isRankingPred = cf.isOn("is.ranking.pred");
 			isDiverseUsed = cf.isOn("is.diverse.used");
+			view = cf.getString("rating.pred.view").toLowerCase();
 
 			// -1 to use as many as possible or disable
 			numRecs = cf.getInt("num.reclist.len");
@@ -326,7 +329,22 @@ public abstract class Recommender implements Runnable {
 	 * method. Default implementation is useful for memory-based methods.
 	 * 
 	 */
-	protected void buildModel() {}
+	protected void buildModel() {
+	}
+
+	/**
+	 * determine whether the rating of a user-item (u, j) is used to predicted
+	 * 
+	 */
+	protected boolean isTestable(int u, int j) {
+		switch (view) {
+		case "cold-start":
+			return trainMatrix.rowSize(u) < 5 ? true : false;
+		case "all":
+		default:
+			return true;
+		}
+	}
 
 	/**
 	 * @return the evaluation results of rating predictions
@@ -344,6 +362,9 @@ public abstract class Recommender implements Runnable {
 
 			int u = me.row();
 			int j = me.column();
+
+			if (!isTestable(u, j))
+				continue;
 
 			double pred = predict(u, j, true);
 			if (Double.isNaN(pred))
