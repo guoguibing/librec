@@ -203,6 +203,9 @@ public abstract class Recommender implements Runnable {
 		String evalInfo = algoName + foldStr + ": " + result + "\tTime: "
 				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
+		if (!isRankingPred)
+			evalInfo += "\tView: " + view;
+
 		if (fold > 0)
 			Logs.debug(evalInfo);
 	}
