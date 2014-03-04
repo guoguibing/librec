@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -265,12 +265,13 @@ public class LibRec {
 
 		String testPath = cf.getPath("dataset.testing");
 		boolean isTestingFlie = !testPath.equals("-1");
-		String datasetInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38),
-				isTestingFlie ? "" : cvInfo);
-		Logs.info(datasetInfo);
+		String mode = isTestingFlie ? String.format("Testing:: %s.", Strings.last(testPath, 38)) : cvInfo;
 
-		if (isTestingFlie)
-			Logs.info("Testing:: {}.", Strings.last(testPath, 38));
+		if (!Recommender.isRankingPred)
+			mode += ", " + cf.getString("rating.pred.view");
+
+		String debugInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38), mode);
+		Logs.info(debugInfo);
 	}
 
 	/**
