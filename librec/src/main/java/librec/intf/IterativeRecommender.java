@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -26,15 +26,15 @@ import librec.data.SparseMatrix;
 
 /**
  * Recommenders using iterative learning techniques
- *  
+ * 
  * @author guoguibing
  * 
  */
 public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
-	// init learning rate, momentum
-	protected static double initLRate, momentum;
+	// init, maximum learning rate, momentum
+	protected static double initLRate, maxLRate, momentum;
 	// user and item regularization
 	protected static double regU, regI;
 	// number of factors
@@ -75,8 +75,9 @@ public abstract class IterativeRecommender extends Recommender {
 	// initialization
 	static {
 		initLRate = cf.getDouble("val.learn.rate");
+		maxLRate = cf.getDouble("max.learn.rate");
 		momentum = cf.getDouble("val.momentum");
-		
+
 		// to support multiple tests in one time in future
 		regU = cf.getRange("val.reg.user").get(0);
 		regI = cf.getRange("val.reg.item").get(0);
@@ -188,6 +189,10 @@ public abstract class IterativeRecommender extends Recommender {
 			lRate *= decay;
 		else if (decay == 0)
 			lRate = initLRate / (1 + initLRate * ((regU + regI) / 2.0) * iter);
+
+		// limit to max-learn-rate after update
+		if (maxLRate > 0 && lRate > maxLRate)
+			lRate = maxLRate;
 	}
 
 	/**
@@ -240,7 +245,8 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, (float)regU, (float)regI, numFactors, maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, maxLRate, (float) regU, (float) regI, numFactors, maxIters,
+				isBoldDriver }, ",");
 	}
 
 }

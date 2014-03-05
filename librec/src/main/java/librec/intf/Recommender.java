@@ -342,7 +342,7 @@ public abstract class Recommender implements Runnable {
 	protected boolean isTestable(int u, int j) {
 		switch (view) {
 		case "cold-start":
-			return trainMatrix.rowSize(u) < 5 ? true : false;
+			return trainMatrix.rowSize(u) < 5 ? true : false;		
 		case "all":
 		default:
 			return true;

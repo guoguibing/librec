@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -68,6 +68,33 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	public String toString() {
 		return Strings.toString(new Object[] { initLRate, (float) regU, (float) regI, (float) regS, numFactors,
 				maxIters, isBoldDriver }, ",");
+	}
+
+	@Override
+	protected boolean isTestable(int u, int j) {
+		switch (view) {
+		case "cold-start":
+			return trainMatrix.rowSize(u) < 5 ? true : false;
+		case "trust-degree":
+			int min_deg = cf.getInt("min.trust.degree");
+			int max_deg = cf.getInt("max.trust.degree");
+			if (min_deg == -1)
+				min_deg = 0;
+			if (max_deg == -1)
+				max_deg = Integer.MAX_VALUE;
+			
+			// size could be indegree + outdegree
+			int out_deg = socialMatrix.rowSize(u);
+			int deg = out_deg;
+
+			boolean cond = (deg >= min_deg) && (deg <= max_deg);
+
+			return cond ? true : false;
+
+		case "all":
+		default:
+			return true;
+		}
 	}
 
 }

@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -369,21 +369,39 @@ public class DataDAO {
 		sps.add(String.format("Median: %.6f", median));
 
 		List<Integer> userCnts = new ArrayList<>();
+		int userMax = 0, userMin = Integer.MAX_VALUE;
 		for (int u = 0, um = numUsers(); u < um; u++) {
 			int size = rateMatrix.rowSize(u);
-			if (size > 0)
+			if (size > 0) {
 				userCnts.add(size);
+
+				if (size > userMax)
+					userMax = size;
+				if (size < userMin)
+					userMin = size;
+			}
 		}
+		sps.add(String.format("User max : %s", userMax));
+		sps.add(String.format("User min : %s", userMin));
 		sps.add(String.format("User mean: %.6f", Stats.mean(userCnts)));
 		sps.add(String.format("User Std : %.6f", Stats.sd(userCnts)));
 
 		if (!isItemAsUser) {
 			List<Integer> itemCnts = new ArrayList<>();
+			int itemMax = 0, itemMin = Integer.MAX_VALUE;
 			for (int j = 0, jm = numItems(); j < jm; j++) {
 				int size = rateMatrix.columnSize(j);
-				if (size > 0)
+				if (size > 0) {
 					itemCnts.add(size);
+
+					if (size > itemMax)
+						itemMax = size;
+					if (size < itemMin)
+						itemMin = size;
+				}
 			}
+			sps.add(String.format("Item max : %s", itemMax));
+			sps.add(String.format("Item min : %s", itemMin));
 			sps.add(String.format("Item mean: %.6f", Stats.mean(itemCnts)));
 			sps.add(String.format("Item Std : %.6f", Stats.sd(itemCnts)));
 		}
