@@ -66,8 +66,8 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, (float) regU, (float) regI, (float) regS, numFactors,
-				maxIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, maxLRate, (float) regU, (float) regI, (float) regS,
+				numFactors, maxIters, isBoldDriver }, ",");
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 				min_deg = 0;
 			if (max_deg == -1)
 				max_deg = Integer.MAX_VALUE;
-			
+
 			// size could be indegree + outdegree
 			int out_deg = socialMatrix.rowSize(u);
 			int deg = out_deg;
