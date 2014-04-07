@@ -354,7 +354,7 @@ public class DataDAO {
 			sps.add("Item amount: " + items + ", " + FileIO.formatSize(items));
 		sps.add("Rate amount: " + numRates + ", " + FileIO.formatSize(numRates));
 		sps.add("Scales dist: " + scaleDist.toString());
-		sps.add(String.format("Data density: %.4f%%", numRates / (users * items + 0.0) * 100));
+		sps.add(String.format("Data density: %.4f%%", (numRates + 0.0) / users / items * 100));
 
 		// user/item mean
 		double[] data = rateMatrix.getData();
