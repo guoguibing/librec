@@ -410,6 +410,39 @@ public class DataDAO {
 	}
 
 	/**
+	 * print out distributions of the dataset <br/>
+	 * 
+	 * <ul>
+	 * <li>#users (y) -- #ratings (x) (that are issued by each user)</li>
+	 * <li>#items (y) -- #ratings (x) (that received by each item)</li>
+	 * </ul>
+	 */
+	public void printDistr() throws Exception {
+		if (rateMatrix == null)
+			readData(true);
+
+		// count how many users give the same number of ratings
+		Multiset<Integer> numURates = HashMultiset.create();
+
+		// count how many items recieve the same number of ratings
+		Multiset<Integer> numIRates = HashMultiset.create();
+
+		for (int r = 0, rm = rateMatrix.numRows; r < rm; r++) {
+			int numRates = rateMatrix.rowSize(r);
+			numURates.add(numRates);
+		}
+
+		for (int c = 0, cm = rateMatrix.numCols; c < cm; c++) {
+			int numRates = rateMatrix.columnSize(c);
+			numIRates.add(numRates);
+		}
+
+		Logs.debug("#ratings (x) ~ #users (y): \n" + Strings.toString(numURates));
+		Logs.debug("#ratings (x) ~ #items (y): \n" + Strings.toString(numIRates));
+
+	}
+
+	/**
 	 * @return number of users
 	 */
 	public int numUsers() {
