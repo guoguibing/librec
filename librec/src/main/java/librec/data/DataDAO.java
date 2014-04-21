@@ -417,7 +417,7 @@ public class DataDAO {
 	 * <li>#items (y) -- #ratings (x) (that received by each item)</li>
 	 * </ul>
 	 */
-	public void printDistr() throws Exception {
+	public void printDistr(boolean isWriteOut) throws Exception {
 		if (rateMatrix == null)
 			readData(true);
 
@@ -437,8 +437,18 @@ public class DataDAO {
 			numIRates.add(numRates);
 		}
 
-		Logs.debug("#ratings (x) ~ #users (y): \n" + Strings.toString(numURates));
-		Logs.debug("#ratings (x) ~ #items (y): \n" + Strings.toString(numIRates));
+		String ustrs = Strings.toString(numURates);
+		String istrs = Strings.toString(numIRates);
+
+		if (isWriteOut) {
+			FileIO.writeString(FileIO.desktop + "user-distr.txt", ustrs);
+			FileIO.writeString(FileIO.desktop + "item-distr.txt", istrs);
+		} else {
+			Logs.debug("#ratings (x) ~ #users (y): \n" + ustrs);
+			Logs.debug("#ratings (x) ~ #items (y): \n" + istrs);
+		}
+
+		Logs.debug("Done!");
 
 	}
 
