@@ -91,7 +91,7 @@ public abstract class Recommender implements Runnable {
 	public String algoName;
 	// current fold
 	protected int fold;
-	// fold information 
+	// fold information
 	protected String foldInfo;
 
 	// rating matrix for training and testing
@@ -117,7 +117,8 @@ public abstract class Recommender implements Runnable {
 	 * @param testMatrix
 	 *            test matrix
 	 */
-	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix,
+			int fold) {
 		this.trainMatrix = trainMatrix;
 		this.testMatrix = testMatrix;
 		this.fold = fold;
@@ -201,7 +202,8 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.TestTime, (double) testTime);
 
 		String evalInfo = algoName + foldStr + ": " + result + "\tTime: "
-				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
+				+ Dates.parse(measures.get(Measure.TrainTime).longValue())
+				+ ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
 		if (!isRankingPred)
 			evalInfo += "\tView: " + view;
@@ -217,18 +219,28 @@ public abstract class Recommender implements Runnable {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.D5),
-						measures.get(Measure.D10), measures.get(Measure.MAE), measures.get(Measure.RMSE),
-						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
-						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
-						measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
+				evalInfo = String.format(
+						"%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
+						measures.get(Measure.D5), measures.get(Measure.D10),
+						measures.get(Measure.MAE), measures.get(Measure.RMSE),
+						measures.get(Measure.Pre5),
+						measures.get(Measure.Pre10),
+						measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC),
+						measures.get(Measure.MAP), measures.get(Measure.NDCG),
+						measures.get(Measure.MRR), numIgnore);
 			else
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.MAE),
-						measures.get(Measure.RMSE), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
-						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
-						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
+						measures.get(Measure.MAE), measures.get(Measure.RMSE),
+						measures.get(Measure.Pre5),
+						measures.get(Measure.Pre10),
+						measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC),
+						measures.get(Measure.MAP), measures.get(Measure.NDCG),
+						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.3f,%.3f,%.3f,%.3f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
+			evalInfo = String.format("%.3f,%.3f,%.3f,%.3f",
+					measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
 		return evalInfo;
@@ -256,12 +268,14 @@ public abstract class Recommender implements Runnable {
 		SymmMatrix corrs = new SymmMatrix(count);
 
 		for (int i = 0; i < count; i++) {
-			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.column(i);
+			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix
+					.column(i);
 			if (iv.getCount() == 0)
 				continue;
 			// user/item itself exclusive
 			for (int j = i + 1; j < count; j++) {
-				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.column(j);
+				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix
+						.column(j);
 
 				double sim = correlation(iv, jv);
 
@@ -274,7 +288,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Compute the correlation between two vectors
+	 * Compute the correlation between two vectors using method specified by
+	 * configuration key "similarity"
 	 * 
 	 * @param iv
 	 *            vector i
@@ -283,6 +298,21 @@ public abstract class Recommender implements Runnable {
 	 * @return the correlation between vectors i and j
 	 */
 	protected double correlation(SparseVector iv, SparseVector jv) {
+		return correlation(iv, jv, cf.getString("similarity"));
+	}
+
+	/**
+	 * Compute the correlation between two vectors for a specific method
+	 * 
+	 * @param iv
+	 *            vector i
+	 * @param jv
+	 *            vector j
+	 * @param method
+	 *            similarity method
+	 * @return the correlation between vectors i and j
+	 */
+	protected double correlation(SparseVector iv, SparseVector jv, String method) {
 
 		// compute similarity
 		List<Double> is = new ArrayList<>();
@@ -296,7 +326,7 @@ public abstract class Recommender implements Runnable {
 		}
 
 		double sim = 0;
-		switch (cf.getString("similarity").toLowerCase()) {
+		switch (method.toLowerCase()) {
 		case "cos":
 			sim = Sims.cos(is, js);
 			break;
@@ -342,7 +372,7 @@ public abstract class Recommender implements Runnable {
 	protected boolean isTestable(int u, int j) {
 		switch (view) {
 		case "cold-start":
-			return trainMatrix.rowSize(u) < 5 ? true : false;		
+			return trainMatrix.rowSize(u) < 5 ? true : false;
 		case "all":
 		default:
 			return true;
@@ -423,7 +453,8 @@ public abstract class Recommender implements Runnable {
 			candItems.add(j);
 
 		if (verbose)
-			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
+			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo,
+					candItems.size());
 
 		// ignore items: most popular items
 		if (numIgnore > 0) {
@@ -432,7 +463,8 @@ public abstract class Recommender implements Runnable {
 			Map<Integer, Integer> itemDegs = new HashMap<>();
 			for (int j : candItems)
 				itemDegs.put(j, trainMatrix.columnSize(j));
-			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
+			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs,
+					true);
 			int k = 0;
 			for (KeyValPair<Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
@@ -497,8 +529,10 @@ public abstract class Recommender implements Runnable {
 			}
 
 			List<Integer> cutoffs = Arrays.asList(5, 10);
-			Map<Integer, Double> precs = Measures.PrecAt(rankedItems, correctItems, cutoffs);
-			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems, correctItems, cutoffs);
+			Map<Integer, Double> precs = Measures.PrecAt(rankedItems,
+					correctItems, cutoffs);
+			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems,
+					correctItems, cutoffs);
 
 			precs5.add(precs.get(5));
 			precs10.add(precs.get(10));
@@ -594,7 +628,8 @@ public abstract class Recommender implements Runnable {
 	 *            items to be ignored from candidate items
 	 * @return a list of ranked items
 	 */
-	protected List<Integer> ranking(int u, Collection<Integer> candItems, Collection<Integer> ignoreItems) {
+	protected List<Integer> ranking(int u, Collection<Integer> candItems,
+			Collection<Integer> ignoreItems) {
 
 		List<Integer> items = new ArrayList<>();
 
@@ -610,8 +645,8 @@ public abstract class Recommender implements Runnable {
 		if (itemScores.size() > 0) {
 
 			List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores, true);
-			List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted.subList(0,
-					numRecs);
+			List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted
+					: sorted.subList(0, numRecs);
 
 			for (KeyValPair<Integer> kv : recomd)
 				items.add(kv.getKey());
