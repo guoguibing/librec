@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -348,6 +348,14 @@ public class DenseMatrix {
 		return result;
 	}
 
+	public DenseVector mult(SparseVector vec) {
+		DenseVector result = new DenseVector(this.numRows);
+		for (int i = 0; i < this.numRows; i++)
+			result.set(i, row(i, false).inner(vec));
+
+		return result;
+	}
+
 	/**
 	 * Matrix multiplication of a sparse matrix by a dense matrix
 	 * 
@@ -671,7 +679,7 @@ public class DenseMatrix {
 	}
 
 	/**
-	 * set one value to the whole row
+	 * set one value to a specific row
 	 * 
 	 * @param row
 	 *            row id
@@ -680,6 +688,19 @@ public class DenseMatrix {
 	 */
 	public void setRow(int row, double val) {
 		Arrays.fill(data[row], val);
+	}
+
+	/**
+	 * set values of one dense vector to a specific row
+	 * 
+	 * @param row
+	 *            row id
+	 * @param vals
+	 *            values of a dense vector
+	 */
+	public void setRow(int row, DenseVector vals) {
+		for (int j = 0; j < numColumns; j++)
+			data[row][j] = vals.data[j];
 	}
 
 	@Override
