@@ -318,13 +318,25 @@ public class DenseMatrix {
 
 		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
 
-		for (int i = 0; i < result.numRows; i++) {
-			for (int j = 0; j < result.numColumns; j++) {
+		/*
+		 * for (int i = 0; i < result.numRows; i++) { for (int j = 0; j <
+		 * result.numColumns; j++) {
+		 * 
+		 * double product = 0; SparseVector col = mat.column(j); // needs to
+		 * compute $result.numRows$ times for (int k : col.getIndex()) product
+		 * += data[i][k] * col.get(k);
+		 * 
+		 * result.set(i, j, product); } }
+		 */
+
+		for (int j = 0; j < result.numColumns; j++) {
+			SparseVector col = mat.column(j); // only one time 
+
+			for (int i = 0; i < result.numRows; i++) {
 
 				double product = 0;
-				SparseVector col = mat.column(j);
-				for (int k : col.getIndex())
-					product += data[i][k] * col.get(k);
+				for (VectorEntry ve : col)
+					product += data[i][ve.index()] * ve.get();
 
 				result.set(i, j, product);
 			}
@@ -350,8 +362,14 @@ public class DenseMatrix {
 
 	public DenseVector mult(SparseVector vec) {
 		DenseVector result = new DenseVector(this.numRows);
-		for (int i = 0; i < this.numRows; i++)
-			result.set(i, row(i, false).inner(vec));
+		for (int i = 0; i < this.numRows; i++) {
+
+			double product = 0;
+			for (VectorEntry ve : vec)
+				product += data[i][ve.index()] * ve.get();
+
+			result.set(i, product);
+		}
 
 		return result;
 	}
