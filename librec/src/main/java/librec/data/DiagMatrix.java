@@ -58,13 +58,20 @@ public class DiagMatrix extends SparseMatrix {
 
 		return res;
 	}
-	
+
+	/**
+	 * Each diagonal entry addes {@code val}
+	 * 
+	 * @param val
+	 *            a value to be added
+	 * @return a new diagonal matrix
+	 */
 	public DiagMatrix add(double val) {
-		
+
 		DiagMatrix res = this.clone();
 		for (int i = 0; i < res.numRows; i++)
 			res.set(i, i, this.get(i, i) + val);
-		
+
 		return res;
 	}
 
@@ -76,13 +83,20 @@ public class DiagMatrix extends SparseMatrix {
 
 		return res;
 	}
-	
+
+	/**
+	 * Each diagonal entry abstracts {@code val}
+	 * 
+	 * @param val
+	 *            a value to be abstracted
+	 * @return a new diagonal matrix
+	 */
 	public DiagMatrix minus(double val) {
-		
+
 		DiagMatrix res = this.clone();
 		for (int i = 0; i < res.numRows; i++)
 			res.set(i, i, this.get(i, i) - val);
-		
+
 		return res;
 	}
 

@@ -47,7 +47,7 @@ import com.google.common.collect.Table.Cell;
 public class SparseMatrix implements Iterable<MatrixEntry> {
 
 	// matrix dimension
-	protected int numRows, numCols;
+	protected int numRows, numColumns;
 
 	// Compressed Row Storage (CRS)
 	protected double[] rowData;
@@ -65,7 +65,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
 		numRows = rows;
-		numCols = cols;
+		numColumns = cols;
 
 		construct(dataTable, colMap);
 	}
@@ -84,7 +84,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	private SparseMatrix(int rows, int cols) {
 		numRows = rows;
-		numCols = cols;
+		numColumns = cols;
 	}
 
 	public SparseMatrix(SparseMatrix mat) {
@@ -101,7 +101,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	public SparseMatrix(SparseMatrix mat, boolean deap) {
 		numRows = mat.numRows;
-		numCols = mat.numCols;
+		numColumns = mat.numColumns;
 
 		copyCRS(mat.rowData, mat.rowPtr, mat.colInd);
 
@@ -149,7 +149,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	public SparseMatrix transpose() {
 		if (isCCSUsed) {
-			SparseMatrix tr = new SparseMatrix(numCols, numRows);
+			SparseMatrix tr = new SparseMatrix(numColumns, numRows);
 
 			tr.copyCRS(this.rowData, this.rowPtr, this.colInd);
 			tr.copyCCS(this.colData, this.colPtr, this.rowInd);
@@ -159,7 +159,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 			for (MatrixEntry me : this)
 				dataTable.put(me.column(), me.row(), me.get());
-			return new SparseMatrix(numCols, numRows, dataTable);
+			return new SparseMatrix(numColumns, numRows, dataTable);
 		}
 	}
 
@@ -213,7 +213,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 			for (int col : cols) {
 				colInd[j++] = col;
-				if (col < 0 || col >= numCols)
+				if (col < 0 || col >= numColumns)
 					throw new IllegalArgumentException("colInd[" + j + "]=" + col
 							+ ", which is not a valid column index");
 			}
@@ -223,13 +223,13 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		// CCS
 		if (columnStructure != null) {
-			colPtr = new int[numCols + 1];
+			colPtr = new int[numColumns + 1];
 			rowInd = new int[nnz];
 			colData = new double[nnz];
 			isCCSUsed = true;
 
 			j = 0;
-			for (int i = 1; i <= numCols; ++i) {
+			for (int i = 1; i <= numColumns; ++i) {
 				// dataTable.col(i-1) is very time-consuming
 				Collection<Integer> rows = columnStructure.get(i - 1);
 				colPtr[i] = colPtr[i - 1] + rows.size();
@@ -266,7 +266,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 * @return number of columns
 	 */
 	public int numColumns() {
-		return numCols;
+		return numColumns;
 	}
 
 	/**
@@ -345,7 +345,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	public SparseVector row(int row) {
 
-		SparseVector sv = new SparseVector(numCols);
+		SparseVector sv = new SparseVector(numColumns);
 
 		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
 			int col = colInd[j];
@@ -369,7 +369,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	public SparseVector row(int row, int except) {
 
-		SparseVector sv = new SparseVector(numCols);
+		SparseVector sv = new SparseVector(numColumns);
 
 		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
 			int col = colInd[j];
@@ -477,7 +477,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows, numCols, size() }));
+		sb.append(String.format("%d\t%d\t%d\n", new Object[] { numRows, numColumns, size() }));
 
 		for (MatrixEntry me : this)
 			if (me.get() != 0)

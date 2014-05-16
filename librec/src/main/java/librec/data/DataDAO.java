@@ -432,7 +432,7 @@ public class DataDAO {
 			numURates.add(numRates);
 		}
 
-		for (int c = 0, cm = rateMatrix.numCols; c < cm; c++) {
+		for (int c = 0, cm = rateMatrix.numColumns; c < cm; c++) {
 			int numRates = rateMatrix.columnSize(c);
 			numIRates.add(numRates);
 		}

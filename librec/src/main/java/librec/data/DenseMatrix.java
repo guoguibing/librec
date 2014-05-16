@@ -202,13 +202,13 @@ public class DenseMatrix {
 	 * @return the matrix norm-2
 	 */
 	public double norm() {
-		double result = 0;
+		double res = 0;
 
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numColumns; j++)
-				result += data[i][j] * data[i][j];
+				res += data[i][j] * data[i][j];
 
-		return Math.sqrt(result);
+		return Math.sqrt(res);
 	}
 
 	/**
@@ -227,11 +227,11 @@ public class DenseMatrix {
 	public static double rowMult(DenseMatrix m, int mrow, DenseMatrix n, int nrow) {
 		assert m.numColumns == n.numColumns;
 
-		double result = 0;
+		double res = 0;
 		for (int j = 0, k = m.numColumns; j < k; j++)
-			result += m.get(mrow, j) * n.get(nrow, j);
+			res += m.get(mrow, j) * n.get(nrow, j);
 
-		return result;
+		return res;
 	}
 
 	/**
@@ -250,11 +250,11 @@ public class DenseMatrix {
 	public static double colMult(DenseMatrix m, int mcol, DenseMatrix n, int ncol) {
 		assert m.numRows == n.numRows;
 
-		double result = 0;
+		double res = 0;
 		for (int j = 0, k = m.numRows; j < k; j++)
-			result += m.get(j, mcol) * n.get(j, ncol);
+			res += m.get(j, mcol) * n.get(j, ncol);
 
-		return result;
+		return res;
 	}
 
 	/**
@@ -274,11 +274,11 @@ public class DenseMatrix {
 	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
 		assert m.numColumns == n.numRows;
 
-		double result = 0;
+		double res = 0;
 		for (int j = 0; j < m.numColumns; j++)
-			result += m.get(mrow, j) * n.get(j, ncol);
+			res += m.get(mrow, j) * n.get(j, ncol);
 
-		return result;
+		return res;
 	}
 
 	/**
@@ -291,19 +291,19 @@ public class DenseMatrix {
 	public DenseMatrix mult(DenseMatrix mat) {
 		assert this.numColumns == mat.numRows;
 
-		DenseMatrix result = new DenseMatrix(this.numRows, mat.numColumns);
-		for (int i = 0; i < result.numRows; i++) {
-			for (int j = 0; j < result.numColumns; j++) {
+		DenseMatrix res = new DenseMatrix(this.numRows, mat.numColumns);
+		for (int i = 0; i < res.numRows; i++) {
+			for (int j = 0; j < res.numColumns; j++) {
 
 				double product = 0;
 				for (int k = 0; k < this.numColumns; k++)
 					product += data[i][k] * mat.data[k][j];
 
-				result.set(i, j, product);
+				res.set(i, j, product);
 			}
 		}
 
-		return result;
+		return res;
 	}
 
 	/**
@@ -316,33 +316,22 @@ public class DenseMatrix {
 	public DenseMatrix mult(SparseMatrix mat) {
 		assert this.numColumns == mat.numRows;
 
-		DenseMatrix result = new DenseMatrix(this.numRows, mat.numCols);
+		DenseMatrix res = new DenseMatrix(this.numRows, mat.numColumns);
 
-		/*
-		 * for (int i = 0; i < result.numRows; i++) { for (int j = 0; j <
-		 * result.numColumns; j++) {
-		 * 
-		 * double product = 0; SparseVector col = mat.column(j); // needs to
-		 * compute $result.numRows$ times for (int k : col.getIndex()) product
-		 * += data[i][k] * col.get(k);
-		 * 
-		 * result.set(i, j, product); } }
-		 */
+		for (int j = 0; j < res.numColumns; j++) {
+			SparseVector col = mat.column(j); // only one-time computation 
 
-		for (int j = 0; j < result.numColumns; j++) {
-			SparseVector col = mat.column(j); // only one time 
-
-			for (int i = 0; i < result.numRows; i++) {
+			for (int i = 0; i < res.numRows; i++) {
 
 				double product = 0;
 				for (VectorEntry ve : col)
 					product += data[i][ve.index()] * ve.get();
 
-				result.set(i, j, product);
+				res.set(i, j, product);
 			}
 		}
 
-		return result;
+		return res;
 	}
 
 	/**
@@ -353,25 +342,25 @@ public class DenseMatrix {
 	public DenseVector mult(DenseVector vec) {
 		assert this.numColumns == vec.size;
 
-		DenseVector result = new DenseVector(this.numRows);
+		DenseVector res = new DenseVector(this.numRows);
 		for (int i = 0; i < this.numRows; i++)
-			result.set(i, row(i, false).inner(vec));
+			res.set(i, row(i, false).inner(vec));
 
-		return result;
+		return res;
 	}
 
 	public DenseVector mult(SparseVector vec) {
-		DenseVector result = new DenseVector(this.numRows);
+		DenseVector res = new DenseVector(this.numRows);
 		for (int i = 0; i < this.numRows; i++) {
 
 			double product = 0;
 			for (VectorEntry ve : vec)
 				product += data[i][ve.index()] * ve.get();
 
-			result.set(i, product);
+			res.set(i, product);
 		}
 
-		return result;
+		return res;
 	}
 
 	/**
@@ -384,23 +373,23 @@ public class DenseMatrix {
 	 * @return a dense matrix with the results of matrix multiplication
 	 */
 	public static DenseMatrix mult(SparseMatrix sm, DenseMatrix dm) {
-		assert sm.numCols == dm.numRows;
+		assert sm.numColumns == dm.numRows;
 
-		DenseMatrix result = new DenseMatrix(sm.numRows, dm.numColumns);
+		DenseMatrix res = new DenseMatrix(sm.numRows, dm.numColumns);
 
-		for (int i = 0; i < result.numRows; i++) {
+		for (int i = 0; i < res.numRows; i++) {
 			SparseVector row = sm.row(i);
-			for (int j = 0; j < result.numColumns; j++) {
+			for (int j = 0; j < res.numColumns; j++) {
 
 				double product = 0;
 				for (int k : row.getIndex())
 					product += row.get(k) * dm.data[k][j];
 
-				result.set(i, j, product);
+				res.set(i, j, product);
 			}
 		}
 
-		return result;
+		return res;
 
 	}
 
@@ -446,13 +435,47 @@ public class DenseMatrix {
 		assert numRows == mat.numRows;
 		assert numColumns == mat.numColumns;
 
-		DenseMatrix result = new DenseMatrix(numRows, numColumns);
+		DenseMatrix res = new DenseMatrix(numRows, numColumns);
 
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numColumns; j++)
-				result.data[i][j] = data[i][j] + mat.data[i][j];
+				res.data[i][j] = data[i][j] + mat.data[i][j];
 
-		return result;
+		return res;
+	}
+
+	/**
+	 * Do {@code A + B} matrix operation
+	 * 
+	 * @return a matrix with results of {@code C = A + B}
+	 */
+	public DenseMatrix add(SparseMatrix mat) {
+		assert numRows == mat.numRows;
+		assert numColumns == mat.numColumns;
+
+		DenseMatrix res = this.clone();
+
+		for (MatrixEntry me : mat)
+			res.add(me.row(), me.column(), me.get());
+
+		return res;
+	}
+
+	/**
+	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each
+	 * entries will be added by {@code c}
+	 * 
+	 * @return a new matrix with results of {@code C = A + c}
+	 */
+	public DenseMatrix add(double val) {
+
+		DenseMatrix res = new DenseMatrix(numRows, numColumns);
+
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numColumns; j++)
+				res.data[i][j] = data[i][j] + val;
+
+		return res;
 	}
 
 	/**
