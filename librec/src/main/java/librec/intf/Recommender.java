@@ -216,17 +216,18 @@ public abstract class Recommender implements Runnable {
 	public static String getEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = null;
 		if (isRankingPred) {
+			// Note: MAE and RMSE are computed, but not used here 
+			// ....  if you need them, add it back in the same manner as other metrics
 			if (isDiverseUsed)
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.D5),
-						measures.get(Measure.D10), measures.get(Measure.MAE), measures.get(Measure.RMSE),
-						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
-						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
-						measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
-			else
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.MAE),
-						measures.get(Measure.RMSE), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.D5),
+						measures.get(Measure.D10), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
 						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
 						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
+			else
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.Pre5),
+						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
+						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
+						measures.get(Measure.MRR), numIgnore);
 		} else
 			evalInfo = String.format("%.3f,%.3f,%.3f,%.3f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
@@ -469,6 +470,8 @@ public abstract class Recommender implements Runnable {
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
+			
+			// get overall MAE and RMSE -- not preferred for ranking
 			for (Integer j : tv.getIndex()) {
 				// intersect with the candidate items
 				if (candItems.contains(j))
@@ -589,7 +592,7 @@ public abstract class Recommender implements Runnable {
 
 	/**
 	 * predict a ranking score for user u on item j: default case using the
-	 * predicted rating values
+	 * unbounded predicted rating values
 	 * 
 	 * @param u
 	 *            user id
@@ -599,7 +602,7 @@ public abstract class Recommender implements Runnable {
 	 * @return a ranking score for user u on item j
 	 */
 	protected double ranking(int u, int j) {
-		return predict(u, j, true);
+		return predict(u, j, false);
 	}
 
 	/**
