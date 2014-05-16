@@ -44,6 +44,7 @@ import librec.core.SVDPlusPlus;
 import librec.core.SocialMF;
 import librec.core.TrustMF;
 import librec.core.UserKNN;
+import librec.core.WRMF;
 import librec.data.DataDAO;
 import librec.data.DataSplitter;
 import librec.data.SparseMatrix;
@@ -241,6 +242,8 @@ public class LibRec {
 			return new SocialMF(trainMatrix, testMatrix, fold);
 		case "trustmf":
 			return new TrustMF(trainMatrix, testMatrix, fold);
+		case "wrmf":
+			return new WRMF(trainMatrix, testMatrix, fold);
 
 			/* extension */
 		case "nmf":
