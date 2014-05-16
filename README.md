@@ -14,7 +14,7 @@ LibRec
 ### Algorithms
 
 * **Baseline**: GlobalAvg, UserAvg, ItemAvg, Random, Constant, MostPop
-* **Core**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, CLiMF, BPMF, SocialMF, TrustMF
+* **Core**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, CLiMF, BPMF, SocialMF, TrustMF, WRMF
 * **Extension**: NMF, SlopeOne, Hybrid
 
 ### Download
