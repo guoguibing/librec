@@ -40,13 +40,17 @@ public class MostPopular extends Recommender {
 		// force to set as the ranking prediction method
 		isRankingPred = true;
 		algoName = "MostPop";
+	}
+	
+	@Override
+	protected void initModel() {
 		itemPops = new HashMap<>();
 	}
 
 	@Override
 	protected double ranking(int u, int j) {
 		if (!itemPops.containsKey(j))
-			itemPops.put(j, trainMatrix.column(j).getCount());
+			itemPops.put(j, trainMatrix.columnSize(j));
 
 		return itemPops.get(j);
 	}
