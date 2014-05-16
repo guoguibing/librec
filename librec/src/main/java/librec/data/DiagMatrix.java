@@ -33,26 +33,57 @@ public class DiagMatrix extends SparseMatrix {
 		super(rows, cols, dataTable);
 	}
 
+	public DiagMatrix(DiagMatrix mat) {
+		super(mat);
+	}
+
+	public DiagMatrix clone() {
+		return new DiagMatrix(this);
+	}
+
+	public DiagMatrix scale(double val) {
+
+		DiagMatrix res = this.clone();
+		for (int i = 0; i < res.numRows; i++)
+			res.set(i, i, this.get(i, i) * val);
+
+		return res;
+	}
+
 	public DiagMatrix add(DiagMatrix that) {
 
-		Table<Integer, Integer, Double> vals = HashBasedTable.create();
-		int n = this.numCols;
-		
-		for (int i = 0; i < n; i++)
-			vals.put(i, i, this.get(i, i) + that.get(i, i));
+		DiagMatrix res = this.clone();
+		for (int i = 0; i < res.numRows; i++)
+			res.set(i, i, this.get(i, i) + that.get(i, i));
 
-		return new DiagMatrix(n, n, vals);
+		return res;
 	}
 	
+	public DiagMatrix add(double val) {
+		
+		DiagMatrix res = this.clone();
+		for (int i = 0; i < res.numRows; i++)
+			res.set(i, i, this.get(i, i) + val);
+		
+		return res;
+	}
+
 	public DiagMatrix minus(DiagMatrix that) {
+
+		DiagMatrix res = this.clone();
+		for (int i = 0; i < res.numRows; i++)
+			res.set(i, i, this.get(i, i) - that.get(i, i));
+
+		return res;
+	}
+	
+	public DiagMatrix minus(double val) {
 		
-		Table<Integer, Integer, Double> vals = HashBasedTable.create();
-		int n = this.numCols;
+		DiagMatrix res = this.clone();
+		for (int i = 0; i < res.numRows; i++)
+			res.set(i, i, this.get(i, i) - val);
 		
-		for (int i = 0; i < n; i++)
-			vals.put(i, i, this.get(i, i) - that.get(i, i));
-		
-		return new DiagMatrix(n, n, vals);
+		return res;
 	}
 
 	public static DiagMatrix eye(int n) {
