@@ -12,6 +12,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/happy.coding.utils-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/happy.coding.utils-1.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

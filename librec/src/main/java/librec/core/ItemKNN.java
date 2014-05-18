@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,6 +20,7 @@ package librec.core;
 
 import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
+import happy.coding.math.Stats;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,7 @@ import librec.intf.Recommender;
  * Item-based Collaborative Filtering
  * 
  * @author guoguibing
- *
+ * 
  */
 public class ItemKNN extends Recommender {
 
@@ -65,7 +66,7 @@ public class ItemKNN extends Recommender {
 	@Override
 	protected double predict(int u, int j) {
 
-		// find a number of similar users
+		// find a number of similar items
 		Map<Integer, Double> nns = new HashMap<>();
 
 		SparseVector dv = itemCorrs.row(j);
@@ -77,7 +78,7 @@ public class ItemKNN extends Recommender {
 				nns.put(i, sim);
 		}
 
-		// topN similar users
+		// topN similar items
 		if (knn > 0 && knn < nns.size()) {
 			List<KeyValPair<Integer>> sorted = Lists.sortMap(nns, true);
 			List<KeyValPair<Integer>> subset = sorted.subList(0, knn);
@@ -89,17 +90,25 @@ public class ItemKNN extends Recommender {
 		if (nns.size() == 0)
 			return globalMean;
 
-		double sum = 0, ws = 0;
-		for (Entry<Integer, Double> en : nns.entrySet()) {
-			int i = en.getKey();
-			double sim = en.getValue();
-			double rate = trainMatrix.get(u, i);
+		if (isRankingPred) {
+			// for recommendation task: item ranking
+			
+			return Stats.sum(nns.values());
+		} else {
+			// for recommendation task: rating prediction
 
-			sum += sim * (rate - itemMeans.get(i));
-			ws += Math.abs(sim);
+			double sum = 0, ws = 0;
+			for (Entry<Integer, Double> en : nns.entrySet()) {
+				int i = en.getKey();
+				double sim = en.getValue();
+				double rate = trainMatrix.get(u, i);
+
+				sum += sim * (rate - itemMeans.get(i));
+				ws += Math.abs(sim);
+			}
+
+			return ws > 0 ? itemMeans.get(j) + sum / ws : globalMean;
 		}
-
-		return ws > 0 ? itemMeans.get(j) + sum / ws : globalMean;
 	}
 
 	@Override

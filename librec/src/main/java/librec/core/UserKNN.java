@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,6 +20,7 @@ package librec.core;
 
 import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
+import happy.coding.math.Stats;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,7 @@ import librec.intf.Recommender;
  * User-based Collaborative Filtering
  * 
  * @author guoguibing
- *
+ * 
  */
 public class UserKNN extends Recommender {
 
@@ -89,18 +90,25 @@ public class UserKNN extends Recommender {
 		if (nns.size() == 0)
 			return globalMean;
 
-		// mean rate of user u
-		double sum = 0, ws = 0;
-		for (Entry<Integer, Double> en : nns.entrySet()) {
-			int v = en.getKey();
-			double sim = en.getValue();
-			double rate = trainMatrix.get(v, j);
+		if (isRankingPred) {
+			// for item ranking
+			
+			return Stats.sum(nns.values());
+		} else {
+			// for rating prediction
+			
+			double sum = 0, ws = 0;
+			for (Entry<Integer, Double> en : nns.entrySet()) {
+				int v = en.getKey();
+				double sim = en.getValue();
+				double rate = trainMatrix.get(v, j);
 
-			sum += sim * (rate - userMeans.get(v));
-			ws += Math.abs(sim);
+				sum += sim * (rate - userMeans.get(v));
+				ws += Math.abs(sim);
+			}
+
+			return ws > 0 ? userMeans.get(u) + sum / ws : globalMean;
 		}
-
-		return ws > 0 ? userMeans.get(u) + sum / ws : globalMean;
 	}
 
 	@Override
