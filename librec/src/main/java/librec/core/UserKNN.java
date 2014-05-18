@@ -20,7 +20,6 @@ package librec.core;
 
 import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
-import happy.coding.math.Stats;
 
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +80,9 @@ public class UserKNN extends Recommender {
 			double sim = dv.get(v);
 			double rate = trainMatrix.get(v, j);
 
-			if (sim > 0 && rate > 0)
+			if (isRankingPred)
+				nns.put(v, sim);
+			else if (sim > 0 && rate > 0)
 				nns.put(v, sim);
 		}
 
@@ -95,12 +96,23 @@ public class UserKNN extends Recommender {
 		}
 
 		if (nns.size() == 0)
-			return globalMean;
+			return isRankingPred ? 0 : globalMean;
 
 		if (isRankingPred) {
 			// for item ranking
 
-			return Stats.mean(nns.values());
+			double sum = 0, ws = 0;
+			for (Entry<Integer, Double> en : nns.entrySet()) {
+				int v = en.getKey();
+				double sim = en.getValue();
+				double rate = trainMatrix.get(v, j);
+
+				sum += sim;
+				if (rate > 0)
+					ws += rate;
+			}
+
+			return sum == 0 ? 0 : ws / sum;
 		} else {
 			// for rating prediction
 
