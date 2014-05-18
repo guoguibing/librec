@@ -92,7 +92,7 @@ public class UserKNN extends Recommender {
 
 		if (isRankingPred) {
 			// for item ranking
-			
+			 
 			return Stats.sum(nns.values());
 		} else {
 			// for rating prediction
