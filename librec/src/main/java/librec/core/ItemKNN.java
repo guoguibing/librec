@@ -97,7 +97,7 @@ public class ItemKNN extends Recommender {
 		}
 
 		if (nns.size() == 0)
-			return globalMean;
+			return isRankingPred ? 0 : globalMean;
 
 		if (isRankingPred) {
 			// for recommendation task: item ranking
