@@ -82,7 +82,7 @@ public class UserKNN extends Recommender {
 			double rate = trainMatrix.get(v, j);
 
 			if (isRankingPred && rate > 0)
-				nns.put(v, sim);
+				nns.put(v, sim); // similarity could be negative for item ranking
 			else if (sim > 0 && rate > 0)
 				nns.put(v, sim);
 		}
