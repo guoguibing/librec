@@ -101,7 +101,7 @@ public class ItemKNN extends Recommender {
 		if (isRankingPred) {
 			// for recommendation task: item ranking
 
-			return Stats.sum(nns.values());
+			return Stats.mean(nns.values());
 		} else {
 			// for recommendation task: rating prediction
 
