@@ -34,7 +34,15 @@ import librec.data.SymmMatrix;
 import librec.intf.Recommender;
 
 /**
- * Item-based Collaborative Filtering
+ * <h3>Item-based Collaborative Filtering</h3>
+ * 
+ * <p>
+ * It supports both recommendation tasks: (1) rating prediction; and (2) item
+ * ranking (by configuring {@code isRankingPred=on} in the librec.conf). For
+ * item ranking, the returned score is the summation of the similarities of
+ * nearest neighbors (see Section 4.3.2 of Rendle et al., BPR: Bayesian
+ * Personalized Ranking from Implicit Feedback, UAI 2009).
+ * </p>
  * 
  * @author guoguibing
  * 
@@ -92,7 +100,7 @@ public class ItemKNN extends Recommender {
 
 		if (isRankingPred) {
 			// for recommendation task: item ranking
-			
+
 			return Stats.sum(nns.values());
 		} else {
 			// for recommendation task: rating prediction

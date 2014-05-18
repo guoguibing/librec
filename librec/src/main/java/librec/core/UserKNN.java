@@ -34,7 +34,14 @@ import librec.data.SymmMatrix;
 import librec.intf.Recommender;
 
 /**
- * User-based Collaborative Filtering
+ * <h3>User-based Collaborative Filtering</h3>
+ * 
+ * <p>
+ * It supports both recommendation tasks: (1) rating prediction; and (2) item
+ * ranking (by configuring {@code isRankingPred=on} in the librec.conf). For
+ * item ranking, the returned score is the summation of the similarities of
+ * nearest neighbors.
+ * </p>
  * 
  * @author guoguibing
  * 
@@ -92,11 +99,11 @@ public class UserKNN extends Recommender {
 
 		if (isRankingPred) {
 			// for item ranking
-			 
+
 			return Stats.sum(nns.values());
 		} else {
 			// for rating prediction
-			
+
 			double sum = 0, ws = 0;
 			for (Entry<Integer, Double> en : nns.entrySet()) {
 				int v = en.getKey();
