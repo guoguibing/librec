@@ -35,6 +35,7 @@ import librec.baseline.MostPopular;
 import librec.baseline.RandomGuess;
 import librec.baseline.UserAverage;
 import librec.core.BPMF;
+import librec.core.BPRMF;
 import librec.core.BiasedMF;
 import librec.core.CLiMF;
 import librec.core.ItemKNN;
@@ -244,6 +245,8 @@ public class LibRec {
 			return new TrustMF(trainMatrix, testMatrix, fold);
 		case "wrmf":
 			return new WRMF(trainMatrix, testMatrix, fold);
+		case "bprmf":
+			return new BPRMF(trainMatrix, testMatrix, fold);
 
 			/* extension */
 		case "nmf":
