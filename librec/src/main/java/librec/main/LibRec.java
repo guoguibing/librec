@@ -42,6 +42,7 @@ import librec.core.ItemKNN;
 import librec.core.PMF;
 import librec.core.RegSVD;
 import librec.core.SVDPlusPlus;
+import librec.core.SoRec;
 import librec.core.SocialMF;
 import librec.core.TrustMF;
 import librec.core.UserKNN;
@@ -208,7 +209,8 @@ public class LibRec {
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
-		/* baselines */
+		
+			/* baselines */
 		case "globalavg":
 			return new GlobalAverage(trainMatrix, testMatrix, fold);
 		case "useravg":
@@ -247,6 +249,8 @@ public class LibRec {
 			return new WRMF(trainMatrix, testMatrix, fold);
 		case "bprmf":
 			return new BPRMF(trainMatrix, testMatrix, fold);
+		case "sorec":
+			return new SoRec(trainMatrix, testMatrix, fold);
 
 			/* extension */
 		case "nmf":
