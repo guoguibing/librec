@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -77,44 +77,42 @@ public class SocialMF extends SocialRecommender {
 			}
 
 			// social regularization
-			if (regS != 0) {
-				for (int u = 0; u < numUsers; u++) {
-					SparseVector uv = socialMatrix.row(u);
-					int numConns = uv.getCount();
-					if (numConns == 0)
-						continue;
+			for (int u = 0; u < numUsers; u++) {
+				SparseVector uv = socialMatrix.row(u);
+				int numConns = uv.getCount();
+				if (numConns == 0)
+					continue;
 
-					double[] sumNNs = new double[numFactors];
-					for (int v : uv.getIndex()) {
+				double[] sumNNs = new double[numFactors];
+				for (int v : uv.getIndex()) {
+					for (int f = 0; f < numFactors; f++)
+						sumNNs[f] += socialMatrix.get(u, v) * P.get(v, f);
+				}
+
+				for (int f = 0; f < numFactors; f++) {
+					double diff = P.get(u, f) - sumNNs[f] / numConns;
+					PS.add(u, f, regS * diff);
+
+					loss += regS * diff * diff;
+				}
+
+				// those who trusted user u
+				SparseVector iuv = socialMatrix.column(u);
+				int numVs = iuv.getCount();
+				for (int v : iuv.getIndex()) {
+					double tvu = socialMatrix.get(v, u);
+
+					SparseVector vv = socialMatrix.row(v);
+					double[] sumDiffs = new double[numFactors];
+					for (int w : vv.getIndex()) {
 						for (int f = 0; f < numFactors; f++)
-							sumNNs[f] += socialMatrix.get(u, v) * P.get(v, f);
+							sumDiffs[f] += socialMatrix.get(v, w) * P.get(w, f);
 					}
 
-					for (int f = 0; f < numFactors; f++) {
-						double diff = P.get(u, f) - sumNNs[f] / numConns;
-						PS.add(u, f, regS * diff);
-
-						loss += regS * diff * diff;
-					}
-
-					// those who trusted user u
-					SparseVector iuv = socialMatrix.column(u);
-					int numVs = iuv.getCount();
-					for (int v : iuv.getIndex()) {
-						double tvu = socialMatrix.get(v, u);
-
-						SparseVector vv = socialMatrix.row(v);
-						double[] sumDiffs = new double[numFactors];
-						for (int w : vv.getIndex()) {
-							for (int f = 0; f < numFactors; f++)
-								sumDiffs[f] += socialMatrix.get(v, w) * P.get(w, f);
-						}
-
-						numConns = vv.getCount();
-						if (numConns > 0)
-							for (int f = 0; f < numFactors; f++)
-								PS.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns)); 
-					}
+					numConns = vv.getCount();
+					if (numConns > 0)
+						for (int f = 0; f < numFactors; f++)
+							PS.add(u, f, -regS * (tvu / numVs) * (P.get(v, f) - sumDiffs[f] / numConns));
 				}
 			}
 

@@ -333,9 +333,6 @@ public abstract class Recommender implements Runnable {
 			break;
 		}
 
-		// if (Double.isNaN(sim))
-		//	sim = 0.0; // return as it is without such pre-processing
-
 		// shrink to account for vector size
 		if (!Double.isNaN(sim)) {
 			int n = is.size();
