@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -20,9 +20,11 @@ package librec.data;
 
 import happy.coding.math.Stats;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.HashBasedTable;
@@ -402,6 +404,25 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	}
 
 	/**
+	 * @return a list of rows which have at least one non-empty entry
+	 */
+	public List<Integer> rowList() {
+		List<Integer> list = new ArrayList<>();
+
+		for (int row = 0; row < numRows; row++) {
+			for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
+				int col = colInd[j];
+				if (get(row, col) != 0.0) {
+					list.add(row);
+					break;
+				}
+			}
+		}
+
+		return list;
+	}
+
+	/**
 	 * get a col sparse vector of a matrix
 	 * 
 	 * @param col
@@ -458,6 +479,36 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 		return size;
+	}
+
+	/**
+	 * @return a list of columns which have at least one non-empty entry
+	 */
+	public List<Integer> columnList() {
+		List<Integer> list = new ArrayList<>();
+
+		for (int col = 0; col < numColumns; col++) {
+			if (isCCSUsed) {
+				for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+					int row = rowInd[j];
+					double val = get(row, col);
+					if (val != 0.0) {
+						list.add(col);
+						break;
+					}
+				}
+			} else {
+				for (int row = 0; row < numRows; row++) {
+					double val = get(row, col);
+					if (val != 0.0) {
+						list.add(col);
+						break;
+					}
+				}
+			}
+		}
+
+		return list;
 	}
 
 	/**
