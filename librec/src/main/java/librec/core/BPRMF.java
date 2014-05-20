@@ -30,6 +30,7 @@ import librec.intf.IterativeRecommender;
  * Rendle et al., <strong>BPR: Bayesian Personalized Ranking from Implicit
  * Feedback</strong>, UAI 2009.
  * 
+ * <p>This method aims to optimize the AUC measure.</p>
  * <p>
  * Related Work:
  * <ul>
