@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -21,7 +21,9 @@ package librec.data;
 import happy.coding.math.Stats;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Data Structure: Sparse Vector whose implementation is modified from M4J
@@ -313,6 +315,22 @@ public class SparseVector implements Iterable<VectorEntry> {
 				sb.append(String.format("%d\t%f\n", new Object[] { ve.index(), ve.get() }));
 
 		return sb.toString();
+	}
+
+	/**
+	 * @return a map of {index, data} of the sparse vector
+	 */
+	public Map<Integer, Double> toMap() {
+		Map<Integer, Double> map = new HashMap<>();
+		for (int i = 0; i < count; i++) {
+			int idx = index[i];
+			double val = data[i];
+
+			if (val != 0)
+				map.put(idx, val);
+		}
+
+		return map;
 	}
 
 }
