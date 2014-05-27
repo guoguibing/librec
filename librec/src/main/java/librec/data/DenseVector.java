@@ -137,7 +137,7 @@ public class DenseVector {
 	/**
 	 * Substract a value from entry [index]
 	 */
-	public void sub(int idx, double val) {
+	public void minus(int idx, double val) {
 		data[idx] -= val;
 	}
 
@@ -157,7 +157,7 @@ public class DenseVector {
 	 * @return a dense vector by substructing a value from all entries of
 	 *         current vector
 	 */
-	public DenseVector sub(double val) {
+	public DenseVector minus(double val) {
 
 		DenseVector result = new DenseVector(size);
 
@@ -200,7 +200,7 @@ public class DenseVector {
 	 * 
 	 * @return a dense vector with results of {@code c = a - b}
 	 */
-	public DenseVector sub(DenseVector vec) {
+	public DenseVector minus(DenseVector vec) {
 		assert size == vec.size;
 
 		DenseVector result = new DenseVector(size);

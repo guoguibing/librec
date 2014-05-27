@@ -479,6 +479,58 @@ public class DenseMatrix {
 	}
 
 	/**
+	 * Do {@code A + B} matrix operation
+	 * 
+	 * @return a matrix with results of {@code C = A + B}
+	 */
+	public DenseMatrix minus(DenseMatrix mat) {
+		assert numRows == mat.numRows;
+		assert numColumns == mat.numColumns;
+
+		DenseMatrix res = new DenseMatrix(numRows, numColumns);
+
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numColumns; j++)
+				res.data[i][j] = data[i][j] - mat.data[i][j];
+
+		return res;
+	}
+
+	/**
+	 * Do {@code A + B} matrix operation
+	 * 
+	 * @return a matrix with results of {@code C = A + B}
+	 */
+	public DenseMatrix minus(SparseMatrix mat) {
+		assert numRows == mat.numRows;
+		assert numColumns == mat.numColumns;
+
+		DenseMatrix res = this.clone();
+
+		for (MatrixEntry me : mat)
+			res.add(me.row(), me.column(), -me.get());
+
+		return res;
+	}
+
+	/**
+	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each
+	 * entries will be added by {@code c}
+	 * 
+	 * @return a new matrix with results of {@code C = A + c}
+	 */
+	public DenseMatrix minus(double val) {
+
+		DenseMatrix res = new DenseMatrix(numRows, numColumns);
+
+		for (int i = 0; i < numRows; i++)
+			for (int j = 0; j < numColumns; j++)
+				res.data[i][j] = data[i][j] - val;
+
+		return res;
+	}
+
+	/**
 	 * @return the Cholesky decomposition of the current matrix
 	 */
 	public DenseMatrix cholesky() {
@@ -525,13 +577,13 @@ public class DenseMatrix {
 
 		for (int i = 0; i < numColumns; i++) {
 			DenseVector xi = this.column(i);
-			xi = xi.sub(xi.mean());
+			xi = xi.minus(xi.mean());
 
 			mat.set(i, i, xi.inner(xi) / (xi.size - 1));
 
 			for (int j = i + 1; j < numColumns; j++) {
 				DenseVector yi = this.column(j);
-				double val = xi.inner(yi.sub(yi.mean())) / (xi.size - 1);
+				double val = xi.inner(yi.minus(yi.mean())) / (xi.size - 1);
 
 				mat.set(i, j, val);
 				mat.set(j, i, val);

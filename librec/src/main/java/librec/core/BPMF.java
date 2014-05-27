@@ -98,7 +98,7 @@ public class BPMF extends IterativeRecommender {
 				x_bar.set(f, P.columnMean(f));
 			S_bar = P.cov();
 
-			DenseVector mu0_u_x_bar = mu0_u.sub(x_bar);
+			DenseVector mu0_u_x_bar = mu0_u.minus(x_bar);
 			DenseMatrix e1e2 = mu0_u_x_bar.outer(mu0_u_x_bar).scale(M * b0_u / (b0_u + M + 0.0));
 			WI_post = WI_u.inv().add(S_bar.scale(M)).add(e1e2);
 			WI_post = WI_post.inv();
@@ -125,7 +125,7 @@ public class BPMF extends IterativeRecommender {
 				x_bar.set(f, Q.columnMean(f));
 			S_bar = Q.cov();
 
-			DenseVector mu0_m_x_bar = mu0_m.sub(x_bar);
+			DenseVector mu0_m_x_bar = mu0_m.minus(x_bar);
 			DenseMatrix e3e4 = mu0_m_x_bar.outer(mu0_m_x_bar).scale(N * b0_m / (b0_m + N + 0.0));
 			WI_post = WI_m.inv().add(S_bar.scale(N)).add(e3e4);
 			WI_post = WI_post.inv();
