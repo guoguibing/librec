@@ -116,37 +116,6 @@ public class DataDAO {
 	}
 
 	/**
-	 * Convert a data file separated by {@code sep} to a data file separated by
-	 * {@code toSep}
-	 * 
-	 * @param sep
-	 *            separator of the source file
-	 * @param toSep
-	 *            separtor of the target file
-	 */
-	public void convert(String sep, String toSep) throws Exception {
-		BufferedReader br = FileIO.getReader(dataPath);
-
-		String line = null;
-		List<String> lines = new ArrayList<>();
-		while ((line = br.readLine()) != null) {
-			String newline = line.replaceAll(sep, toSep);
-
-			lines.add(newline);
-
-			if (lines.size() >= 1000) {
-				FileIO.writeList(dataPath + "-converted", lines, null, true);
-				lines.clear();
-			}
-		}
-
-		if (lines.size() > 0)
-			FileIO.writeList(dataPath + "-converted", lines, null, true);
-
-		br.close();
-	}
-
-	/**
 	 * Default relevant columns {0: user column, 1: item column, 2: rate
 	 * column}; otherwise try {@code readData(int[] rels)}
 	 * 

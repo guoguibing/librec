@@ -467,7 +467,7 @@ public abstract class Recommender implements Runnable {
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
-			
+
 			// get overall MAE and RMSE -- not preferred for ranking
 			for (Integer j : tv.getIndex()) {
 				// intersect with the candidate items
@@ -570,6 +570,38 @@ public abstract class Recommender implements Runnable {
 		}
 
 		return pred;
+	}
+
+	/**
+	 * Convert a rating (given by user {@code u} on item {@code j}) into a
+	 * binary value, useful for the task of item ranking
+	 * 
+	 * @param u
+	 *            user id
+	 * @param j
+	 *            item id
+	 * @param ruj
+	 *            rating value
+	 * 
+	 * @return a binarized rating value
+	 */
+	protected double binary(int u, int j, double ruj) {
+		return ruj > 0 ? 1 : 0;
+	}
+
+	/**
+	 * Convert a rating (given by user {@code u} on item {@code j}) into a
+	 * binary value, useful for the task of item ranking
+	 * 
+	 * @param u
+	 *            user id
+	 * @param j
+	 *            item id
+	 * 
+	 * @return a binarized rating value
+	 */
+	protected double binary(int u, int j) {
+		return binary(u, j, trainMatrix.get(u, j));
 	}
 
 	/**
