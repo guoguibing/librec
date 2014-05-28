@@ -16,7 +16,7 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.core;
+package librec.ranking;
 
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;

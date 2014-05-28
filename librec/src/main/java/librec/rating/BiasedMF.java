@@ -16,26 +16,41 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.core;
+package librec.rating;
 
+import librec.data.DenseMatrix;
+import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
 
 /**
- * Regularized SVD: <em>Arkadiusz Paterek, Improving Regularized Singular Value
- * Decomposition Collaborative Filtering, Proceedings of KDD Cup and Workshop,
- * 2007.</em>
+ * Biased Matrix Factorization Models. <br/>
+ * 
+ * NOTE: To have more control on learning, you can add additional regularation
+ * parameters to user/item biases. For simplicity, we do not do this.
  * 
  * @author guoguibing
  * 
  */
-public class RegSVD extends IterativeRecommender {
+public class BiasedMF extends IterativeRecommender {
 
-	public RegSVD(SparseMatrix rm, SparseMatrix tm, int fold) {
+	public BiasedMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
-		algoName = "RegSVD";
+		algoName = "BiasedMF";
+	}
+
+	protected void initModel() {
+
+		super.initModel();
+
+		userBiases = new DenseVector(numUsers);
+		itemBiases = new DenseVector(numItems);
+
+		// initialize user bias
+		userBiases.init(initMean, initStd);
+		itemBiases.init(initMean, initStd);
 	}
 
 	@Override
@@ -61,6 +76,18 @@ public class RegSVD extends IterativeRecommender {
 				loss += euj * euj;
 
 				// update factors
+				double bu = userBiases.get(u);
+				double sgd = euj - regU * bu;
+				userBiases.add(u, lRate * sgd);
+
+				loss += regU * bu * bu;
+
+				double bj = itemBiases.get(j);
+				sgd = euj - regI * bj;
+				itemBiases.add(j, lRate * sgd);
+
+				loss += regI * bj * bj;
+
 				for (int f = 0; f < numFactors; f++) {
 					double puf = P.get(u, f);
 					double qjf = Q.get(j, f);
@@ -84,6 +111,10 @@ public class RegSVD extends IterativeRecommender {
 
 		}// end of training
 
+	}
+
+	protected double predict(int u, int j) {
+		return globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 
 }

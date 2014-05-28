@@ -16,7 +16,7 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.core;
+package librec.ranking;
 
 import java.util.ArrayList;
 import java.util.HashMap;
