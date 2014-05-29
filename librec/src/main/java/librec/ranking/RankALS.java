@@ -50,7 +50,7 @@ public class RankALS extends IterativeRecommender {
 	private double sum_s;
 
 	// threshold to binarize a rating
-	private double binaryHold;
+	protected double binaryHold;
 
 	public RankALS(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -203,8 +203,8 @@ public class RankALS extends IterativeRecommender {
 	/**
 	 * transform a real-valued rating into binary one
 	 */
-	protected double binary(int u, int j, double rui) {
-		return rui >= binaryHold ? 1 : 0;
+	protected double binary(int u, int j, double ruj) {
+		return ruj >= binaryHold ? 1 : 0;
 	}
 
 	@Override
