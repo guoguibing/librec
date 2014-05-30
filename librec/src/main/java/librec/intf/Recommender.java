@@ -438,10 +438,6 @@ public abstract class Recommender implements Runnable {
 		List<Double> rmses = new ArrayList<>();
 
 		// candidate items: here only training items
-//		Set<Integer> candItems = new HashSet<>();
-//		for (Integer j : trainMatrix.getColumnIndices())
-//			candItems.add(j);
-		
 		List<Integer> candItems = trainMatrix.columns();
 
 		if (verbose)
