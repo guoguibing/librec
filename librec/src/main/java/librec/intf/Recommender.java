@@ -316,7 +316,12 @@ public abstract class Recommender implements Runnable {
 		double sim = 0;
 		switch (method.toLowerCase()) {
 		case "cos":
+			// for real ratings
 			sim = Sims.cos(is, js);
+			break;
+		case "cos-binary":
+			// for binary ratings
+			sim = iv.inner(jv) / (Math.sqrt(iv.inner(iv)) * Math.sqrt(jv.inner(jv)));
 			break;
 		case "msd":
 			sim = Sims.msd(is, js);
