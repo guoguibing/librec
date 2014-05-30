@@ -61,7 +61,7 @@ public class RSTE extends SocialRecommender {
 			DenseMatrix QS = new DenseMatrix(numItems, numFactors);
 
 			// ratings
-			for (int u : trainMatrix.rowList()) {
+			for (int u : trainMatrix.rows()) {
 
 				SparseVector tu = socialMatrix.row(u);
 				int[] tks = tu.getIndex();
@@ -117,7 +117,7 @@ public class RSTE extends SocialRecommender {
 			}
 
 			// social
-			for (int u : socialMatrix.columnList()) {
+			for (int u : socialMatrix.columns()) {
 
 				SparseVector bu = socialMatrix.column(u);
 				for (int p : bu.getIndex()) {

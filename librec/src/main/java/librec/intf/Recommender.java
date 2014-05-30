@@ -32,10 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import librec.data.DataDAO;
@@ -440,9 +438,11 @@ public abstract class Recommender implements Runnable {
 		List<Double> rmses = new ArrayList<>();
 
 		// candidate items: here only training items
-		Set<Integer> candItems = new HashSet<>();
-		for (Integer j : trainMatrix.getColumnIndices())
-			candItems.add(j);
+//		Set<Integer> candItems = new HashSet<>();
+//		for (Integer j : trainMatrix.getColumnIndices())
+//			candItems.add(j);
+		
+		List<Integer> candItems = trainMatrix.columns();
 
 		if (verbose)
 			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());

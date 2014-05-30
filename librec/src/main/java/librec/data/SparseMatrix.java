@@ -430,7 +430,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	/**
 	 * @return a list of rows which have at least one non-empty entry
 	 */
-	public List<Integer> rowList() {
+	public List<Integer> rows() {
 		List<Integer> list = new ArrayList<>();
 
 		for (int row = 0; row < numRows; row++) {
@@ -445,7 +445,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		return list;
 	}
-
+	
 	/**
 	 * get a col sparse vector of a matrix
 	 * 
@@ -541,7 +541,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	/**
 	 * @return a list of columns which have at least one non-empty entry
 	 */
-	public List<Integer> columnList() {
+	public List<Integer> columns() {
 		List<Integer> list = new ArrayList<>();
 
 		for (int col = 0; col < numColumns; col++) {

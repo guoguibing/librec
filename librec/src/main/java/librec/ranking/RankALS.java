@@ -81,7 +81,7 @@ public class RankALS extends IterativeRecommender {
 		for (int iter = 1; iter < maxIters; iter++) {
 
 			if (verbose)
-				Logs.debug("{} {} runs at iteration {}/{}", algoName, foldInfo, iter, maxIters);
+				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo, iter, maxIters);
 
 			// P step: update user vectors
 			DenseVector sum_sq = new DenseVector(numFactors);
@@ -95,7 +95,7 @@ public class RankALS extends IterativeRecommender {
 				sum_sqq = sum_sqq.add(qj.outer(qj).scale(sj));
 			}
 
-			List<Integer> cus = trainMatrix.rowList(); // list of users with $c_ui=1$
+			List<Integer> cus = trainMatrix.rows(); // list of users with $c_ui=1$
 			for (int u : cus) {
 				// for each user
 				DenseMatrix sum_cqq = new DenseMatrix(numFactors, numFactors);
