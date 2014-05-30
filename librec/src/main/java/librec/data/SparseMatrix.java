@@ -376,9 +376,8 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
 			int col = colInd[j];
 			double val = get(row, col);
-			if (val != 0.0) {
-				zeros.remove(col);
-			}
+			if (val != 0.0)
+				zeros.remove((Integer) col); // to remove elements rather than index
 		}
 
 		return zeros;
@@ -497,13 +496,13 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 				int row = rowInd[j];
 				double val = get(row, col);
 				if (val != 0.0)
-					zeros.remove(row);
+					zeros.remove((Integer) row); // force cast is important here as we intend to remove the element rather than the index
 			}
 		} else {
 			for (int row = 0; row < numRows; row++) {
 				double val = get(row, col);
 				if (val != 0.0)
-					zeros.remove(row);
+					zeros.remove((Integer) row);
 			}
 		}
 
