@@ -370,12 +370,15 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	public List<Integer> rowZeros(int row) {
 
 		List<Integer> zeros = new ArrayList<>();
+		for (int j = 0; j < numColumns; j++)
+			zeros.add(j);
 
 		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
 			int col = colInd[j];
 			double val = get(row, col);
-			if (val == 0.0)
-				zeros.add(col);
+			if (val != 0.0) {
+				zeros.remove(col);
+			}
 		}
 
 		return zeros;
@@ -486,18 +489,21 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		List<Integer> zeros = new ArrayList<>();
 
+		for (int u = 0; u < numRows; u++)
+			zeros.add(u);
+
 		if (isCCSUsed) {
 			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
 				int row = rowInd[j];
 				double val = get(row, col);
-				if (val == 0.0)
-					zeros.add(row);
+				if (val != 0.0)
+					zeros.remove(row);
 			}
 		} else {
 			for (int row = 0; row < numRows; row++) {
 				double val = get(row, col);
-				if (val == 0.0)
-					zeros.add(row);
+				if (val != 0.0)
+					zeros.remove(row);
 			}
 		}
 
