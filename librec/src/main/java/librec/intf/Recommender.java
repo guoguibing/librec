@@ -590,18 +590,21 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Convert a rating (given by user {@code u} on item {@code j}) into a
-	 * binary value, useful for the task of item ranking
 	 * 
-	 * @param u
-	 *            user id
-	 * @param j
-	 *            item id
+	 * Binarize a given matrix by applying the {@link binary(int, int, double)}
+	 * method. Note that the given matrix will be changed directly.
 	 * 
-	 * @return a binarized rating value
+	 * @param mat
+	 *            a given matrix to be binarized
 	 */
-	protected double binary(int u, int j) {
-		return binary(u, j, trainMatrix.get(u, j));
+	protected void binary(SparseMatrix mat) {
+		for (MatrixEntry me : mat) {
+			int u = me.row();
+			int j = me.column();
+			double ruj = me.get();
+
+			me.set(binary(u, j, ruj));
+		}
 	}
 
 	/**
