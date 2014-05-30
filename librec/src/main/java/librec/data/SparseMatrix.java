@@ -360,6 +360,28 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	}
 
 	/**
+	 * get a list of entries (for a specific row) with values 0
+	 * 
+	 * @param row
+	 *            row id
+	 * @return a list of entries
+	 * 
+	 */
+	public List<Integer> rowZeros(int row) {
+
+		List<Integer> zeros = new ArrayList<>();
+
+		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
+			int col = colInd[j];
+			double val = get(row, col);
+			if (val == 0.0)
+				zeros.add(col);
+		}
+
+		return zeros;
+	}
+
+	/**
 	 * get a row sparse vector of a matrix
 	 * 
 	 * @param row
@@ -450,6 +472,36 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		}
 
 		return sv;
+	}
+
+	/**
+	 * get a list of entries (for a specific column) with values 0
+	 * 
+	 * @param col
+	 *            column id
+	 * @return a list of entries
+	 * 
+	 */
+	public List<Integer> columnZeros(int col) {
+
+		List<Integer> zeros = new ArrayList<>();
+
+		if (isCCSUsed) {
+			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+				int row = rowInd[j];
+				double val = get(row, col);
+				if (val == 0.0)
+					zeros.add(row);
+			}
+		} else {
+			for (int row = 0; row < numRows; row++) {
+				double val = get(row, col);
+				if (val == 0.0)
+					zeros.add(row);
+			}
+		}
+
+		return zeros;
 	}
 
 	/**
