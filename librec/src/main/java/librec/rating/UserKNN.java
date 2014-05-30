@@ -101,7 +101,7 @@ public class UserKNN extends Recommender {
 			List<KeyValPair<Integer>> subset = sorted.subList(0, knn);
 			nns.clear();
 			for (KeyValPair<Integer> kv : subset)
-				nns.put(kv.getKey(), kv.getVal().doubleValue());
+				nns.put(kv.getKey(), kv.getValue());
 		}
 
 		if (nns.size() == 0)
