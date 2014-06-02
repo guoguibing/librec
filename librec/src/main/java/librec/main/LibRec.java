@@ -183,9 +183,10 @@ public class LibRec {
 	private static void runGiven() throws Exception {
 
 		DataSplitter ds = new DataSplitter(rateMatrix);
-		int n = cf.getInt("num.given");
+		int n = cf.getInt("num.given.n");
+		double ratio = cf.getDouble("val.given.ratio");
 
-		Recommender algo = getRecommender(ds.getGiven(n), -1);
+		Recommender algo = getRecommender(ds.getGiven(n > 0 ? n : ratio), -1);
 		algo.execute();
 
 		printEvalInfo(algo, algo.measures);
@@ -300,9 +301,12 @@ public class LibRec {
 				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
 
 		float ratio = (float) cf.getDouble("val.ratio");
-		int given = cf.getInt("num.given");
-		String cvInfo = cf.isOn("is.cross.validation") ? cv : (ratio > 0 ? "ratio: " + ratio : "given: " + given);
-
+		int givenN = cf.getInt("num.given.n");
+		float givenRatio = cf.getFloat("val.given.ratio");
+		
+		String cvInfo = cf.isOn("is.cross.validation") ? cv : (ratio > 0 ? "ratio: " + ratio : "given: "
+				+ (givenN > 0 ? givenN : givenRatio));
+		
 		String testPath = cf.getPath("dataset.testing");
 		boolean isTestingFlie = !testPath.equals("-1");
 		String mode = isTestingFlie ? String.format("Testing:: %s.", Strings.last(testPath, 38)) : cvInfo;

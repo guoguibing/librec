@@ -112,7 +112,7 @@ public class DataSplitter {
 	 * Split ratings into two parts: (1-ratio) training, (ratio) testing data
 	 * 
 	 * @param ratio
-	 *            the ratio of testing data over all the ratings.
+	 *            the ratio of training data over all the ratings.
 	 */
 	public SparseMatrix[] getRatio(double ratio) {
 
@@ -130,9 +130,9 @@ public class DataSplitter {
 
 				double rdm = Math.random();
 				if (rdm < ratio)
-					trainMatrix.set(u, j, 0.0);
-				else
 					testMatrix.set(u, j, 0.0);
+				else
+					trainMatrix.set(u, j, 0.0);
 			}
 		}
 
@@ -164,22 +164,72 @@ public class DataSplitter {
 			int numRated = uv.getCount();
 
 			if (numRated > numGiven) {
-				int[] ratedIndex = uv.getIndex();
+				// a set of rated items
+				int[] ratedItems = uv.getIndex();
+
+				// a set of sampled indices of rated items
 				int[] givenIndex = Randoms.nextNoRepeatIntArray(numGiven, numRated);
-				for (int i = 0, j = 0; j < ratedIndex.length; j++) {
+				
+				for (int i = 0, j = 0; j < ratedItems.length; j++) {
 					if (i < givenIndex.length && givenIndex[i] == j) {
 						// for training
-						testMatrix.set(u, ratedIndex[j], 0.0);
+						testMatrix.set(u, ratedItems[j], 0.0);
 						i++;
 					} else {
 						// for testing
-						trainMatrix.set(u, ratedIndex[j], 0.0);
+						trainMatrix.set(u, ratedItems[j], 0.0);
 					}
 				}
 			} else {
 				// all ratings are used for training
 				for (VectorEntry ve : uv)
 					testMatrix.set(u, ve.index(), 0.0);
+			}
+
+		}
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts: the training set consisting of user-item
+	 * ratings where {@code numGiven} ratings are preserved for each user, and
+	 * the rest are used as the testing data
+	 * 
+	 * @param numGiven
+	 *            the number of ratings given to each user
+	 */
+	public SparseMatrix[] getGiven(double ratio) throws Exception {
+
+		assert ratio > 0 && ratio < 1;
+
+		// keep both CRS and CCS for training matrix
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		// keep only CRS for testing matrix
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+
+		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
+
+			SparseVector uv = rateMatrix.row(u);
+			int numRated = uv.getCount();
+
+			// a set of rated items
+			int[] ratedItems = uv.getIndex();
+
+			// a set of sampled indices of rated items
+			int[] givenIndex = Randoms.nextNoRepeatIntArray((int) (numRated * ratio), numRated);
+
+			for (int i = 0, j = 0; j < ratedItems.length; j++) {
+				if (i < givenIndex.length && givenIndex[i] == j) {
+					// for training
+					testMatrix.set(u, ratedItems[j], 0.0);
+					i++;
+				} else {
+					// for testing
+					trainMatrix.set(u, ratedItems[j], 0.0);
+				}
 			}
 
 		}
