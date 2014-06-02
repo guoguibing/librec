@@ -142,6 +142,54 @@ public class DataSplitter {
 	}
 
 	/**
+	 * Split ratings into two parts: the training set consisting of user-item
+	 * ratings where {@code numGiven} ratings are preserved for each user, and
+	 * the rest are used as the testing data
+	 * 
+	 * @param numGiven
+	 *            the number of ratings given to each user
+	 */
+	public SparseMatrix[] getGiven(int numGiven) throws Exception {
+
+		assert numGiven > 0;
+
+		// keep both CRS and CCS for training matrix
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		// keep only CRS for testing matrix
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+
+		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
+
+			SparseVector uv = rateMatrix.row(u);
+			int numRated = uv.getCount();
+
+			if (numRated > numGiven) {
+				int[] ratedIndex = uv.getIndex();
+				int[] givenIndex = Randoms.nextNoRepeatIntArray(numGiven, numRated);
+				for (int i = 0, j = 0; j < ratedIndex.length; j++) {
+					if (i < givenIndex.length && givenIndex[i] == j) {
+						// for training
+						testMatrix.set(u, ratedIndex[j], 0.0);
+						i++;
+					} else {
+						// for testing
+						trainMatrix.set(u, ratedIndex[j], 0.0);
+					}
+				}
+			} else {
+				// all ratings are used for training
+				for (VectorEntry ve : uv)
+					testMatrix.set(u, ve.index(), 0.0);
+			}
+
+		}
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
 	 * generate a random sample of rate matrix with specified number of users
 	 * and items
 	 * 

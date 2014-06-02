@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
@@ -77,6 +78,30 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	 */
 	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable) {
 		this(rows, cols, dataTable, null);
+	}
+
+	/**
+	 * Construct a sparse matrix with CRS structures (CCS structure optional).
+	 * 
+	 * @deprecated I don't recommend to use this method as it (takes time and)
+	 *             is better to constructe the column structure at the time when
+	 *             you construct the row structure (of data table). This method
+	 *             is put here (as an example) to show how to construct column
+	 *             structure according to the data table.
+	 */
+	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, boolean isCCSUsed) {
+		numRows = rows;
+		numColumns = cols;
+
+		Multimap<Integer, Integer> colMap = null;
+
+		if (isCCSUsed) {
+			colMap = HashMultimap.create();
+			for (Cell<Integer, Integer, Double> cell : dataTable.cellSet())
+				colMap.put(cell.getColumnKey(), cell.getRowKey());
+		}
+
+		construct(dataTable, colMap);
 	}
 
 	/**
@@ -445,7 +470,7 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 
 		return list;
 	}
-	
+
 	/**
 	 * get a col sparse vector of a matrix
 	 * 
