@@ -715,6 +715,13 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
+	 * Below are a set of mathematical functions. As many recommenders often
+	 * adopts them, for conveniency's sake, we put these functions in the base
+	 * Recommender class, though they belong to Math class.
+	 * 
+	 */
+
+	/**
 	 * logistic function g(x)
 	 */
 	protected double g(double x) {
@@ -726,6 +733,21 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected double gd(double x) {
 		return g(x) * g(-x);
+	}
+
+	/**
+	 * @param x
+	 *            input value
+	 * @param mu
+	 *            mean of normal distribution
+	 * @param sigma
+	 *            standard deviation of normation distribution
+	 * 
+	 * @return a gaussian value with mean {@code mu} and standard deviation
+	 *         {@code sigma};
+	 */
+	protected double gaussian(double x, double mu, double sigma) {
+		return Math.exp(-0.5 * Math.pow(x - mu, 2) / (sigma * sigma));
 	}
 
 	/**
