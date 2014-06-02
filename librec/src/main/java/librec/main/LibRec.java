@@ -39,6 +39,7 @@ import librec.data.DataSplitter;
 import librec.data.SparseMatrix;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
+import librec.ext.PD;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
@@ -287,6 +288,8 @@ public class LibRec {
 			return new Hybrid(trainMatrix, testMatrix, fold);
 		case "slopeone":
 			return new SlopeOne(trainMatrix, testMatrix, fold);
+		case "pd":
+			return new PD(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");
