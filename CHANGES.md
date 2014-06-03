@@ -11,6 +11,17 @@
   * Given N: For each user, N ratings will be preserved as training set, while the rest are used as test set. 
   * Given ratio: Similarly as Given N, a ratio of users' ratings will be used for training and others for testing. 
   * val.ratio: Its meaning is changed to the ratio of data for training, rather than the ratio of data for testing.
+* Data Structure:
+  * DiagMatrix: diagonal matrix added
+  * DataConvertor: is added to convert data files from one format to our supporting formats. 
+  * A number of enhancement functions are added to matrix, vector class
+* Package Refactor:
+  * Package *librec.core* is split into two packages: 
+    * librec.rating: algorithms for rating predictions; supporting rating-based item ranking. 
+    * librec.ranking: algorithms for item ranking. 
+* Others
+  * Code improved
+  * Some bugs fixed
 
 ### librec-v1.0
 
