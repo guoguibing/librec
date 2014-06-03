@@ -1,4 +1,4 @@
-## LibRec Changes 
+## The Changes of the LibRec Library
 
 ### librec-v1.1
 
