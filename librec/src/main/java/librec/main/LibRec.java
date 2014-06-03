@@ -37,6 +37,7 @@ import librec.baseline.UserAverage;
 import librec.data.DataDAO;
 import librec.data.DataSplitter;
 import librec.data.SparseMatrix;
+import librec.ext.AR;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
 import librec.ext.PD;
@@ -290,6 +291,8 @@ public class LibRec {
 			return new SlopeOne(trainMatrix, testMatrix, fold);
 		case "pd":
 			return new PD(trainMatrix, testMatrix, fold);
+		case "ar":
+			return new AR(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");
