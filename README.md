@@ -22,7 +22,7 @@ The references for all the algorithms are summarized [here](http://trust.sce.ntu
 
 ### Download
 
-The first version of the LibRec library is available to [download](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip) now.  New version (v1.1) is under development, will be released in the near future. 
+The first version of the LibRec library is available to [download](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip) now.  New version (v1.1) is under development, and will be released in the near future. 
 
 ### GPL License
 
