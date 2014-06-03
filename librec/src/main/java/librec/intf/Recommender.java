@@ -41,6 +41,7 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.SymmMatrix;
+import librec.data.VectorEntry;
 
 import com.google.common.base.Stopwatch;
 
@@ -437,13 +438,13 @@ public abstract class Recommender implements Runnable {
 		List<Double> maes = new ArrayList<>();
 		List<Double> rmses = new ArrayList<>();
 
-		// candidate items: here only training items
+		// candidate items for all users: here only training items
 		List<Integer> candItems = trainMatrix.columns();
 
 		if (verbose)
 			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
 
-		// ignore items: most popular items
+		// ignore items for all users: most popular items
 		if (numIgnore > 0) {
 			List<Integer> ignoreItems = new ArrayList<>();
 
@@ -465,6 +466,9 @@ public abstract class Recommender implements Runnable {
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
+			// make a copy: candidate items for each user
+			List<Integer> pCandItems = new ArrayList<>(candItems);
+
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
@@ -472,7 +476,7 @@ public abstract class Recommender implements Runnable {
 			// get overall MAE and RMSE -- not preferred for ranking
 			for (Integer j : tv.getIndex()) {
 				// intersect with the candidate items
-				if (candItems.contains(j))
+				if (pCandItems.contains(j))
 					correctItems.add(j);
 
 				double pred = predict(u, j, true);
@@ -487,18 +491,29 @@ public abstract class Recommender implements Runnable {
 			if (correctItems.size() == 0)
 				continue; // no testing data for user u
 
-			// get rated items from training data
+			// remove rated items from candidate items
 			SparseVector rv = trainMatrix.row(u);
-			List<Integer> ratedItems = new ArrayList<>();
-			for (Integer j : rv.getIndex()) {
-				if (candItems.contains(j))
-					ratedItems.add(j);
-			}
-			// number of candidate items for this user
-			int numCand = candItems.size() - ratedItems.size();
+			for (VectorEntry ve : rv)
+				pCandItems.remove((Integer) ve.index());
 
-			// predicted items: no repeated items that has been rated by user u
-			List<Integer> rankedItems = ranking(u, candItems, ratedItems);
+			// number of candidate items for this user
+			int numCand = pCandItems.size();
+
+			// predict the ranking scores of all candidate items
+			Map<Integer, Double> itemScores = ranking(u, pCandItems);
+
+			// order the ranking scores from highest to lowest
+			List<Integer> rankedItems = new ArrayList<>();
+			if (itemScores.size() > 0) {
+
+				List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores, true);
+				List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted.subList(
+						0, numRecs);
+
+				for (KeyValPair<Integer> kv : recomd)
+					rankedItems.add(kv.getKey());
+			}
+
 			if (rankedItems.size() == 0)
 				continue; // no recommendations available for user u
 
@@ -645,34 +660,18 @@ public abstract class Recommender implements Runnable {
 	 *            user id
 	 * @param candItems
 	 *            candidate items
-	 * @param ignoreItems
-	 *            items to be ignored from candidate items
-	 * @return a list of ranked items
+	 * @return a map of {item, ranking scores}
 	 */
-	protected List<Integer> ranking(int u, Collection<Integer> candItems, Collection<Integer> ignoreItems) {
+	protected Map<Integer, Double> ranking(int u, Collection<Integer> candItems) {
 
-		List<Integer> items = new ArrayList<>();
-
-		Map<Integer, Double> itemScores = new HashMap<>();
+		Map<Integer, Double> itemRanks = new HashMap<>();
 		for (Integer j : candItems) {
-			if (!ignoreItems.contains(j)) {
-				double rank = ranking(u, j);
-				if (!Double.isNaN(rank))
-					itemScores.put(j, rank);
-			}
+			double rank = ranking(u, j);
+			if (!Double.isNaN(rank))
+				itemRanks.put(j, rank);
 		}
 
-		if (itemScores.size() > 0) {
-
-			List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores, true);
-			List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted.subList(0,
-					numRecs);
-
-			for (KeyValPair<Integer> kv : recomd)
-				items.add(kv.getKey());
-		}
-
-		return items;
+		return itemRanks;
 	}
 
 	/**

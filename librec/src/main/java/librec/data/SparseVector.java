@@ -157,13 +157,24 @@ public class SparseVector implements Iterable<VectorEntry> {
 	 * @return inner product with a given sparse vector
 	 */
 	public double inner(SparseVector vec) {
-		double result = 0;
+		double res = 0;
 		for (int idx : this.getIndex()) {
 			if (vec.contains(idx))
-				result += get(idx) * vec.get(idx);
+				res += get(idx) * vec.get(idx);
 		}
 
-		return result;
+		return res;
+	}
+
+	/**
+	 * @return inner product with a given dense vector
+	 */
+	public double inner(DenseVector vec) {
+		double res = 0;
+		for (int idx : this.getIndex()) 
+			res += get(idx) * vec.get(idx);
+
+		return res;
 	}
 
 	/**
