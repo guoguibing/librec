@@ -30,14 +30,15 @@ import librec.data.VectorEntry;
 import librec.intf.Recommender;
 
 /**
- * Simple Association Rule Recommender
+ * 
+ * Choonho Kim and Juntae Kim, <strong>A Recommendation Algorithm Using
+ * Multi-Level Association Rules</strong>, WI 2003.
  * 
  * <p>
- * Related Work:
- * <ul>
- * <li>Choonho Kim and Juntae Kim, A Recommendation Algorithm Using Multi-Level
- * Association Rules, WI 2003.</li>
- * </ul>
+ * Simple Association Rule Recommender: we do not consider the item categories
+ * (or multi levels) used in the original paper. Besides, we consider all
+ * association rules without ruling out weak ones (by setting high support and
+ * confidence threshold).
  * </p>
  * 
  * @author guoguibing
