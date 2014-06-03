@@ -1,7 +1,7 @@
 LibRec
 ======
 
-**LibRec** is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art and up-to-date recommendation algorithms. It consists of three major components: **interfaces**, **data structures** and **recommendation algorithms**. To learn more, check out the [home page](http://trust.sce.ntu.edu.sg/~gguo1/librec/), or look into a simple [tutorial](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html). 
+**LibRec** is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art and up-to-date recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. To learn more, check out the [home page](http://trust.sce.ntu.edu.sg/~gguo1/librec/), or look into the detailed [tutorial](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html). 
 
 
 ### Features
@@ -9,17 +9,20 @@ LibRec
 * **Cross-platform:** as a Java software, LibRec can be easily deployed and executed in any platforms, including MS Windows, Linux and Mac OS.
 * **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/).
 * **Easy configuration:** LibRec configs recommenders using a configuration file: *librec.conf*. Click [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#config) to check out the details.
-* **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
+* **Flexible expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
 
 ### Algorithms
 
 * **Baseline**: GlobalAvg, UserAvg, ItemAvg, Random, Constant, MostPop
-* **Core**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, CLiMF, BPMF, SocialMF, TrustMF, WRMF
-* **Extension**: NMF, SlopeOne, Hybrid
+* **Rating Prediction**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, BPMF, SocialMF, TrustMF, SoRec, SoReg, RSTE
+* **Item Ranking**: BPRMF, CLiMF, RankALS, WRMF
+* **Extension**: NMF, SlopeOne, Hybrid, PD, AR
+
+The references for all the algorithms are summarized [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#algo)
 
 ### Download
 
-The first version of the LibRec library is available to [download](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip) now. 
+The first version of the LibRec library is available to [download](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip) now.  New version (v1.1) is under development, will be released in the near future. 
 
 ### GPL License
 
