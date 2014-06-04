@@ -49,9 +49,6 @@ public class RankALS extends IterativeRecommender {
 
 	private double sum_s;
 
-	// threshold to binarize a rating
-	protected double binaryHold;
-
 	public RankALS(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
@@ -63,8 +60,7 @@ public class RankALS extends IterativeRecommender {
 	protected void initModel() {
 		super.initModel();
 
-		isSupportWeight = cf.isOn("RankALS.is.support.weight");
-		binaryHold = cf.getDouble("RankALS.binary.threshold");
+		isSupportWeight = cf.isOn("RankALS.is.sw");
 
 		s = new DenseVector(numItems);
 		sum_s = 0;
@@ -200,15 +196,8 @@ public class RankALS extends IterativeRecommender {
 		}
 	}
 
-	/**
-	 * transform a real-valued rating into binary one
-	 */
-	protected double binary(int u, int j, double ruj) {
-		return ruj >= binaryHold ? 1 : 0;
-	}
-
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binaryHold, isSupportWeight, maxIters }, ",");
+		return Strings.toString(new Object[] { binThold, isSupportWeight, maxIters }, ",");
 	}
 }
