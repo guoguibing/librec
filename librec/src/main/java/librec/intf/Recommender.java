@@ -84,6 +84,8 @@ public abstract class Recommender implements Runnable {
 	protected static double maxRate, minRate;
 	// init mean and standard deviation
 	protected static double initMean, initStd;
+	// threshold to convert a real rating into a binary rating
+	protected static double binThold;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// algorithm's name
@@ -158,6 +160,10 @@ public abstract class Recommender implements Runnable {
 			// -1 to use as many as possible or disable
 			numRecs = cf.getInt("num.reclist.len");
 			numIgnore = cf.getInt("num.ignor.items");
+
+			binThold = cf.getDouble("val.binary.threshold");
+			if (binThold < 0)
+				binThold = minRate;
 
 			// initial random seed
 			int seed = cf.getInt("num.rand.seed");
@@ -602,7 +608,7 @@ public abstract class Recommender implements Runnable {
 	 * @return a binarized rating value
 	 */
 	protected double binary(int u, int j, double ruj) {
-		return ruj > 0 ? 1 : 0;
+		return ruj >= binThold ? 1 : 0;
 	}
 
 	/**
