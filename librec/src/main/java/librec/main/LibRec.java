@@ -41,12 +41,14 @@ import librec.ext.AR;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
 import librec.ext.PD;
+import librec.ext.PRankD;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
 import librec.ranking.BPRMF;
 import librec.ranking.CLiMF;
 import librec.ranking.RankALS;
+import librec.ranking.RankSGD;
 import librec.ranking.WRMF;
 import librec.rating.BPMF;
 import librec.rating.BiasedMF;
@@ -277,6 +279,8 @@ public class LibRec {
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "rankals":
 			return new RankALS(trainMatrix, testMatrix, fold);
+		case "ranksgd":
+			return new RankSGD(trainMatrix, testMatrix, fold);
 		case "wrmf":
 			return new WRMF(trainMatrix, testMatrix, fold);
 		case "bprmf":
@@ -293,6 +297,8 @@ public class LibRec {
 			return new PD(trainMatrix, testMatrix, fold);
 		case "ar":
 			return new AR(trainMatrix, testMatrix, fold);
+		case "prankd":
+			return new PRankD(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");
@@ -309,10 +315,10 @@ public class LibRec {
 		float ratio = (float) cf.getDouble("val.ratio");
 		int givenN = cf.getInt("num.given.n");
 		float givenRatio = cf.getFloat("val.given.ratio");
-		
+
 		String cvInfo = cf.isOn("is.cross.validation") ? cv : (ratio > 0 ? "ratio: " + ratio : "given: "
 				+ (givenN > 0 ? givenN : givenRatio));
-		
+
 		String testPath = cf.getPath("dataset.testing");
 		boolean isTestingFlie = !testPath.equals("-1");
 		String mode = isTestingFlie ? String.format("Testing:: %s.", Strings.last(testPath, 38)) : cvInfo;
