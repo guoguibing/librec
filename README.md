@@ -15,14 +15,15 @@ LibRec
 
 * **Baseline**: GlobalAvg, UserAvg, ItemAvg, Random, Constant, MostPop
 * **Rating Prediction**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, BPMF, SocialMF, TrustMF, SoRec, SoReg, RSTE
-* **Item Ranking**: BPRMF, CLiMF, RankALS, WRMF
-* **Extension**: NMF, SlopeOne, Hybrid, PD, AR
+* **Item Ranking**: BPRMF, CLiMF, RankALS, RankSGD, WRMF
+* **Extension**: NMF, SlopeOne, Hybrid, PD, AR, PRankD
 
 The references for all the algorithms are summarized [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#algo)
 
 ### Download
 
-The first version of the LibRec library is available to [download](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip) now.  New version (v1.1) is under development, and will be released in the near future. 
+* **[librec-v1.1](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.1.zip)**
+* **[librec-v1.0](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip)**
 
 ### GPL License
 
