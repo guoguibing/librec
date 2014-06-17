@@ -53,7 +53,7 @@ public class RankSGD extends IterativeRecommender {
 		super.initModel();
 
 		// pre-processing: binarize training data
-		// super.binary(trainMatrix);
+		super.binary(trainMatrix);
 		// super.binary(testMatrix); 
 	}
 
