@@ -136,10 +136,6 @@ public abstract class Recommender implements Runnable {
 		// fold info
 		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 
-		// compute item-item correlations
-		if (isRankingPred && isDiverseUsed)
-			corrs = new SymmMatrix(numItems);
-
 		// static initialization, only done once
 		if (scales == null) {
 			initMean = 0.0;
@@ -169,6 +165,10 @@ public abstract class Recommender implements Runnable {
 			int seed = cf.getInt("num.rand.seed");
 			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
 		}
+
+		// compute item-item correlations
+		if (isRankingPred && isDiverseUsed)
+			corrs = new SymmMatrix(numItems);
 	}
 
 	public void run() {
