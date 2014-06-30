@@ -49,7 +49,6 @@ public class SoReg extends SocialRecommender {
 	public SoReg(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "SoReg";
 		initByNorm = false;
 	}
 

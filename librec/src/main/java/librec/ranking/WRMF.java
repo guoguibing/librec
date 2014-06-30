@@ -50,7 +50,6 @@ public class WRMF extends IterativeRecommender {
 	public WRMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "WRMF";
 		isRankingPred = true; // item recommendation
 
 		alpha = cf.getDouble("WRMF.alpha");

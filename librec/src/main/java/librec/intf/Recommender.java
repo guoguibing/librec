@@ -133,6 +133,9 @@ public abstract class Recommender implements Runnable {
 		numRates = trainMatrix.size();
 		globalMean = trainMatrix.sum() / numRates;
 
+		// class name as the default algorithm name 
+		algoName = this.getClass().getSimpleName();
+		
 		// fold info
 		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 

@@ -42,8 +42,6 @@ public class NMF extends IterativeRecommender {
 	public NMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "NMF";
-
 		// no need to update learning rate
 		lRate = -1;
 	}

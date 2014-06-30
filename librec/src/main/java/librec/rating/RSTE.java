@@ -44,8 +44,6 @@ public class RSTE extends SocialRecommender {
 	public RSTE(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "RSTE";
-
 		initByNorm = false;
 		alpha = cf.getDouble("RSTE.alpha");
 	}

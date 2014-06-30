@@ -61,7 +61,6 @@ public class PRankD extends RankSGD {
 	public PRankD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "PRankD";
 		isRankingPred = true;
 	}
 

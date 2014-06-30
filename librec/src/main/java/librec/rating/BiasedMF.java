@@ -37,8 +37,6 @@ public class BiasedMF extends IterativeRecommender {
 
 	public BiasedMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
-
-		algoName = "BiasedMF";
 	}
 
 	protected void initModel() {

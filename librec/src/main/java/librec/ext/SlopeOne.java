@@ -38,8 +38,6 @@ public class SlopeOne extends Recommender {
 
 	public SlopeOne(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-
-		algoName = "SlopeOne";
 	}
 
 	@Override

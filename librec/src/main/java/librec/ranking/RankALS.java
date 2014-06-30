@@ -52,7 +52,6 @@ public class RankALS extends IterativeRecommender {
 	public RankALS(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "RankALS";
 		isRankingPred = true;
 	}
 

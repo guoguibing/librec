@@ -37,8 +37,6 @@ public class PMF extends IterativeRecommender {
 	public PMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
-		algoName = "PMF";
-
 		// disable bold driver
 		isBoldDriver = false; 
 		

@@ -44,7 +44,6 @@ public class SoRec extends SocialRecommender {
 	public SoRec(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "SoRec";
 		initByNorm = false;
 	}
 

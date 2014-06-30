@@ -49,7 +49,6 @@ public class BPRMF extends IterativeRecommender {
 	public BPRMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "BPRMF";
 		isRankingPred = true;
 		initByNorm = false;
 

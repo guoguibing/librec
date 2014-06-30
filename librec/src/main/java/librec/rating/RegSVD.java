@@ -34,8 +34,6 @@ public class RegSVD extends IterativeRecommender {
 
 	public RegSVD(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
-
-		algoName = "RegSVD";
 	}
 
 	@Override

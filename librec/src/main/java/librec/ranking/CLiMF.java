@@ -38,8 +38,6 @@ public class CLiMF extends IterativeRecommender {
 
 	public CLiMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
-
-		algoName = "CLiMF";
 	}
 
 	@Override

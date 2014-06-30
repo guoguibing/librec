@@ -53,8 +53,6 @@ public class PD extends Recommender {
 
 	public PD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-
-		algoName = "PD";
 	}
 
 	@Override

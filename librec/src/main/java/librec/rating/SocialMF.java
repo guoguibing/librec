@@ -36,7 +36,6 @@ public class SocialMF extends SocialRecommender {
 	public SocialMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "SocialMF";
 		initByNorm = false;
 	}
 

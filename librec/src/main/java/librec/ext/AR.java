@@ -52,9 +52,6 @@ public class AR extends Recommender {
 	public AR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		// Association rules recommender
-		algoName = "AR";
-
 		// cannot predict ratings, but only order preferences
 		isRankingPred = true;
 	}

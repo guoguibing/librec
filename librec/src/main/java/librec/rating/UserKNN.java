@@ -64,7 +64,6 @@ public class UserKNN extends Recommender {
 	public UserKNN(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "UserKNN";
 		knn = cf.getInt("num.neighbors");
 	}
 
