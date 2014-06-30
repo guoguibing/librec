@@ -24,7 +24,7 @@ import happy.coding.math.Randoms;
 import java.util.Arrays;
 
 /**
- * Data Structure: dense matrix <br/>
+ * Data Structure: dense matrix <br>
  * 
  * A big reason that we do not adopt original DenseMatrix from M4J libraray is
  * because the latter using one-dimensional array to store data, which will
