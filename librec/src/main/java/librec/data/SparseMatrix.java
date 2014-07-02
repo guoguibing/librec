@@ -607,6 +607,67 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 		return sum() / size();
 	}
 
+	/**
+	 * Normalize the matrix entries to (0, 1) by (x-min)/(max-min)
+	 * 
+	 * @param min
+	 *            minimum value
+	 * @param max
+	 *            maximum value
+	 */
+	public void normalize(double min, double max) {
+		assert max > min;
+
+		for (MatrixEntry me : this) {
+			double entry = me.get();
+			if (entry != 0)
+				me.set((entry - min) / (max - min));
+		}
+	}
+
+	/**
+	 * Normalize the matrix entries to (0, 1) by (x/max)
+	 * 
+	 * @param max
+	 *            maximum value
+	 */
+	public void normalize(double max) {
+		normalize(0, max);
+	}
+
+	/**
+	 * Standardize the matrix entries by row- or column-wise z-scores
+	 * (z=(x-u)/sigma)
+	 * 
+	 * @param isByRow
+	 *            standardize by row if true; otherwise by column
+	 */
+	public void standardize(boolean isByRow) {
+
+		int iters = isByRow ? numRows : numColumns;
+		for (int iter = 0; iter < iters; iter++) {
+			SparseVector vec = isByRow ? row(iter) : column(iter);
+
+			if (vec.getCount() > 0) {
+
+				double[] data = vec.getData();
+				double mu = Stats.mean(data);
+				double sigma = Stats.sd(data, mu);
+
+				for (VectorEntry ve : vec) {
+					int idx = ve.index();
+					double val = ve.get();
+					double z = (val - mu) / sigma;
+
+					if (isByRow)
+						this.set(iter, idx, z);
+					else
+						this.set(idx, iter, z);
+				}
+			}
+		}
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
