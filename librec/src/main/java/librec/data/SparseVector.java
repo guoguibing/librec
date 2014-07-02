@@ -95,24 +95,25 @@ public class SparseVector implements Iterable<VectorEntry> {
 	}
 
 	/**
-	 * Returns the internal data
+	 * @return a copy of internal data (to prevent changes outside)
 	 */
 	public double[] getData() {
-		return data;
+		double[] res = new double[count];
+		for (int i = 0; i < count; i++)
+			res[i] = data[i];
+
+		return res;
 	}
 
 	/**
-	 * Returns the indices
+	 * @return a copy of indices (to prevent changes outside)
 	 */
 	public int[] getIndex() {
-		if (count == index.length)
-			return index;
-
-		int[] indices = new int[count];
+		int[] res = new int[count];
 		for (int i = 0; i < count; i++)
-			indices[i] = index[i];
+			res[i] = index[i];
 
-		return indices;
+		return res;
 	}
 
 	/**
@@ -171,7 +172,7 @@ public class SparseVector implements Iterable<VectorEntry> {
 	 */
 	public double inner(DenseVector vec) {
 		double res = 0;
-		for (int idx : this.getIndex()) 
+		for (int idx : this.getIndex())
 			res += get(idx) * vec.get(idx);
 
 		return res;
