@@ -96,14 +96,14 @@ public class SymmMatrix {
 	 * Retrieve a complete row of similar items	 
 	 */
 	public SparseVector row(int row) {
-		SparseVector nv = new SparseVector(dim);
+		SparseVector res = new SparseVector(dim);
 		for (int col = 0; col < dim; col++) {
 			double val = get(row, col);
 			if (val != 0)
-				nv.set(col, val);
+				res.set(col, val);
 		}
 
-		return nv;
+		return res;
 	}
 
 	@Override
