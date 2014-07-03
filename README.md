@@ -18,7 +18,7 @@ LibRec
 * **Item Ranking**: BPRMF, CLiMF, RankALS, RankSGD, WRMF
 * **Extension**: NMF, SlopeOne, Hybrid, PD, AR, PRankD
 
-The references for all the algorithms are summarized [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#algo)
+The references for all the algorithms are summarized [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#algos)
 
 ### Download
 
