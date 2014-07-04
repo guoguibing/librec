@@ -63,7 +63,7 @@ public class WRMF extends IterativeRecommender {
 
 		// Updating by using alternative least square (ALS) 
 		// due to large amount of entries to be processed (SGD will be too slow)
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			// Step 1: update user factors;
 			DenseMatrix Yt = Y.transpose();
@@ -139,7 +139,7 @@ public class WRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, (float) regU, (float) regI, (float) alpha, maxIters }, ",");
+		return Strings.toString(new Object[] { numFactors, (float) regU, (float) regI, (float) alpha, numIters }, ",");
 	}
 
 }

@@ -91,7 +91,7 @@ public class BPMF extends IterativeRecommender {
 
 		int M = numUsers, N = numItems;
 
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			// Sample from user hyper parameters:
 			for (int f = 0; f < numFactors; f++)
@@ -325,6 +325,6 @@ public class BPMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, maxIters }, ",");
+		return Strings.toString(new Object[] { numFactors, numIters }, ",");
 	}
 }

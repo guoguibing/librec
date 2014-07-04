@@ -73,10 +73,10 @@ public class RankALS extends IterativeRecommender {
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 1; iter < maxIters; iter++) {
+		for (int iter = 1; iter < numIters; iter++) {
 
 			if (verbose)
-				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo, iter, maxIters);
+				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo, iter, numIters);
 
 			// P step: update user vectors
 			DenseVector sum_sq = new DenseVector(numFactors);
@@ -197,6 +197,6 @@ public class RankALS extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, isSupportWeight, maxIters }, ",");
+		return Strings.toString(new Object[] { binThold, isSupportWeight, numIters }, ",");
 	}
 }

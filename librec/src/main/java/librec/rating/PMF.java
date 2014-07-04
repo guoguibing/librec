@@ -55,7 +55,7 @@ public class PMF extends IterativeRecommender {
 	protected void buildModel() {
 
 		// batch updates with momentums
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			DenseMatrix userSgds = new DenseMatrix(numUsers, numFactors);
 			DenseMatrix itemSgds = new DenseMatrix(numItems, numFactors);

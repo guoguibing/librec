@@ -50,7 +50,7 @@ public class RSTE extends SocialRecommender {
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
 			errs = 0;
@@ -184,7 +184,7 @@ public class RSTE extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, (float) regU, (float) regI, numFactors, maxIters,
+		return Strings.toString(new Object[] { initLRate, (float) regU, (float) regI, numFactors, numIters,
 				isBoldDriver, (float) alpha }, ",");
 	}
 }

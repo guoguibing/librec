@@ -58,7 +58,7 @@ public class BPRMF extends IterativeRecommender {
 	@Override
 	protected void buildModel() {
 
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			int sampleSize = numUsers * 100;
 			if (verbose)
@@ -109,6 +109,6 @@ public class BPRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, lRate, regU, regI, regJ, maxIters }, ",");
+		return Strings.toString(new Object[] { numFactors, lRate, regU, regI, regJ, numIters }, ",");
 	}
 }

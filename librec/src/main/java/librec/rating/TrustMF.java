@@ -105,7 +105,7 @@ public class TrustMF extends SocialRecommender {
 	 * Build TrusterMF model: Br*Vr
 	 */
 	protected void TrusterMF() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
 			errs = 0;
 
@@ -180,7 +180,7 @@ public class TrustMF extends SocialRecommender {
 	 * Build TrusteeMF model: We*Ve
 	 */
 	protected void TrusteeMF() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
 			errs = 0;
 

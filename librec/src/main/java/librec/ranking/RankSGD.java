@@ -58,7 +58,7 @@ public class RankSGD extends IterativeRecommender {
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			errs = 0;
 			loss = 0;
@@ -125,6 +125,6 @@ public class RankSGD extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, (float) lRate, maxIters }, ",");
+		return Strings.toString(new Object[] { binThold, (float) lRate, numIters }, ",");
 	}
 }

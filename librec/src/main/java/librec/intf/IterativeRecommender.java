@@ -40,7 +40,7 @@ public abstract class IterativeRecommender extends Recommender {
 	// number of factors
 	protected static int numFactors;
 	// number of iterations
-	protected static int maxIters;
+	protected static int numIters;
 
 	// whether to adjust learning rate automatically
 	protected static boolean isBoldDriver;
@@ -83,7 +83,7 @@ public abstract class IterativeRecommender extends Recommender {
 		regI = cf.getRange("val.reg.item").get(0);
 
 		numFactors = cf.getInt("num.factors");
-		maxIters = cf.getInt("num.max.iter");
+		numIters = cf.getInt("num.max.iter");
 
 		isBoldDriver = cf.isOn("is.bold.driver");
 		isUndoEnabled = cf.isOn("is.undo.change");
@@ -245,7 +245,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, (float) regU, (float) regI, numFactors, maxIters,
+		return Strings.toString(new Object[] { initLRate, maxLRate, (float) regU, (float) regI, numFactors, numIters,
 				isBoldDriver }, ",");
 	}
 

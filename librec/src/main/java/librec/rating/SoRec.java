@@ -71,7 +71,7 @@ public class SoRec extends SocialRecommender {
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 			errs = 0;
 			loss = 0;
 

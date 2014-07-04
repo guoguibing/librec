@@ -59,7 +59,7 @@ public class NMF extends IterativeRecommender {
 
 	@Override
 	protected void buildModel() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			// update W by fixing H
 			for (int u = 0; u < W.numRows(); u++) {
@@ -130,7 +130,7 @@ public class NMF extends IterativeRecommender {
 	 * Why buildingModel2 that follows the paper instructions does not work?
 	 */
 	protected void buildModel2() {
-		for (int iter = 1; iter <= maxIters; iter++) {
+		for (int iter = 1; iter <= numIters; iter++) {
 
 			// Step 1: update W by fixing H
 			DenseMatrix trH = H.transpose();
@@ -196,6 +196,6 @@ public class NMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, maxIters }, ",");
+		return Strings.toString(new Object[] { numFactors, numIters }, ",");
 	}
 }
