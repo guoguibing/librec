@@ -1,5 +1,13 @@
 ## The Changes of the LibRec Library
 
+### librec-v1.2
+
+* New recommendation methods implemented:
+  * SLIM
+* Others
+  * Few codes refactored
+  * Utility methods (e.g., data standardization) added to data structure
+
 ### librec-v1.1
 
 * New recommendation methods implemented: 
