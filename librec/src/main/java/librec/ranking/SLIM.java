@@ -47,9 +47,7 @@ import com.google.common.collect.Multimap;
  * <ul>
  * <li>Levy and Jack, Efficient Top-N Recommendation by Linear Regression, ISRS
  * 2013. This paper reports experimental results on the MovieLens (100K, 10M)
- * and Epinions datasets in terms of precision, MRR and HR@N (i.e., Recall@N).
- * According to the results, the performance of SLIM works only slightly better
- * than ItemKNN.</li>
+ * and Epinions datasets in terms of precision, MRR and HR@N (i.e., Recall@N).</li>
  * <li>Friedman et al., Regularization Paths for Generalized Linear Models via
  * Coordinate Descent, Journal of Statistical Software, 2010.</li>
  * <li>C++ Code: <a
