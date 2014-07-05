@@ -49,6 +49,7 @@ import librec.ranking.BPRMF;
 import librec.ranking.CLiMF;
 import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
+import librec.ranking.SLIM;
 import librec.ranking.WRMF;
 import librec.rating.BPMF;
 import librec.rating.BiasedMF;
@@ -285,6 +286,8 @@ public class LibRec {
 			return new WRMF(trainMatrix, testMatrix, fold);
 		case "bprmf":
 			return new BPRMF(trainMatrix, testMatrix, fold);
+		case "slim":
+			return new SLIM(trainMatrix, testMatrix, fold);
 
 			/* extension */
 		case "nmf":
