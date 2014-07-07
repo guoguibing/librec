@@ -19,10 +19,13 @@
 package librec.ranking;
 
 import happy.coding.io.KeyValPair;
+import happy.coding.io.Lists;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
@@ -54,6 +57,18 @@ public class RankSGD extends IterativeRecommender {
 		// pre-processing: binarize training data
 		super.binary(trainMatrix);
 		// super.binary(testMatrix); 
+
+		// compute item sampling probability
+		Map<Integer, Double> itemProbsMap = new HashMap<>();
+		for (int j = 0; j < numItems; j++) {
+			int users = trainMatrix.columnSize(j);
+
+			// sample items based on popularity
+			double prob = (users + 0.0) / numRates;
+			if (prob > 0)
+				itemProbsMap.put(j, prob);
+		}
+		itemProbs = Lists.sortMap(itemProbsMap);
 	}
 
 	@Override
