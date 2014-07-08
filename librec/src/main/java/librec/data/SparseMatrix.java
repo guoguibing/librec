@@ -218,6 +218,20 @@ public class SparseMatrix implements Iterable<MatrixEntry> {
 	}
 
 	/**
+	 * @return the data table of this matrix as (row, column, value) cells
+	 */
+	public Table<Integer, Integer, Double> getDataTable() {
+		Table<Integer, Integer, Double> res = HashBasedTable.create();
+
+		for (MatrixEntry me : this) {
+			if (me.get() != 0)
+				res.put(me.row(), me.column(), me.get());
+		}
+
+		return res;
+	}
+
+	/**
 	 * Construct a sparse matrix
 	 * 
 	 * @param dataTable
