@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -90,13 +90,21 @@ public class DenseVector {
 		for (int i = 0; i < size; i++)
 			data[i] = Randoms.gaussian(mean, sigma);
 	}
-	
+
 	/**
-	 * Initialize a dense vector with Uniform values in (0, 1)
+	 * Initialize a dense vector with uniform values in (0, 1)
 	 */
-	public void init(){
-		for(int i=0; i<size; i++)
+	public void init() {
+		for (int i = 0; i < size; i++)
 			data[i] = Randoms.uniform();
+	}
+
+	/**
+	 * Initialize a dense vector with uniform values in (0, range)
+	 */
+	public void init(double range) {
+		for (int i = 0; i < size; i++)
+			data[i] = Randoms.uniform(0, range);
 	}
 
 	/**
