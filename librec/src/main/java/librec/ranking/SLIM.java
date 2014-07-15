@@ -50,12 +50,6 @@ import com.google.common.collect.Multimap;
  * and Epinions datasets in terms of precision, MRR and HR@N (i.e., Recall@N).</li>
  * <li>Friedman et al., Regularization Paths for Generalized Linear Models via
  * Coordinate Descent, Journal of Statistical Software, 2010.</li>
- * <li>C++ Code: <a
- * href="http://www-users.cs.umn.edu/~xning/slim/html/index.html">Slim</a></li>
- * <li>Python Code: <a href=
- * "https://github.com/Mendeley/mrec/blob/master/mrec/item_similarity/slim.py"
- * >mrec: slim.py</a></li>
- * <li>C# Code: MyMediaLite: SLIM.cs</li>
  * </ul>
  * </p>
  * 
@@ -174,7 +168,7 @@ public class SLIM extends IterativeRecommender {
 							double update = (gradSum - regL1) / (regL2 + rateSum);
 							W.set(i, j, update);
 						} else {
-							// Just one doubt: in this case, wij<0, however, the paper says wij>=0. How to gaurantee this?
+							// One doubt: in this case, wij<0, however, the paper says wij>=0. How to gaurantee that?
 							double update = (gradSum + regL1) / (regL2 + rateSum);
 							W.set(i, j, update);
 						}
@@ -218,10 +212,8 @@ public class SLIM extends IterativeRecommender {
 		double delta_loss = last_loss - loss;
 		last_loss = loss;
 
-		if (verbose) {
-			Logs.debug("{} [{}] runs at iteration {}, loss = {}, delta_loss = {}", algoName, fold, iter, loss,
-					delta_loss);
-		}
+		if (verbose)
+			Logs.debug("{} [{}] iter {}: loss = {}, delta_loss = {}", algoName, fold, iter, loss, delta_loss);
 
 		return iter > 1 ? delta_loss < 1e-5 : false;
 	}
