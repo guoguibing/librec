@@ -7,7 +7,7 @@ LibRec
 ### Features
 
 * **Cross-platform:** as a Java software, LibRec can be easily deployed and executed in any platforms, including MS Windows, Linux and Mac OS.
-* **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://www.librec.net/).
+* **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://www.librec.net/example.html).
 * **Easy configuration:** LibRec configs recommenders using a configuration file: [librec.conf](http://www.librec.net/tutorial.html#config). 
 * **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
 
