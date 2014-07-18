@@ -1,14 +1,14 @@
 LibRec
 ======
 
-**LibRec** is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art and up-to-date recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. To learn more, check out the [home page](http://trust.sce.ntu.edu.sg/~gguo1/librec/), or look into the detailed [tutorial](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html). 
+**LibRec** is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art and up-to-date recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. To learn more, check out the [home page](http://www.librec.net/), or look into the detailed [tutorial](http://www.librec.net/tutorial.html). 
 
 
 ### Features
 
 * **Cross-platform:** as a Java software, LibRec can be easily deployed and executed in any platforms, including MS Windows, Linux and Mac OS.
-* **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/).
-* **Easy configuration:** LibRec configs recommenders using a configuration file: [librec.conf](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#config). 
+* **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://www.librec.net/).
+* **Easy configuration:** LibRec configs recommenders using a configuration file: [librec.conf](http://www.librec.net/tutorial.html#config). 
 * **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
 
 ### Algorithms
@@ -18,12 +18,12 @@ LibRec
 * **Item Ranking**: BPRMF, CLiMF, RankALS, RankSGD, WRMF, SLIM
 * **Extension**: NMF, SlopeOne, Hybrid, PD, AR, PRankD
 
-The references for all the algorithms are summarized [here](http://trust.sce.ntu.edu.sg/~gguo1/librec/tutorial.html#algos)
+The references for all the algorithms are summarized [here](http://www.librec.net/tutorial.html#algos)
 
 ### Download
 
-* **[librec-v1.1](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.1.zip)**
-* **[librec-v1.0](http://trust.sce.ntu.edu.sg/~gguo1/librec/release/librec-v1.0.zip)**
+* **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
+* **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
 ### GPL License
 
