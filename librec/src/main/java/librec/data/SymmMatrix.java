@@ -61,7 +61,13 @@ public class SymmMatrix {
 	 * Get a value at entry (row, col)
 	 */
 	public double get(int row, int col) {
-		return row >= col ? data.get(row, col) : data.get(col, row);
+
+		if (data.contains(row, col))
+			return data.get(row, col);
+		else if (data.contains(col, row))
+			return data.get(col, row);
+
+		return 0.0;
 	}
 
 	/**
