@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -18,7 +18,8 @@
 
 package librec.data;
 
-import happy.coding.io.Strings;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 /**
  * Data Structure, Lower Symmetric Matrix
@@ -31,17 +32,14 @@ public class SymmMatrix {
 	// matrix dimension
 	protected int dim;
 	// matrix data
-	protected double[][] data;
+	Table<Integer, Integer, Double> data;
 
 	/**
 	 * Construct a symmetric matrix
 	 */
 	public SymmMatrix(int dim) {
 		this.dim = dim;
-
-		data = new double[dim][];
-		for (int i = 0; i < dim; i++)
-			data[i] = new double[i + 1];
+		data = HashBasedTable.create(dim, dim);
 	}
 
 	/**
@@ -49,13 +47,7 @@ public class SymmMatrix {
 	 */
 	public SymmMatrix(SymmMatrix mat) {
 		dim = mat.dim;
-
-		data = new double[dim][];
-		for (int i = 0; i < dim; i++) {
-			data[i] = new double[i + 1];
-			for (int j = 0; j < data[i].length; j++)
-				data[i][j] = mat.data[i][j];
-		}
+		data = HashBasedTable.create(mat.data);
 	}
 
 	/**
@@ -66,34 +58,34 @@ public class SymmMatrix {
 	}
 
 	/**
-	 * Get a value at entry (row, col)	
+	 * Get a value at entry (row, col)
 	 */
 	public double get(int row, int col) {
-		return row >= col ? data[row][col] : data[col][row];
+		return row >= col ? data.get(row, col) : data.get(col, row);
 	}
 
 	/**
-	 * set a value to entry (row, col) 
+	 * set a value to entry (row, col)
 	 */
 	public void set(int row, int col, double val) {
 		if (row >= col)
-			data[row][col] = val;
+			data.put(row, col, val);
 		else
-			data[col][row] = val;
+			data.put(col, row, val);
 	}
 
 	/**
-	 * add a value to entry (row, col)	 
+	 * add a value to entry (row, col)
 	 */
 	public void add(int row, int col, double val) {
 		if (row >= col)
-			data[row][col] += val;
+			data.put(row, col, val + get(row, col));
 		else
-			data[col][row] += val;
+			data.put(col, row, val + get(col, row));
 	}
 
 	/**
-	 * Retrieve a complete row of similar items	 
+	 * Retrieve a complete row of similar items
 	 */
 	public SparseVector row(int row) {
 		SparseVector res = new SparseVector(dim);
@@ -108,7 +100,7 @@ public class SymmMatrix {
 
 	@Override
 	public String toString() {
-		return Strings.toString(data);
+		return "Dimension: " + dim + " x " + dim + "\n" + data.toString();
 	}
 
 }
