@@ -39,7 +39,7 @@ public class SymmMatrix {
 	 */
 	public SymmMatrix(int dim) {
 		this.dim = dim;
-		data = HashBasedTable.create(dim, dim);
+		data = HashBasedTable.create(); // do not specify the size here as a sparse matrix
 	}
 
 	/**
