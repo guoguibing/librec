@@ -73,7 +73,7 @@ import librec.rating.UserKNN;
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version
 	// (small changes, bug fixes)
-	private static String version = "1.0";
+	private static String version = "1.2";
 
 	// configuration
 	private static Configer cf;
