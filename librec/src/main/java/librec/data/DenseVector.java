@@ -18,8 +18,11 @@
 
 package librec.data;
 
+import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 import happy.coding.math.Stats;
+
+import java.io.Serializable;
 
 /**
  * Data Structure: dense vector
@@ -27,7 +30,9 @@ import happy.coding.math.Stats;
  * @author guoguibing
  * 
  */
-public class DenseVector {
+public class DenseVector implements Serializable {
+
+	private static final long serialVersionUID = -2930574547913792430L;
 
 	protected int size;
 	protected double[] data;
@@ -259,6 +264,11 @@ public class DenseVector {
 				mat.set(i, j, get(i) * vec.get(j));
 
 		return mat;
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(data);
 	}
 
 }

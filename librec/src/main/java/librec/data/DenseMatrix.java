@@ -21,6 +21,7 @@ package librec.data;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -34,8 +35,10 @@ import java.util.Arrays;
  * @author guoguibing
  * 
  */
-public class DenseMatrix {
+public class DenseMatrix implements Serializable{
 
+	private static final long serialVersionUID = -2069621030647530185L;
+	
 	// dimension
 	protected int numRows, numColumns;
 	// read data
