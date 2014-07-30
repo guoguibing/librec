@@ -29,6 +29,8 @@ import com.google.common.collect.Table;
  */
 public class DiagMatrix extends SparseMatrix {
 
+	private static final long serialVersionUID = -9186836460633909994L;
+
 	public DiagMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable) {
 		super(rows, cols, dataTable);
 	}

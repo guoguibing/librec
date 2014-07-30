@@ -20,6 +20,7 @@ package librec.data;
 
 import happy.coding.math.Stats;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,7 +48,9 @@ import com.google.common.collect.Table.Cell;
  * @author guoguibing
  * 
  */
-public class SparseMatrix implements Iterable<MatrixEntry> {
+public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
+
+	private static final long serialVersionUID = 8024536511172609539L;
 
 	// matrix dimension
 	protected int numRows, numColumns;

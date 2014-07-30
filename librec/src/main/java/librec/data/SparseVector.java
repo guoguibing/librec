@@ -20,6 +20,7 @@ package librec.data;
 
 import happy.coding.math.Stats;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,7 +33,9 @@ import java.util.Map;
  * @author guoguibing
  * 
  */
-public class SparseVector implements Iterable<VectorEntry> {
+public class SparseVector implements Iterable<VectorEntry>, Serializable {
+
+	private static final long serialVersionUID = 1151609203685872657L;
 
 	// capacity
 	protected int capacity;

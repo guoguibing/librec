@@ -27,6 +27,7 @@ import happy.coding.math.Randoms;
 import happy.coding.math.Sims;
 import happy.coding.math.Stats;
 import happy.coding.system.Dates;
+import happy.coding.system.Debug;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -135,7 +136,7 @@ public abstract class Recommender implements Runnable {
 
 		// class name as the default algorithm name 
 		algoName = this.getClass().getSimpleName();
-		
+
 		// fold info
 		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
 
@@ -175,30 +176,41 @@ public abstract class Recommender implements Runnable {
 	}
 
 	public void run() {
-		execute();
+		try {
+			execute();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * execution method of a recommender
 	 * 
 	 */
-	public void execute() {
+	public void execute() throws Exception {
 
 		Stopwatch sw = Stopwatch.createStarted();
-		initModel();
+		if (Debug.ON) {
+			// learn a recommender model
+			initModel();
 
-		// print out algorithm's settings: to indicate starting building models
-		String algoInfo = toString();
-		if (!algoInfo.isEmpty())
-			Logs.debug(algoName + ": " + algoInfo);
+			// print out algorithm's settings: to indicate starting building models
+			String algoInfo = toString();
+			if (!algoInfo.isEmpty())
+				Logs.debug(algoName + ": " + algoInfo);
 
-		buildModel();
+			buildModel();
+		} else {
+			// load a learned model: this code will not be executed unless "Debug.OFF"
+			// ... mainly for the purpose of examplifying how to use the saved models. 
+			loadModel();
+		}
 		long trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
 
 		// evaluation
 		String foldStr = fold > 0 ? " fold [" + fold + "]" : "";
 		if (verbose)
-			Logs.debug("{}{} evaluate testing data ... ", algoName, foldStr);
+			Logs.debug("{}{} evaluate test data ... ", algoName, foldStr);
 		measures = isRankingPred ? evalRankings() : evalRatings();
 		String result = getEvalInfo(measures);
 		sw.stop();
@@ -216,6 +228,9 @@ public abstract class Recommender implements Runnable {
 
 		if (fold > 0)
 			Logs.debug(evalInfo);
+
+		if (cf.isOn("is.save.model"))
+			saveModel();
 	}
 
 	/**
@@ -363,6 +378,18 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 */
 	protected void buildModel() {
+	}
+
+	/**
+	 * Serializing a learned model (i.e., variable data) to files.
+	 */
+	protected void saveModel() throws Exception {
+	}
+
+	/**
+	 * Deserializing a learned model (i.e., variable data) from files.
+	 */
+	protected void loadModel() throws Exception {
 	}
 
 	/**

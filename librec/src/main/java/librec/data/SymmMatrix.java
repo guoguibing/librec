@@ -18,6 +18,8 @@
 
 package librec.data;
 
+import java.io.Serializable;
+
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
@@ -27,8 +29,10 @@ import com.google.common.collect.Table;
  * @author guoguibing
  * 
  */
-public class SymmMatrix {
+public class SymmMatrix implements Serializable {
 
+	private static final long serialVersionUID = -6138247653152029007L;
+	
 	// matrix dimension
 	protected int dim;
 	// matrix data

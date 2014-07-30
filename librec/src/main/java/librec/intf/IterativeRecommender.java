@@ -18,6 +18,7 @@
 
 package librec.intf;
 
+import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import librec.data.DenseMatrix;
@@ -241,6 +242,51 @@ public abstract class IterativeRecommender extends Recommender {
 			Q.init();
 		}
 
+	}
+
+	protected void saveModel() throws Exception {
+		// make a folder
+		String dirPath = FileIO.makeDirectory("Results", algoName);
+
+		// suffix info
+		String suffix = (fold > 0 ? "-" + fold : "") + ".bin";
+
+		// writing training, test data
+		FileIO.serialize(trainMatrix, dirPath + "trainMatrix" + suffix);
+		FileIO.serialize(testMatrix, dirPath + "testMatrix" + suffix);
+
+		// write matrices P, Q
+		FileIO.serialize(P, dirPath + "userFactors" + suffix);
+		FileIO.serialize(Q, dirPath + "itemFactors" + suffix);
+
+		// write vectors 
+		if (userBiases != null)
+			FileIO.serialize(userBiases, dirPath + "userBiases" + suffix);
+		if (itemBiases != null)
+			FileIO.serialize(itemBiases, dirPath + "itemBiases" + suffix);
+
+		Logs.debug("The learned model has been saved to {}", dirPath);
+	}
+
+	protected void loadModel() throws Exception {
+		// make a folder
+		String dirPath = FileIO.makeDirectory("Results", algoName);
+
+		Logs.debug("A recommender model will be loaded from {}", dirPath);
+
+		// suffix info
+		String suffix = (fold > 0 ? "-" + fold : "") + ".bin";
+
+		trainMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "trainMatrix" + suffix);
+		testMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "testMatrix" + suffix);
+
+		// write matrices P, Q
+		P = (DenseMatrix) FileIO.deserialize(dirPath + "userFactors" + suffix);
+		Q = (DenseMatrix) FileIO.deserialize(dirPath + "itemFactors" + suffix);
+
+		// write vectors 
+		userBiases = (DenseVector) FileIO.deserialize(dirPath + "userBiases" + suffix);
+		itemBiases = (DenseVector) FileIO.deserialize(dirPath + "itemBiases" + suffix);
 	}
 
 	@Override
