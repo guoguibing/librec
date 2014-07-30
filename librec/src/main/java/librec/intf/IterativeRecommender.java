@@ -265,14 +265,14 @@ public abstract class IterativeRecommender extends Recommender {
 		if (itemBiases != null)
 			FileIO.serialize(itemBiases, dirPath + "itemBiases" + suffix);
 
-		Logs.debug("The learned model has been saved to {}", dirPath);
+		Logs.debug("Learned models are saved to folder \"{}\"", dirPath);
 	}
 
 	protected void loadModel() throws Exception {
 		// make a folder
 		String dirPath = FileIO.makeDirectory("Results", algoName);
 
-		Logs.debug("A recommender model will be loaded from {}", dirPath);
+		Logs.debug("A recommender model is loaded from {}", dirPath);
 
 		// suffix info
 		String suffix = (fold > 0 ? "-" + fold : "") + ".bin";
