@@ -56,7 +56,7 @@ public class PD extends Recommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		prior = 1.0 / numUsers;
 		sigma = cf.getDouble("PD.sigma");
 	}

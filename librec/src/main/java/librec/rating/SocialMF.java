@@ -40,7 +40,7 @@ public class SocialMF extends SocialRecommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;

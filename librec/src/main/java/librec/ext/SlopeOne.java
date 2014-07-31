@@ -9,7 +9,7 @@
 //
 // LibRec is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
@@ -41,13 +41,13 @@ public class SlopeOne extends Recommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		devMatrix = new DenseMatrix(numItems, numItems);
 		cardMatrix = new DenseMatrix(numItems, numItems);
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel()  throws Exception{
 
 		// compute items' differences
 		for (int u = 0; u < numUsers; u++) {

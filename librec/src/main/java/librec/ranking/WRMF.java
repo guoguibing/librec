@@ -56,7 +56,7 @@ public class WRMF extends IterativeRecommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 
 		// To be consistent with the symbols in the paper
 		DenseMatrix X = P, Y = Q;

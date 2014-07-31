@@ -45,9 +45,9 @@ import librec.intf.Recommender;
  * </p>
  * 
  * <p>
- * When the number of items is extremely large which makes it memory intensive to
- * store/precompute all item-item correlations, a trick presented by (Jahrer and
- * Toscher, Collaborative Filtering Ensemble, JMLR 2012) can be applied.
+ * When the number of items is extremely large which makes it memory intensive
+ * to store/precompute all item-item correlations, a trick presented by (Jahrer
+ * and Toscher, Collaborative Filtering Ensemble, JMLR 2012) can be applied.
  * Specifically, we can use a basic SVD model to obtain item-feature vectors,
  * and then item-item correlations can be computed by Eqs (13, 15).
  * </p>
@@ -69,7 +69,7 @@ public class ItemKNN extends Recommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		itemCorrs = buildCorrs(false);
 		itemMeans = new DenseVector(numItems);
 		for (int i = 0; i < numItems; i++) {

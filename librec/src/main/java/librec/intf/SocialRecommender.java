@@ -96,5 +96,5 @@ public abstract class SocialRecommender extends IterativeRecommender {
 			return true;
 		}
 	}
-
+	
 }

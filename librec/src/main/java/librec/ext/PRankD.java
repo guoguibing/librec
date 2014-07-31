@@ -65,7 +65,7 @@ public class PRankD extends RankSGD {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		super.initModel();
 
 		// compute item sampling probability
@@ -113,7 +113,7 @@ public class PRankD extends RankSGD {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			errs = 0;

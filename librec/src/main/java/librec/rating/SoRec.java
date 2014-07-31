@@ -48,7 +48,7 @@ public class SoRec extends SocialRecommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		super.initModel();
 
 		Z = new DenseMatrix(numUsers, numFactors);
@@ -70,7 +70,7 @@ public class SoRec extends SocialRecommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 			errs = 0;
 			loss = 0;

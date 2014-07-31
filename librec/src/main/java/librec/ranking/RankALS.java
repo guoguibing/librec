@@ -56,7 +56,7 @@ public class RankALS extends IterativeRecommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		super.initModel();
 
 		isSupportWeight = cf.isOn("RankALS.is.sw");
@@ -72,7 +72,7 @@ public class RankALS extends IterativeRecommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		for (int iter = 1; iter < numIters; iter++) {
 
 			if (verbose)

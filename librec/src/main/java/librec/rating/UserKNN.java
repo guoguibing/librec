@@ -68,7 +68,7 @@ public class UserKNN extends Recommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		userCorrs = buildCorrs(true);
 		userMeans = new DenseVector(numUsers);
 		for (int u = 0; u < numUsers; u++) {

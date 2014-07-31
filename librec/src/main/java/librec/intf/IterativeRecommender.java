@@ -228,7 +228,7 @@ public abstract class IterativeRecommender extends Recommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 
 		P = new DenseMatrix(numUsers, numFactors);
 		Q = new DenseMatrix(numItems, numFactors);

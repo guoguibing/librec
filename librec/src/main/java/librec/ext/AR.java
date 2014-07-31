@@ -57,7 +57,7 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		A = new DenseMatrix(numItems, numItems);
 
 		// simple rule: X => Y, given that each user vector is regarded as a transaction

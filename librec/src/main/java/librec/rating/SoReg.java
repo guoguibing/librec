@@ -53,7 +53,7 @@ public class SoReg extends SocialRecommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		super.initModel();
 
 		userCorrs = HashBasedTable.create();
@@ -89,7 +89,7 @@ public class SoReg extends SocialRecommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			errs = 0;

@@ -261,7 +261,7 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * initilize recommender model
 	 */
-	protected void initModel() {
+	protected void initModel() throws Exception {
 	}
 
 	/**
@@ -377,7 +377,7 @@ public abstract class Recommender implements Runnable {
 	 * method. Default implementation is useful for memory-based methods.
 	 * 
 	 */
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 	}
 
 	/**

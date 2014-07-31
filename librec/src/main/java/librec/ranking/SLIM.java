@@ -81,7 +81,7 @@ public class SLIM extends IterativeRecommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		W = new DenseMatrix(numItems, numItems);
 		W.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01)) to speed up training
 
@@ -123,7 +123,7 @@ public class SLIM extends IterativeRecommender {
 	}
 
 	@Override
-	protected void buildModel() {
+	protected void buildModel() throws Exception {
 		last_loss = 0;
 
 		// number of iteration cycles
