@@ -22,10 +22,13 @@ import happy.coding.io.Configer;
 import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
+import happy.coding.io.net.EMailer;
 import happy.coding.system.Dates;
+import happy.coding.system.Systems;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Map.Entry;
 
 import librec.baseline.ConstantGuess;
@@ -111,7 +114,12 @@ public class LibRec {
 		runAlgorithm();
 
 		// collect results
-		FileIO.notifyMe(algorithm, cf.getString("notify.email.to"), cf.isOn("is.email.notify"));
+		String destPath = FileIO.makeDirectory("Results");
+		String dest = destPath + algorithm + "@" + Dates.now() + ".txt";
+		FileIO.copyFile("results.txt", dest);
+
+		// send notificaiton
+		notifyMe(dest);
 	}
 
 	private static void runAlgorithm() throws Exception {
@@ -223,6 +231,45 @@ public class LibRec {
 		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result, algo.toString(), time);
 
 		Logs.info(evalInfo);
+	}
+	
+	/**
+	 * Send a notification of completeness
+	 * 
+	 */
+	private static void notifyMe(String dest) throws Exception {
+		if (!cf.isOn("is.email.notify"))
+			return;
+
+		EMailer notifier = new EMailer();
+		Properties props = notifier.getProps();
+
+		props.setProperty("mail.debug", "false");
+
+		String host = cf.getString("mail.smtp.host");
+		String port = cf.getString("mail.smtp.port");
+		props.setProperty("mail.smtp.host", host);
+		props.setProperty("mail.smtp.port", port);
+		props.setProperty("mail.smtp.auth", cf.getString("mail.smtp.auth"));
+
+		props.put("mail.smtp.socketFactory.port", port);
+		props.put("mail.smtp.socketFactory.class",
+				"javax.net.ssl.SSLSocketFactory");
+
+		final String user = cf.getString("mail.smtp.user");
+		final String pwd = cf.getString("mail.smtp.password");
+		props.setProperty("mail.smtp.user", user);
+		props.setProperty("mail.smtp.password", pwd);
+
+		props.setProperty("mail.from", user);
+		props.setProperty("mail.to", cf.getString("mail.to"));
+
+		props.setProperty("mail.subject", FileIO.getCurrentFolder() + "."
+				+ algorithm + " [" + Systems.getIP() + "]");
+		props.setProperty("mail.text", "Program was finished @" + Dates.now());
+
+		String msg = "Program [" + algorithm + "] has been finished !";
+		notifier.send(msg, dest);
 	}
 
 	/**
