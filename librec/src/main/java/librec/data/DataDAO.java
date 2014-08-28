@@ -136,7 +136,8 @@ public class DataDAO {
 	}
 
 	/**
-	 * Read data from the data file
+	 * Read data from the data file. Note that we didn't take care of the
+	 * duplicated lines.
 	 * 
 	 * @param cols
 	 *            the indexes of the relevant columns in the data file
@@ -327,6 +328,7 @@ public class DataDAO {
 
 		int users = numUsers();
 		int items = numItems();
+		int numRates = rateMatrix.size();
 
 		sps.add(String.format("Dataset: %s", Strings.last(dataPath, 38)));
 		sps.add("User amount: " + users + ", " + FileIO.formatSize(users));
