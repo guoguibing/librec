@@ -118,7 +118,7 @@ public class LibRec {
 		String dest = destPath + algorithm + "@" + Dates.now() + ".txt";
 		FileIO.copyFile("results.txt", dest);
 
-		// send notificaiton
+		// send notification
 		notifyMe(dest);
 	}
 

@@ -62,11 +62,10 @@ public class BPRMF extends IterativeRecommender {
 
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			int sampleSize = numUsers * 100;
 			if (verbose)
-				Logs.debug("Sample size = {}, running at iteration = {}", sampleSize, iter);
+				Logs.debug("Fold [{}] runs at iteration = {}", fold, iter);
 
-			for (int s = 0; s < sampleSize; s++) {
+			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
 
 				// draw (u, i, j) from Ds with replacement
 				int u = 0, i = 0, j = 0;
@@ -88,7 +87,7 @@ public class BPRMF extends IterativeRecommender {
 					break;
 				}
 
-				// update \theta 
+				// update \theta
 				double xui = predict(u, i);
 				double xuj = predict(u, j);
 				double xuij = xui - xuj;
@@ -111,6 +110,7 @@ public class BPRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, lRate, regU, regI, regJ, numIters }, ",");
+		return Strings.toString(new Object[] { numFactors, lRate, regU, regI,
+				regJ, numIters }, ",");
 	}
 }
