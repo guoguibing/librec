@@ -85,8 +85,6 @@ public abstract class Recommender implements Runnable {
 	protected static double maxRate, minRate;
 	// init mean and standard deviation
 	protected static double initMean, initStd;
-	// threshold to convert a real rating into a binary rating
-	protected static double binThold;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// algorithm's name
@@ -119,7 +117,8 @@ public abstract class Recommender implements Runnable {
 	 * @param testMatrix
 	 *            test matrix
 	 */
-	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix,
+			int fold) {
 		this.trainMatrix = trainMatrix;
 		this.testMatrix = testMatrix;
 		this.fold = fold;
@@ -134,7 +133,7 @@ public abstract class Recommender implements Runnable {
 		numRates = trainMatrix.size();
 		globalMean = trainMatrix.sum() / numRates;
 
-		// class name as the default algorithm name 
+		// class name as the default algorithm name
 		algoName = this.getClass().getSimpleName();
 
 		// fold info
@@ -160,10 +159,6 @@ public abstract class Recommender implements Runnable {
 			// -1 to use as many as possible or disable
 			numRecs = cf.getInt("num.reclist.len");
 			numIgnore = cf.getInt("num.ignor.items");
-
-			binThold = cf.getDouble("val.binary.threshold");
-			if (binThold < 0)
-				binThold = minRate;
 
 			// initial random seed
 			int seed = cf.getInt("num.rand.seed");
@@ -194,15 +189,18 @@ public abstract class Recommender implements Runnable {
 			// learn a recommender model
 			initModel();
 
-			// print out algorithm's settings: to indicate starting building models
+			// print out algorithm's settings: to indicate starting building
+			// models
 			String algoInfo = toString();
 			if (!algoInfo.isEmpty())
 				Logs.debug(algoName + ": " + algoInfo);
 
 			buildModel();
 		} else {
-			// load a learned model: this code will not be executed unless "Debug.OFF"
-			// ... mainly for the purpose of examplifying how to use the saved models. 
+			// load a learned model: this code will not be executed unless
+			// "Debug.OFF"
+			// ... mainly for the purpose of examplifying how to use the saved
+			// models.
 			loadModel();
 		}
 		long trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
@@ -221,7 +219,8 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.TestTime, (double) testTime);
 
 		String evalInfo = algoName + foldStr + ": " + result + "\tTime: "
-				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
+				+ Dates.parse(measures.get(Measure.TrainTime).longValue())
+				+ ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
 		if (!isRankingPred)
 			evalInfo += "\tView: " + view;
@@ -239,20 +238,29 @@ public abstract class Recommender implements Runnable {
 	public static String getEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = null;
 		if (isRankingPred) {
-			// Note: MAE and RMSE are computed, but not used here 
-			// ....  if you need them, add it back in the same manner as other metrics
+			// Note: MAE and RMSE are computed, but not used here
+			// .... if you need them, add it back in the same manner as other
+			// metrics
 			if (isDiverseUsed)
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.D5),
-						measures.get(Measure.D10), measures.get(Measure.Pre5), measures.get(Measure.Pre10),
-						measures.get(Measure.Rec5), measures.get(Measure.Rec10), measures.get(Measure.AUC),
-						measures.get(Measure.MAP), measures.get(Measure.NDCG), measures.get(Measure.MRR), numIgnore);
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
+						measures.get(Measure.D5), measures.get(Measure.D10),
+						measures.get(Measure.Pre5),
+						measures.get(Measure.Pre10),
+						measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC),
+						measures.get(Measure.MAP), measures.get(Measure.NDCG),
+						measures.get(Measure.MRR), numIgnore);
 			else
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%2d", measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
-						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
+				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%2d",
+						measures.get(Measure.Pre5),
+						measures.get(Measure.Pre10),
+						measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC),
+						measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.3f,%.3f,%.3f,%.3f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
+			evalInfo = String.format("%.3f,%.3f,%.3f,%.3f",
+					measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
 		return evalInfo;
@@ -280,12 +288,14 @@ public abstract class Recommender implements Runnable {
 		SymmMatrix corrs = new SymmMatrix(count);
 
 		for (int i = 0; i < count; i++) {
-			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix.column(i);
+			SparseVector iv = isUser ? trainMatrix.row(i) : trainMatrix
+					.column(i);
 			if (iv.getCount() == 0)
 				continue;
 			// user/item itself exclusive
 			for (int j = i + 1; j < count; j++) {
-				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix.column(j);
+				SparseVector jv = isUser ? trainMatrix.row(j) : trainMatrix
+						.column(j);
 
 				double sim = correlation(iv, jv);
 
@@ -344,7 +354,8 @@ public abstract class Recommender implements Runnable {
 			break;
 		case "cos-binary":
 			// for ratings along all the vectors (including one-sided 0s)
-			sim = iv.inner(jv) / (Math.sqrt(iv.inner(iv)) * Math.sqrt(jv.inner(jv)));
+			sim = iv.inner(jv)
+					/ (Math.sqrt(iv.inner(iv)) * Math.sqrt(jv.inner(jv)));
 			break;
 		case "msd":
 			sim = Sims.msd(is, js);
@@ -478,7 +489,8 @@ public abstract class Recommender implements Runnable {
 		List<Integer> candItems = trainMatrix.columns();
 
 		if (verbose)
-			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
+			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo,
+					candItems.size());
 
 		// ignore items for all users: most popular items
 		if (numIgnore > 0) {
@@ -487,7 +499,8 @@ public abstract class Recommender implements Runnable {
 			Map<Integer, Integer> itemDegs = new HashMap<>();
 			for (int j : candItems)
 				itemDegs.put(j, trainMatrix.columnSize(j));
-			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
+			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs,
+					true);
 			int k = 0;
 			for (KeyValPair<Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
@@ -542,9 +555,11 @@ public abstract class Recommender implements Runnable {
 			List<Integer> rankedItems = new ArrayList<>();
 			if (itemScores.size() > 0) {
 
-				List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores, true);
-				List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted.subList(
-						0, numRecs);
+				List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores,
+						true);
+				List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted
+						.size() <= numRecs) ? sorted : sorted.subList(0,
+						numRecs);
 
 				for (KeyValPair<Integer> kv : recomd)
 					rankedItems.add(kv.getKey());
@@ -568,8 +583,10 @@ public abstract class Recommender implements Runnable {
 			}
 
 			List<Integer> cutoffs = Arrays.asList(5, 10);
-			Map<Integer, Double> precs = Measures.PrecAt(rankedItems, correctItems, cutoffs);
-			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems, correctItems, cutoffs);
+			Map<Integer, Double> precs = Measures.PrecAt(rankedItems,
+					correctItems, cutoffs);
+			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems,
+					correctItems, cutoffs);
 
 			precs5.add(precs.get(5));
 			precs10.add(precs.get(10));
@@ -622,41 +639,6 @@ public abstract class Recommender implements Runnable {
 		}
 
 		return pred;
-	}
-
-	/**
-	 * Convert a rating (given by user {@code u} on item {@code j}) into a
-	 * binary value, useful for the task of item ranking
-	 * 
-	 * @param u
-	 *            user id
-	 * @param j
-	 *            item id
-	 * @param ruj
-	 *            rating value
-	 * 
-	 * @return a binarized rating value
-	 */
-	protected double binary(int u, int j, double ruj) {
-		return ruj >= binThold ? 1 : 0;
-	}
-
-	/**
-	 * 
-	 * Binarize a given matrix by applying the {@link binary(int, int, double)}
-	 * method. Note that the given matrix will be changed directly.
-	 * 
-	 * @param mat
-	 *            a given matrix to be binarized
-	 */
-	protected void binary(SparseMatrix mat) {
-		for (MatrixEntry me : mat) {
-			int u = me.row();
-			int j = me.column();
-			double ruj = me.get();
-
-			me.set(binary(u, j, ruj));
-		}
 	}
 
 	/**
@@ -790,6 +772,19 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected double normalize(double rate) {
 		return (rate - minRate) / (maxRate - minRate);
+	}
+
+	/**
+	 * Check if ratings have been binarized; useful for methods that require binarized ratings; 
+	 */
+	protected void checkBinary() {
+		double binThold = cf.getDouble("val.binary.threshold");
+		if (binThold < 0) {
+			Logs.error(
+					"val.binary.threshold={}, ratings must be binarized first! Try set a non-negative value.",
+					binThold);
+			System.exit(-1);
+		}
 	}
 
 	/**

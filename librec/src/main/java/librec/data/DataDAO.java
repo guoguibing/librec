@@ -118,7 +118,8 @@ public class DataDAO {
 
 	/**
 	 * Default relevant columns {0: user column, 1: item column, 2: rate
-	 * column}; otherwise try {@code readData(int[] rels)}
+	 * column}; column structures are used for better performance; and default
+	 * recommendation task is rating prediction;
 	 * 
 	 * 
 	 * @return a sparse matrix storing all the relevant data
@@ -128,11 +129,32 @@ public class DataDAO {
 	}
 
 	/**
+	 * Read data for rating prediction, or item recommendation
+	 * 
+	 * @param binThold
+	 *            a parameter to distinguish recommendation task; if binThold<0:
+	 *            rating prediction; binThold>=0: item recommendation
+	 * @return a sparse matrix storing all the relevant data
+	 */
+	public SparseMatrix readData(double binThold) throws Exception {
+		return readData(true, binThold);
+	}
+
+	/**
 	 * @param isCCSUsed
 	 *            whether to construct CCS structures while reading data
 	 */
 	public SparseMatrix readData(boolean isCCSUsed) throws Exception {
-		return readData(new int[] { 0, 1, 2 }, isCCSUsed);
+		return readData(new int[] { 0, 1, 2 }, isCCSUsed, -1);
+	}
+
+	/**
+	 * @param isCCSUsed
+	 *            whether to construct CCS structures while reading data
+	 */
+	public SparseMatrix readData(boolean isCCSUsed, double binThold)
+			throws Exception {
+		return readData(new int[] { 0, 1, 2 }, isCCSUsed, binThold);
 	}
 
 	/**
@@ -143,9 +165,14 @@ public class DataDAO {
 	 *            the indexes of the relevant columns in the data file
 	 * @param isCCSUsed
 	 *            whether to store the CCS structures of the rating matrix
+	 * @param binThold
+	 *            the threshold to binarize a rating. If a rating is greater
+	 *            than the threshold, the value will be 1; otherwise 0. To
+	 *            disable this feature, i.e., keep the original rating value,
+	 *            set the threshold a negative value
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMatrix readData(int[] cols, boolean isCCSUsed)
+	public SparseMatrix readData(int[] cols, boolean isCCSUsed, double binThold)
 			throws Exception {
 
 		// Table {row-id, col-id, rate}
@@ -165,11 +192,13 @@ public class DataDAO {
 			Double rate = (cols.length >= 3 && data.length >= 3) ? Double
 					.valueOf(data[cols[2]]) : 1.0;
 
-			/*
-			 * if (cols.length >= 4) { double weight =
-			 * Double.parseDouble(data[cols[3]]); if (rate == 0 && weight < 1)
-			 * continue; }
-			 */
+			// binarize the rating for item recommendation task
+			if (binThold >= 0) {
+				if (rate > binThold)
+					rate = 1.0;
+				else
+					continue;
+			}
 
 			scaleDist.add(rate);
 

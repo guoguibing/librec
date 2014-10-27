@@ -41,22 +41,19 @@ import librec.intf.IterativeRecommender;
  */
 public class RankSGD extends IterativeRecommender {
 
-	// item sampling probabilities sorted ascendingly 
+	// item sampling probabilities sorted ascendingly
 	protected List<KeyValPair<Integer>> itemProbs;
 
 	public RankSGD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		isRankingPred = true;
+		checkBinary();
 	}
 
 	@Override
-	protected void initModel()  throws Exception{
+	protected void initModel() throws Exception {
 		super.initModel();
-
-		// pre-processing: binarize training data
-		super.binary(trainMatrix);
-		// super.binary(testMatrix); 
 
 		// compute item sampling probability
 		Map<Integer, Double> itemProbsMap = new HashMap<>();
@@ -89,7 +86,8 @@ public class RankSGD extends IterativeRecommender {
 
 					int j = -1;
 					while (true) {
-						// draw an item j with probability proportional to popularity
+						// draw an item j with probability proportional to
+						// popularity
 						double sum = 0, rand = Randoms.random();
 						for (KeyValPair<Integer> en : itemProbs) {
 							int k = en.getKey();
@@ -140,6 +138,8 @@ public class RankSGD extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, (float) lRate, numIters }, ",");
+		return Strings.toString(
+				new Object[] { cf.getFloat("val.binary.threshold"),
+						(float) lRate, numIters }, ",");
 	}
 }

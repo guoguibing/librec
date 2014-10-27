@@ -53,6 +53,7 @@ public class RankALS extends IterativeRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		isRankingPred = true;
+		checkBinary();
 	}
 
 	@Override
@@ -76,7 +77,8 @@ public class RankALS extends IterativeRecommender {
 		for (int iter = 1; iter < numIters; iter++) {
 
 			if (verbose)
-				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo, iter, numIters);
+				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo,
+						iter, numIters);
 
 			// P step: update user vectors
 			DenseVector sum_sq = new DenseVector(numFactors);
@@ -90,7 +92,8 @@ public class RankALS extends IterativeRecommender {
 				sum_sqq = sum_sqq.add(qj.outer(qj).scale(sj));
 			}
 
-			List<Integer> cus = trainMatrix.rows(); // list of users with $c_ui=1$
+			List<Integer> cus = trainMatrix.rows(); // list of users with
+													// $c_ui=1$
 			for (int u : cus) {
 				// for each user
 				DenseMatrix sum_cqq = new DenseMatrix(numFactors, numFactors);
@@ -104,8 +107,8 @@ public class RankALS extends IterativeRecommender {
 
 				for (VectorEntry ve : Ru) {
 					int i = ve.index();
-					double rui = binary(u, i, ve.get());
-					// double cui = 1; 
+					double rui = ve.get();
+					// double cui = 1;
 					DenseVector qi = Q.row(i);
 
 					sum_cqq = sum_cqq.add(qi.outer(qi));
@@ -119,11 +122,13 @@ public class RankALS extends IterativeRecommender {
 					sum_sqr = sum_sqr.add(qi.scale(si * rui));
 				}
 
-				DenseMatrix M = sum_cqq.scale(sum_s).minus(sum_cq.outer(sum_sq)).minus(sum_sq.outer(sum_cq))
-						.add(sum_sqq.scale(sum_c));
+				DenseMatrix M = sum_cqq.scale(sum_s)
+						.minus(sum_cq.outer(sum_sq))
+						.minus(sum_sq.outer(sum_cq)).add(sum_sqq.scale(sum_c));
 
-				DenseVector y = sum_cqr.scale(sum_s).minus(sum_cq.scale(sum_sr)).minus(sum_sq.scale(sum_cr))
-						.add(sum_sqr.scale(sum_c));
+				DenseVector y = sum_cqr.scale(sum_s)
+						.minus(sum_cq.scale(sum_sr))
+						.minus(sum_sq.scale(sum_cr)).add(sum_sqr.scale(sum_c));
 
 				DenseVector pu = M.inv().mult(y);
 				P.setRow(u, pu);
@@ -143,7 +148,7 @@ public class RankALS extends IterativeRecommender {
 
 				for (VectorEntry ve : Ru) {
 					int j = ve.index();
-					double ruj = binary(u, j, ve.get());
+					double ruj = ve.get();
 					double sj = s.get(j);
 
 					sum_sr += sj * ruj;
@@ -171,7 +176,7 @@ public class RankALS extends IterativeRecommender {
 
 				for (int u : cus) {
 					DenseVector pu = P.row(u);
-					double rui = binary(u, i, trainMatrix.get(u, i));
+					double rui = trainMatrix.get(u, i);
 
 					DenseMatrix pp = pu.outer(pu);
 					sum_cpp = sum_cpp.add(pp);
@@ -182,13 +187,15 @@ public class RankALS extends IterativeRecommender {
 					if (rui > 0) {
 						sum_cpr = sum_cpr.add(pu.scale(rui));
 						sum_c_sr_p = sum_c_sr_p.add(pu.scale(m_sum_sr.get(u)));
-						sum_p_r_c = sum_p_r_c.add(pu.scale(rui * m_sum_c.get(u)));
+						sum_p_r_c = sum_p_r_c
+								.add(pu.scale(rui * m_sum_c.get(u)));
 					}
 				}
 
 				DenseMatrix M = sum_cpp.scale(sum_s).add(sum_p_p_c.scale(si));
-				DenseVector y = sum_cpp.mult(sum_sq).add(sum_cpr.scale(sum_s)).minus(sum_c_sr_p)
-						.add(sum_p_p_cq.scale(si)).minus(sum_cr_p.scale(si)).add(sum_p_r_c.scale(si));
+				DenseVector y = sum_cpp.mult(sum_sq).add(sum_cpr.scale(sum_s))
+						.minus(sum_c_sr_p).add(sum_p_p_cq.scale(si))
+						.minus(sum_cr_p.scale(si)).add(sum_p_r_c.scale(si));
 				DenseVector qi = M.inv().mult(y);
 				Q.setRow(i, qi);
 			}
@@ -197,6 +204,7 @@ public class RankALS extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, isSupportWeight, numIters }, ",");
+		return Strings.toString(new Object[] { cf.getFloat("val.binary.threshold"), isSupportWeight,
+				numIters }, ",");
 	}
 }
