@@ -111,7 +111,7 @@ public class BPR extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, lRate, regU, regI,
+		return Strings.toString(new Object[] { (float)binThold, numFactors, lRate, regU, regI,
 				regJ, numIters }, ",");
 	}
 }

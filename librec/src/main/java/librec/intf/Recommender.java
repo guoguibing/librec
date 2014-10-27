@@ -66,6 +66,8 @@ public abstract class Recommender implements Runnable {
 	protected static boolean verbose;
 	// is ranking/rating prediction
 	public static boolean isRankingPred;
+	// threshold to binarize ratings
+	public static double binThold;
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
 	// view of rating predictions
@@ -153,6 +155,7 @@ public abstract class Recommender implements Runnable {
 
 			verbose = cf.isOn("is.verbose");
 			isRankingPred = cf.isOn("is.ranking.pred");
+			binThold = cf.getDouble("val.binary.threshold");
 			isDiverseUsed = cf.isOn("is.diverse.used");
 			view = cf.getString("rating.pred.view").toLowerCase();
 
@@ -775,10 +778,10 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Check if ratings have been binarized; useful for methods that require binarized ratings; 
+	 * Check if ratings have been binarized; useful for methods that require
+	 * binarized ratings;
 	 */
 	protected void checkBinary() {
-		double binThold = cf.getDouble("val.binary.threshold");
 		if (binThold < 0) {
 			Logs.error(
 					"val.binary.threshold={}, ratings must be binarized first! Try set a non-negative value.",

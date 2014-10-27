@@ -67,7 +67,7 @@ public class SLIM extends IterativeRecommender {
 	// item's nearest neighbors for kNN <=0, i.e., all other items
 	private List<Integer> allItems;
 
-	// regularization parameters for the L1 or L2 term 
+	// regularization parameters for the L1 or L2 term
 	private double regL1, regL2;
 
 	public SLIM(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -83,9 +83,10 @@ public class SLIM extends IterativeRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		W = new DenseMatrix(numItems, numItems);
-		W.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01)) to speed up training
+		W.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01))
+					// to speed up training
 
-		// optional: data standardization  
+		// optional: data standardization
 		// trainMatrix.standardize(false);
 
 		if (knn > 0) {
@@ -137,8 +138,9 @@ public class SLIM extends IterativeRecommender {
 				// find k-nearest neighbors
 				Collection<Integer> nns = knn > 0 ? itemNNs.get(j) : allItems;
 
-				// for each nearest neighbor i, update wij by the coordinate descent update rule
-				// it is OK if i==j, since wjj = 0; 
+				// for each nearest neighbor i, update wij by the coordinate
+				// descent update rule
+				// it is OK if i==j, since wjj = 0;
 				for (Integer i : nns) {
 
 					double gradSum = 0, rateSum = 0, errs = 0;
@@ -165,11 +167,14 @@ public class SLIM extends IterativeRecommender {
 
 					if (regL1 < Math.abs(gradSum)) {
 						if (gradSum > 0) {
-							double update = (gradSum - regL1) / (regL2 + rateSum);
+							double update = (gradSum - regL1)
+									/ (regL2 + rateSum);
 							W.set(i, j, update);
 						} else {
-							// One doubt: in this case, wij<0, however, the paper says wij>=0. How to gaurantee that?
-							double update = (gradSum + regL1) / (regL2 + rateSum);
+							// One doubt: in this case, wij<0, however, the
+							// paper says wij>=0. How to gaurantee that?
+							double update = (gradSum + regL1)
+									/ (regL2 + rateSum);
 							W.set(i, j, update);
 						}
 					} else {
@@ -213,15 +218,17 @@ public class SLIM extends IterativeRecommender {
 		last_loss = loss;
 
 		if (verbose)
-			Logs.debug("{} [{}] iter {}: loss = {}, delta_loss = {}", algoName, fold, iter, loss, delta_loss);
+			Logs.debug("{} [{}] iter {}: loss = {}, delta_loss = {}", algoName,
+					fold, iter, loss, delta_loss);
 
 		return iter > 1 ? delta_loss < 1e-5 : false;
 	}
 
 	@Override
 	public String toString() {
-		return Strings.toString(
-				new Object[] { knn, (float) regL2, (float) regL1, cf.getString("similarity"), numIters }, ",");
+		return Strings.toString(new Object[] { (float) binThold, knn,
+				(float) regL2, (float) regL1, cf.getString("similarity"),
+				numIters }, ",");
 	}
 
 }

@@ -53,6 +53,7 @@ public class WRMF extends IterativeRecommender {
 		isRankingPred = true; // item recommendation
 
 		alpha = cf.getDouble("WRMF.alpha");
+		checkBinary();
 	}
 
 	@Override
@@ -85,10 +86,6 @@ public class WRMF extends IterativeRecommender {
 													// + alpha * r_{u, i}
 				}
 
-				// binarize real values
-				for (VectorEntry ve : pu)
-					ve.set(ve.get() > 0 ? 1 : 0);
-
 				// Cu - I
 				DiagMatrix CuI = Cu.minus(1);
 				// YtY + Yt * (Cu - I) * Y
@@ -110,8 +107,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
 				if (verbose && (i + 1) % 100 == 0)
-					Logs.debug(
-							"{}{} is running at iteration = {}, item = {}/{}",
+					Logs.debug("{}{} runs at iteration = {}, item = {}/{}",
 							algoName, foldInfo, iter, i + 1, numItems);
 
 				// diagonal matrix C^i for each item
@@ -122,10 +118,6 @@ public class WRMF extends IterativeRecommender {
 					int u = ve.index();
 					Ci.add(u, u, alpha * ve.get());
 				}
-
-				// binarize real values
-				for (VectorEntry ve : pi)
-					ve.set(ve.get() > 0 ? 1 : 0);
 
 				// Ci - I
 				DiagMatrix CiI = Ci.minus(1); // more efficient than
@@ -148,7 +140,7 @@ public class WRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, (float) regU,
+		return Strings.toString(new Object[] { (float)binThold,numFactors, (float) regU,
 				(float) regI, (float) alpha, numIters }, ",");
 	}
 
