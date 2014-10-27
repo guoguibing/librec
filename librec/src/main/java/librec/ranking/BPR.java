@@ -44,11 +44,11 @@ import librec.intf.IterativeRecommender;
  * @author guoguibing
  * 
  */
-public class BPRMF extends IterativeRecommender {
+public class BPR extends IterativeRecommender {
 
 	private double regJ;
 
-	public BPRMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public BPR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		isRankingPred = true;

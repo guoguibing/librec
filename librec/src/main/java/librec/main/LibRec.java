@@ -48,7 +48,7 @@ import librec.ext.PRankD;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
-import librec.ranking.BPRMF;
+import librec.ranking.BPR;
 import librec.ranking.CLiMF;
 import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
@@ -331,8 +331,8 @@ public class LibRec {
 			return new RankSGD(trainMatrix, testMatrix, fold);
 		case "wrmf":
 			return new WRMF(trainMatrix, testMatrix, fold);
-		case "bprmf":
-			return new BPRMF(trainMatrix, testMatrix, fold);
+		case "bpr":
+			return new BPR(trainMatrix, testMatrix, fold);
 		case "slim":
 			return new SLIM(trainMatrix, testMatrix, fold);
 
