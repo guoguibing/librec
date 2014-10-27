@@ -111,8 +111,8 @@ public class WRMF extends IterativeRecommender {
 			for (int i = 0; i < numItems; i++) {
 				if (verbose && (i + 1) % 100 == 0)
 					Logs.debug(
-							"Fold [{}] is running at iteration = {}, item = {}/{}",
-							fold, iter, i + 1, numItems);
+							"{}{} is running at iteration = {}, item = {}/{}",
+							algoName, foldInfo, iter, i + 1, numItems);
 
 				// diagonal matrix C^i for each item
 				DiagMatrix Ci = DiagMatrix.eye(numUsers);
