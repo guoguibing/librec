@@ -362,7 +362,7 @@ public class LibRec {
 		String cv = "kFold: " + cf.getInt("num.kfold")
 				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
 
-		float ratio = (float) cf.getDouble("val.ratio");
+		float ratio =cf.getFloat("val.ratio");
 		int givenN = cf.getInt("num.given.n");
 		float givenRatio = cf.getFloat("val.given.ratio");
 

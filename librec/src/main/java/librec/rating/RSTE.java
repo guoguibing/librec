@@ -39,13 +39,13 @@ import librec.intf.SocialRecommender;
  */
 public class RSTE extends SocialRecommender {
 
-	private double alpha;
+	private float alpha;
 
 	public RSTE(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		initByNorm = false;
-		alpha = cf.getDouble("RSTE.alpha");
+		alpha = cf.getFloat("RSTE.alpha");
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public class RSTE extends SocialRecommender {
 					double rate = ve.get();
 					double ruj = normalize(rate);
 
-					// compute directly to speed up calculation 
+					// compute directly to speed up calculation
 					double pred1 = DenseMatrix.rowMult(P, u, Q, j);
 					double sum = 0.0;
 					for (int k : tks)
@@ -104,7 +104,8 @@ public class RSTE extends SocialRecommender {
 						double usgd = alpha * csgd * qjf + regU * puf;
 
 						double jd = ws > 0 ? sum_us[f] / ws : 0;
-						double jsgd = csgd * (alpha * puf + (1 - alpha) * jd) + regI * qjf;
+						double jsgd = csgd * (alpha * puf + (1 - alpha) * jd)
+								+ regI * qjf;
 
 						PS.add(u, f, usgd);
 						QS.add(j, f, jsgd);
@@ -184,7 +185,7 @@ public class RSTE extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, (float) regU, (float) regI, numFactors, numIters,
-				isBoldDriver, (float) alpha }, ",");
+		return Strings.toString(new Object[] { initLRate, regU, regI,
+				numFactors, numIters, isBoldDriver, alpha }, ",");
 	}
 }

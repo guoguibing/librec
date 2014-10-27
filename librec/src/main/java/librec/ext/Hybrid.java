@@ -44,7 +44,7 @@ public class Hybrid extends Recommender {
 	Table<Integer, Integer, Double> userItemRanks = HashBasedTable.create();
 	Table<Integer, Integer, Double> heatScores = HashBasedTable.create();
 	Table<Integer, Integer, Double> probScores = HashBasedTable.create();
-	protected double lambda;
+	protected float lambda;
 
 	Map<Integer, Integer> userDegrees = new HashMap<>();
 	Map<Integer, Integer> itemDegrees = new HashMap<>();
@@ -55,7 +55,7 @@ public class Hybrid extends Recommender {
 
 		algoName = "Hybrid (HeatS+ProbS)";
 		isRankingPred = true;
-		lambda = cf.getDouble("Hybrid.lambda");
+		lambda = cf.getFloat("Hybrid.lambda");
 	}
 
 	@Override
@@ -66,7 +66,8 @@ public class Hybrid extends Recommender {
 
 	protected double ranking_basic(int u, int j) {
 
-		// Note that in ranking, we first check a user u, and then check the ranking score of each candidate items
+		// Note that in ranking, we first check a user u, and then check the
+		// ranking score of each candidate items
 		if (!heatScores.containsRow(u)) {
 			// new user
 			heatScores.clear();
@@ -109,7 +110,8 @@ public class Hybrid extends Recommender {
 				SparseVector vv = trainMatrix.row(v);
 				double sum = 0.0;
 				for (int item : vv.getIndex())
-					sum += items.contains(item) ? 1.0 / itemDegrees.get(item) : 0.0;
+					sum += items.contains(item) ? 1.0 / itemDegrees.get(item)
+							: 0.0;
 
 				userResources.put(v, sum);
 			}
@@ -128,13 +130,14 @@ public class Hybrid extends Recommender {
 			}
 		}
 
-		return heatScores.contains(u, j) ? heatScores.get(u, j) / maxHeat * (1 - lambda) + probScores.get(u, j)
-				/ maxProb * lambda : 0.0;
+		return heatScores.contains(u, j) ? heatScores.get(u, j) / maxHeat
+				* (1 - lambda) + probScores.get(u, j) / maxProb * lambda : 0.0;
 	}
 
 	protected double ranking(int u, int j) {
 
-		// Note that in ranking, we first check a user u, and then check the ranking score of each candidate items
+		// Note that in ranking, we first check a user u, and then check the
+		// ranking score of each candidate items
 		if (!userItemRanks.containsRow(u)) {
 			// new user
 			userItemRanks.clear();
@@ -165,7 +168,8 @@ public class Hybrid extends Recommender {
 				SparseVector iv = trainMatrix.column(i);
 				double sum = 0;
 				for (int user : iv.getIndex())
-					sum += userResources.containsKey(user) ? userResources.get(user) : 0.0;
+					sum += userResources.containsKey(user) ? userResources
+							.get(user) : 0.0;
 
 				double score = sum / Math.pow(itemDegrees.get(i), 1 - lambda);
 				userItemRanks.put(u, i, score);
@@ -220,6 +224,6 @@ public class Hybrid extends Recommender {
 
 	@Override
 	public String toString() {
-		return super.toString() + "," + (float) lambda;
+		return super.toString() + "," + lambda;
 	}
 }

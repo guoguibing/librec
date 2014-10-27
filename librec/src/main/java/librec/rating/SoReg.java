@@ -44,7 +44,7 @@ import com.google.common.collect.Table;
 public class SoReg extends SocialRecommender {
 
 	private Table<Integer, Integer, Double> userCorrs;
-	private double beta;
+	private float beta;
 
 	public SoReg(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -57,7 +57,7 @@ public class SoReg extends SocialRecommender {
 		super.initModel();
 
 		userCorrs = HashBasedTable.create();
-		beta = cf.getDouble("SoReg.beta"); // suggested values: 0.01, 0.001
+		beta = cf.getFloat("SoReg.beta"); // suggested values: 0.01, 0.001
 	}
 
 	/**

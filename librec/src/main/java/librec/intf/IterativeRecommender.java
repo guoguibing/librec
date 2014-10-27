@@ -35,9 +35,9 @@ public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
 	// init, maximum learning rate, momentum
-	protected static double initLRate, maxLRate, momentum;
+	protected static float initLRate, maxLRate, momentum;
 	// user and item regularization
-	protected static double regU, regI;
+	protected static float regU, regI;
 	// number of factors
 	protected static int numFactors;
 	// number of iterations
@@ -49,7 +49,7 @@ public abstract class IterativeRecommender extends Recommender {
 	// driving
 	protected static boolean isUndoEnabled;
 	// decay of learning rate
-	protected static double decay;
+	protected static float decay;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
@@ -75,13 +75,13 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// initialization
 	static {
-		initLRate = cf.getDouble("val.learn.rate");
-		maxLRate = cf.getDouble("max.learn.rate");
-		momentum = cf.getDouble("val.momentum");
+		initLRate = cf.getFloat("val.learn.rate");
+		maxLRate = cf.getFloat("max.learn.rate");
+		momentum = cf.getFloat("val.momentum");
 
 		// to support multiple tests in one time in future
-		regU = cf.getRange("val.reg.user").get(0);
-		regI = cf.getRange("val.reg.item").get(0);
+		regU = cf.getRange("val.reg.user").get(0).floatValue();
+		regI = cf.getRange("val.reg.item").get(0).floatValue();
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
@@ -89,7 +89,7 @@ public abstract class IterativeRecommender extends Recommender {
 		isBoldDriver = cf.isOn("is.bold.driver");
 		isUndoEnabled = cf.isOn("is.undo.change");
 
-		decay = cf.getDouble("val.decay.rate");
+		decay = cf.getFloat("val.decay.rate");
 	}
 
 	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -291,7 +291,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, (float) regU, (float) regI, numFactors, numIters,
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, numFactors, numIters,
 				isBoldDriver }, ",");
 	}
 

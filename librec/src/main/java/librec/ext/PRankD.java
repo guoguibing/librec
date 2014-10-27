@@ -56,7 +56,7 @@ public class PRankD extends RankSGD {
 	private SymmMatrix itemCorrs;
 
 	// similarity filter
-	private double alpha;
+	private float alpha;
 
 	public PRankD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -93,7 +93,7 @@ public class PRankD extends RankSGD {
 			s.set(j, s.get(j) / maxUsers);
 		}
 
-		alpha = cf.getDouble("PRankD.alpha");
+		alpha = cf.getFloat("PRankD.alpha");
 
 		// compute item correlations by cosine similarity
 		itemCorrs = buildCorrs(false);
@@ -184,6 +184,6 @@ public class PRankD extends RankSGD {
 
 	@Override
 	public String toString() {
-		return super.toString() + "," + (float) alpha;
+		return super.toString() + "," + alpha;
 	}
 }

@@ -46,7 +46,7 @@ import librec.intf.Recommender;
 public class PD extends Recommender {
 
 	// Gaussian noise: 2.5 suggested in the paper
-	private double sigma;
+	private float sigma;
 
 	// prior probability
 	private double prior;
@@ -58,7 +58,7 @@ public class PD extends Recommender {
 	@Override
 	protected void initModel() throws Exception {
 		prior = 1.0 / numUsers;
-		sigma = cf.getDouble("PD.sigma");
+		sigma = cf.getFloat("PD.sigma");
 	}
 
 	@Override

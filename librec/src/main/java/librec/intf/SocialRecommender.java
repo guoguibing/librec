@@ -34,8 +34,10 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// social data dao
 	protected static DataDAO socialDao;
 
-	// socialMatrix: social rate matrix, indicating a user is connecting to a number of other users  
-	// trSocialMatrix: inverse social matrix, indicating a user is connected by a number of other users
+	// socialMatrix: social rate matrix, indicating a user is connecting to a
+	// number of other users
+	// trSocialMatrix: inverse social matrix, indicating a user is connected by
+	// a number of other users
 	protected static SparseMatrix socialMatrix;
 
 	// social regularization
@@ -60,14 +62,15 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		}
 	}
 
-	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix,
+			int fold) {
 		super(trainMatrix, testMatrix, fold);
 	}
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, (float) regU, (float) regI, (float) regS,
-				numFactors, numIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI,
+				regS, numFactors, numIters, isBoldDriver }, ",");
 	}
 
 	@Override
@@ -96,5 +99,5 @@ public abstract class SocialRecommender extends IterativeRecommender {
 			return true;
 		}
 	}
-	
+
 }

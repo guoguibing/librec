@@ -68,7 +68,7 @@ public class SLIM extends IterativeRecommender {
 	private List<Integer> allItems;
 
 	// regularization parameters for the L1 or L2 term
-	private double regL1, regL2;
+	private float regL1, regL2;
 
 	public SLIM(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -76,8 +76,8 @@ public class SLIM extends IterativeRecommender {
 		isRankingPred = true;
 		knn = cf.getInt("num.neighbors");
 
-		regL1 = cf.getDouble("SLIM.reg.l1");
-		regL2 = cf.getDouble("SLIM.reg.l2");
+		regL1 = cf.getFloat("SLIM.reg.l1");
+		regL2 = cf.getFloat("SLIM.reg.l2");
 	}
 
 	@Override
@@ -223,9 +223,9 @@ public class SLIM extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { (float) binThold, knn,
-				(float) regL2, (float) regL1, cf.getString("similarity"),
-				numIters }, ",");
+		return Strings.toString(
+				new Object[] { binThold, knn, regL2, regL1,
+						cf.getString("similarity"), numIters }, ",");
 	}
 
 }

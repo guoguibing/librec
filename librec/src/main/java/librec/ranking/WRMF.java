@@ -45,14 +45,14 @@ import librec.intf.IterativeRecommender;
  */
 public class WRMF extends IterativeRecommender {
 
-	private double alpha;
+	private float alpha;
 
 	public WRMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		isRankingPred = true; // item recommendation
 
-		alpha = cf.getDouble("WRMF.alpha");
+		alpha = cf.getFloat("WRMF.alpha");
 		checkBinary();
 	}
 
@@ -140,8 +140,8 @@ public class WRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { (float)binThold,numFactors, (float) regU,
-				(float) regI, (float) alpha, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, regU,
+				regI, alpha, numIters }, ",");
 	}
 
 }

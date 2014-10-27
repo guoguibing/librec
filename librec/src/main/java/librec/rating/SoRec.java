@@ -37,7 +37,7 @@ import librec.intf.SocialRecommender;
 public class SoRec extends SocialRecommender {
 
 	private DenseMatrix Z;
-	private double regC, regZ;
+	private float regC, regZ;
 
 	private Map<Integer, Integer> inDegrees, outDegrees;
 
@@ -54,8 +54,8 @@ public class SoRec extends SocialRecommender {
 		Z = new DenseMatrix(numUsers, numFactors);
 		Z.init();
 
-		regC = cf.getDouble("SoRec.reg.c");
-		regZ = cf.getDouble("SoRec.reg.z");
+		regC = cf.getFloat("SoRec.reg.c");
+		regZ = cf.getFloat("SoRec.reg.z");
 
 		inDegrees = new HashMap<>();
 		outDegrees = new HashMap<>();

@@ -204,7 +204,7 @@ public class RankALS extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { (float)binThold, isSupportWeight,
+		return Strings.toString(new Object[] { binThold, isSupportWeight,
 				numIters }, ",");
 	}
 }
