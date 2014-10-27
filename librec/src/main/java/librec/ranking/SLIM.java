@@ -86,9 +86,6 @@ public class SLIM extends IterativeRecommender {
 		W.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01))
 					// to speed up training
 
-		// optional: data standardization
-		// trainMatrix.standardize(false);
-
 		if (knn > 0) {
 			// find the nearest neighbors for each item based on item similarity
 			SymmMatrix itemCorrs = buildCorrs(false);
@@ -218,8 +215,8 @@ public class SLIM extends IterativeRecommender {
 		last_loss = loss;
 
 		if (verbose)
-			Logs.debug("{} [{}] iter {}: loss = {}, delta_loss = {}", algoName,
-					fold, iter, loss, delta_loss);
+			Logs.debug("{}{} iter {}: loss = {}, delta_loss = {}", algoName,
+					foldInfo, iter, loss, delta_loss);
 
 		return iter > 1 ? delta_loss < 1e-5 : false;
 	}
