@@ -343,12 +343,12 @@ public class DataSplitter {
 	 */
 	private void debugInfo(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		String foldInfo = fold > 0 ? "Fold [" + fold + "]: " : "";
-		Logs.debug("{}training amount: {}, testing amount: {}", foldInfo, trainMatrix.size(), testMatrix.size());
+		Logs.debug("{}training amount: {}, test amount: {}", foldInfo, trainMatrix.size(), testMatrix.size());
 
 		if (Debug.OFF) {
 			String dir = Systems.getDesktop();
 			try {
-				FileIO.writeString(dir + "train.txt", trainMatrix.toString());
+				FileIO.writeString(dir + "training.txt", trainMatrix.toString());
 				FileIO.writeString(dir + "test.txt", testMatrix.toString());
 			} catch (Exception e) {
 				e.printStackTrace();
