@@ -21,9 +21,11 @@ package librec.ext;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import librec.data.DenseMatrix;
-import librec.data.DenseVector;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
@@ -47,7 +49,7 @@ import librec.intf.Recommender;
 public class AR extends Recommender {
 
 	// confidence matrix of association rules
-	private DenseMatrix A;
+	private Table<Integer, Integer, Double> A;
 
 	public AR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -58,9 +60,10 @@ public class AR extends Recommender {
 
 	@Override
 	protected void buildModel() throws Exception {
-		A = new DenseMatrix(numItems, numItems);
+		A = HashBasedTable.create(numItems, numItems);
 
-		// simple rule: X => Y, given that each user vector is regarded as a transaction
+		// simple rule: X => Y, given that each user vector is regarded as a
+		// transaction
 		for (int x = 0; x < numItems; x++) {
 			// all transactions for item x
 			SparseVector qx = trainMatrix.column(x);
@@ -75,8 +78,11 @@ public class AR extends Recommender {
 					if (ruy > 0)
 						count++;
 				}
-				double conf = (count + 0.0) / total;
-				A.set(x, y, conf);
+
+				if (count > 0) {
+					double conf = (count + 0.0) / total;
+					A.put(x, y, conf);
+				}
 			}
 		}
 	}
@@ -87,8 +93,13 @@ public class AR extends Recommender {
 
 		SparseVector pu = trainMatrix.row(u);
 		for (Integer j : candItems) {
-			DenseVector qj = A.column(j);
-			double rank = pu.inner(qj);
+			double rank = 0;
+			for (Entry<Integer, Double> en : A.column(j).entrySet()) {
+				int i = en.getKey();
+				double support = en.getValue();
+
+				rank += pu.get(i) * support;
+			}
 
 			itemScores.put(j, rank);
 		}

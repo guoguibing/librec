@@ -53,7 +53,7 @@ public class WRMF extends IterativeRecommender {
 		isRankingPred = true; // item recommendation
 
 		alpha = cf.getFloat("WRMF.alpha");
-		checkBinary();
+		// checkBinary();
 	}
 
 	@Override
@@ -85,6 +85,10 @@ public class WRMF extends IterativeRecommender {
 					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1
 													// + alpha * r_{u, i}
 				}
+
+				// binarize real values
+				for (VectorEntry ve : pu)
+					ve.set(ve.get() > 0 ? 1 : 0);
 
 				// Cu - I
 				DiagMatrix CuI = Cu.minus(1);
@@ -118,6 +122,10 @@ public class WRMF extends IterativeRecommender {
 					int u = ve.index();
 					Ci.add(u, u, alpha * ve.get());
 				}
+
+				// binarize real values
+				for (VectorEntry ve : pi)
+					ve.set(ve.get() > 0 ? 1 : 0);
 
 				// Ci - I
 				DiagMatrix CiI = Ci.minus(1); // more efficient than
