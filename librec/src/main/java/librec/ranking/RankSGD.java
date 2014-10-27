@@ -139,6 +139,6 @@ public class RankSGD extends IterativeRecommender {
 	@Override
 	public String toString() {
 		return Strings
-				.toString(new Object[] { binThold, lRate, numIters }, ",");
+				.toString(new Object[] { binThold, initLRate, numIters }, ",");
 	}
 }
