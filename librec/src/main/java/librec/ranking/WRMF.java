@@ -61,7 +61,7 @@ public class WRMF extends IterativeRecommender {
 		// To be consistent with the symbols in the paper
 		DenseMatrix X = P, Y = Q;
 
-		// Updating by using alternative least square (ALS) 
+		// Updating by using alternative least square (ALS)
 		// due to large amount of entries to be processed (SGD will be too slow)
 		for (int iter = 1; iter <= numIters; iter++) {
 
@@ -70,15 +70,19 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix YtY = Yt.mult(Y);
 			for (int u = 0; u < numUsers; u++) {
 				if (verbose && (u + 1) % 100 == 0)
-					Logs.debug("Fold [{}] runs at iteration = {}, user = {}/{}", fold, iter, u + 1, numUsers);
+					Logs.debug("{}{} runs at iteration = {}, user = {}/{}",
+							algoName, foldInfo, iter, u + 1, numUsers);
 
 				// diagonal matrix C^u for each user
-				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the diagonal will be 1
+				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the
+															// diagonal will be
+															// 1
 				SparseVector pu = trainMatrix.row(u);
 
 				for (VectorEntry ve : pu) {
 					int i = ve.index();
-					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1 + alpha * r_{u, i}
+					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1
+													// + alpha * r_{u, i}
 				}
 
 				// binarize real values
@@ -90,7 +94,8 @@ public class WRMF extends IterativeRecommender {
 				// YtY + Yt * (Cu - I) * Y
 				DenseMatrix YtCuY = YtY.add(Yt.mult(CuI).mult(Y));
 				// (YtCuY + lambda * I)^-1
-				DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
+				DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(
+						regU))).inv();
 				// Yt * Cu
 				DenseMatrix YtCu = Yt.mult(Cu);
 
@@ -105,7 +110,9 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
 				if (verbose && (i + 1) % 100 == 0)
-					Logs.debug("Fold [{}] is running at iteration = {}, item = {}/{}", fold, iter, i + 1, numItems);
+					Logs.debug(
+							"Fold [{}] is running at iteration = {}, item = {}/{}",
+							fold, iter, i + 1, numItems);
 
 				// diagonal matrix C^i for each item
 				DiagMatrix Ci = DiagMatrix.eye(numUsers);
@@ -121,11 +128,13 @@ public class WRMF extends IterativeRecommender {
 					ve.set(ve.get() > 0 ? 1 : 0);
 
 				// Ci - I
-				DiagMatrix CiI = Ci.minus(1); // more efficient than DiagMatrix.eye(numUsers)
+				DiagMatrix CiI = Ci.minus(1); // more efficient than
+												// DiagMatrix.eye(numUsers)
 				// XtX + Xt * (Ci - I) * X
 				DenseMatrix XtCiX = XtX.add(Xt.mult(CiI).mult(X));
 				// (XtCiX + lambda * I)^-1
-				DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
+				DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(
+						regI))).inv();
 				// Xt * Ci
 				DenseMatrix XtCi = Xt.mult(Ci);
 
@@ -139,7 +148,8 @@ public class WRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, (float) regU, (float) regI, (float) alpha, numIters }, ",");
+		return Strings.toString(new Object[] { numFactors, (float) regU,
+				(float) regI, (float) alpha, numIters }, ",");
 	}
 
 }
