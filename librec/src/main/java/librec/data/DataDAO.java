@@ -275,6 +275,10 @@ public class DataDAO {
 
 		List<String> lines = new ArrayList<>(1500);
 		for (MatrixEntry me : rateMatrix) {
+			
+			if (me.get() <= 0) // enable sparse output
+				continue;
+			
 			String line = Strings.toString(
 					new Object[] { me.row() + 1, me.column() + 1,
 							(float) me.get() }, sep);
@@ -543,6 +547,13 @@ public class DataDAO {
 		return rateMatrix;
 	}
 
+	/**
+	 * @param ratingMatrix
+	 */
+	public void setRateMatrix(SparseMatrix ratingMatrix) {
+		this.rateMatrix = ratingMatrix;
+	}
+	
 	/**
 	 * @return whether "items" are users, useful for social reltions
 	 */
