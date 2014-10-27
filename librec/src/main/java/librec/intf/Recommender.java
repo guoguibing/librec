@@ -245,7 +245,7 @@ public abstract class Recommender implements Runnable {
 			// .... if you need them, add it back in the same manner as other
 			// metrics
 			if (isDiverseUsed)
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%2d",
+				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
 						measures.get(Measure.D5), measures.get(Measure.D10),
 						measures.get(Measure.Pre5),
 						measures.get(Measure.Pre10),
@@ -254,7 +254,7 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 			else
-				evalInfo = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%2d",
+				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
 						measures.get(Measure.Pre5),
 						measures.get(Measure.Pre10),
 						measures.get(Measure.Rec5),
@@ -262,7 +262,7 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.3f,%.3f,%.3f,%.3f",
+			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f",
 					measures.get(Measure.MAE), measures.get(Measure.RMSE),
 					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
 
