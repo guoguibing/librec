@@ -448,6 +448,12 @@ public abstract class Recommender implements Runnable {
 
 		double sum_maes = 0, sum_mses = 0, sum_asyms = 0;
 		int numCount = 0;
+		
+		//cf.getString("printTestPredictions");
+		
+		SparseMatrix predMatrix = testMatrix.clone();
+		
+		
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
 			if (rate <= 0)
@@ -462,9 +468,10 @@ public abstract class Recommender implements Runnable {
 			double pred = predict(u, j, true);
 			if (Double.isNaN(pred))
 				continue;
-
+			
+			predMatrix.set(u, j, pred);
 			double err = rate - pred;
-
+			
 			sum_maes += Math.abs(err);
 			sum_mses += err * err;
 			sum_asyms += Measures.ASYMMLoss(rate, pred, minRate, maxRate);
@@ -499,6 +506,21 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.RMSE, rmse);
 		measures.put(Measure.ASYMM, asymm);
 
+		if (cf.isOn("has.predictions.rating.output")) {
+			DataDAO testDao = new DataDAO(cf.getPath("dataset.testing"), rateDao.getUserIds(), rateDao.getItemIds());
+			testDao.setRateMatrix(predMatrix);
+			try {
+				String foldString = "";
+				if (this.fold>-1) {
+					foldString = "_"+Integer.toString(this.fold);
+				}
+				testDao.writeData(cf.getPath("predictions.rating.output") + foldString);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		return measures;
 	}
 
