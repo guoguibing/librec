@@ -2,11 +2,15 @@
 
 ### librec-v1.2
 
+* Rating predictions can be outputed now, thanks to [disc5](https://github.com/disc5)'s comment. 
 * New recommendation methods implemented:
-  * SLIM
+  * SLIM, FISM, SBPR
 * Others
-  * Few codes refactored
+  * Codes refactored & improved
+  * Rename BRPMF to BPR
+  * Support conversion from real-valued ratings to binary ones (val.binary.threshold)
   * Utility methods (e.g., data standardization) added to data structure
+  * bugs fixed
 
 ### librec-v1.1
 
