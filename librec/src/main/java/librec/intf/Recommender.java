@@ -19,6 +19,7 @@
 package librec.intf;
 
 import happy.coding.io.Configer;
+import happy.coding.io.FileIO;
 import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
 import happy.coding.io.Logs;
@@ -29,6 +30,7 @@ import happy.coding.math.Stats;
 import happy.coding.system.Dates;
 import happy.coding.system.Debug;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -245,16 +247,21 @@ public abstract class Recommender implements Runnable {
 			// .... if you need them, add it back in the same manner as other
 			// metrics
 			if (isDiverseUsed)
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
-						measures.get(Measure.D5), measures.get(Measure.D10),
-						measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10),
-						measures.get(Measure.Rec5),
-						measures.get(Measure.Rec10), measures.get(Measure.AUC),
-						measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR), numIgnore);
+				evalInfo = String
+						.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+								measures.get(Measure.D5),
+								measures.get(Measure.D10),
+								measures.get(Measure.Pre5),
+								measures.get(Measure.Pre10),
+								measures.get(Measure.Rec5),
+								measures.get(Measure.Rec10),
+								measures.get(Measure.AUC),
+								measures.get(Measure.MAP),
+								measures.get(Measure.NDCG),
+								measures.get(Measure.MRR), numIgnore);
 			else
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+				evalInfo = String.format(
+						"%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
 						measures.get(Measure.Pre5),
 						measures.get(Measure.Pre10),
 						measures.get(Measure.Rec5),
@@ -423,9 +430,21 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * @return the evaluation results of rating predictions
 	 */
-	private Map<Measure, Double> evalRatings() {
+	private Map<Measure, Double> evalRatings() throws Exception {
 
 		Map<Measure, Double> measures = new HashMap<>();
+
+		boolean isResultsOut = cf.isOn("is.prediction.out");
+		List<String> preds = null;
+		String toFile = null;
+		if (isResultsOut) {
+			preds = new ArrayList<String>(1500);
+			preds.add("# userId itemId rating prediction"); // optional: file header
+			FileIO.makeDirectory("Results"); // in case that the fold does not exist
+			toFile = "Results" + File.separator + algoName + "-prediction"
+					+ (fold > 0 ? "-" + fold : "") + ".txt"; // the output-file name
+			FileIO.deleteFile(toFile); // delete possibly old files
+		}
 
 		double sum_maes = 0, sum_mses = 0, sum_asyms = 0;
 		int numCount = 0;
@@ -450,6 +469,23 @@ public abstract class Recommender implements Runnable {
 			sum_mses += err * err;
 			sum_asyms += Measures.ASYMMLoss(rate, pred, minRate, maxRate);
 			numCount++;
+
+			// output predictions
+			if (isResultsOut) {
+				// restore back to the original user/item id
+				preds.add(rateDao.getUserId(u) + " " + rateDao.getItemId(j)
+						+ " " + rate + " " + (float) pred);
+				if (preds.size() >= 1000) {
+					FileIO.writeList(toFile, preds, true);
+					preds.clear();
+				}
+			}
+		}
+
+		if (isResultsOut && preds.size() > 0) {
+			FileIO.writeList(toFile, preds, true);
+			Logs.debug("{}{} has writeen rating prediction to {}", algoName,
+					foldInfo, toFile);
 		}
 
 		double mae = sum_maes / numCount;
