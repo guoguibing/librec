@@ -18,7 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 import librec.data.SparseMatrix;
@@ -54,7 +53,7 @@ public class BPR extends IterativeRecommender {
 		isRankingPred = true;
 		initByNorm = false;
 
-		regJ = cf.getFloat("BPRMF.reg.j");
+		regJ = cf.getFloat("BPR.reg.j");
 	}
 
 	@Override
@@ -62,13 +61,11 @@ public class BPR extends IterativeRecommender {
 
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			if (verbose)
-				Logs.debug("{}{} runs at iteration = {}", algoName, foldInfo,
-						iter);
-
+			loss = 0;
+			errs = 0;
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
 
-				// draw (u, i, j) from Ds with replacement
+				// randomly draw (u, i, j) 
 				int u = 0, i = 0, j = 0;
 
 				while (true) {
@@ -88,30 +85,40 @@ public class BPR extends IterativeRecommender {
 					break;
 				}
 
-				// update \theta
+				// update parameters
 				double xui = predict(u, i);
 				double xuj = predict(u, j);
 				double xuij = xui - xuj;
 
-				double cmg = 1.0 / (1 + Math.exp(xuij));
+				double vals = -Math.log(g(xuij));
+				loss += vals;
+				errs += vals;
+
+				double cmg = g(-xuij);
 
 				for (int f = 0; f < numFactors; f++) {
-					double wuf = P.get(u, f);
-					double hif = Q.get(i, f);
-					double hjf = Q.get(j, f);
+					double puf = P.get(u, f);
+					double qif = Q.get(i, f);
+					double qjf = Q.get(j, f);
 
-					P.add(u, f, lRate * (cmg * (hif - hjf) + regU * wuf));
-					Q.add(i, f, lRate * (cmg * wuf + regI * hif));
-					Q.add(j, f, lRate * (cmg * (-wuf) + regJ * hjf));
+					P.add(u, f, lRate * (cmg * (qif - qjf) + regU * puf));
+					Q.add(i, f, lRate * (cmg * puf + regI * qif));
+					Q.add(j, f, lRate * (cmg * (-puf) + regJ * qjf));
+
+					loss += regU * puf * puf + regI * qif * qif + regJ * qjf
+							* qjf;
 				}
 			}
+
+			if (isConverged(iter))
+				break;
 
 		}
 	}
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate, regU, regI,
-				regJ, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate,
+				regU, regI, regJ, numIters }, ",");
 	}
 }
