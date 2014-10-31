@@ -135,12 +135,12 @@ public class GBPR extends SocialRecommender {
 
 				// update bi, bj
 				double bi = itemBiases.get(i);
-				itemBiases.add(i, lRate * (cmg + regI * bi));
-				loss += regI * bi * bi;
+				itemBiases.add(i, lRate * (cmg + regB * bi));
+				loss += regB * bi * bi;
 
 				double bj = itemBiases.get(j);
-				itemBiases.add(j, lRate * (-cmg + regI * bj));
-				loss += regI * bj * bj;
+				itemBiases.add(j, lRate * (-cmg + regB * bj));
+				loss += regB * bj * bj;
 
 				// update Pw
 				double n = 1.0 / g.size();
@@ -174,11 +174,11 @@ public class GBPR extends SocialRecommender {
 
 					double delta_qif = rho * n * sum_w[f] + (1 - rho) * puf;
 					QS.add(i, f, cmg * delta_qif + regI * qif);
-					loss += regU * qif * qif;
+					loss += regI * qif * qif;
 
 					double delta_qjf = -puf;
 					QS.add(j, f, cmg * delta_qjf + regI * qjf);
-					loss += regU * qjf * qjf;
+					loss += regI * qjf * qjf;
 
 				}
 			}
@@ -211,7 +211,7 @@ public class GBPR extends SocialRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { binThold, rho, gLen, numFactors,
-				initLRate, regU, regI, numIters }, ",");
+				initLRate, regU, regI, regB, numIters }, ",");
 	}
 
 }

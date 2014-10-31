@@ -36,8 +36,8 @@ public abstract class IterativeRecommender extends Recommender {
 	/************************************ Static parameters for all recommenders ***********************************/
 	// init, maximum learning rate, momentum
 	protected static float initLRate, maxLRate, momentum;
-	// user and item regularization
-	protected static float regU, regI;
+	// user, item and bias regularization
+	protected static float regU, regI, regB;
 	// number of factors
 	protected static int numFactors;
 	// number of iterations
@@ -82,6 +82,7 @@ public abstract class IterativeRecommender extends Recommender {
 		// to support multiple tests in one time in future
 		regU = cf.getRange("val.reg.user").get(0).floatValue();
 		regI = cf.getRange("val.reg.item").get(0).floatValue();
+		regB = cf.getRange("val.reg.bias").get(0).floatValue();
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
@@ -301,7 +302,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI,
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, regB, 
 				numFactors, numIters, isBoldDriver }, ",");
 	}
 

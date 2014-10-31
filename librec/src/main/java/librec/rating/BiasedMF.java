@@ -75,16 +75,16 @@ public class BiasedMF extends IterativeRecommender {
 
 				// update factors
 				double bu = userBiases.get(u);
-				double sgd = euj - regU * bu;
+				double sgd = euj - regB * bu;
 				userBiases.add(u, lRate * sgd);
 
-				loss += regU * bu * bu;
+				loss += regB * bu * bu;
 
 				double bj = itemBiases.get(j);
-				sgd = euj - regI * bj;
+				sgd = euj - regB * bj;
 				itemBiases.add(j, lRate * sgd);
 
-				loss += regI * bj * bj;
+				loss += regB * bj * bj;
 
 				for (int f = 0; f < numFactors; f++) {
 					double puf = P.get(u, f);
