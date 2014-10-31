@@ -163,7 +163,7 @@ public abstract class Recommender implements Runnable {
 
 			// -1 to use as many as possible or disable
 			numRecs = cf.getInt("num.reclist.len");
-			numIgnore = cf.getInt("num.ignor.items");
+			numIgnore = cf.getInt("num.ignore.items");
 
 			// initial random seed
 			int seed = cf.getInt("num.rand.seed");
