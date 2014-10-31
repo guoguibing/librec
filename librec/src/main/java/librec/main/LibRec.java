@@ -296,7 +296,7 @@ public class LibRec {
 		case "mostpop":
 			return new MostPopular(trainMatrix, testMatrix, fold);
 
-			/* user rating */
+			/* rating prediction */
 		case "userknn":
 			return new UserKNN(trainMatrix, testMatrix, fold);
 		case "itemknn":
