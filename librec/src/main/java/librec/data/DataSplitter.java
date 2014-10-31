@@ -168,7 +168,7 @@ public class DataSplitter {
 				int[] ratedItems = uv.getIndex();
 
 				// a set of sampled indices of rated items
-				int[] givenIndex = Randoms.nextNoRepeatIntArray(numGiven, numRated);
+				int[] givenIndex = Randoms.nextIntArray(numGiven, numRated);
 				
 				for (int i = 0, j = 0; j < ratedItems.length; j++) {
 					if (i < givenIndex.length && givenIndex[i] == j) {
@@ -219,7 +219,7 @@ public class DataSplitter {
 			int[] ratedItems = uv.getIndex();
 
 			// a set of sampled indices of rated items
-			int[] givenIndex = Randoms.nextNoRepeatIntArray((int) (numRated * ratio), numRated);
+			int[] givenIndex = Randoms.nextIntArray((int) (numRated * ratio), numRated);
 
 			for (int i = 0, j = 0; j < ratedItems.length; j++) {
 				if (i < givenIndex.length && givenIndex[i] == j) {
@@ -254,8 +254,8 @@ public class DataSplitter {
 		int users = numUsers <= 0 || numUsers > rows ? rows : numUsers;
 		int items = numItems <= 0 || numItems > cols ? cols : numItems;
 
-		int[] userIds = Randoms.nextNoRepeatIntArray(users, rows);
-		int[] itemIds = Randoms.nextNoRepeatIntArray(items, cols);
+		int[] userIds = Randoms.nextIntArray(users, rows);
+		int[] itemIds = Randoms.nextIntArray(items, cols);
 
 		String path = FileIO.desktop + "sample.txt";
 		FileIO.deleteFile(path);
