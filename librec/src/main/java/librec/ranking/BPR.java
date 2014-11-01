@@ -43,15 +43,11 @@ import librec.intf.IterativeRecommender;
  */
 public class BPR extends IterativeRecommender {
 
-	private float regJ;
-
 	public BPR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		isRankingPred = true;
 		initByNorm = false;
-
-		regJ = cf.getFloat("BPR.reg.j");
 	}
 
 	@Override
@@ -101,9 +97,9 @@ public class BPR extends IterativeRecommender {
 
 					P.add(u, f, lRate * (cmg * (qif - qjf) + regU * puf));
 					Q.add(i, f, lRate * (cmg * puf + regI * qif));
-					Q.add(j, f, lRate * (cmg * (-puf) + regJ * qjf));
+					Q.add(j, f, lRate * (cmg * (-puf) + regI * qjf));
 
-					loss += regU * puf * puf + regI * qif * qif + regJ * qjf * qjf;
+					loss += regU * puf * puf + regI * qif * qif + regI * qjf * qjf;
 				}
 			}
 
@@ -115,6 +111,6 @@ public class BPR extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate, regU, regI, regJ, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate, regU, regI, numIters }, ",");
 	}
 }
