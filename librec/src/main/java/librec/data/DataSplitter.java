@@ -142,9 +142,8 @@ public class DataSplitter {
 	}
 
 	/**
-	 * Split ratings into two parts: the training set consisting of user-item
-	 * ratings where {@code numGiven} ratings are preserved for each user, and
-	 * the rest are used as the testing data
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
+	 * preserved for each user, and the rest are used as the testing data
 	 * 
 	 * @param numGiven
 	 *            the number of ratings given to each user
@@ -169,7 +168,7 @@ public class DataSplitter {
 
 				// a set of sampled indices of rated items
 				int[] givenIndex = Randoms.nextIntArray(numGiven, numRated);
-				
+
 				for (int i = 0, j = 0; j < ratedItems.length; j++) {
 					if (i < givenIndex.length && givenIndex[i] == j) {
 						// for training
@@ -194,9 +193,8 @@ public class DataSplitter {
 	}
 
 	/**
-	 * Split ratings into two parts: the training set consisting of user-item
-	 * ratings where {@code numGiven} ratings are preserved for each user, and
-	 * the rest are used as the testing data
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
+	 * preserved for each user, and the rest are used as the testing data
 	 * 
 	 * @param numGiven
 	 *            the number of ratings given to each user
@@ -240,8 +238,7 @@ public class DataSplitter {
 	}
 
 	/**
-	 * generate a random sample of rate matrix with specified number of users
-	 * and items
+	 * generate a random sample of rate matrix with specified number of users and items
 	 * 
 	 * @param numUsers
 	 *            number of users, -1 to use all users;
@@ -286,29 +283,28 @@ public class DataSplitter {
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
 
 		switch (view.toLowerCase()) {
-		case "cold-start":
-			for (int u = 0, um = rateMatrix.numRows; u < um; u++) {
-				SparseVector uv = rateMatrix.row(u);
-				if (uv.getCount() < 5) {
-					for (int i : uv.getIndex())
-						trainMatrix.set(u, i, 0.0);
+			case "cold-start":
+				for (int u = 0, um = rateMatrix.numRows; u < um; u++) {
+					SparseVector uv = rateMatrix.row(u);
+					if (uv.getCount() < 5) {
+						for (int i : uv.getIndex())
+							trainMatrix.set(u, i, 0.0);
 
-				} else {
-					for (int i : uv.getIndex())
-						testMatrix.set(u, i, 0.0);
+					} else {
+						for (int i : uv.getIndex())
+							testMatrix.set(u, i, 0.0);
+					}
 				}
-			}
-			break;
-		default:
-			return null;
+				break;
+			default:
+				return null;
 		}
 
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
 	/**
-	 * Return the k-th fold as test set (testMatrix), making all the others as
-	 * train set in rateMatrix.
+	 * Return the k-th fold as test set (testMatrix), making all the others as train set in rateMatrix.
 	 * 
 	 * @param k
 	 *            The index for desired fold.

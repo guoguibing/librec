@@ -33,14 +33,12 @@ import librec.data.VectorEntry;
 import librec.ranking.RankSGD;
 
 /**
- * Neil Hurley, <strong>Personalised ranking with diversity</strong>, RecSys
- * 2013.
+ * Neil Hurley, <strong>Personalised ranking with diversity</strong>, RecSys 2013.
  * 
  * <p>
  * Related Work:
  * <ul>
- * <li>Jahrer and Toscher, Collaborative Filtering Ensemble for Ranking, JMLR,
- * 2012 (KDD Cup 2011 Track 2).</li>
+ * <li>Jahrer and Toscher, Collaborative Filtering Ensemble for Ranking, JMLR, 2012 (KDD Cup 2011 Track 2).</li>
  * </ul>
  * </p>
  * 

@@ -27,18 +27,17 @@ import java.util.Arrays;
 /**
  * Data Structure: dense matrix <br>
  * 
- * A big reason that we do not adopt original DenseMatrix from M4J libraray is
- * because the latter using one-dimensional array to store data, which will
- * often cause OutOfMemory exception due to the limit of maximum length of a
+ * A big reason that we do not adopt original DenseMatrix from M4J libraray is because the latter using one-dimensional
+ * array to store data, which will often cause OutOfMemory exception due to the limit of maximum length of a
  * one-dimensional Java array.
  * 
  * @author guoguibing
  * 
  */
-public class DenseMatrix implements Serializable{
+public class DenseMatrix implements Serializable {
 
 	private static final long serialVersionUID = -2069621030647530185L;
-	
+
 	// dimension
 	protected int numRows, numColumns;
 	// read data
@@ -108,9 +107,8 @@ public class DenseMatrix implements Serializable{
 	/**
 	 * Initialize a dense matrix with small Guassian values <br/>
 	 * 
-	 * <strong>NOTE:</strong> small initial values make it easier to train a
-	 * model; otherwise a very small learning rate may be needed (especially
-	 * when the number of factors is large) which can cause bad performance.
+	 * <strong>NOTE:</strong> small initial values make it easier to train a model; otherwise a very small learning rate
+	 * may be needed (especially when the number of factors is large) which can cause bad performance.
 	 */
 	public void init(double mean, double sigma) {
 		for (int i = 0; i < numRows; i++)
@@ -163,8 +161,7 @@ public class DenseMatrix implements Serializable{
 	 * @param rowId
 	 *            row id
 	 * @param deep
-	 *            whether to copy data or only shallow copy for executing
-	 *            speedup purpose
+	 *            whether to copy data or only shallow copy for executing speedup purpose
 	 * @return a vector of a specific row
 	 */
 	public DenseVector row(int rowId, boolean deep) {
@@ -271,8 +268,7 @@ public class DenseMatrix implements Serializable{
 	 *            the second matrix
 	 * @param ncol
 	 *            column id of the second matrix
-	 * @return dot product of row of the first matrix and column of the second
-	 *         matrix
+	 * @return dot product of row of the first matrix and column of the second matrix
 	 */
 	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
 		assert m.numColumns == n.numRows;
@@ -322,7 +318,7 @@ public class DenseMatrix implements Serializable{
 		DenseMatrix res = new DenseMatrix(this.numRows, mat.numColumns);
 
 		for (int j = 0; j < res.numColumns; j++) {
-			SparseVector col = mat.column(j); // only one-time computation 
+			SparseVector col = mat.column(j); // only one-time computation
 
 			for (int i = 0; i < res.numRows; i++) {
 
@@ -465,8 +461,7 @@ public class DenseMatrix implements Serializable{
 	}
 
 	/**
-	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each
-	 * entries will be added by {@code c}
+	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each entries will be added by {@code c}
 	 * 
 	 * @return a new matrix with results of {@code C = A + c}
 	 */
@@ -517,8 +512,7 @@ public class DenseMatrix implements Serializable{
 	}
 
 	/**
-	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each
-	 * entries will be added by {@code c}
+	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each entries will be added by {@code c}
 	 * 
 	 * @return a new matrix with results of {@code C = A + c}
 	 */
@@ -697,8 +691,8 @@ public class DenseMatrix implements Serializable{
 	}
 
 	/**
-	 * NOTE: this implementation (adopted from PREA package) is slightly faster
-	 * than {@code inverse}, especailly when {@code numRows} is large.
+	 * NOTE: this implementation (adopted from PREA package) is slightly faster than {@code inverse}, especailly when
+	 * {@code numRows} is large.
 	 * 
 	 * @return the inverse matrix of current matrix
 	 */

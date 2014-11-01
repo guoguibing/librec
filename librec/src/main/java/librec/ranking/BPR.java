@@ -26,8 +26,7 @@ import librec.intf.IterativeRecommender;
 
 /**
  * 
- * Rendle et al., <strong>BPR: Bayesian Personalized Ranking from Implicit
- * Feedback</strong>, UAI 2009.
+ * Rendle et al., <strong>BPR: Bayesian Personalized Ranking from Implicit Feedback</strong>, UAI 2009.
  * 
  * <p>
  * This method aims to optimize the AUC measure.
@@ -35,8 +34,7 @@ import librec.intf.IterativeRecommender;
  * <p>
  * Related Work:
  * <ul>
- * <li>Gantner et al., Learning Attribute-to-Feature Mappings for Cold-Start
- * Recommendations, ICDM 2010.</li>
+ * <li>Gantner et al., Learning Attribute-to-Feature Mappings for Cold-Start Recommendations, ICDM 2010.</li>
  * </ul>
  * </p>
  * 
@@ -65,7 +63,7 @@ public class BPR extends IterativeRecommender {
 			errs = 0;
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
 
-				// randomly draw (u, i, j) 
+				// randomly draw (u, i, j)
 				int u = 0, i = 0, j = 0;
 
 				while (true) {
@@ -105,8 +103,7 @@ public class BPR extends IterativeRecommender {
 					Q.add(i, f, lRate * (cmg * puf + regI * qif));
 					Q.add(j, f, lRate * (cmg * (-puf) + regJ * qjf));
 
-					loss += regU * puf * puf + regI * qif * qif + regJ * qjf
-							* qjf;
+					loss += regU * puf * puf + regI * qif * qif + regJ * qjf * qjf;
 				}
 			}
 
@@ -118,7 +115,6 @@ public class BPR extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate,
-				regU, regI, regJ, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate, regU, regI, regJ, numIters }, ",");
 	}
 }

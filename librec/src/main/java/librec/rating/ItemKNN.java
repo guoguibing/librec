@@ -37,19 +37,17 @@ import librec.intf.Recommender;
  * <h3>Item-based Nearest Neighbors</h3>
  * 
  * <p>
- * It supports both recommendation tasks: (1) rating prediction; and (2) item
- * ranking (by configuring {@code isRankingPred=on} in the librec.conf). For
- * item ranking, the returned score is the summation of the similarities of
- * nearest neighbors (see Section 4.3.2 of Rendle et al., BPR: Bayesian
- * Personalized Ranking from Implicit Feedback, UAI 2009).
+ * It supports both recommendation tasks: (1) rating prediction; and (2) item ranking (by configuring
+ * {@code isRankingPred=on} in the librec.conf). For item ranking, the returned score is the summation of the
+ * similarities of nearest neighbors (see Section 4.3.2 of Rendle et al., BPR: Bayesian Personalized Ranking from
+ * Implicit Feedback, UAI 2009).
  * </p>
  * 
  * <p>
- * When the number of items is extremely large which makes it memory intensive
- * to store/precompute all item-item correlations, a trick presented by (Jahrer
- * and Toscher, Collaborative Filtering Ensemble, JMLR 2012) can be applied.
- * Specifically, we can use a basic SVD model to obtain item-feature vectors,
- * and then item-item correlations can be computed by Eqs (13, 15).
+ * When the number of items is extremely large which makes it memory intensive to store/precompute all item-item
+ * correlations, a trick presented by (Jahrer and Toscher, Collaborative Filtering Ensemble, JMLR 2012) can be applied.
+ * Specifically, we can use a basic SVD model to obtain item-feature vectors, and then item-item correlations can be
+ * computed by Eqs (13, 15).
  * </p>
  * 
  * @author guoguibing

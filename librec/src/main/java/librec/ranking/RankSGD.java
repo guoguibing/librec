@@ -33,8 +33,7 @@ import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
 
 /**
- * Jahrer and Toscher, Collaborative Filtering Ensemble for Ranking, JMLR, 2012
- * (KDD Cup 2011 Track 2).
+ * Jahrer and Toscher, Collaborative Filtering Ensemble for Ranking, JMLR, 2012 (KDD Cup 2011 Track 2).
  * 
  * @author guoguibing
  * 
@@ -124,7 +123,7 @@ public class RankSGD extends IterativeRecommender {
 						P.add(u, f, -ye * (qif - qjf));
 						Q.add(i, f, -ye * puf);
 						Q.add(j, f, ye * puf);
-						
+
 					}
 				}
 			}
@@ -139,7 +138,6 @@ public class RankSGD extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings
-				.toString(new Object[] { binThold, initLRate, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, initLRate, numIters }, ",");
 	}
 }

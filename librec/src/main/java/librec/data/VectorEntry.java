@@ -19,7 +19,7 @@
 package librec.data;
 
 /**
- * An entry of a vector. 
+ * An entry of a vector.
  */
 public interface VectorEntry {
 

@@ -37,18 +37,16 @@ import librec.intf.Recommender;
  * <h3>User-based Nearest Neighbors</h3>
  * 
  * <p>
- * It supports both recommendation tasks: (1) rating prediction; and (2) item
- * ranking (by configuring {@code isRankingPred=on} in the librec.conf). For
- * item ranking, the returned score is the summation of the similarities of
- * nearest neighbors.
+ * It supports both recommendation tasks: (1) rating prediction; and (2) item ranking (by configuring
+ * {@code isRankingPred=on} in the librec.conf). For item ranking, the returned score is the summation of the
+ * similarities of nearest neighbors.
  * </p>
  * 
  * <p>
- * When the number of users is extremely large which makes it memory intensive
- * to store/precompute all user-user correlations, a trick presented by (Jahrer
- * and Toscher, Collaborative Filtering Ensemble, JMLR 2012) can be applied.
- * Specifically, we can use a basic SVD model to obtain user-feature vectors,
- * and then user-user correlations can be computed by Eqs (17, 15).
+ * When the number of users is extremely large which makes it memory intensive to store/precompute all user-user
+ * correlations, a trick presented by (Jahrer and Toscher, Collaborative Filtering Ensemble, JMLR 2012) can be applied.
+ * Specifically, we can use a basic SVD model to obtain user-feature vectors, and then user-user correlations can be
+ * computed by Eqs (17, 15).
  * </p>
  * 
  * @author guoguibing

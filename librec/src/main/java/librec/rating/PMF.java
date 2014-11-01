@@ -24,8 +24,7 @@ import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
 
 /**
- * Ruslan Salakhutdinov and Andriy Mnih, <strong>Probabilistic Matrix
- * Factorization</strong>, NIPS 2008. <br/>
+ * Ruslan Salakhutdinov and Andriy Mnih, <strong>Probabilistic Matrix Factorization</strong>, NIPS 2008. <br/>
  * 
  * @author guoguibing
  * 

@@ -25,7 +25,7 @@ import librec.intf.Recommender;
  * Baseline: predict by average rating of all users
  * 
  * @author guoguibing
- *
+ * 
  */
 public class GlobalAverage extends Recommender {
 

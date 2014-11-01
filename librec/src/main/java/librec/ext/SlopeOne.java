@@ -25,15 +25,15 @@ import librec.intf.Recommender;
 
 /**
  * 
- * Weighted Slope One: Lemire and Maclachlan, <strong>Slope One Predictors for
- * Online Rating-Based Collaborative Filtering</strong>, SDM 2005. <br/>
+ * Weighted Slope One: Lemire and Maclachlan, <strong>Slope One Predictors for Online Rating-Based Collaborative
+ * Filtering</strong>, SDM 2005. 
  * 
  * @author guoguibing
  * 
  */
 public class SlopeOne extends Recommender {
 
-	// matrices for item-item differences with number of occurrences/cardinary 
+	// matrices for item-item differences with number of occurrences/cardinary
 	private DenseMatrix devMatrix, cardMatrix;
 
 	public SlopeOne(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -47,7 +47,7 @@ public class SlopeOne extends Recommender {
 	}
 
 	@Override
-	protected void buildModel()  throws Exception{
+	protected void buildModel() throws Exception {
 
 		// compute items' differences
 		for (int u = 0; u < numUsers; u++) {

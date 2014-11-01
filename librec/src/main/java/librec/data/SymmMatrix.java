@@ -32,7 +32,7 @@ import com.google.common.collect.Table;
 public class SymmMatrix implements Serializable {
 
 	private static final long serialVersionUID = -6138247653152029007L;
-	
+
 	// matrix dimension
 	protected int dim;
 	// matrix data

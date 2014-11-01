@@ -28,12 +28,13 @@ import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
 
 /**
- * Salakhutdinov and Mnih, <strong>Bayesian Probabilistic Matrix Factorization
- * using Markov Chain Monte Carlo</strong>, ICML 2008. <br/>
+ * Salakhutdinov and Mnih, <strong>Bayesian Probabilistic Matrix Factorization using Markov Chain Monte Carlo</strong>,
+ * ICML 2008.
  * 
- * Matlab version is provided by the authors via <a
- * href="http://www.utstat.toronto.edu/~rsalakhu/BPMF.html">this link</a>. This
- * implementation is modified from the BayesianPMF by the PREA package.
+ * <p>
+ * Matlab version is provided by the authors via <a href="http://www.utstat.toronto.edu/~rsalakhu/BPMF.html">this
+ * link</a>. This implementation is modified from the BayesianPMF by the PREA package.
+ * </p>
  * 
  * @author guoguibing
  * 
@@ -148,7 +149,7 @@ public class BPMF extends IterativeRecommender {
 			}
 
 			// Gibbs updates over user and item feature vectors given hyper parameters:
-			// NOTE: in PREA, only 1 iter for gibbs where in the original Matlab code, 2 iters are used. 
+			// NOTE: in PREA, only 1 iter for gibbs where in the original Matlab code, 2 iters are used.
 			for (int gibbs = 0; gibbs < 2; gibbs++) {
 				// Infer posterior distribution over all user feature vectors
 				for (int u = 0; u < numUsers; u++) {
@@ -252,8 +253,7 @@ public class BPMF extends IterativeRecommender {
 	}
 
 	/**
-	 * Randomly sample a matrix from Wishart Distribution with the given
-	 * parameters.
+	 * Randomly sample a matrix from Wishart Distribution with the given parameters.
 	 * 
 	 * @param scale
 	 *            scale parameter for Wishart Distribution.

@@ -26,7 +26,7 @@ import librec.intf.Recommender;
  * Baseline: predict by a random value in (minRate, maxRate)
  * 
  * @author guoguibing
- *
+ * 
  */
 public class RandomGuess extends Recommender {
 

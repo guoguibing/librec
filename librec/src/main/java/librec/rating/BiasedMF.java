@@ -27,8 +27,8 @@ import librec.intf.IterativeRecommender;
 /**
  * Biased Matrix Factorization Models. <br/>
  * 
- * NOTE: To have more control on learning, you can add additional regularation
- * parameters to user/item biases. For simplicity, we do not do this.
+ * NOTE: To have more control on learning, you can add additional regularation parameters to user/item biases. For
+ * simplicity, we do not do this.
  * 
  * @author guoguibing
  * 

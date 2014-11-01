@@ -167,8 +167,7 @@ public class DenseVector implements Serializable {
 	}
 
 	/**
-	 * @return a dense vector by substructing a value from all entries of
-	 *         current vector
+	 * @return a dense vector by substructing a value from all entries of current vector
 	 */
 	public DenseVector minus(double val) {
 
@@ -181,8 +180,7 @@ public class DenseVector implements Serializable {
 	}
 
 	/**
-	 * @return a dense vector by scaling a value to all entries of current
-	 *         vector
+	 * @return a dense vector by scaling a value to all entries of current vector
 	 */
 	public DenseVector scale(double val) {
 

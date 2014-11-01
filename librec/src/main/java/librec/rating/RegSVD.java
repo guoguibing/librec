@@ -23,9 +23,12 @@ import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
 
 /**
- * Regularized SVD: <em>Arkadiusz Paterek, Improving Regularized Singular Value
- * Decomposition Collaborative Filtering, Proceedings of KDD Cup and Workshop,
- * 2007.</em>
+ * Regularized SVD
+ * 
+ * <p>
+ * Arkadiusz Paterek, <strong>Improving Regularized Singular Value Decomposition Collaborative Filtering</strong>,
+ * Proceedings of KDD Cup and Workshop, 2007.
+ * </p>
  * 
  * @author guoguibing
  * 

@@ -41,7 +41,7 @@ public class MostPopular extends Recommender {
 		isRankingPred = true;
 		algoName = "MostPop";
 	}
-	
+
 	@Override
 	protected void initModel() {
 		itemPops = new HashMap<>();

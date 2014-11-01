@@ -28,8 +28,8 @@ import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
 
 /**
- * Shi et al., <strong>Climf: learning to maximize reciprocal rank with
- * collaborative less-is-more filtering.</strong>, RecSys 2012.
+ * Shi et al., <strong>Climf: learning to maximize reciprocal rank with collaborative less-is-more filtering.</strong>,
+ * RecSys 2012.
  * 
  * @author guoguibing
  * 
@@ -83,7 +83,7 @@ public class CLiMF extends IterativeRecommender {
 
 				// compute sgds for items rated by user u
 				Map<Integer, List<Double>> itemSgds = new HashMap<>();
-				//for (int j : items) {
+				// for (int j : items) {
 				for (int j = 0; j < numItems; j++) {
 
 					double fuj = predict(u, j);

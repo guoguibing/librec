@@ -27,8 +27,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Data Structure: Sparse Vector whose implementation is modified from M4J
- * library
+ * Data Structure: Sparse Vector whose implementation is modified from M4J library
  * 
  * @author guoguibing
  * 
@@ -64,8 +63,7 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * Construct a sparse vector with its maximum capacity, filled with given
-	 * data array
+	 * Construct a sparse vector with its maximum capacity, filled with given data array
 	 * 
 	 * @param capcity
 	 *            maximum size of the sparse vector
@@ -218,8 +216,7 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * Tries to find the index. If it is not found, a reallocation is done, and
-	 * a new index is returned.
+	 * Tries to find the index. If it is not found, a reallocation is done, and a new index is returned.
 	 */
 	private int getIndex(int idx) {
 		// Try to find column index

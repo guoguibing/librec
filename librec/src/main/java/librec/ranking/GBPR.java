@@ -30,8 +30,8 @@ import librec.data.SparseVector;
 import librec.intf.SocialRecommender;
 
 /**
- * Pan and Chen, <strong>GBPR: Group Preference Based Bayesian Personalized
- * Ranking for One-Class Collaborative Filtering</strong>, IJCAI 2013.
+ * Pan and Chen, <strong>GBPR: Group Preference Based Bayesian Personalized Ranking for One-Class Collaborative
+ * Filtering</strong>, IJCAI 2013.
  * 
  * @author guibing
  * 
@@ -151,8 +151,7 @@ public class GBPR extends SocialRecommender {
 						double qif = Q.get(i, f);
 						double qjf = Q.get(j, f);
 
-						double delta_pwf = rho * n * qif + (1 - rho) * delta
-								* qif - delta * qjf;
+						double delta_pwf = rho * n * qif + (1 - rho) * delta * qif - delta * qjf;
 						PS.add(w, f, cmg * delta_pwf + regU * pwf);
 
 						loss += regU * pwf * pwf;
@@ -210,8 +209,8 @@ public class GBPR extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, rho, gLen, numFactors,
-				initLRate, regU, regI, regB, numIters }, ",");
+		return Strings.toString(
+				new Object[] { binThold, rho, gLen, numFactors, initLRate, regU, regI, regB, numIters }, ",");
 	}
 
 }

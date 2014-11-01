@@ -19,7 +19,7 @@
 package librec.data;
 
 /**
- * An entry of a matrix. 
+ * An entry of a matrix.
  */
 public interface MatrixEntry {
 

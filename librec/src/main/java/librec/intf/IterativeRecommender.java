@@ -93,8 +93,7 @@ public abstract class IterativeRecommender extends Recommender {
 		decay = cf.getFloat("val.decay.rate");
 	}
 
-	public IterativeRecommender(SparseMatrix trainMatrix,
-			SparseMatrix testMatrix, int fold) {
+	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		lRate = initLRate;
@@ -128,16 +127,12 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// print out debug info
 		if (verbose) {
-			Logs.debug(
-					"{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
-					new Object[] { algoName, foldInfo, iter, (float) errs,
-							(float) (last_errs - errs), (float) loss,
-							(float) (Math.abs(last_loss) - Math.abs(loss)),
-							(float) lRate });
+			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
+					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
+							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
 		}
 
-		if (!(isBoldDriver && isUndoEnabled)
-				&& (Double.isNaN(loss) || Double.isInfinite(loss))) {
+		if (!(isBoldDriver && isUndoEnabled) && (Double.isNaN(loss) || Double.isInfinite(loss))) {
 			Logs.error("Loss = NaN or Infinity: current settings cannot train the recommender! Try other settings instead!");
 			System.exit(-1);
 		}
@@ -161,13 +156,12 @@ public abstract class IterativeRecommender extends Recommender {
 	 * Update current learning rate after each epoch <br/>
 	 * 
 	 * <ol>
-	 * <li>bold driver: Gemulla et al., Large-scale matrix factorization with
-	 * distributed stochastic gradient descent, KDD 2011.</li>
-	 * <li>constant decay: Niu et al, Hogwild!: A lock-free approach to
-	 * parallelizing stochastic gradient descent, NIPS 2011.</li>
+	 * <li>bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent,
+	 * KDD 2011.</li>
+	 * <li>constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS
+	 * 2011.</li>
 	 * <li>Leon Bottou, Stochastic Gradient Descent Tricks</li>
-	 * <li>more ways to adapt learning rate can refer to:
-	 * http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
+	 * <li>more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
 	 * </ol>
 	 * 
 	 * @param iter
@@ -220,9 +214,8 @@ public abstract class IterativeRecommender extends Recommender {
 	 * undo last weight changes
 	 */
 	protected void undos(int iter) {
-		Logs.debug(
-				"{}{} iter {}: undo last weight changes and sharply decrease the learning rate !",
-				algoName, foldInfo, iter);
+		Logs.debug("{}{} iter {}: undo last weight changes and sharply decrease the learning rate !", algoName,
+				foldInfo, iter);
 
 		if (last_P != null)
 			P = last_P.clone();
@@ -284,26 +277,22 @@ public abstract class IterativeRecommender extends Recommender {
 		// suffix info
 		String suffix = (fold > 0 ? "-" + fold : "") + ".bin";
 
-		trainMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "trainMatrix"
-				+ suffix);
-		testMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "testMatrix"
-				+ suffix);
+		trainMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "trainMatrix" + suffix);
+		testMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "testMatrix" + suffix);
 
 		// write matrices P, Q
 		P = (DenseMatrix) FileIO.deserialize(dirPath + "userFactors" + suffix);
 		Q = (DenseMatrix) FileIO.deserialize(dirPath + "itemFactors" + suffix);
 
 		// write vectors
-		userBiases = (DenseVector) FileIO.deserialize(dirPath + "userBiases"
-				+ suffix);
-		itemBiases = (DenseVector) FileIO.deserialize(dirPath + "itemBiases"
-				+ suffix);
+		userBiases = (DenseVector) FileIO.deserialize(dirPath + "userBiases" + suffix);
+		itemBiases = (DenseVector) FileIO.deserialize(dirPath + "itemBiases" + suffix);
 	}
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, regB, 
-				numFactors, numIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, regB, numFactors, numIters,
+				isBoldDriver }, ",");
 	}
 
 }

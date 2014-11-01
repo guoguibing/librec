@@ -32,9 +32,8 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
- * Zhou et al., <strong>Solving the apparent diversity-accuracy dilemma of
- * recommender systems</strong>, Proceedings of the National Academy of
- * Sciences, 2010.
+ * Zhou et al., <strong>Solving the apparent diversity-accuracy dilemma of recommender systems</strong>, Proceedings of
+ * the National Academy of Sciences, 2010.
  * 
  * @author guoguibing
  * 
@@ -110,8 +109,7 @@ public class Hybrid extends Recommender {
 				SparseVector vv = trainMatrix.row(v);
 				double sum = 0.0;
 				for (int item : vv.getIndex())
-					sum += items.contains(item) ? 1.0 / itemDegrees.get(item)
-							: 0.0;
+					sum += items.contains(item) ? 1.0 / itemDegrees.get(item) : 0.0;
 
 				userResources.put(v, sum);
 			}
@@ -130,8 +128,8 @@ public class Hybrid extends Recommender {
 			}
 		}
 
-		return heatScores.contains(u, j) ? heatScores.get(u, j) / maxHeat
-				* (1 - lambda) + probScores.get(u, j) / maxProb * lambda : 0.0;
+		return heatScores.contains(u, j) ? heatScores.get(u, j) / maxHeat * (1 - lambda) + probScores.get(u, j)
+				/ maxProb * lambda : 0.0;
 	}
 
 	protected double ranking(int u, int j) {
@@ -168,8 +166,7 @@ public class Hybrid extends Recommender {
 				SparseVector iv = trainMatrix.column(i);
 				double sum = 0;
 				for (int user : iv.getIndex())
-					sum += userResources.containsKey(user) ? userResources
-							.get(user) : 0.0;
+					sum += userResources.containsKey(user) ? userResources.get(user) : 0.0;
 
 				double score = sum / Math.pow(itemDegrees.get(i), 1 - lambda);
 				userItemRanks.put(u, i, score);

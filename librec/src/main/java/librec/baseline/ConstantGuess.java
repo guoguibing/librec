@@ -35,7 +35,7 @@ public class ConstantGuess extends Recommender {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "Constant";
-		constant = (minRate + maxRate) / 2.0; //can also use given constant
+		constant = (minRate + maxRate) / 2.0; // can also use given constant
 	}
 
 	@Override

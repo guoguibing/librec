@@ -39,17 +39,15 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 /**
- * Xia Ning and George Karypis, <strong>SLIM: Sparse Linear Methods for Top-N
- * Recommender Systems</strong>, ICDM 2011. <br>
+ * Xia Ning and George Karypis, <strong>SLIM: Sparse Linear Methods for Top-N Recommender Systems</strong>, ICDM 2011. <br>
  * 
  * <p>
  * Related Work:
  * <ul>
- * <li>Levy and Jack, Efficient Top-N Recommendation by Linear Regression, ISRS
- * 2013. This paper reports experimental results on the MovieLens (100K, 10M)
- * and Epinions datasets in terms of precision, MRR and HR@N (i.e., Recall@N).</li>
- * <li>Friedman et al., Regularization Paths for Generalized Linear Models via
- * Coordinate Descent, Journal of Statistical Software, 2010.</li>
+ * <li>Levy and Jack, Efficient Top-N Recommendation by Linear Regression, ISRS 2013. This paper reports experimental
+ * results on the MovieLens (100K, 10M) and Epinions datasets in terms of precision, MRR and HR@N (i.e., Recall@N).</li>
+ * <li>Friedman et al., Regularization Paths for Generalized Linear Models via Coordinate Descent, Journal of
+ * Statistical Software, 2010.</li>
  * </ul>
  * </p>
  * 
@@ -164,14 +162,12 @@ public class SLIM extends IterativeRecommender {
 
 					if (regL1 < Math.abs(gradSum)) {
 						if (gradSum > 0) {
-							double update = (gradSum - regL1)
-									/ (regL2 + rateSum);
+							double update = (gradSum - regL1) / (regL2 + rateSum);
 							W.set(i, j, update);
 						} else {
 							// One doubt: in this case, wij<0, however, the
 							// paper says wij>=0. How to gaurantee that?
-							double update = (gradSum + regL1)
-									/ (regL2 + rateSum);
+							double update = (gradSum + regL1) / (regL2 + rateSum);
 							W.set(i, j, update);
 						}
 					} else {
@@ -215,17 +211,15 @@ public class SLIM extends IterativeRecommender {
 		last_loss = loss;
 
 		if (verbose)
-			Logs.debug("{}{} iter {}: loss = {}, delta_loss = {}", algoName,
-					foldInfo, iter, loss, delta_loss);
+			Logs.debug("{}{} iter {}: loss = {}, delta_loss = {}", algoName, foldInfo, iter, loss, delta_loss);
 
 		return iter > 1 ? delta_loss < 1e-5 : false;
 	}
 
 	@Override
 	public String toString() {
-		return Strings.toString(
-				new Object[] { binThold, knn, regL2, regL1,
-						cf.getString("similarity"), numIters }, ",");
+		return Strings
+				.toString(new Object[] { binThold, knn, regL2, regL1, cf.getString("similarity"), numIters }, ",");
 	}
 
 }

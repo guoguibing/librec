@@ -35,20 +35,17 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
 /**
- * Data Structure: Sparse Matrix whose implementation is modified from M4J
- * library
+ * Data Structure: Sparse Matrix whose implementation is modified from M4J library
  * 
  * <ul>
- * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed
- * Row Storage (CRS)</a></li>
- * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed
- * Col Storage (CCS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed Row Storage (CRS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed Col Storage (CCS)</a></li>
  * </ul>
  * 
  * @author guoguibing
  * 
  */
-public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
+public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 
 	private static final long serialVersionUID = 8024536511172609539L;
 
@@ -86,11 +83,9 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
 	/**
 	 * Construct a sparse matrix with CRS structures (CCS structure optional).
 	 * 
-	 * @deprecated I don't recommend to use this method as it (takes time and)
-	 *             is better to constructe the column structure at the time when
-	 *             you construct the row structure (of data table). This method
-	 *             is put here (as an example) to show how to construct column
-	 *             structure according to the data table.
+	 * @deprecated I don't recommend to use this method as it (takes time and) is better to constructe the column
+	 *             structure at the time when you construct the row structure (of data table). This method is put here
+	 *             (as an example) to show how to construct column structure according to the data table.
 	 */
 	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, boolean isCCSUsed) {
 		numRows = rows;
@@ -108,8 +103,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
 	}
 
 	/**
-	 * Define a sparse matrix without data, only use for {@code transpose}
-	 * method
+	 * Define a sparse matrix without data, only use for {@code transpose} method
 	 * 
 	 */
 	private SparseMatrix(int rows, int cols) {
@@ -538,7 +532,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
 				int row = rowInd[j];
 				double val = get(row, col);
 				if (val != 0.0)
-					zeros.remove((Integer) row); // force cast is important here as we intend to remove the element rather than the index
+					zeros.remove((Integer) row); // force cast is important here as we intend to remove the element
+													// rather than the index
 			}
 		} else {
 			for (int row = 0; row < numRows; row++) {
@@ -653,8 +648,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
 	}
 
 	/**
-	 * Standardize the matrix entries by row- or column-wise z-scores
-	 * (z=(x-u)/sigma)
+	 * Standardize the matrix entries by row- or column-wise z-scores (z=(x-u)/sigma)
 	 * 
 	 * @param isByRow
 	 *            standardize by row if true; otherwise by column
@@ -771,8 +765,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable{
 		}
 
 		/**
-		 * Locates the first non-empty row, starting at the current. After the
-		 * new row has been found, the cursor is also updated
+		 * Locates the first non-empty row, starting at the current. After the new row has been found, the cursor is
+		 * also updated
 		 */
 		private void nextNonEmptyRow() {
 			while (row < numRows && rowPtr[row] == rowPtr[row + 1])

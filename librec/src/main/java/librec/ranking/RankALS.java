@@ -33,8 +33,7 @@ import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
 
 /**
- * Takacs and Tikk, <strong>Alternating Least Squares for Personalized
- * Ranking</strong>, RecSys 2012.
+ * Takacs and Tikk, <strong>Alternating Least Squares for Personalized Ranking</strong>, RecSys 2012.
  * 
  * @author guoguibing
  * 
@@ -77,8 +76,7 @@ public class RankALS extends IterativeRecommender {
 		for (int iter = 1; iter < numIters; iter++) {
 
 			if (verbose)
-				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo,
-						iter, numIters);
+				Logs.debug("{}{} runs at iter = {}/{}", algoName, foldInfo, iter, numIters);
 
 			// P step: update user vectors
 			DenseVector sum_sq = new DenseVector(numFactors);
@@ -122,13 +120,11 @@ public class RankALS extends IterativeRecommender {
 					sum_sqr = sum_sqr.add(qi.scale(si * rui));
 				}
 
-				DenseMatrix M = sum_cqq.scale(sum_s)
-						.minus(sum_cq.outer(sum_sq))
-						.minus(sum_sq.outer(sum_cq)).add(sum_sqq.scale(sum_c));
+				DenseMatrix M = sum_cqq.scale(sum_s).minus(sum_cq.outer(sum_sq)).minus(sum_sq.outer(sum_cq))
+						.add(sum_sqq.scale(sum_c));
 
-				DenseVector y = sum_cqr.scale(sum_s)
-						.minus(sum_cq.scale(sum_sr))
-						.minus(sum_sq.scale(sum_cr)).add(sum_sqr.scale(sum_c));
+				DenseVector y = sum_cqr.scale(sum_s).minus(sum_cq.scale(sum_sr)).minus(sum_sq.scale(sum_cr))
+						.add(sum_sqr.scale(sum_c));
 
 				DenseVector pu = M.inv().mult(y);
 				P.setRow(u, pu);
@@ -187,15 +183,13 @@ public class RankALS extends IterativeRecommender {
 					if (rui > 0) {
 						sum_cpr = sum_cpr.add(pu.scale(rui));
 						sum_c_sr_p = sum_c_sr_p.add(pu.scale(m_sum_sr.get(u)));
-						sum_p_r_c = sum_p_r_c
-								.add(pu.scale(rui * m_sum_c.get(u)));
+						sum_p_r_c = sum_p_r_c.add(pu.scale(rui * m_sum_c.get(u)));
 					}
 				}
 
 				DenseMatrix M = sum_cpp.scale(sum_s).add(sum_p_p_c.scale(si));
-				DenseVector y = sum_cpp.mult(sum_sq).add(sum_cpr.scale(sum_s))
-						.minus(sum_c_sr_p).add(sum_p_p_cq.scale(si))
-						.minus(sum_cr_p.scale(si)).add(sum_p_r_c.scale(si));
+				DenseVector y = sum_cpp.mult(sum_sq).add(sum_cpr.scale(sum_s)).minus(sum_c_sr_p)
+						.add(sum_p_p_cq.scale(si)).minus(sum_cr_p.scale(si)).add(sum_p_r_c.scale(si));
 				DenseVector qi = M.inv().mult(y);
 				Q.setRow(i, qi);
 			}
@@ -204,7 +198,6 @@ public class RankALS extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, isSupportWeight,
-				numIters }, ",");
+		return Strings.toString(new Object[] { binThold, isSupportWeight, numIters }, ",");
 	}
 }

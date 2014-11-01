@@ -34,10 +34,8 @@ import librec.intf.IterativeRecommender;
  * This implementation refers to the method proposed by Hu et al. at ICDM 2008.
  * 
  * <ul>
- * <li><strong>Binary ratings:</strong> Pan et al., One-class Collaborative
- * Filtering, ICDM 2008.</li>
- * <li><strong>Real ratings:</strong> Hu et al., Collaborative filtering for
- * implicit feedback datasets, ICDM 2008.</li>
+ * <li><strong>Binary ratings:</strong> Pan et al., One-class Collaborative Filtering, ICDM 2008.</li>
+ * <li><strong>Real ratings:</strong> Hu et al., Collaborative filtering for implicit feedback datasets, ICDM 2008.</li>
  * </ul>
  * 
  * @author guoguibing
@@ -71,8 +69,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix YtY = Yt.mult(Y);
 			for (int u = 0; u < numUsers; u++) {
 				if (verbose && (u + 1) % 100 == 0)
-					Logs.debug("{}{} runs at iteration = {}, user = {}/{}",
-							algoName, foldInfo, iter, u + 1, numUsers);
+					Logs.debug("{}{} runs at iteration = {}, user = {}/{}", algoName, foldInfo, iter, u + 1, numUsers);
 
 				// diagonal matrix C^u for each user
 				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the
@@ -95,8 +92,7 @@ public class WRMF extends IterativeRecommender {
 				// YtY + Yt * (Cu - I) * Y
 				DenseMatrix YtCuY = YtY.add(Yt.mult(CuI).mult(Y));
 				// (YtCuY + lambda * I)^-1
-				DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(
-						regU))).inv();
+				DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
 				// Yt * Cu
 				DenseMatrix YtCu = Yt.mult(Cu);
 
@@ -111,8 +107,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
 				if (verbose && (i + 1) % 100 == 0)
-					Logs.debug("{}{} runs at iteration = {}, item = {}/{}",
-							algoName, foldInfo, iter, i + 1, numItems);
+					Logs.debug("{}{} runs at iteration = {}, item = {}/{}", algoName, foldInfo, iter, i + 1, numItems);
 
 				// diagonal matrix C^i for each item
 				DiagMatrix Ci = DiagMatrix.eye(numUsers);
@@ -133,8 +128,7 @@ public class WRMF extends IterativeRecommender {
 				// XtX + Xt * (Ci - I) * X
 				DenseMatrix XtCiX = XtX.add(Xt.mult(CiI).mult(X));
 				// (XtCiX + lambda * I)^-1
-				DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(
-						regI))).inv();
+				DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
 				// Xt * Ci
 				DenseMatrix XtCi = Xt.mult(Ci);
 
@@ -148,8 +142,7 @@ public class WRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, regU,
-				regI, alpha, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, regU, regI, alpha, numIters }, ",");
 	}
 
 }

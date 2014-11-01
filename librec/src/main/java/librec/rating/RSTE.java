@@ -26,12 +26,10 @@ import librec.data.VectorEntry;
 import librec.intf.SocialRecommender;
 
 /**
- * Hao Ma, Irwin King and Michael R. Lyu, <strong>Learning to Recommend with
- * Social Trust Ensemble</strong>, SIGIR 2009.<br>
+ * Hao Ma, Irwin King and Michael R. Lyu, <strong>Learning to Recommend with Social Trust Ensemble</strong>, SIGIR 2009.<br>
  * 
  * <p>
- * This method is quite time-consuming when dealing with the social influence
- * part.
+ * This method is quite time-consuming when dealing with the social influence part.
  * </p>
  * 
  * @author guoguibing
@@ -104,8 +102,7 @@ public class RSTE extends SocialRecommender {
 						double usgd = alpha * csgd * qjf + regU * puf;
 
 						double jd = ws > 0 ? sum_us[f] / ws : 0;
-						double jsgd = csgd * (alpha * puf + (1 - alpha) * jd)
-								+ regI * qjf;
+						double jsgd = csgd * (alpha * puf + (1 - alpha) * jd) + regI * qjf;
 
 						PS.add(u, f, usgd);
 						QS.add(j, f, jsgd);
@@ -185,7 +182,6 @@ public class RSTE extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, regU, regI,
-				numFactors, numIters, isBoldDriver, alpha }, ",");
+		return Strings.toString(new Object[] { initLRate, regU, regI, numFactors, numIters, isBoldDriver, alpha }, ",");
 	}
 }

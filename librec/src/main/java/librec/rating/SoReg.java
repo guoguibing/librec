@@ -28,14 +28,13 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
- * Hao Ma, Dengyong Zhou, Chao Liu, Michael R. Lyu and Irwin King,
- * <strong>Recommender systems with social regularization</strong>, WSDM 2011.<br>
+ * Hao Ma, Dengyong Zhou, Chao Liu, Michael R. Lyu and Irwin King, <strong>Recommender systems with social
+ * regularization</strong>, WSDM 2011.<br>
  * 
  * <p>
- * In the original paper, this method is named as "SR2_pcc". For consistency, we
- * rename it as "SoReg" as used by some other papers such as: Tang et al.,
- * <strong>Exploiting Local and Global Social Context for
- * Recommendation</strong>, IJCAI 2013.
+ * In the original paper, this method is named as "SR2_pcc". For consistency, we rename it as "SoReg" as used by some
+ * other papers such as: Tang et al., <strong>Exploiting Local and Global Social Context for Recommendation</strong>,
+ * IJCAI 2013.
  * </p>
  * 
  * @author guoguibing

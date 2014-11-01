@@ -27,8 +27,7 @@ import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
 
 /**
- * Daniel D. Lee and H. Sebastian Seung, <strong>Algorithms for Non-negative
- * Matrix Factorization</strong>, NIPS 2001.
+ * Daniel D. Lee and H. Sebastian Seung, <strong>Algorithms for Non-negative Matrix Factorization</strong>, NIPS 2001.
  * 
  * @author guoguibing
  * 

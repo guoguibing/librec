@@ -33,13 +33,11 @@ import librec.intf.Recommender;
 
 /**
  * 
- * Choonho Kim and Juntae Kim, <strong>A Recommendation Algorithm Using
- * Multi-Level Association Rules</strong>, WI 2003.
+ * Choonho Kim and Juntae Kim, <strong>A Recommendation Algorithm Using Multi-Level Association Rules</strong>, WI 2003.
  * 
  * <p>
- * Simple Association Rule Recommender: we do not consider the item categories
- * (or multi levels) used in the original paper. Besides, we consider all
- * association rules without ruling out weak ones (by setting high support and
+ * Simple Association Rule Recommender: we do not consider the item categories (or multi levels) used in the original
+ * paper. Besides, we consider all association rules without ruling out weak ones (by setting high support and
  * confidence threshold).
  * </p>
  * 

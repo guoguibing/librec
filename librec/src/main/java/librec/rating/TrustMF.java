@@ -25,8 +25,7 @@ import librec.data.SparseMatrix;
 import librec.intf.SocialRecommender;
 
 /**
- * Yang et al., <strong>Social Collaborative Filtering by Trust</strong>, IJCAI
- * 2013.
+ * Yang et al., <strong>Social Collaborative Filtering by Trust</strong>, IJCAI 2013.
  * 
  * @author guoguibing
  * 
@@ -68,36 +67,36 @@ public class TrustMF extends SocialRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		switch (model) {
-		case "Tr":
-			initTr();
-			break;
+			case "Tr":
+				initTr();
+				break;
 
-		case "Te":
-			initTe();
-			break;
+			case "Te":
+				initTe();
+				break;
 
-		case "T":
-		default:
-			initTr();
-			initTe();
-			break;
+			case "T":
+			default:
+				initTr();
+				initTe();
+				break;
 		}
 	}
 
 	@Override
 	protected void buildModel() throws Exception {
 		switch (model) {
-		case "Tr":
-			TrusterMF();
-			break;
-		case "Te":
-			TrusteeMF();
-			break;
-		case "T":
-		default:
-			TrusterMF();
-			TrusteeMF();
-			break;
+			case "Tr":
+				TrusterMF();
+				break;
+			case "Te":
+				TrusteeMF();
+				break;
+			case "T":
+			default:
+				TrusterMF();
+				TrusteeMF();
+				break;
 		}
 	}
 
@@ -267,19 +266,19 @@ public class TrustMF extends SocialRecommender {
 
 		double pred = 0.0;
 		switch (model) {
-		case "Tr":
-			pred = DenseMatrix.rowMult(Br, u, Vr, j);
-			break;
-		case "Te":
-			pred = DenseMatrix.rowMult(We, u, Ve, j);
-			break;
-		case "T":
-		default:
-			DenseVector uv = Br.row(u).add(We.row(u, false));
-			DenseVector jv = Vr.row(j).add(Ve.row(j, false));
+			case "Tr":
+				pred = DenseMatrix.rowMult(Br, u, Vr, j);
+				break;
+			case "Te":
+				pred = DenseMatrix.rowMult(We, u, Ve, j);
+				break;
+			case "T":
+			default:
+				DenseVector uv = Br.row(u).add(We.row(u, false));
+				DenseVector jv = Vr.row(j).add(Ve.row(j, false));
 
-			pred = uv.scale(0.5).inner(jv.scale(0.5));
-			break;
+				pred = uv.scale(0.5).inner(jv.scale(0.5));
+				break;
 		}
 
 		if (bounded)

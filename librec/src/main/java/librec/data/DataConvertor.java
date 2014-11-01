@@ -25,9 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A data convertor class to convert a data file from one source format to a
- * target format (i.e., our supporting format) of {@code UserId ItemId Rating},
- * separted by " \t,"<br>
+ * A data convertor class to convert a data file from one source format to a target format (i.e., our supporting format)
+ * of {@code UserId ItemId Rating}, separted by " \t,"<br>
  * 
  * @author guoguibing
  * 
@@ -52,8 +51,7 @@ public class DataConvertor {
 	}
 
 	/**
-	 * Convert a data file separated by {@code sep} to a data file separated by
-	 * {@code toSep}
+	 * Convert a data file separated by {@code sep} to a data file separated by {@code toSep}
 	 * 
 	 * @param sep
 	 *            separator of the source file

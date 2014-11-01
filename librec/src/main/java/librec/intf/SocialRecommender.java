@@ -34,10 +34,8 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// social data dao
 	protected static DataDAO socialDao;
 
-	// socialMatrix: social rate matrix, indicating a user is connecting to a
-	// number of other users
-	// trSocialMatrix: inverse social matrix, indicating a user is connected by
-	// a number of other users
+	// socialMatrix: social rate matrix, indicating a user is connecting to a number of other users
+	// trSocialMatrix: inverse social matrix, indicating a user is connected by a number of other users
 	protected static SparseMatrix socialMatrix;
 
 	// social regularization
@@ -62,41 +60,40 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		}
 	}
 
-	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix,
-			int fold) {
+	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 	}
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI,
-				regS, numFactors, numIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, regS, numFactors, numIters,
+				isBoldDriver }, ",");
 	}
 
 	@Override
 	protected boolean isTestable(int u, int j) {
 		switch (view) {
-		case "cold-start":
-			return trainMatrix.rowSize(u) < 5 ? true : false;
-		case "trust-degree":
-			int min_deg = cf.getInt("min.trust.degree");
-			int max_deg = cf.getInt("max.trust.degree");
-			if (min_deg == -1)
-				min_deg = 0;
-			if (max_deg == -1)
-				max_deg = Integer.MAX_VALUE;
+			case "cold-start":
+				return trainMatrix.rowSize(u) < 5 ? true : false;
+			case "trust-degree":
+				int min_deg = cf.getInt("min.trust.degree");
+				int max_deg = cf.getInt("max.trust.degree");
+				if (min_deg == -1)
+					min_deg = 0;
+				if (max_deg == -1)
+					max_deg = Integer.MAX_VALUE;
 
-			// size could be indegree + outdegree
-			int out_deg = socialMatrix.rowSize(u);
-			int deg = out_deg;
+				// size could be indegree + outdegree
+				int out_deg = socialMatrix.rowSize(u);
+				int deg = out_deg;
 
-			boolean cond = (deg >= min_deg) && (deg <= max_deg);
+				boolean cond = (deg >= min_deg) && (deg <= max_deg);
 
-			return cond ? true : false;
+				return cond ? true : false;
 
-		case "all":
-		default:
-			return true;
+			case "all":
+			default:
+				return true;
 		}
 	}
 

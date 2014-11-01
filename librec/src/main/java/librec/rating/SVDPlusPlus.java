@@ -24,8 +24,8 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 
 /**
- * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted
- * Collaborative Filtering Model.</strong>, KDD 2008.
+ * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model.</strong>,
+ * KDD 2008.
  * 
  * @author guoguibing
  * 

@@ -25,8 +25,8 @@ import librec.data.SparseVector;
 import librec.intf.SocialRecommender;
 
 /**
- * Jamali and Ester, <strong>A matrix factorization technique with trust
- * propagation for recommendation in social networks</strong>, RecSys 2010.
+ * Jamali and Ester, <strong>A matrix factorization technique with trust propagation for recommendation in social
+ * networks</strong>, RecSys 2010.
  * 
  * @author guoguibing
  * 
