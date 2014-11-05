@@ -39,12 +39,12 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	protected static SparseMatrix socialMatrix;
 
 	// social regularization
-	protected static double regS;
+	protected static float regS;
 
 	// initialization
 	static {
 		// to support multiple tests in one time in future
-		regS = cf.getRange("val.reg.social").get(0);
+		regS = cf.getRange("val.reg.social").get(0).floatValue();
 
 		String socialPath = cf.getPath("dataset.social");
 		Logs.debug("Social dataset: {}", Strings.last(socialPath, 38));
