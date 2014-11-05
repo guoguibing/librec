@@ -291,7 +291,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, regB, numFactors, numIters,
+		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, numFactors, numIters,
 				isBoldDriver }, ",");
 	}
 
