@@ -82,10 +82,6 @@ public class LibRec {
 	private static Configer cf;
 	private static String algorithm;
 
-	// params for multiple runs at once
-	public static int paramIdx;
-	public static boolean isMultRun = false;
-
 	// rate DAO object
 	private static DataDAO rateDao;
 
@@ -93,10 +89,25 @@ public class LibRec {
 	private static SparseMatrix rateMatrix = null;
 
 	public static void main(String[] args) throws Exception {
-		// Logs.debug(LibRec.readme());
+		String configFile = "librec.conf";
+
+		// read arguments
+		int i = 0;
+		while (i < args.length) {
+			if (args[i].equals("-f")) { // configuration file
+				configFile = args[i + 1];
+				i += 2;
+			} else if (args[i].equals("-v")) { // print out short version information
+				System.out.println("LibRec version " + version);
+				System.exit(0);
+			} else if (args[i].equals("--version")) { // print out full version information
+				printMe();
+				System.exit(0);
+			}
+		}
 
 		// get configuration file
-		cf = new Configer("librec.conf");
+		cf = new Configer(configFile);
 
 		// debug info
 		debugInfo();
@@ -395,8 +406,8 @@ public class LibRec {
 	/**
 	 * Print out software information
 	 */
-	public static String readme() {
-		return "\nLibRec " + version + " Copyright (C) 2014 Guibing Guo \n\n"
+	public static void printMe() {
+		String readme = "\nLibRec version " + version + ", copyright (C) 2014 Guibing Guo \n\n"
 
 		/* Description */
 		+ "LibRec is free software: you can redistribute it and/or modify \n"
@@ -413,5 +424,7 @@ public class LibRec {
 				/* licence */
 				+ "You should have received a copy of the GNU General Public License \n"
 				+ "along with LibRec. If not, see <http://www.gnu.org/licenses/>.";
+
+		System.out.println(readme);
 	}
 }
