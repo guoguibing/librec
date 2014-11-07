@@ -61,6 +61,9 @@ public abstract class Recommender implements Runnable {
 	// matrix of rating data
 	public static SparseMatrix rateMatrix;
 
+	// params used for multiple runs
+	public static Map<String, List<Float>> params;
+
 	// verbose
 	protected static boolean verbose;
 	// is ranking/rating prediction
