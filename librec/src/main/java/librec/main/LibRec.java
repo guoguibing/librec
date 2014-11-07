@@ -94,7 +94,7 @@ public class LibRec {
 		// read arguments
 		int i = 0;
 		while (i < args.length) {
-			if (args[i].equals("-f")) { // configuration file
+			if (args[i].equals("-c")) { // configuration file
 				configFile = args[i + 1];
 				i += 2;
 			} else if (args[i].equals("-v")) { // print out short version information
