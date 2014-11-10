@@ -84,8 +84,9 @@ public abstract class SocialRecommender extends IterativeRecommender {
 					max_deg = Integer.MAX_VALUE;
 
 				// size could be indegree + outdegree
+				int in_deg = socialMatrix.columnSize(u);
 				int out_deg = socialMatrix.rowSize(u);
-				int deg = out_deg;
+				int deg = in_deg + out_deg;
 
 				boolean cond = (deg >= min_deg) && (deg <= max_deg);
 
