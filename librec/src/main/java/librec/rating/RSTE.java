@@ -182,6 +182,7 @@ public class RSTE extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, regU, regI, numFactors, numIters, isBoldDriver, alpha }, ",");
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, numFactors, numIters, isBoldDriver,
+				alpha }, ",");
 	}
 }
