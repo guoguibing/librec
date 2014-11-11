@@ -66,6 +66,7 @@ import librec.rating.SoRec;
 import librec.rating.SoReg;
 import librec.rating.SocialMF;
 import librec.rating.TrustMF;
+import librec.rating.TrustSVD;
 import librec.rating.UserKNN;
 
 /**
@@ -330,6 +331,8 @@ public class LibRec {
 				return new SoReg(trainMatrix, testMatrix, fold);
 			case "rste":
 				return new RSTE(trainMatrix, testMatrix, fold);
+			case "trustsvd":
+				return new TrustSVD(trainMatrix, testMatrix, fold);
 
 				/* item ranking */
 			case "climf":
