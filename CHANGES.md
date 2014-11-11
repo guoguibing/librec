@@ -4,7 +4,7 @@
 
 * Rating predictions can be outputed now, thanks to [disc5](https://github.com/disc5)'s comment. 
 * New recommendation methods implemented:
-  * SLIM, FISM, SBPR
+  * SLIM, FISM, SBPR, GBPR, TrustSVD
 * Others
   * Codes refactored & improved
   * Rename BRPMF to BPR
