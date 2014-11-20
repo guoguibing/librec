@@ -29,7 +29,7 @@ package librec.intf;
  * @author guoguibing
  * 
  */
-public class Context {
+public abstract class Context {
 
 	/* context related user */
 	private int user;
