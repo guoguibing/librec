@@ -20,7 +20,7 @@ package librec.data;
 /**
  * Item-related Contextual Information
  * 
- * @author guibing
+ * @author guoguibing
  * 
  */
 public class ItemContext extends Context {
