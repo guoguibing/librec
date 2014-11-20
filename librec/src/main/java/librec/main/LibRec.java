@@ -50,9 +50,12 @@ import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
 import librec.ranking.BPR;
 import librec.ranking.CLiMF;
+import librec.ranking.FISMauc;
+import librec.ranking.FISMrmse;
 import librec.ranking.GBPR;
 import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
+import librec.ranking.SBPR;
 import librec.ranking.SLIM;
 import librec.ranking.WRMF;
 import librec.rating.BPMF;
@@ -337,6 +340,11 @@ public class LibRec {
 				/* item ranking */
 			case "climf":
 				return new CLiMF(trainMatrix, testMatrix, fold);
+			case "fismrmse":
+				return new FISMrmse(trainMatrix, testMatrix, fold);
+			case "fism":
+			case "fismauc":
+				return new FISMauc(trainMatrix, testMatrix, fold);
 			case "rankals":
 				return new RankALS(trainMatrix, testMatrix, fold);
 			case "ranksgd":
@@ -347,6 +355,8 @@ public class LibRec {
 				return new BPR(trainMatrix, testMatrix, fold);
 			case "gbpr":
 				return new GBPR(trainMatrix, testMatrix, fold);
+			case "sbpr":
+				return new SBPR(trainMatrix, testMatrix, fold);
 			case "slim":
 				return new SLIM(trainMatrix, testMatrix, fold);
 
