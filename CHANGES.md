@@ -5,6 +5,9 @@
 * Rating predictions can be outputed now, thanks to [disc5](https://github.com/disc5)'s comment. 
 * New recommendation methods implemented:
   * SLIM, FISM, SBPR, GBPR, TrustSVD
+* Interface for context-aware recommender systems added
+  * Context, UserContext, ItemContext, RatingContext  -- Data Class
+  * ContextRecommender -- Generic Interface
 * Others
   * Codes refactored & improved
   * Rename BRPMF to BPR
