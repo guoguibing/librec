@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
-package librec.intf;
+package librec.data;
 
 import java.sql.Date;
 import java.sql.Time;
