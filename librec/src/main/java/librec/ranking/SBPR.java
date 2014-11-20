@@ -41,7 +41,7 @@ import librec.intf.SocialRecommender;
  * Filtering</strong>, CIKM 2014.
  * </p>
  * 
- * @author guibing
+ * @author guoguibing
  * 
  */
 public class SBPR extends SocialRecommender {

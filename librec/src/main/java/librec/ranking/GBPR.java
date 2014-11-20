@@ -33,7 +33,7 @@ import librec.intf.SocialRecommender;
  * Pan and Chen, <strong>GBPR: Group Preference Based Bayesian Personalized Ranking for One-Class Collaborative
  * Filtering</strong>, IJCAI 2013.
  * 
- * @author guibing
+ * @author guoguibing
  * 
  */
 public class GBPR extends SocialRecommender {
