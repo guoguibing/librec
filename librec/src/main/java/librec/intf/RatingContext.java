@@ -31,6 +31,7 @@ public class RatingContext extends Context {
 	private Date date;
 	private Time time;
 	private String location;
+	// accompany user id
 	private int accompany;
 	private String mood;
 

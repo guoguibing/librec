@@ -56,4 +56,27 @@ public class UserContext extends Context {
 		socialMap.put(user, val);
 	}
 
+	/**
+	 * get the strength of a social relation
+	 * 
+	 * @param user
+	 *            user id
+	 * @return social strength
+	 */
+	public double getSocial(int user) {
+		double val = Double.NaN;
+
+		if (socialMap != null && socialMap.containsKey(user))
+			return socialMap.get(user);
+
+		return val;
+	}
+
+	/**
+	 * @return the socialMap
+	 */
+	public Map<Integer, Double> getSocialMap() {
+		return socialMap;
+	}
+
 }
