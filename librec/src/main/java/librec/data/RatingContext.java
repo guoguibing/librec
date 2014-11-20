@@ -28,11 +28,15 @@ import java.sql.Time;
  */
 public class RatingContext extends Context {
 
+	// rating date
 	private Date date;
+	// rating time
 	private Time time;
+	// location when rating
 	private String location;
 	// accompany user id
 	private int accompany;
+	// mood when rating
 	private String mood;
 
 	/**
