@@ -41,7 +41,11 @@ public class ItemContext extends Context {
 	 *            item id
 	 */
 	public ItemContext(int user, int item) {
-		super(user, item);
+		super(-1, item);
+	}
+
+	public ItemContext(int item) {
+		this(-1, item);
 	}
 
 	/**

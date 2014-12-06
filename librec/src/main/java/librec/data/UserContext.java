@@ -41,6 +41,10 @@ public class UserContext extends Context {
 		super(user, -1);
 	}
 
+	public UserContext(int user) {
+		this(user, -1);
+	}
+
 	/**
 	 * add social relations
 	 * 
