@@ -17,7 +17,6 @@
 //
 package librec.data;
 
-import java.sql.Date;
 import java.sql.Time;
 
 /**
@@ -28,8 +27,8 @@ import java.sql.Time;
  */
 public class RatingContext extends Context {
 
-	// rating date
-	private Date date;
+	// rating time stamp, we prefer long to Date for computational convenience  
+	private long timestamp;
 	// rating time
 	private Time time;
 	// location when rating
@@ -47,21 +46,6 @@ public class RatingContext extends Context {
 	 */
 	public RatingContext(int user, int item) {
 		super(user, item);
-	}
-
-	/**
-	 * @return the date
-	 */
-	public Date getDate() {
-		return date;
-	}
-
-	/**
-	 * @param date
-	 *            the date to set
-	 */
-	public void setDate(Date date) {
-		this.date = date;
 	}
 
 	/**
@@ -120,6 +104,20 @@ public class RatingContext extends Context {
 	 */
 	public void setMood(String mood) {
 		this.mood = mood;
+	}
+
+	/**
+	 * @return the timestamp
+	 */
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	/**
+	 * @param timestamp the timestamp to set
+	 */
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 
 }

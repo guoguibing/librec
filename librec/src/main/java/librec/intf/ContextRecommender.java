@@ -4,8 +4,8 @@ import java.util.Map;
 
 import com.google.common.collect.Table;
 
-import librec.data.Context;
 import librec.data.ItemContext;
+import librec.data.RatingContext;
 import librec.data.SparseMatrix;
 import librec.data.UserContext;
 
@@ -22,7 +22,7 @@ public class ContextRecommender extends IterativeRecommender {
 	// {item, item-context}
 	protected static Map<Integer, ItemContext> itemContexts;
 	// {user, item, rating-context}
-	protected static Table<Integer, Integer, Context> ratingContexts;
+	protected static Table<Integer, Integer, RatingContext> ratingContexts;
 
 	// initialization
 	static {
@@ -33,5 +33,5 @@ public class ContextRecommender extends IterativeRecommender {
 	public ContextRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 	}
-
+	
 }
