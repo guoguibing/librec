@@ -53,8 +53,8 @@ public class GBPR extends SocialRecommender {
 		// initialization
 		super.initModel();
 
-		itemBiases = new DenseVector(numItems);
-		itemBiases.init();
+		itemBias = new DenseVector(numItems);
+		itemBias.init();
 
 		rho = cf.getFloat("GBPR.rho");
 		gLen = cf.getInt("GBPR.group.size");
@@ -134,12 +134,12 @@ public class GBPR extends SocialRecommender {
 				double cmg = g(-pgij);
 
 				// update bi, bj
-				double bi = itemBiases.get(i);
-				itemBiases.add(i, lRate * (cmg + regB * bi));
+				double bi = itemBias.get(i);
+				itemBias.add(i, lRate * (cmg + regB * bi));
 				loss += regB * bi * bi;
 
-				double bj = itemBiases.get(j);
-				itemBiases.add(j, lRate * (-cmg + regB * bj));
+				double bj = itemBias.get(j);
+				itemBias.add(j, lRate * (-cmg + regB * bj));
 				loss += regB * bj * bj;
 
 				// update Pw
@@ -192,7 +192,7 @@ public class GBPR extends SocialRecommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		return itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
+		return itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 
 	protected double predict(int u, int j, List<Integer> g) {
@@ -202,7 +202,7 @@ public class GBPR extends SocialRecommender {
 		for (int w : g)
 			sum += DenseMatrix.rowMult(P, w, Q, j);
 
-		double rgj = sum / g.size() + itemBiases.get(j);
+		double rgj = sum / g.size() + itemBias.get(j);
 
 		return rho * rgj + (1 - rho) * ruj;
 	}

@@ -57,10 +57,10 @@ public class FISMrmse extends IterativeRecommender {
 		P.init(0.01);
 		Q.init(0.01);
 
-		userBiases = new DenseVector(numUsers);
-		itemBiases = new DenseVector(numItems);
-		userBiases.init(0.01);
-		itemBiases.init(0.01);
+		userBias = new DenseVector(numUsers);
+		itemBias = new DenseVector(numItems);
+		userBias.init(0.01);
+		itemBias.init(0.01);
 
 		nnz = trainMatrix.size();
 		rho = cf.getFloat("FISM.rho");
@@ -116,7 +116,7 @@ public class FISMrmse extends IterativeRecommender {
 
 				// for efficiency, use the below code to predict ruj instead of simply using "predict(u,j)"
 				SparseVector Ru = trainMatrix.row(u);
-				double bu = userBiases.get(u), bj = itemBiases.get(j);
+				double bu = userBias.get(u), bj = itemBias.get(j);
 
 				double sum_ij = 0;
 				int cnt = 0;
@@ -138,10 +138,10 @@ public class FISMrmse extends IterativeRecommender {
 				loss += euj * euj;
 
 				// update bu
-				userBiases.add(u, -lRate * (euj + regB * bu));
+				userBias.add(u, -lRate * (euj + regB * bu));
 
 				// update bj
-				itemBiases.add(j, -lRate * (euj + regB * bj));
+				itemBias.add(j, -lRate * (euj + regB * bj));
 
 				loss += regB * bu * bu + regB * bj * bj;
 
@@ -191,7 +191,7 @@ public class FISMrmse extends IterativeRecommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		double pred = userBiases.get(u) + itemBiases.get(j);
+		double pred = userBias.get(u) + itemBias.get(j);
 
 		double sum = 0;
 		int count = 0;

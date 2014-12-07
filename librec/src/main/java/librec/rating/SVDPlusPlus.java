@@ -75,15 +75,15 @@ public class SVDPlusPlus extends BiasedMF {
 				double w = Math.sqrt(items.length);
 
 				// update factors
-				double bu = userBiases.get(u);
+				double bu = userBias.get(u);
 				double sgd = euj - regB * bu;
-				userBiases.add(u, lRate * sgd);
+				userBias.add(u, lRate * sgd);
 
 				loss += regB * bu * bu;
 
-				double bj = itemBiases.get(j);
+				double bj = itemBias.get(j);
 				sgd = euj - regB * bj;
-				itemBiases.add(j, lRate * sgd);
+				itemBias.add(j, lRate * sgd);
 
 				loss += regB * bj * bj;
 
@@ -131,7 +131,7 @@ public class SVDPlusPlus extends BiasedMF {
 
 	@Override
 	protected double predict(int u, int j) {
-		double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
+		double pred = globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
 		SparseVector uv = trainMatrix.row(u);
 		double w = Math.sqrt(uv.getCount());

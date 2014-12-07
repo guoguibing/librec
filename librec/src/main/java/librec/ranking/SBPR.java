@@ -60,8 +60,8 @@ public class SBPR extends SocialRecommender {
 		// initialization
 		super.initModel();
 
-		itemBiases = new DenseVector(numItems);
-		itemBiases.init();
+		itemBias = new DenseVector(numItems);
+		itemBias.init();
 
 		// find items rated by trusted neighbors only
 		SP = HashMultimap.create();
@@ -150,16 +150,16 @@ public class SBPR extends SocialRecommender {
 					double cik = g(-xuik), ckj = g(-xukj);
 
 					// update bi, bk, bj
-					double bi = itemBiases.get(i);
-					itemBiases.add(i, lRate * (cik / (1 + suk) + regB * bi));
+					double bi = itemBias.get(i);
+					itemBias.add(i, lRate * (cik / (1 + suk) + regB * bi));
 					loss += regB * bi * bi;
 
-					double bk = itemBiases.get(k);
-					itemBiases.add(k, lRate * (-cik / (1 + suk) + ckj + regB * bk));
+					double bk = itemBias.get(k);
+					itemBias.add(k, lRate * (-cik / (1 + suk) + ckj + regB * bk));
 					loss += regB * bk * bk;
 
-					double bj = itemBiases.get(j);
-					itemBiases.add(j, lRate * (-ckj + regB * bj));
+					double bj = itemBias.get(j);
+					itemBias.add(j, lRate * (-ckj + regB * bj));
 					loss += regB * bj * bj;
 
 					// update P, Q
@@ -191,12 +191,12 @@ public class SBPR extends SocialRecommender {
 					double cij = g(-xuij);
 
 					// update bi, bj
-					double bi = itemBiases.get(i);
-					itemBiases.add(i, lRate * (cij + regB * bi));
+					double bi = itemBias.get(i);
+					itemBias.add(i, lRate * (cij + regB * bi));
 					loss += regB * bi * bi;
 
-					double bj = itemBiases.get(j);
-					itemBiases.add(j, lRate * (-cij + regB * bj));
+					double bj = itemBias.get(j);
+					itemBias.add(j, lRate * (-cij + regB * bj));
 					loss += regB * bj * bj;
 
 					// update P, Q
@@ -221,7 +221,7 @@ public class SBPR extends SocialRecommender {
 
 	@Override
 	protected double predict(int u, int j) {
-		return itemBiases.get(j) + DenseMatrix.rowMult(P, u, Q, j);
+		return itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 
 	@Override

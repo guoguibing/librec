@@ -55,8 +55,8 @@ public class FISMauc extends IterativeRecommender {
 		P.init(0.01);
 		Q.init(0.01);
 
-		itemBiases = new DenseVector(numItems);
-		itemBiases.init(0.01);
+		itemBias = new DenseVector(numItems);
+		itemBias.init(0.01);
 
 		rho = cf.getInt("FISM.rho");
 		alpha = cf.getFloat("FISM.alpha");
@@ -106,7 +106,7 @@ public class FISMauc extends IterativeRecommender {
 							sum_j += DenseMatrix.rowMult(P, k, Q, j);
 						}
 
-						double bi = itemBiases.get(i), bj = itemBiases.get(j);
+						double bi = itemBias.get(i), bj = itemBias.get(j);
 
 						double pui = bi + wu * sum_i;
 						double puj = bj + Math.pow(Ru.getCount(), -alpha) * sum_j;
@@ -118,10 +118,10 @@ public class FISMauc extends IterativeRecommender {
 						loss += eij * eij;
 
 						// update bi
-						itemBiases.add(i, lRate * (eij - regB * bi));
+						itemBias.add(i, lRate * (eij - regB * bi));
 
 						// update bj
-						itemBiases.add(j, -lRate * (eij - regB * bj));
+						itemBias.add(j, -lRate * (eij - regB * bj));
 
 						loss += regB * bi * bi - regB * bj * bj;
 
@@ -191,7 +191,7 @@ public class FISMauc extends IterativeRecommender {
 
 		double wu = count > 0 ? Math.pow(count, -alpha) : 0;
 
-		return itemBiases.get(i) + wu * sum;
+		return itemBias.get(i) + wu * sum;
 	}
 
 	@Override

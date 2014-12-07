@@ -59,9 +59,9 @@ public abstract class IterativeRecommender extends Recommender {
 	protected DenseMatrix Q, last_Q;
 
 	// user biases
-	protected DenseVector userBiases, last_UB;
+	protected DenseVector userBias, last_UB;
 	// item biases
-	protected DenseVector itemBiases, last_IB;
+	protected DenseVector itemBias, last_IB;
 
 	// adaptive learn rate
 	protected double lRate;
@@ -204,10 +204,10 @@ public abstract class IterativeRecommender extends Recommender {
 			last_P = P.clone();
 		if (Q != null)
 			last_Q = Q.clone();
-		if (userBiases != null)
-			last_UB = userBiases.clone();
-		if (itemBiases != null)
-			last_IB = itemBiases.clone();
+		if (userBias != null)
+			last_UB = userBias.clone();
+		if (itemBias != null)
+			last_IB = itemBias.clone();
 	}
 
 	/**
@@ -222,9 +222,9 @@ public abstract class IterativeRecommender extends Recommender {
 		if (last_Q != null)
 			Q = last_Q.clone();
 		if (last_UB != null)
-			userBiases = last_UB.clone();
+			userBias = last_UB.clone();
 		if (last_IB != null)
-			itemBiases = last_IB.clone();
+			itemBias = last_IB.clone();
 	}
 
 	@Override
@@ -260,10 +260,10 @@ public abstract class IterativeRecommender extends Recommender {
 		FileIO.serialize(Q, dirPath + "itemFactors" + suffix);
 
 		// write vectors
-		if (userBiases != null)
-			FileIO.serialize(userBiases, dirPath + "userBiases" + suffix);
-		if (itemBiases != null)
-			FileIO.serialize(itemBiases, dirPath + "itemBiases" + suffix);
+		if (userBias != null)
+			FileIO.serialize(userBias, dirPath + "userBiases" + suffix);
+		if (itemBias != null)
+			FileIO.serialize(itemBias, dirPath + "itemBiases" + suffix);
 
 		Logs.debug("Learned models are saved to folder \"{}\"", dirPath);
 	}
@@ -285,8 +285,8 @@ public abstract class IterativeRecommender extends Recommender {
 		Q = (DenseMatrix) FileIO.deserialize(dirPath + "itemFactors" + suffix);
 
 		// write vectors
-		userBiases = (DenseVector) FileIO.deserialize(dirPath + "userBiases" + suffix);
-		itemBiases = (DenseVector) FileIO.deserialize(dirPath + "itemBiases" + suffix);
+		userBias = (DenseVector) FileIO.deserialize(dirPath + "userBiases" + suffix);
+		itemBias = (DenseVector) FileIO.deserialize(dirPath + "itemBiases" + suffix);
 	}
 
 	@Override
