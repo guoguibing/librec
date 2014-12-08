@@ -45,11 +45,12 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// whether to adjust learning rate automatically
 	protected static boolean isBoldDriver;
-	// whether to undo last weight changes if negative loss observed when bold
-	// driving
+	// whether to undo last weight changes if negative loss observed when bold driving
 	protected static boolean isUndoEnabled;
 	// decay of learning rate
 	protected static float decay;
+	// small value for initialization
+	protected static double smallValue = 0.01;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
@@ -238,8 +239,8 @@ public abstract class IterativeRecommender extends Recommender {
 			P.init(initMean, initStd);
 			Q.init(initMean, initStd);
 		} else {
-			P.init();
-			Q.init();
+			P.init(); // P.init(smallValue);
+			Q.init(); // Q.init(smallValue);
 		}
 
 	}
