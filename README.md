@@ -21,7 +21,7 @@ LibRec
 The references for all the algorithms are summarized [here](http://www.librec.net/tutorial.html#algos)
 
 ### Download
-
+* librec-v1.2 is under development, see [what's new](CHANGES.md)
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
