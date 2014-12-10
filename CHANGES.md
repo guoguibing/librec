@@ -5,6 +5,8 @@
 * Rating predictions can be outputed now, thanks to [disc5](https://github.com/disc5)'s comment. 
 * New recommendation methods implemented:
   * SLIM, FISM, SBPR, GBPR, TrustSVD
+* New recommendation methods under testing:
+  * timeSVD++
 * Interface for context-aware recommender systems added
   * Context, UserContext, ItemContext, RatingContext  -- Data Class
   * ContextRecommender -- Generic Interface
@@ -13,7 +15,7 @@
   * Rename BRPMF to BPR
   * Support conversion from real-valued ratings to binary ones (val.binary.threshold)
   * Utility methods (e.g., data standardization) added to data structure
-  * bugs fixed
+  * bugs fixed, partially thanks to [albe91](https://github.com/albe91)'s comment. 
 
 ### librec-v1.1
 
