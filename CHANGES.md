@@ -1,8 +1,16 @@
 ## The Changes of the LibRec Library
 
-### librec-v1.2
+## librec-v1.3 (Targets)
+* New recommendation methods
+  * CoFiSet
+* New context-aware recommenders
 
-* Rating predictions can be outputed now, thanks to [disc5](https://github.com/disc5)'s comment. 
+### librec-v1.2 (Under Development)
+
+* Support
+  * Rating predictions can be outputed now (is.prediction.out), thanks to [disc5](https://github.com/disc5)'s comment. 
+  * Data conversion from real-valued ratings to binary ones (val.binary.threshold)
+  * Additional configuration files, now you can run > java -jar librec.jar -c yourConfigFile.conf; otherwise, librec.conf is used by default. 
 * New recommendation methods implemented:
   * SLIM, FISM, SBPR, GBPR, TrustSVD
 * New recommendation methods under testing:
@@ -13,7 +21,6 @@
 * Others
   * Codes refactored & improved
   * Rename BRPMF to BPR
-  * Support conversion from real-valued ratings to binary ones (val.binary.threshold)
   * Utility methods (e.g., data standardization) added to data structure
   * bugs fixed, partially thanks to [albe91](https://github.com/albe91)'s comment. 
 
