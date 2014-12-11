@@ -52,11 +52,11 @@ public class FISMauc extends IterativeRecommender {
 	protected void initModel() {
 		P = new DenseMatrix(numItems, numFactors);
 		Q = new DenseMatrix(numItems, numFactors);
-		P.init(0.01);
-		Q.init(0.01);
+		P.init(smallValue);
+		Q.init(smallValue);
 
 		itemBias = new DenseVector(numItems);
-		itemBias.init(0.01);
+		itemBias.init(smallValue);
 
 		rho = cf.getInt("FISM.rho");
 		alpha = cf.getFloat("FISM.alpha");
