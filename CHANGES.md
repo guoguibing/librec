@@ -10,7 +10,7 @@
 * Support
   * Rating predictions can be outputed now (is.prediction.out), thanks to [disc5](https://github.com/disc5)'s comment. 
   * Data conversion from real-valued ratings to binary ones (val.binary.threshold)
-  * Additional configuration files, now you can run > java -jar librec.jar -c yourConfigFile.conf; otherwise, librec.conf is used by default. 
+  * Additional configuration files, now you can run *java -jar librec.jar -c yourConfigFile.conf*; otherwise, librec.conf is used by default. 
 * New recommendation methods implemented:
   * SLIM, FISM, SBPR, GBPR, TrustSVD
 * New recommendation methods under testing:
