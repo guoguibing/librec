@@ -39,7 +39,7 @@ public class PMF extends IterativeRecommender {
 		// disable bold driver
 		isBoldDriver = false;
 
-		initByNorm = false;
+		// initByNorm = false;
 	}
 
 	@Override
