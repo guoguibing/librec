@@ -132,6 +132,7 @@ public class GBPR extends SocialRecommender {
 
 				// update Pw
 				double n = 1.0 / g.size();
+				double sum_w[] = new double[numFactors];
 				for (int w : g) {
 					double delta = w == u ? 1 : 0;
 					for (int f = 0; f < numFactors; f++) {
@@ -140,16 +141,11 @@ public class GBPR extends SocialRecommender {
 						double qjf = Q.get(j, f);
 
 						double delta_pwf = rho * n * qif + (1 - rho) * delta * qif - delta * qjf;
-						PS.add(w, f, cmg * delta_pwf + regU * pwf);
+						PS.add(w, f, lRate * (cmg * delta_pwf + regU * pwf));
 
 						loss += regU * pwf * pwf;
-					}
-				}
 
-				double sum_w[] = new double[numFactors];
-				for (int f = 0; f < numFactors; f++) {
-					for (int w : g) {
-						sum_w[f] += P.get(w, f);
+						sum_w[f] += pwf;
 					}
 				}
 
@@ -160,18 +156,17 @@ public class GBPR extends SocialRecommender {
 					double qjf = Q.get(j, f);
 
 					double delta_qif = rho * n * sum_w[f] + (1 - rho) * puf;
-					QS.add(i, f, cmg * delta_qif + regI * qif);
+					QS.add(i, f, lRate * (cmg * delta_qif + regI * qif));
 					loss += regI * qif * qif;
 
 					double delta_qjf = -puf;
-					QS.add(j, f, cmg * delta_qjf + regI * qjf);
+					QS.add(j, f, lRate * (cmg * delta_qjf + regI * qjf));
 					loss += regI * qjf * qjf;
-
 				}
 			}
 
-			P = P.add(PS.scale(lRate));
-			Q = Q.add(QS.scale(lRate));
+			P = P.add(PS);
+			Q = Q.add(QS);
 
 			if (isConverged(iter))
 				break;
