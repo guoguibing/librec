@@ -34,7 +34,8 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
 /**
- * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N Recommender Systems</strong>, KDD 2013.
+ * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N
+ * Recommender Systems</strong>, KDD 2013.
  * 
  * @author guoguibing
  * 
@@ -114,7 +115,8 @@ public class FISMrmse extends IterativeRecommender {
 				int j = cell.getColumnKey();
 				double ruj = cell.getValue();
 
-				// for efficiency, use the below code to predict ruj instead of simply using "predict(u,j)"
+				// for efficiency, use the below code to predict ruj instead of
+				// simply using "predict(u,j)"
 				SparseVector Ru = trainMatrix.row(u);
 				double bu = userBias.get(u), bj = itemBias.get(j);
 
@@ -122,7 +124,8 @@ public class FISMrmse extends IterativeRecommender {
 				int cnt = 0;
 				for (VectorEntry ve : Ru) {
 					int i = ve.index();
-					// for training, i and j should be equal as j may be rated or unrated
+					// for training, i and j should be equal as j may be rated
+					// or unrated
 					if (i != j) {
 						sum_ij += DenseMatrix.rowMult(P, i, Q, j);
 						cnt++;
@@ -213,7 +216,7 @@ public class FISMrmse extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings
-				.toString(new Object[] { binThold, rho, alpha, numFactors, initLRate, regI, regB, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, rho, alpha, numFactors, initLRate, maxLRate, regI, regB,
+				numIters }, ",");
 	}
 }

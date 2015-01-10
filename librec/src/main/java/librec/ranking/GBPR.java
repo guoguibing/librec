@@ -20,7 +20,6 @@ package librec.ranking;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 import librec.data.DenseMatrix;
@@ -72,7 +71,7 @@ public class GBPR extends SocialRecommender {
 			DenseMatrix QS = new DenseMatrix(numItems, numFactors);
 
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
-
+				
 				// uniformly draw (u, i, g, j)
 				int u = 0, i = 0, j = 0;
 
@@ -88,6 +87,7 @@ public class GBPR extends SocialRecommender {
 				i = is[Randoms.uniform(is.length)];
 
 				// g
+
 				SparseVector Ci = trainMatrix.column(i); // column i
 				int[] ws = Ci.getIndex();
 				List<Integer> g = new ArrayList<>();
@@ -192,8 +192,8 @@ public class GBPR extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(
-				new Object[] { binThold, rho, gLen, numFactors, initLRate, maxLRate, regU, regI, regB, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, rho, gLen, numFactors, initLRate, maxLRate, regU, regI, regB,
+				numIters }, ",");
 	}
 
 }

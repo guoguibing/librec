@@ -32,7 +32,8 @@ import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
 
 /**
- * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N Recommender Systems</strong>, KDD 2013.
+ * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N
+ * Recommender Systems</strong>, KDD 2013.
  * 
  * @author guoguibing
  * 
@@ -99,7 +100,8 @@ public class FISMauc extends IterativeRecommender {
 
 						double sum_i = 0, sum_j = 0;
 						for (int k : ratedItems) {
-							// for test, i and j will be always unequal as j is unrated
+							// for test, i and j will be always unequal as j is
+							// unrated
 							if (i != k)
 								sum_i += DenseMatrix.rowMult(P, k, Q, i);
 
@@ -196,7 +198,7 @@ public class FISMauc extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings
-				.toString(new Object[] { binThold, rho, alpha, numFactors, initLRate, regI, regB, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, rho, alpha, numFactors, initLRate, maxLRate, regI, regB,
+				numIters }, ",");
 	}
 }
