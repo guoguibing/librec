@@ -193,7 +193,7 @@ public class GBPR extends SocialRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(
-				new Object[] { binThold, rho, gLen, numFactors, initLRate, regU, regI, regB, numIters }, ",");
+				new Object[] { binThold, rho, gLen, numFactors, initLRate, maxLRate, regU, regI, regB, numIters }, ",");
 	}
 
 }
