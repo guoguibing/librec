@@ -28,13 +28,6 @@ import librec.intf.IterativeRecommender;
  * 
  * Rendle et al., <strong>BPR: Bayesian Personalized Ranking from Implicit Feedback</strong>, UAI 2009.
  * 
- * <p>
- * Related Work:
- * <ul>
- * <li>Gantner et al., Learning Attribute-to-Feature Mappings for Cold-Start Recommendations, ICDM 2010.</li>
- * </ul>
- * </p>
- * 
  * @author guoguibing
  * 
  */

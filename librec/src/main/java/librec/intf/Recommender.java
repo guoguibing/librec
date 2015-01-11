@@ -302,8 +302,7 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Compute the correlation between two vectors using method specified by
-	 * configuration key "similarity"
+	 * Compute the correlation between two vectors using method specified by configuration key "similarity"
 	 * 
 	 * @param iv
 	 *            vector i
@@ -324,8 +323,7 @@ public abstract class Recommender implements Runnable {
 	 *            vector j
 	 * @param method
 	 *            similarity method
-	 * @return the correlation between vectors i and j; return NaN if the
-	 *         correlation is not computable.
+	 * @return the correlation between vectors i and j; return NaN if the correlation is not computable.
 	 */
 	protected double correlation(SparseVector iv, SparseVector jv, String method) {
 
@@ -377,8 +375,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Learning method: override this method to build a model, for a model-based
-	 * method. Default implementation is useful for memory-based methods.
+	 * Learning method: override this method to build a model, for a model-based method. Default implementation is
+	 * useful for memory-based methods.
 	 * 
 	 */
 	protected void buildModel() throws Exception {
@@ -532,9 +530,6 @@ public abstract class Recommender implements Runnable {
 
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
-			
-			if(Debug.OFF && u % 100 == 0) 
-				Logs.debug("{}{} progress: {} / {}", algoName, foldInfo, u, um);
 
 			// make a copy of candidate items for each user: trading space for time
 			// use Set instead of ArrayList to speedup removeAll() and contains() operations: Set: O(1); ArrayList: O(log n).
@@ -622,8 +617,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a specific rating for user u on item j. It is useful for
-	 * evalution which requires predictions are bounded.
+	 * predict a specific rating for user u on item j. It is useful for evalution which requires predictions are
+	 * bounded.
 	 * 
 	 * @param u
 	 *            user id
@@ -647,9 +642,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a specific rating for user u on item j, note that the prediction
-	 * is not bounded. It is useful for building models with no need to bound
-	 * predictions.
+	 * predict a specific rating for user u on item j, note that the prediction is not bounded. It is useful for
+	 * building models with no need to bound predictions.
 	 * 
 	 * @param u
 	 *            user id
@@ -662,8 +656,7 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a ranking score for user u on item j: default case using the
-	 * unbounded predicted rating values
+	 * predict a ranking score for user u on item j: default case using the unbounded predicted rating values
 	 * 
 	 * @param u
 	 *            user id
@@ -737,9 +730,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Below are a set of mathematical functions. As many recommenders often
-	 * adopts them, for conveniency's sake, we put these functions in the base
-	 * Recommender class, though they belong to Math class.
+	 * Below are a set of mathematical functions. As many recommenders often adopts them, for conveniency's sake, we put
+	 * these functions in the base Recommender class, though they belong to Math class.
 	 * 
 	 */
 
@@ -765,8 +757,7 @@ public abstract class Recommender implements Runnable {
 	 * @param sigma
 	 *            standard deviation of normation distribution
 	 * 
-	 * @return a gaussian value with mean {@code mu} and standard deviation
-	 *         {@code sigma};
+	 * @return a gaussian value with mean {@code mu} and standard deviation {@code sigma};
 	 */
 	protected double gaussian(double x, double mu, double sigma) {
 		return Math.exp(-0.5 * Math.pow(x - mu, 2) / (sigma * sigma));
@@ -780,8 +771,7 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Check if ratings have been binarized; useful for methods that require
-	 * binarized ratings;
+	 * Check if ratings have been binarized; useful for methods that require binarized ratings;
 	 */
 	protected void checkBinary() {
 		if (binThold < 0) {
