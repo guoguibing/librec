@@ -503,9 +503,6 @@ public abstract class Recommender implements Runnable {
 		List<Double> aucs = new ArrayList<>();
 		List<Double> ndcgs = new ArrayList<>();
 
-		List<Double> maes = new ArrayList<>();
-		List<Double> rmses = new ArrayList<>();
-
 		// candidate items for all users: here only training items
 		List<Integer> candItems = trainMatrix.columns();
 
@@ -538,20 +535,10 @@ public abstract class Recommender implements Runnable {
 			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
 
-			// get overall MAE and RMSE -- not preferred for ranking
-			for (Integer j : tv.getIndex()) {
-				// intersect with the candidate items
+			// intersect with the candidate items
+			for (Integer j : tv.getIndexList()) {
 				if (candItems.contains(j))
 					correctItems.add(j);
-
-				double pred = predict(u, j, true);
-				if (!Double.isNaN(pred)) {
-					double rate = tv.get(j);
-					double euj = rate - pred;
-
-					maes.add(Math.abs(euj));
-					rmses.add(euj * euj);
-				}
 			}
 			if (correctItems.size() == 0)
 				continue; // no testing data for user u
@@ -559,12 +546,10 @@ public abstract class Recommender implements Runnable {
 			// number of candidate items for this user
 			int numCand = candItems.size();
 
-			// remove rated items from candidate items
+			// remove rated items
 			SparseVector rv = trainMatrix.row(u);
 			List<Integer> ratedItems = rv.getIndexList();
 			for (Integer j : ratedItems) {
-				// pCandItems.remove((Integer) ve.index());
-
 				if (candItems.contains(j))
 					numCand--;
 			}
@@ -626,9 +611,6 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.NDCG, Stats.mean(ndcgs));
 		measures.put(Measure.MAP, Stats.mean(aps));
 		measures.put(Measure.MRR, Stats.mean(rrs));
-
-		measures.put(Measure.MAE, Stats.mean(maes));
-		measures.put(Measure.RMSE, Stats.mean(rmses));
 
 		return measures;
 	}
