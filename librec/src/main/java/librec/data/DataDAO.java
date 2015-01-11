@@ -232,12 +232,12 @@ public class DataDAO {
 				}
 			}
 		}
-
+ 
 		if (isItemAsUser) {
-			Logs.debug("User amount: {}, scales: {{}}", numRows, Strings.toString(scales, ", "));
+			Logs.debug("User amount: {}, scale: {{}}", numRows, Strings.toString(scales, ", "));
 		} else {
 			Logs.debug("User amount: {}, item amount: {}", numRows, numCols);
-			Logs.debug("Rate amount: {}, scales: {{}}", numRates, Strings.toString(scales, ", "));
+			Logs.debug("Rate amount: {}, scale: {{}}", numRates, Strings.toString(scales, ", "));
 		}
 
 		// build rating matrix

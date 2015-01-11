@@ -532,9 +532,12 @@ public abstract class Recommender implements Runnable {
 
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
+			
+			if(u % 100 == 0) 
+				Logs.debug("{}{} progress: {} / {}", algoName, foldInfo, u, um);
 
 			// make a copy of candidate items for each user: trading space for time
-			// use Set instead of ArrayList to speedup removeAll() and contains() operations: Set: O(1); ArrayList: O(log n). 
+			// use Set instead of ArrayList to speedup removeAll() and contains() operations: Set: O(1); ArrayList: O(log n).
 			Set<Integer> pCandItems = new HashSet<>(candItems);
 
 			// get positive items from testing data
