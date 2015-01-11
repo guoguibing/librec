@@ -533,7 +533,7 @@ public abstract class Recommender implements Runnable {
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 			
-			if(u % 100 == 0) 
+			if(Debug.OFF && u % 100 == 0) 
 				Logs.debug("{}{} progress: {} / {}", algoName, foldInfo, u, um);
 
 			// make a copy of candidate items for each user: trading space for time
