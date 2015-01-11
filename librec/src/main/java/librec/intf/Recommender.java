@@ -34,8 +34,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import librec.data.DataDAO;
@@ -532,7 +534,8 @@ public abstract class Recommender implements Runnable {
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
 			// make a copy of candidate items for each user: trading space for time
-			List<Integer> pCandItems = new ArrayList<>(candItems);
+			// use Set instead of ArrayList to speedup removeAll() and contains() operations: Set: O(1); ArrayList: O(log n). 
+			Set<Integer> pCandItems = new HashSet<>(candItems);
 
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
