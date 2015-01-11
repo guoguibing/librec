@@ -24,7 +24,7 @@
   * Rename BRPMF to BPR
   * Utility methods (e.g., data standardization) added to data structure
   * bugs fixed
-    * crititical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method) when cloning rateMtrix for trainMatrix
+    * critical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method) when cloning rateMtrix for trainMatrix
     * partially thanks to [albe91](https://github.com/albe91)'s comment. 
 
 ### librec-v1.1
