@@ -88,22 +88,20 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
+	protected Map<Integer, Double> ranking(int u, Collection<Integer> candItems) {
 		Map<Integer, Double> itemScores = new HashMap<>();
 
 		SparseVector pu = trainMatrix.row(u);
 		for (Integer j : candItems) {
-			if (!ratedItems.contains(j)) {
-				double rank = 0;
-				for (Entry<Integer, Double> en : A.column(j).entrySet()) {
-					int i = en.getKey();
-					double support = en.getValue();
+			double rank = 0;
+			for (Entry<Integer, Double> en : A.column(j).entrySet()) {
+				int i = en.getKey();
+				double support = en.getValue();
 
-					rank += pu.get(i) * support;
-				}
-
-				itemScores.put(j, rank);
+				rank += pu.get(i) * support;
 			}
+
+			itemScores.put(j, rank);
 		}
 
 		return itemScores;

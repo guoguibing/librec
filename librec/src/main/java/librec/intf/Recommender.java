@@ -531,38 +531,38 @@ public abstract class Recommender implements Runnable {
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
+			// make a copy of candidate items for each user: trading space for time
+			List<Integer> pCandItems = new ArrayList<>(candItems);
+
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
 
 			// intersect with the candidate items
 			for (Integer j : tv.getIndexList()) {
-				if (candItems.contains(j))
+				if (pCandItems.contains(j))
 					correctItems.add(j);
 			}
 			if (correctItems.size() == 0)
 				continue; // no testing data for user u
 
-			// number of candidate items for this user
-			int numCand = candItems.size();
-
-			// remove rated items
+			// remove rated items from candidate items
 			SparseVector rv = trainMatrix.row(u);
 			List<Integer> ratedItems = rv.getIndexList();
-			for (Integer j : ratedItems) {
-				if (candItems.contains(j))
-					numCand--;
-			}
+			pCandItems.removeAll(ratedItems);
+
+			// number of candidate items for this user
+			int numCand = pCandItems.size();
 
 			// predict the ranking scores of all candidate items
-			Map<Integer, Double> itemScores = ranking(u, ratedItems, candItems);
+			Map<Integer, Double> itemScores = ranking(u, pCandItems);
 
 			// order the ranking scores from highest to lowest
 			List<Integer> rankedItems = new ArrayList<>();
 			if (itemScores.size() > 0) {
 
 				List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(itemScores, true);
-				List<Map.Entry<Integer, Double>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted
+				List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || sorted.size() <= numRecs) ? sorted : sorted
 						.subList(0, numRecs);
 
 				for (Map.Entry<Integer, Double> kv : recomd)
@@ -679,15 +679,13 @@ public abstract class Recommender implements Runnable {
 	 *            candidate items
 	 * @return a map of {item, ranking scores}
 	 */
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
+	protected Map<Integer, Double> ranking(int u, Collection<Integer> candItems) {
 
 		Map<Integer, Double> itemRanks = new HashMap<>();
 		for (Integer j : candItems) {
-			if (!ratedItems.contains(j)) {
-				double rank = ranking(u, j);
-				if (!Double.isNaN(rank))
-					itemRanks.put(j, rank);
-			}
+			double rank = ranking(u, j);
+			if (!Double.isNaN(rank))
+				itemRanks.put(j, rank);
 		}
 
 		return itemRanks;
