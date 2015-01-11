@@ -18,7 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
@@ -41,7 +40,7 @@ import librec.intf.IterativeRecommender;
 public class RankSGD extends IterativeRecommender {
 
 	// item sampling probabilities sorted ascendingly
-	protected List<KeyValPair<Integer>> itemProbs;
+	protected List<Map.Entry<Integer, Double>> itemProbs;
 
 	public RankSGD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -88,7 +87,7 @@ public class RankSGD extends IterativeRecommender {
 						// draw an item j with probability proportional to
 						// popularity
 						double sum = 0, rand = Randoms.random();
-						for (KeyValPair<Integer> en : itemProbs) {
+						for (Map.Entry<Integer, Double> en : itemProbs) {
 							int k = en.getKey();
 							double prob = en.getValue();
 

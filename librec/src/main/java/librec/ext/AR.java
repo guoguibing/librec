@@ -33,11 +33,13 @@ import librec.intf.Recommender;
 
 /**
  * 
- * Choonho Kim and Juntae Kim, <strong>A Recommendation Algorithm Using Multi-Level Association Rules</strong>, WI 2003.
+ * Choonho Kim and Juntae Kim, <strong>A Recommendation Algorithm Using
+ * Multi-Level Association Rules</strong>, WI 2003.
  * 
  * <p>
- * Simple Association Rule Recommender: we do not consider the item categories (or multi levels) used in the original
- * paper. Besides, we consider all association rules without ruling out weak ones (by setting high support and
+ * Simple Association Rule Recommender: we do not consider the item categories
+ * (or multi levels) used in the original paper. Besides, we consider all
+ * association rules without ruling out weak ones (by setting high support and
  * confidence threshold).
  * </p>
  * 
@@ -86,20 +88,22 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> candItems) {
+	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
 		Map<Integer, Double> itemScores = new HashMap<>();
 
 		SparseVector pu = trainMatrix.row(u);
 		for (Integer j : candItems) {
-			double rank = 0;
-			for (Entry<Integer, Double> en : A.column(j).entrySet()) {
-				int i = en.getKey();
-				double support = en.getValue();
+			if (!ratedItems.contains(j)) {
+				double rank = 0;
+				for (Entry<Integer, Double> en : A.column(j).entrySet()) {
+					int i = en.getKey();
+					double support = en.getValue();
 
-				rank += pu.get(i) * support;
+					rank += pu.get(i) * support;
+				}
+
+				itemScores.put(j, rank);
 			}
-
-			itemScores.put(j, rank);
 		}
 
 		return itemScores;

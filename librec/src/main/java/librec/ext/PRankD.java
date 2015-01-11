@@ -18,7 +18,6 @@
 
 package librec.ext;
 
-import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
 import happy.coding.math.Randoms;
 
@@ -130,7 +129,7 @@ public class PRankD extends RankSGD {
 					while (true) {
 						// draw an item j with probability proportional to popularity
 						double sum = 0, rand = Randoms.random();
-						for (KeyValPair<Integer> en : itemProbs) {
+						for (Map.Entry<Integer, Double> en : itemProbs) {
 							int k = en.getKey();
 							double prob = en.getValue();
 

@@ -18,7 +18,6 @@
 
 package librec.rating;
 
-import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
 import happy.coding.math.Stats;
 
@@ -95,10 +94,10 @@ public class ItemKNN extends Recommender {
 
 		// topN similar items
 		if (knn > 0 && knn < nns.size()) {
-			List<KeyValPair<Integer>> sorted = Lists.sortMap(nns, true);
-			List<KeyValPair<Integer>> subset = sorted.subList(0, knn);
+			List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(nns, true);
+			List<Map.Entry<Integer, Double>> subset = sorted.subList(0, knn);
 			nns.clear();
-			for (KeyValPair<Integer> kv : subset)
+			for (Map.Entry<Integer, Double> kv : subset)
 				nns.put(kv.getKey(), kv.getValue());
 		}
 

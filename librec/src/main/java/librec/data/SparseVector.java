@@ -21,13 +21,16 @@ package librec.data;
 import happy.coding.math.Stats;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Data Structure: Sparse Vector whose implementation is modified from M4J library
+ * Data Structure: Sparse Vector whose implementation is modified from M4J
+ * library
  * 
  * @author guoguibing
  * 
@@ -63,7 +66,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * Construct a sparse vector with its maximum capacity, filled with given data array
+	 * Construct a sparse vector with its maximum capacity, filled with given
+	 * data array
 	 * 
 	 * @param capcity
 	 *            maximum size of the sparse vector
@@ -113,6 +117,17 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 		int[] res = new int[count];
 		for (int i = 0; i < count; i++)
 			res[i] = index[i];
+
+		return res;
+	}
+
+	/**
+	 * @return a list of indices (to prevent changes outside)
+	 */
+	public List<Integer> getIndexList() {
+		List<Integer> res = new ArrayList<>((int) (count * 1.5));
+		for (int i = 0; i < count; i++)
+			res.add(index[i]);
 
 		return res;
 	}
@@ -216,7 +231,8 @@ public class SparseVector implements Iterable<VectorEntry>, Serializable {
 	}
 
 	/**
-	 * Tries to find the index. If it is not found, a reallocation is done, and a new index is returned.
+	 * Tries to find the index. If it is not found, a reallocation is done, and
+	 * a new index is returned.
 	 */
 	private int getIndex(int idx) {
 		// Try to find column index

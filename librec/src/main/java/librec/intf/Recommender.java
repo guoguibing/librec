@@ -20,7 +20,6 @@ package librec.intf;
 
 import happy.coding.io.Configer;
 import happy.coding.io.FileIO;
-import happy.coding.io.KeyValPair;
 import happy.coding.io.Lists;
 import happy.coding.io.Logs;
 import happy.coding.math.Measures;
@@ -44,7 +43,6 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.SymmMatrix;
-import librec.data.VectorEntry;
 
 import com.google.common.base.Stopwatch;
 
@@ -265,7 +263,8 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * initilize recommender model
 	 */
-	protected void initModel() throws Exception {}
+	protected void initModel() throws Exception {
+	}
 
 	/**
 	 * build user-user or item-item correlation matrix from training data
@@ -301,7 +300,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Compute the correlation between two vectors using method specified by configuration key "similarity"
+	 * Compute the correlation between two vectors using method specified by
+	 * configuration key "similarity"
 	 * 
 	 * @param iv
 	 *            vector i
@@ -322,7 +322,8 @@ public abstract class Recommender implements Runnable {
 	 *            vector j
 	 * @param method
 	 *            similarity method
-	 * @return the correlation between vectors i and j; return NaN if the correlation is not computable.
+	 * @return the correlation between vectors i and j; return NaN if the
+	 *         correlation is not computable.
 	 */
 	protected double correlation(SparseVector iv, SparseVector jv, String method) {
 
@@ -339,27 +340,27 @@ public abstract class Recommender implements Runnable {
 
 		double sim = 0;
 		switch (method.toLowerCase()) {
-			case "cos":
-				// for ratings along the overlappings
-				sim = Sims.cos(is, js);
-				break;
-			case "cos-binary":
-				// for ratings along all the vectors (including one-sided 0s)
-				sim = iv.inner(jv) / (Math.sqrt(iv.inner(iv)) * Math.sqrt(jv.inner(jv)));
-				break;
-			case "msd":
-				sim = Sims.msd(is, js);
-				break;
-			case "cpc":
-				sim = Sims.cpc(is, js, (minRate + maxRate) / 2.0);
-				break;
-			case "exjaccard":
-				sim = Sims.exJaccard(is, js);
-				break;
-			case "pcc":
-			default:
-				sim = Sims.pcc(is, js);
-				break;
+		case "cos":
+			// for ratings along the overlappings
+			sim = Sims.cos(is, js);
+			break;
+		case "cos-binary":
+			// for ratings along all the vectors (including one-sided 0s)
+			sim = iv.inner(jv) / (Math.sqrt(iv.inner(iv)) * Math.sqrt(jv.inner(jv)));
+			break;
+		case "msd":
+			sim = Sims.msd(is, js);
+			break;
+		case "cpc":
+			sim = Sims.cpc(is, js, (minRate + maxRate) / 2.0);
+			break;
+		case "exjaccard":
+			sim = Sims.exJaccard(is, js);
+			break;
+		case "pcc":
+		default:
+			sim = Sims.pcc(is, js);
+			break;
 		}
 
 		// shrink to account for vector size
@@ -374,21 +375,24 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Learning method: override this method to build a model, for a model-based method. Default implementation is
-	 * useful for memory-based methods.
+	 * Learning method: override this method to build a model, for a model-based
+	 * method. Default implementation is useful for memory-based methods.
 	 * 
 	 */
-	protected void buildModel() throws Exception {}
+	protected void buildModel() throws Exception {
+	}
 
 	/**
 	 * Serializing a learned model (i.e., variable data) to files.
 	 */
-	protected void saveModel() throws Exception {}
+	protected void saveModel() throws Exception {
+	}
 
 	/**
 	 * Deserializing a learned model (i.e., variable data) from files.
 	 */
-	protected void loadModel() throws Exception {}
+	protected void loadModel() throws Exception {
+	}
 
 	/**
 	 * determine whether the rating of a user-item (u, j) is used to predicted
@@ -396,11 +400,11 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected boolean isTestable(int u, int j) {
 		switch (view) {
-			case "cold-start":
-				return trainMatrix.rowSize(u) < 5 ? true : false;
-			case "all":
-			default:
-				return true;
+		case "cold-start":
+			return trainMatrix.rowSize(u) < 5 ? true : false;
+		case "all":
+		default:
+			return true;
 		}
 	}
 
@@ -416,8 +420,10 @@ public abstract class Recommender implements Runnable {
 		String toFile = null;
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
-			preds.add("# userId itemId rating prediction"); // optional: file header
-			FileIO.makeDirectory("Results"); // in case that the fold does not exist
+			preds.add("# userId itemId rating prediction"); // optional: file
+															// header
+			FileIO.makeDirectory("Results"); // in case that the fold does not
+												// exist
 			toFile = "Results" + File.separator + algoName + "-prediction" + (fold > 0 ? "-" + fold : "") + ".txt"; // the
 																													// output-file
 																													// name
@@ -513,9 +519,9 @@ public abstract class Recommender implements Runnable {
 			Map<Integer, Integer> itemDegs = new HashMap<>();
 			for (int j : candItems)
 				itemDegs.put(j, trainMatrix.columnSize(j));
-			List<KeyValPair<Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
+			List<Map.Entry<Integer, Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
 			int k = 0;
-			for (KeyValPair<Integer> deg : sortedDegrees) {
+			for (Map.Entry<Integer, Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
 				if (++k >= numIgnore)
 					break;
@@ -528,9 +534,6 @@ public abstract class Recommender implements Runnable {
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
-			// make a copy: candidate items for each user
-			List<Integer> pCandItems = new ArrayList<>(candItems);
-
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
 			List<Integer> correctItems = new ArrayList<>();
@@ -538,7 +541,7 @@ public abstract class Recommender implements Runnable {
 			// get overall MAE and RMSE -- not preferred for ranking
 			for (Integer j : tv.getIndex()) {
 				// intersect with the candidate items
-				if (pCandItems.contains(j))
+				if (candItems.contains(j))
 					correctItems.add(j);
 
 				double pred = predict(u, j, true);
@@ -553,26 +556,31 @@ public abstract class Recommender implements Runnable {
 			if (correctItems.size() == 0)
 				continue; // no testing data for user u
 
+			// number of candidate items for this user
+			int numCand = candItems.size();
+
 			// remove rated items from candidate items
 			SparseVector rv = trainMatrix.row(u);
-			for (VectorEntry ve : rv)
-				pCandItems.remove((Integer) ve.index());
+			List<Integer> ratedItems = rv.getIndexList();
+			for (Integer j : ratedItems) {
+				// pCandItems.remove((Integer) ve.index());
 
-			// number of candidate items for this user
-			int numCand = pCandItems.size();
+				if (candItems.contains(j))
+					numCand--;
+			}
 
 			// predict the ranking scores of all candidate items
-			Map<Integer, Double> itemScores = ranking(u, pCandItems);
+			Map<Integer, Double> itemScores = ranking(u, ratedItems, candItems);
 
 			// order the ranking scores from highest to lowest
 			List<Integer> rankedItems = new ArrayList<>();
 			if (itemScores.size() > 0) {
 
-				List<KeyValPair<Integer>> sorted = Lists.sortMap(itemScores, true);
-				List<KeyValPair<Integer>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted.subList(
-						0, numRecs);
+				List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(itemScores, true);
+				List<Map.Entry<Integer, Double>> recomd = (numRecs < 0 || sorted.size() <= numRecs) ? sorted : sorted
+						.subList(0, numRecs);
 
-				for (KeyValPair<Integer> kv : recomd)
+				for (Map.Entry<Integer, Double> kv : recomd)
 					rankedItems.add(kv.getKey());
 			}
 
@@ -626,8 +634,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a specific rating for user u on item j. It is useful for evalution which requires predictions are
-	 * bounded.
+	 * predict a specific rating for user u on item j. It is useful for
+	 * evalution which requires predictions are bounded.
 	 * 
 	 * @param u
 	 *            user id
@@ -651,8 +659,9 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a specific rating for user u on item j, note that the prediction is not bounded. It is useful for
-	 * building models with no need to bound predictions.
+	 * predict a specific rating for user u on item j, note that the prediction
+	 * is not bounded. It is useful for building models with no need to bound
+	 * predictions.
 	 * 
 	 * @param u
 	 *            user id
@@ -665,7 +674,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * predict a ranking score for user u on item j: default case using the unbounded predicted rating values
+	 * predict a ranking score for user u on item j: default case using the
+	 * unbounded predicted rating values
 	 * 
 	 * @param u
 	 *            user id
@@ -687,13 +697,15 @@ public abstract class Recommender implements Runnable {
 	 *            candidate items
 	 * @return a map of {item, ranking scores}
 	 */
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> candItems) {
+	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
 
 		Map<Integer, Double> itemRanks = new HashMap<>();
 		for (Integer j : candItems) {
-			double rank = ranking(u, j);
-			if (!Double.isNaN(rank))
-				itemRanks.put(j, rank);
+			if (!ratedItems.contains(j)) {
+				double rank = ranking(u, j);
+				if (!Double.isNaN(rank))
+					itemRanks.put(j, rank);
+			}
 		}
 
 		return itemRanks;
@@ -739,8 +751,9 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Below are a set of mathematical functions. As many recommenders often adopts them, for conveniency's sake, we put
-	 * these functions in the base Recommender class, though they belong to Math class.
+	 * Below are a set of mathematical functions. As many recommenders often
+	 * adopts them, for conveniency's sake, we put these functions in the base
+	 * Recommender class, though they belong to Math class.
 	 * 
 	 */
 
@@ -766,7 +779,8 @@ public abstract class Recommender implements Runnable {
 	 * @param sigma
 	 *            standard deviation of normation distribution
 	 * 
-	 * @return a gaussian value with mean {@code mu} and standard deviation {@code sigma};
+	 * @return a gaussian value with mean {@code mu} and standard deviation
+	 *         {@code sigma};
 	 */
 	protected double gaussian(double x, double mu, double sigma) {
 		return Math.exp(-0.5 * Math.pow(x - mu, 2) / (sigma * sigma));
@@ -780,7 +794,8 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * Check if ratings have been binarized; useful for methods that require binarized ratings;
+	 * Check if ratings have been binarized; useful for methods that require
+	 * binarized ratings;
 	 */
 	protected void checkBinary() {
 		if (binThold < 0) {
