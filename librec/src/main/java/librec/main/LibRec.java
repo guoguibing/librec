@@ -125,11 +125,11 @@ public class LibRec {
 
 			// collect results to folder "Results"
 			String destPath = FileIO.makeDirectory("Results");
-			String dest = destPath + algorithm + "@" + Dates.now() + ".txt";
-			FileIO.copyFile("results.txt", dest);
+			String results = destPath + algorithm + "@" + Dates.now() + ".txt";
+			FileIO.copyFile("results.txt", results);
 
 			// send notification
-			notifyMe(dest);
+			notifyMe(results);
 
 		} catch (Exception e) {
 			// capture exception to log file
@@ -443,7 +443,7 @@ public class LibRec {
 	 * Print out software information
 	 */
 	public static void printMe() {
-		String readme = "\nLibRec version " + version + ", copyright (C) 2014 Guibing Guo \n\n"
+		String readme = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
 
 		/* Description */
 		+ "LibRec is free software: you can redistribute it and/or modify \n"
