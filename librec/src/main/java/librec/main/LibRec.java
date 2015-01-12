@@ -84,6 +84,7 @@ public class LibRec {
 
 	// configuration
 	private static Configer cf;
+	private static String configFile = "librec.conf";
 	private static String algorithm;
 
 	// rate DAO object
@@ -92,15 +93,61 @@ public class LibRec {
 	// rating matrix
 	private static SparseMatrix rateMatrix = null;
 
-	public static void main(String[] args) throws Exception {
-		String configFile = "librec.conf";
+	/**
+	 * entry of the LibRec library
+	 * 
+	 * @param args
+	 *            command line arguments
+	 */
+	public static void main(String[] args) {
 
+		try {
+			// process librec arguments
+			cmdArgs(args);
+
+			// get configuration file
+			cf = new Configer(configFile);
+
+			// debug info
+			debugInfo();
+
+			// prepare data
+			rateDao = new DataDAO(cf.getPath("dataset.training"));
+			rateMatrix = rateDao.readData(cf.getDouble("val.binary.threshold"));
+
+			// config general recommender
+			Recommender.cf = cf;
+			Recommender.rateMatrix = rateMatrix;
+			Recommender.rateDao = rateDao;
+
+			// run algorithms
+			runAlgorithm();
+
+			// collect results to folder "Results"
+			String destPath = FileIO.makeDirectory("Results");
+			String dest = destPath + algorithm + "@" + Dates.now() + ".txt";
+			FileIO.copyFile("results.txt", dest);
+
+			// send notification
+			notifyMe(dest);
+
+		} catch (Exception e) {
+			// capture exception to log file
+			Logs.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * process arguments specified at the command line
+	 * 
+	 * @param args
+	 *            command line arguments
+	 */
+	private static void cmdArgs(String[] args) {
 		// read arguments
-		int i = 0;
-		while (i < args.length) {
+		for (int i = 0; i < args.length; i += 2) {
 			if (args[i].equals("-c")) { // configuration file
 				configFile = args[i + 1];
-				i += 2;
 			} else if (args[i].equals("-v")) { // print out short version information
 				System.out.println("LibRec version " + version);
 				System.exit(0);
@@ -109,32 +156,6 @@ public class LibRec {
 				System.exit(0);
 			}
 		}
-
-		// get configuration file
-		cf = new Configer(configFile);
-
-		// debug info
-		debugInfo();
-
-		// prepare data
-		rateDao = new DataDAO(cf.getPath("dataset.training"));
-		rateMatrix = rateDao.readData(cf.getDouble("val.binary.threshold"));
-
-		// config general recommender
-		Recommender.cf = cf;
-		Recommender.rateMatrix = rateMatrix;
-		Recommender.rateDao = rateDao;
-
-		// run algorithms
-		runAlgorithm();
-
-		// collect results
-		String destPath = FileIO.makeDirectory("Results");
-		String dest = destPath + algorithm + "@" + Dates.now() + ".txt";
-		FileIO.copyFile("results.txt", dest);
-
-		// send notification
-		notifyMe(dest);
 	}
 
 	private static void runAlgorithm() throws Exception {
@@ -251,8 +272,10 @@ public class LibRec {
 	/**
 	 * Send a notification of completeness
 	 * 
+	 * @param attachment
+	 *            email attachment
 	 */
-	private static void notifyMe(String dest) throws Exception {
+	private static void notifyMe(String attachment) throws Exception {
 		if (!cf.isOn("is.email.notify"))
 			return;
 
@@ -282,7 +305,7 @@ public class LibRec {
 		props.setProperty("mail.text", "Program was finished @" + Dates.now());
 
 		String msg = "Program [" + algorithm + "] has been finished !";
-		notifier.send(msg, dest);
+		notifier.send(msg, attachment);
 	}
 
 	/**
@@ -296,86 +319,86 @@ public class LibRec {
 		switch (algorithm.toLowerCase()) {
 
 		/* baselines */
-			case "globalavg":
-				return new GlobalAverage(trainMatrix, testMatrix, fold);
-			case "useravg":
-				return new UserAverage(trainMatrix, testMatrix, fold);
-			case "itemavg":
-				return new ItemAverage(trainMatrix, testMatrix, fold);
-			case "random":
-				return new RandomGuess(trainMatrix, testMatrix, fold);
-			case "constant":
-				return new ConstantGuess(trainMatrix, testMatrix, fold);
-			case "mostpop":
-				return new MostPopular(trainMatrix, testMatrix, fold);
+		case "globalavg":
+			return new GlobalAverage(trainMatrix, testMatrix, fold);
+		case "useravg":
+			return new UserAverage(trainMatrix, testMatrix, fold);
+		case "itemavg":
+			return new ItemAverage(trainMatrix, testMatrix, fold);
+		case "random":
+			return new RandomGuess(trainMatrix, testMatrix, fold);
+		case "constant":
+			return new ConstantGuess(trainMatrix, testMatrix, fold);
+		case "mostpop":
+			return new MostPopular(trainMatrix, testMatrix, fold);
 
-				/* rating prediction */
-			case "userknn":
-				return new UserKNN(trainMatrix, testMatrix, fold);
-			case "itemknn":
-				return new ItemKNN(trainMatrix, testMatrix, fold);
-			case "regsvd":
-				return new RegSVD(trainMatrix, testMatrix, fold);
-			case "biasedmf":
-				return new BiasedMF(trainMatrix, testMatrix, fold);
-			case "svd++":
-				return new SVDPlusPlus(trainMatrix, testMatrix, fold);
-			case "pmf":
-				return new PMF(trainMatrix, testMatrix, fold);
-			case "bpmf":
-				return new BPMF(trainMatrix, testMatrix, fold);
-			case "socialmf":
-				return new SocialMF(trainMatrix, testMatrix, fold);
-			case "trustmf":
-				return new TrustMF(trainMatrix, testMatrix, fold);
-			case "sorec":
-				return new SoRec(trainMatrix, testMatrix, fold);
-			case "soreg":
-				return new SoReg(trainMatrix, testMatrix, fold);
-			case "rste":
-				return new RSTE(trainMatrix, testMatrix, fold);
-			case "trustsvd":
-				return new TrustSVD(trainMatrix, testMatrix, fold);
+			/* rating prediction */
+		case "userknn":
+			return new UserKNN(trainMatrix, testMatrix, fold);
+		case "itemknn":
+			return new ItemKNN(trainMatrix, testMatrix, fold);
+		case "regsvd":
+			return new RegSVD(trainMatrix, testMatrix, fold);
+		case "biasedmf":
+			return new BiasedMF(trainMatrix, testMatrix, fold);
+		case "svd++":
+			return new SVDPlusPlus(trainMatrix, testMatrix, fold);
+		case "pmf":
+			return new PMF(trainMatrix, testMatrix, fold);
+		case "bpmf":
+			return new BPMF(trainMatrix, testMatrix, fold);
+		case "socialmf":
+			return new SocialMF(trainMatrix, testMatrix, fold);
+		case "trustmf":
+			return new TrustMF(trainMatrix, testMatrix, fold);
+		case "sorec":
+			return new SoRec(trainMatrix, testMatrix, fold);
+		case "soreg":
+			return new SoReg(trainMatrix, testMatrix, fold);
+		case "rste":
+			return new RSTE(trainMatrix, testMatrix, fold);
+		case "trustsvd":
+			return new TrustSVD(trainMatrix, testMatrix, fold);
 
-				/* item ranking */
-			case "climf":
-				return new CLiMF(trainMatrix, testMatrix, fold);
-			case "fismrmse":
-				return new FISMrmse(trainMatrix, testMatrix, fold);
-			case "fism":
-			case "fismauc":
-				return new FISMauc(trainMatrix, testMatrix, fold);
-			case "rankals":
-				return new RankALS(trainMatrix, testMatrix, fold);
-			case "ranksgd":
-				return new RankSGD(trainMatrix, testMatrix, fold);
-			case "wrmf":
-				return new WRMF(trainMatrix, testMatrix, fold);
-			case "bpr":
-				return new BPR(trainMatrix, testMatrix, fold);
-			case "gbpr":
-				return new GBPR(trainMatrix, testMatrix, fold);
-			case "sbpr":
-				return new SBPR(trainMatrix, testMatrix, fold);
-			case "slim":
-				return new SLIM(trainMatrix, testMatrix, fold);
+			/* item ranking */
+		case "climf":
+			return new CLiMF(trainMatrix, testMatrix, fold);
+		case "fismrmse":
+			return new FISMrmse(trainMatrix, testMatrix, fold);
+		case "fism":
+		case "fismauc":
+			return new FISMauc(trainMatrix, testMatrix, fold);
+		case "rankals":
+			return new RankALS(trainMatrix, testMatrix, fold);
+		case "ranksgd":
+			return new RankSGD(trainMatrix, testMatrix, fold);
+		case "wrmf":
+			return new WRMF(trainMatrix, testMatrix, fold);
+		case "bpr":
+			return new BPR(trainMatrix, testMatrix, fold);
+		case "gbpr":
+			return new GBPR(trainMatrix, testMatrix, fold);
+		case "sbpr":
+			return new SBPR(trainMatrix, testMatrix, fold);
+		case "slim":
+			return new SLIM(trainMatrix, testMatrix, fold);
 
-				/* extension */
-			case "nmf":
-				return new NMF(trainMatrix, testMatrix, fold);
-			case "hybrid":
-				return new Hybrid(trainMatrix, testMatrix, fold);
-			case "slopeone":
-				return new SlopeOne(trainMatrix, testMatrix, fold);
-			case "pd":
-				return new PD(trainMatrix, testMatrix, fold);
-			case "ar":
-				return new AR(trainMatrix, testMatrix, fold);
-			case "prankd":
-				return new PRankD(trainMatrix, testMatrix, fold);
+			/* extension */
+		case "nmf":
+			return new NMF(trainMatrix, testMatrix, fold);
+		case "hybrid":
+			return new Hybrid(trainMatrix, testMatrix, fold);
+		case "slopeone":
+			return new SlopeOne(trainMatrix, testMatrix, fold);
+		case "pd":
+			return new PD(trainMatrix, testMatrix, fold);
+		case "ar":
+			return new AR(trainMatrix, testMatrix, fold);
+		case "prankd":
+			return new PRankD(trainMatrix, testMatrix, fold);
 
-			default:
-				throw new Exception("No recommender is specified!");
+		default:
+			throw new Exception("No recommender is specified!");
 		}
 	}
 
@@ -400,16 +423,16 @@ public class LibRec {
 		if (!Recommender.isRankingPred) {
 			String view = cf.getString("rating.pred.view");
 			switch (view.toLowerCase()) {
-				case "cold-start":
-					mode += ", " + view;
-					break;
-				case "trust-degree":
-					mode += String.format(", %s [%d, %d]",
-							new Object[] { view, cf.getInt("min.trust.degree"), cf.getInt("max.trust.degree") });
-					break;
-				case "all":
-				default:
-					break;
+			case "cold-start":
+				mode += ", " + view;
+				break;
+			case "trust-degree":
+				mode += String.format(", %s [%d, %d]",
+						new Object[] { view, cf.getInt("min.trust.degree"), cf.getInt("max.trust.degree") });
+				break;
+			case "all":
+			default:
+				break;
 			}
 		}
 		String debugInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38), mode);
