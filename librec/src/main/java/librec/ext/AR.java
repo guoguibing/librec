@@ -18,8 +18,9 @@
 
 package librec.ext;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -86,11 +87,11 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
-		Map<Integer, Double> itemScores = new HashMap<>();
+	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
+		List<Map.Entry<Integer, Double>> itemScores = new ArrayList<>();
 
 		SparseVector pu = trainMatrix.row(u);
-		for (Integer j : candItems) {
+		for (final Integer j : candItems) {
 			if (ratedItems.contains(j))
 				continue;
 
@@ -101,8 +102,26 @@ public class AR extends Recommender {
 
 				rank += pu.get(i) * support;
 			}
+			
+			final double score = rank;
 
-			itemScores.put(j, rank);
+			itemScores.add(new Map.Entry<Integer, Double>() {
+
+				@Override
+				public Integer getKey() {
+					return j;
+				}
+
+				@Override
+				public Double getValue() {
+					return score;
+				}
+
+				@Override
+				public Double setValue(Double value) {
+					return null;
+				}
+			});
 		}
 
 		return itemScores;

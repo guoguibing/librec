@@ -413,8 +413,6 @@ public abstract class Recommender implements Runnable {
 	 */
 	private Map<Measure, Double> evalRatings() throws Exception {
 
-		Map<Measure, Double> measures = new HashMap<>();
-
 		boolean isResultsOut = cf.isOn("is.prediction.out");
 		List<String> preds = null;
 		String toFile = null;
@@ -474,6 +472,7 @@ public abstract class Recommender implements Runnable {
 		double rmse = Math.sqrt(sum_mses / numCount);
 		double asymm = sum_asyms / numCount;
 
+		Map<Measure, Double> measures = new HashMap<>();
 		measures.put(Measure.MAE, mae);
 		// normalized MAE: useful for direct comparison between two systems
 		// using different rating scales.
@@ -489,19 +488,20 @@ public abstract class Recommender implements Runnable {
 	 */
 	private Map<Measure, Double> evalRankings() {
 
-		Map<Measure, Double> measures = new HashMap<>();
+		int capacity = testMatrix.numRows();
 
-		List<Double> ds5 = new ArrayList<>();
-		List<Double> ds10 = new ArrayList<>();
+		// initialization capacity to speed up
+		List<Double> ds5 = new ArrayList<>(isDiverseUsed ? capacity : 0);
+		List<Double> ds10 = new ArrayList<>(isDiverseUsed ? capacity : 0);
 
-		List<Double> precs5 = new ArrayList<>();
-		List<Double> precs10 = new ArrayList<>();
-		List<Double> recalls5 = new ArrayList<>();
-		List<Double> recalls10 = new ArrayList<>();
-		List<Double> aps = new ArrayList<>();
-		List<Double> rrs = new ArrayList<>();
-		List<Double> aucs = new ArrayList<>();
-		List<Double> ndcgs = new ArrayList<>();
+		List<Double> precs5 = new ArrayList<>(capacity);
+		List<Double> precs10 = new ArrayList<>(capacity);
+		List<Double> recalls5 = new ArrayList<>(capacity);
+		List<Double> recalls10 = new ArrayList<>(capacity);
+		List<Double> aps = new ArrayList<>(capacity);
+		List<Double> rrs = new ArrayList<>(capacity);
+		List<Double> aucs = new ArrayList<>(capacity);
+		List<Double> ndcgs = new ArrayList<>(capacity);
 
 		// candidate items for all users: here only training items
 		// use HashSet instead of ArrayList to speedup removeAll() and contains() operations: HashSet: O(1); ArrayList: O(log n).
@@ -554,16 +554,16 @@ public abstract class Recommender implements Runnable {
 				if (candItems.contains(j))
 					numCand--;
 
-			// predict the ranking scores of all candidate items
-			Map<Integer, Double> itemScores = ranking(u, ratedItems, candItems);
+			// predict the ranking scores (unordered) of all candidate items
+			List<Map.Entry<Integer, Double>> itemScores = ranking(u, ratedItems, candItems);
 
 			// order the ranking scores from highest to lowest: List to preserve orders
 			List<Integer> rankedItems = new ArrayList<>();
 			if (itemScores.size() > 0) {
 
-				List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(itemScores, true);
-				List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || sorted.size() <= numRecs) ? sorted : sorted
-						.subList(0, numRecs);
+				Lists.sortList(itemScores, true);
+				List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || itemScores.size() <= numRecs) ? itemScores
+						: itemScores.subList(0, numRecs);
 
 				for (Map.Entry<Integer, Double> kv : recomd)
 					rankedItems.add(kv.getKey());
@@ -601,6 +601,7 @@ public abstract class Recommender implements Runnable {
 			ndcgs.add(nDCG);
 		}
 
+		Map<Measure, Double> measures = new HashMap<>();
 		measures.put(Measure.D5, isDiverseUsed ? Stats.mean(ds5) : 0.0);
 		measures.put(Measure.D10, isDiverseUsed ? Stats.mean(ds10) : 0.0);
 		measures.put(Measure.Pre5, Stats.mean(precs5));
@@ -679,15 +680,34 @@ public abstract class Recommender implements Runnable {
 	 *            candidate items for all users
 	 * @return a map of {item, ranking scores}
 	 */
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
+	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
+			Collection<Integer> candItems) {
 
-		Map<Integer, Double> itemRanks = new HashMap<>();
-		for (Integer j : candItems) {
+		// Map<Integer, Double> itemRanks = new HashMap<>();
+		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>();
+		for (final Integer j : candItems) {
 			// item j is not rated 
 			if (!ratedItems.contains(j)) {
-				double rank = ranking(u, j);
-				if (!Double.isNaN(rank))
-					itemRanks.put(j, rank);
+				final double rank = ranking(u, j);
+				if (!Double.isNaN(rank)) {
+					itemRanks.add(new Map.Entry<Integer, Double>() {
+
+						@Override
+						public Integer getKey() {
+							return j;
+						}
+
+						@Override
+						public Double getValue() {
+							return rank;
+						}
+
+						@Override
+						public Double setValue(Double value) {
+							return null; // no need to assign value
+						}
+					});
+				}
 			}
 		}
 
