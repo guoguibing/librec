@@ -178,7 +178,8 @@ public abstract class Recommender implements Runnable {
 		try {
 			execute();
 		} catch (Exception e) {
-			e.printStackTrace();
+			// capture error message
+			Logs.error(e.getMessage());
 		}
 	}
 
@@ -201,8 +202,7 @@ public abstract class Recommender implements Runnable {
 
 			buildModel();
 		} else {
-			// load a learned model: this code will not be executed unless
-			// "Debug.OFF"
+			// load a learned model: this code will not be executed unless "Debug.OFF"
 			// ... mainly for the purpose of examplifying how to use the saved
 			// models.
 			loadModel();
