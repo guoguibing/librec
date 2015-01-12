@@ -504,7 +504,8 @@ public abstract class Recommender implements Runnable {
 		List<Double> ndcgs = new ArrayList<>();
 
 		// candidate items for all users: here only training items
-		List<Integer> candItems = trainMatrix.columns();
+		// use HashSet instead of ArrayList to speedup removeAll() and contains() operations: HashSet: O(1); ArrayList: O(log n).
+		Set<Integer> candItems = new HashSet<>(trainMatrix.columns());
 
 		if (verbose)
 			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
@@ -513,10 +514,10 @@ public abstract class Recommender implements Runnable {
 		if (numIgnore > 0) {
 			List<Integer> ignoreItems = new ArrayList<>();
 
-			Map<Integer, Integer> itemDegs = new HashMap<>();
-			for (int j : candItems)
-				itemDegs.put(j, trainMatrix.columnSize(j));
-			List<Map.Entry<Integer, Integer>> sortedDegrees = Lists.sortMap(itemDegs, true);
+			Map<Integer, Integer> itemPops = new HashMap<>();
+			for (Integer j : candItems)
+				itemPops.put(j, trainMatrix.columnSize(j));
+			List<Map.Entry<Integer, Integer>> sortedDegrees = Lists.sortMap(itemPops, true);
 			int k = 0;
 			for (Map.Entry<Integer, Integer> deg : sortedDegrees) {
 				ignoreItems.add(deg.getKey());
@@ -524,16 +525,15 @@ public abstract class Recommender implements Runnable {
 					break;
 			}
 
-			// remove ignore items from candidate items
+			// ignore these items from candidate items
 			candItems.removeAll(ignoreItems);
 		}
 
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
-			// make a copy of candidate items for each user: trading space for time
-			// use Set instead of ArrayList to speedup removeAll() and contains() operations: Set: O(1); ArrayList: O(log n).
-			Set<Integer> pCandItems = new HashSet<>(candItems);
+			// number of candidate items for all users
+			int numCand = candItems.size();
 
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
@@ -541,7 +541,7 @@ public abstract class Recommender implements Runnable {
 
 			// intersect with the candidate items
 			for (Integer j : tv.getIndexList()) {
-				if (pCandItems.contains(j))
+				if (candItems.contains(j))
 					correctItems.add(j);
 			}
 			if (correctItems.size() == 0)
@@ -550,15 +550,14 @@ public abstract class Recommender implements Runnable {
 			// remove rated items from candidate items
 			SparseVector rv = trainMatrix.row(u);
 			List<Integer> ratedItems = rv.getIndexList();
-			pCandItems.removeAll(ratedItems);
-
-			// number of candidate items for this user
-			int numCand = pCandItems.size();
+			for (Integer j : ratedItems)
+				if (candItems.contains(j))
+					numCand--;
 
 			// predict the ranking scores of all candidate items
-			Map<Integer, Double> itemScores = ranking(u, pCandItems);
+			Map<Integer, Double> itemScores = ranking(u, ratedItems, candItems);
 
-			// order the ranking scores from highest to lowest
+			// order the ranking scores from highest to lowest: List to preserve orders
 			List<Integer> rankedItems = new ArrayList<>();
 			if (itemScores.size() > 0) {
 
@@ -674,17 +673,22 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 * @param u
 	 *            user id
+	 * @param ratedItems
+	 *            items rated by user u
 	 * @param candItems
-	 *            candidate items
+	 *            candidate items for all users
 	 * @return a map of {item, ranking scores}
 	 */
-	protected Map<Integer, Double> ranking(int u, Collection<Integer> candItems) {
+	protected Map<Integer, Double> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
 
 		Map<Integer, Double> itemRanks = new HashMap<>();
 		for (Integer j : candItems) {
-			double rank = ranking(u, j);
-			if (!Double.isNaN(rank))
-				itemRanks.put(j, rank);
+			// item j is not rated 
+			if (!ratedItems.contains(j)) {
+				double rank = ranking(u, j);
+				if (!Double.isNaN(rank))
+					itemRanks.put(j, rank);
+			}
 		}
 
 		return itemRanks;
