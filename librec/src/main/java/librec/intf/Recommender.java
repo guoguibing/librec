@@ -564,9 +564,9 @@ public abstract class Recommender implements Runnable {
 				Lists.sortList(itemScores, true);
 				List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || itemScores.size() <= numRecs) ? itemScores
 						: itemScores.subList(0, numRecs);
-
+				
 				for (Map.Entry<Integer, Double> kv : recomd)
-					rankedItems.add(kv.getKey());
+					 rankedItems.add(kv.getKey());
 			}
 
 			if (rankedItems.size() == 0)
@@ -683,7 +683,6 @@ public abstract class Recommender implements Runnable {
 	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
 			Collection<Integer> candItems) {
 
-		// Map<Integer, Double> itemRanks = new HashMap<>();
 		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>();
 		for (final Integer j : candItems) {
 			// item j is not rated 
