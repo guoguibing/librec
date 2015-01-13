@@ -51,6 +51,12 @@ public class PMF extends IterativeRecommender {
 	}
 
 	@Override
+	protected void cleanUp() throws Exception {
+		userDeltas = null;
+		itemDeltas = null;
+	}
+
+	@Override
 	protected void buildModel() throws Exception {
 
 		// batch updates with momentums

@@ -201,6 +201,9 @@ public abstract class Recommender implements Runnable {
 				Logs.debug(algoName + ": " + algoInfo);
 
 			buildModel();
+			
+			// clean up: release intermediate memory to avoid memory leak
+			cleanUp();
 		} else {
 			// load a learned model: this code will not be executed unless "Debug.OFF"
 			// ... mainly for the purpose of examplifying how to use the saved
@@ -380,6 +383,12 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 */
 	protected void buildModel() throws Exception {
+	}
+
+	/**
+	 * After learning model: release some intermediate data to avoid memory leak 
+	 */
+	protected void cleanUp() throws Exception{
 	}
 
 	/**

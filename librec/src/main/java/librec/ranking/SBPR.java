@@ -90,6 +90,11 @@ public class SBPR extends SocialRecommender {
 
 		}
 	}
+	
+	@Override
+	protected void cleanUp() throws Exception {
+		SP = null; // no need for evaluation, release it. 
+	}
 
 	@Override
 	protected void buildModel() throws Exception {
