@@ -62,7 +62,7 @@ public abstract class Recommender implements Runnable {
 	public static SparseMatrix rateMatrix;
 
 	// params used for multiple runs
-	public static Map<String, List<Float>> params;
+	public static Map<String, List<Float>> params = new HashMap<>();
 
 	// verbose
 	protected static boolean verbose;
