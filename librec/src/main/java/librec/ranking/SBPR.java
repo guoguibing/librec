@@ -19,10 +19,9 @@
 package librec.ranking;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import java.util.Map;
 
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
@@ -46,7 +45,7 @@ import librec.intf.SocialRecommender;
  */
 public class SBPR extends SocialRecommender {
 
-	private Multimap<Integer, Integer> SP;
+	private Map<Integer, List<Integer>> SP;
 
 	public SBPR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -64,7 +63,7 @@ public class SBPR extends SocialRecommender {
 		itemBias.init();
 
 		// find items rated by trusted neighbors only
-		SP = HashMultimap.create();
+		SP = new HashMap<>();
 
 		for (int u = 0, um = trainMatrix.numRows(); u < um; u++) {
 			SparseVector Ru = trainMatrix.row(u);
@@ -73,18 +72,21 @@ public class SBPR extends SocialRecommender {
 
 			// SPu
 			SparseVector Tu = socialMatrix.row(u);
+			List<Integer> items = new ArrayList<>();
 			for (VectorEntry ve : Tu) {
 				int v = ve.index(); // friend v
 				if (v >= um)
 					continue;
 
 				SparseVector Rv = trainMatrix.row(v); // v's ratings
-				for (VectorEntry ve2 : Rv) {
-					int j = ve2.index(); // v's rated items
-					if (!Ru.contains(j)) // if not rated by user u
-						SP.put(u, j);
+				for (VectorEntry vj : Rv) {
+					int j = vj.index(); // v's rated items
+					if (!Ru.contains(j) && !items.contains(j)) // if not rated by user u and not already added to item list
+						items.add(j);
 				}
 			}
+
+			SP.put(u, items);
 
 		}
 	}
@@ -115,7 +117,7 @@ public class SBPR extends SocialRecommender {
 				double xui = predict(u, i);
 
 				// SPu
-				List<Integer> SPu = new ArrayList<>(SP.get(u));
+				List<Integer> SPu = SP.get(u);
 
 				// j
 				do {
@@ -226,7 +228,8 @@ public class SBPR extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, regB, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, regB, numIters },
+				",");
 	}
 
 }
