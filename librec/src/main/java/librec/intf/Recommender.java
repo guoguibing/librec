@@ -180,6 +180,8 @@ public abstract class Recommender implements Runnable {
 		} catch (Exception e) {
 			// capture error message
 			Logs.error(e.getMessage());
+			
+			e.printStackTrace();
 		}
 	}
 

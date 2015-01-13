@@ -134,6 +134,8 @@ public class LibRec {
 		} catch (Exception e) {
 			// capture exception to log file
 			Logs.error(e.getMessage());
+			
+			e.printStackTrace();
 		}
 	}
 
