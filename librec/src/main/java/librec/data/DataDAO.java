@@ -232,13 +232,9 @@ public class DataDAO {
 				}
 			}
 		}
- 
-		if (isItemAsUser) {
-			Logs.debug("User amount: {}, scale: {{}}", numRows, Strings.toString(scales, ", "));
-		} else {
-			Logs.debug("User amount: {}, item amount: {}", numRows, numCols);
-			Logs.debug("Rate amount: {}, scale: {{}}", numRates, Strings.toString(scales, ", "));
-		}
+
+		Logs.debug("Dataset: {Users, {}} = {{}, {}, {}}, Scale = {{}}", (isItemAsUser ? "Users, Links"
+				: "Items, Ratings"), numRows, numCols, numRates, Strings.toString(scales, ", "));
 
 		// build rating matrix
 		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
