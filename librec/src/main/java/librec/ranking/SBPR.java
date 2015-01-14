@@ -36,7 +36,7 @@ import librec.intf.SocialRecommender;
  * Social Bayesian Personalized Ranking (SBPR)
  * 
  * <p>
- * Zhao et al., <strong>Leveraing Social Connections to Improve Personalized Ranking for Collaborative
+ * Zhao et al., <strong>Leveraging Social Connections to Improve Personalized Ranking for Collaborative
  * Filtering</strong>, CIKM 2014.
  * </p>
  * 
