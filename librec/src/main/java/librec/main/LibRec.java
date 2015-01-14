@@ -148,20 +148,20 @@ public class LibRec {
 	private static void cmdArgs(String[] args) throws Exception {
 		// read arguments
 		for (int i = 0; i < args.length; i += 2) {
-			if (args[i].equals("-c")) { 
+			if (args[i].equals("-c")) {
 				// configuration file
 				configFile = args[i + 1];
-				
-			} else if (args[i].equals("-v")) { 
+
+			} else if (args[i].equals("-v")) {
 				// print out short version information
 				System.out.println("LibRec version " + version);
 				System.exit(0);
-				
-			} else if (args[i].equals("--version")) { 
+
+			} else if (args[i].equals("--version")) {
 				// print out full version information
 				printMe();
 				System.exit(0);
-				
+
 			} else if (args[i].equals("--dataset-spec")) {
 				// print out data set specification
 				cf = new Configer(configFile);
@@ -171,13 +171,15 @@ public class LibRec {
 
 				String socialSet = cf.getPath("dataset.social");
 				if (!socialSet.equals("-1")) {
-					DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
+					DataDAO socDao = rateDao == null ? new DataDAO(socialSet) : new DataDAO(socialSet,
+							rateDao.getUserIds());
 					socDao.printSpecs();
 				}
 
 				String testSet = cf.getPath("dataset.testing");
 				if (!testSet.equals("-1")) {
-					DataDAO testDao = new DataDAO(testSet, rateDao.getUserIds(), rateDao.getItemIds());
+					DataDAO testDao = rateDao == null ? new DataDAO(testSet) : new DataDAO(testSet,
+							rateDao.getUserIds(), rateDao.getItemIds());
 					testDao.printSpecs();
 				}
 
