@@ -10,7 +10,7 @@
 * Support
   * Rating predictions can be outputed now (is.prediction.out), thanks to [disc5](https://github.com/disc5)'s comment. 
   * Data conversion from real-valued ratings to binary ones (val.binary.threshold)
-  * A number of [command line options](http://www.librec.net/tutorial.html#cmd): 
+  * A number of [command line arguments](http://www.librec.net/tutorial.html#cmd): 
     * -c configFile: set alternative configuration files,  *java -jar librec.jar -c yourConfigFile.conf*; 
     * -v/--version: print out version information
     * --dataset-spec: print out dataset specifications
