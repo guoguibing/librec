@@ -7,7 +7,7 @@
 
 ### librec-v1.2 (Under Development)
 
-* Support
+* Support more configurations
   * Rating predictions can be outputed now (is.prediction.out), thanks to [disc5](https://github.com/disc5)'s comment. 
   * Data conversion from real-valued ratings to binary ones (val.binary.threshold)
   * A number of [command line arguments](http://www.librec.net/tutorial.html#cmd): 
@@ -27,8 +27,8 @@
   * Rename BRPMF to BPR
   * Utility methods (e.g., data standardization) added to data structure
   * bugs fixed
-    * critical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method) when cloning rateMtrix for trainMatrix
-    * partially thanks to [albe91](https://github.com/albe91)'s comment. 
+    * critical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method)
+    * bug due to [albe91](https://github.com/albe91)'s comment. 
 
 ### librec-v1.1
 
