@@ -331,7 +331,7 @@ public class DataDAO {
 	 */
 	public void printSpecs() throws Exception {
 		if (rateMatrix == null)
-			readData(false);
+			readData(true);
 
 		List<String> sps = new ArrayList<>();
 
@@ -339,25 +339,26 @@ public class DataDAO {
 		int items = numItems();
 		int numRates = rateMatrix.size();
 
-		sps.add(String.format("Dataset: %s", Strings.last(dataPath, 38)));
+		sps.add(String.format("Dataset: %s", dataPath));
 		sps.add("User amount: " + users + ", " + FileIO.formatSize(users));
 		if (!isItemAsUser)
 			sps.add("Item amount: " + items + ", " + FileIO.formatSize(items));
 		sps.add("Rate amount: " + numRates + ", " + FileIO.formatSize(numRates));
-		sps.add("Scales dist: " + scaleDist.toString());
 		sps.add(String.format("Data density: %.4f%%", (numRates + 0.0) / users / items * 100));
+		sps.add("Scale distribution: " + scaleDist.toString());
 
 		// user/item mean
 		double[] data = rateMatrix.getData();
-		double mean = Stats.sum(data) / numRates;
-		double std = Stats.sd(data);
-		double mode = Stats.mode(data);
-		double median = Stats.median(data);
+		float mean = (float) (Stats.sum(data) / numRates);
+		float std = (float) Stats.sd(data);
+		float mode = (float) Stats.mode(data);
+		float median = (float) Stats.median(data);
 
-		sps.add(String.format("Mean: %.6f", mean));
-		sps.add(String.format("Std : %.6f", std));
-		sps.add(String.format("Mode: %.6f", mode));
-		sps.add(String.format("Median: %.6f", median));
+		sps.add("");
+		sps.add(String.format("Average value of all ratings: %f", mean));
+		sps.add(String.format("Standard deviation of all ratings: %f", std));
+		sps.add(String.format("Mode of all rating values: %f", mode));
+		sps.add(String.format("Median of all rating values: %f", median));
 
 		List<Integer> userCnts = new ArrayList<>();
 		int userMax = 0, userMin = Integer.MAX_VALUE;
@@ -372,10 +373,12 @@ public class DataDAO {
 					userMin = size;
 			}
 		}
-		sps.add(String.format("User max : %s", userMax));
-		sps.add(String.format("User min : %s", userMin));
-		sps.add(String.format("User mean: %.6f", Stats.mean(userCnts)));
-		sps.add(String.format("User Std : %.6f", Stats.sd(userCnts)));
+		
+		sps.add("");
+		sps.add(String.format("Max number of ratings per user: %d", userMax));
+		sps.add(String.format("Min number of ratings per user: %d", userMin));
+		sps.add(String.format("Average number of ratings per user: %f", (float) Stats.mean(userCnts)));
+		sps.add(String.format("Standard deviation of number of ratings per user: %f", (float) Stats.sd(userCnts)));
 
 		if (!isItemAsUser) {
 			List<Integer> itemCnts = new ArrayList<>();
@@ -391,10 +394,12 @@ public class DataDAO {
 						itemMin = size;
 				}
 			}
-			sps.add(String.format("Item max : %s", itemMax));
-			sps.add(String.format("Item min : %s", itemMin));
-			sps.add(String.format("Item mean: %.6f", Stats.mean(itemCnts)));
-			sps.add(String.format("Item Std : %.6f", Stats.sd(itemCnts)));
+			
+			sps.add("");
+			sps.add(String.format("Max number of ratings per item: %d", itemMax));
+			sps.add(String.format("Min number of ratings per item: %d", itemMin));
+			sps.add(String.format("Average number of ratings per item: %f", (float) Stats.mean(itemCnts)));
+			sps.add(String.format("Standard deviation of number of ratings per item: %f", (float) Stats.sd(itemCnts)));
 		}
 
 		Logs.info(Strings.toSection(sps));

@@ -134,7 +134,7 @@ public class LibRec {
 		} catch (Exception e) {
 			// capture exception to log file
 			Logs.error(e.getMessage());
-			
+
 			e.printStackTrace();
 		}
 	}
@@ -145,16 +145,42 @@ public class LibRec {
 	 * @param args
 	 *            command line arguments
 	 */
-	private static void cmdArgs(String[] args) {
+	private static void cmdArgs(String[] args) throws Exception {
 		// read arguments
 		for (int i = 0; i < args.length; i += 2) {
-			if (args[i].equals("-c")) { // configuration file
+			if (args[i].equals("-c")) { 
+				// configuration file
 				configFile = args[i + 1];
-			} else if (args[i].equals("-v")) { // print out short version information
+				
+			} else if (args[i].equals("-v")) { 
+				// print out short version information
 				System.out.println("LibRec version " + version);
 				System.exit(0);
-			} else if (args[i].equals("--version")) { // print out full version information
+				
+			} else if (args[i].equals("--version")) { 
+				// print out full version information
 				printMe();
+				System.exit(0);
+				
+			} else if (args[i].equals("--dataset-spec")) {
+				// print out data set specification
+				cf = new Configer(configFile);
+
+				DataDAO rateDao = new DataDAO(cf.getPath("dataset.training"));
+				rateDao.printSpecs();
+
+				String socialSet = cf.getPath("dataset.social");
+				if (!socialSet.equals("-1")) {
+					DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
+					socDao.printSpecs();
+				}
+
+				String testSet = cf.getPath("dataset.testing");
+				if (!testSet.equals("-1")) {
+					DataDAO testDao = new DataDAO(testSet, rateDao.getUserIds(), rateDao.getItemIds());
+					testDao.printSpecs();
+				}
+
 				System.exit(0);
 			}
 		}
