@@ -23,9 +23,9 @@
   * ContextRecommender -- Generic Interface
 * Others
   * Codes refactored & improved
-  * SortMap performance improved, depency library updated
-  * Rename BRPMF to BPR
-  * Utility methods (e.g., data standardization) added to data structure
+    * SortMap/SortList performance improved, dependent library updated
+    * Rename BRPMF to BPR
+    * Utility methods (e.g., data standardization) added to data structure
   * bugs fixed
     * critical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method)
     * bug due to [albe91](https://github.com/albe91)'s comment. 
