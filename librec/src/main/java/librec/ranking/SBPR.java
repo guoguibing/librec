@@ -183,7 +183,7 @@ public class SBPR extends SocialRecommender {
 						double delta_qkf = cik * (-puf / (1 + suk)) + ckj * puf;
 						Q.add(k, f, lRate * (delta_qkf - regI * qkf));
 
-						Q.add(j, f, lRate * (cik * (-puf) - regI * qjf));
+						Q.add(j, f, lRate * (ckj * (-puf) - regI * qjf));
 
 						loss += regU * puf * puf + regI * qif * qif;
 						loss += regI * qkf * qkf + regI * qjf * qjf;
