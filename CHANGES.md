@@ -28,7 +28,7 @@
     * Utility methods (e.g., data standardization) added to data structure
   * bugs fixed
     * critical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method)
-    * bug due to [albe91](https://github.com/albe91)'s comment. 
+    * thanks to the comments of [albe91](https://github.com/albe91), Victoria Lin
 
 ### librec-v1.1
 
