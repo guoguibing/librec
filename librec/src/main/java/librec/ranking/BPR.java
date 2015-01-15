@@ -85,9 +85,9 @@ public class BPR extends IterativeRecommender {
 					double qif = Q.get(i, f);
 					double qjf = Q.get(j, f);
 
-					P.add(u, f, lRate * (cmg * (qif - qjf) + regU * puf));
-					Q.add(i, f, lRate * (cmg * puf + regI * qif));
-					Q.add(j, f, lRate * (cmg * (-puf) + regI * qjf));
+					P.add(u, f, lRate * (cmg * (qif - qjf) - regU * puf));
+					Q.add(i, f, lRate * (cmg * puf - regI * qif));
+					Q.add(j, f, lRate * (cmg * (-puf) - regI * qjf));
 
 					loss += regU * puf * puf + regI * qif * qif + regI * qjf * qjf;
 				}
@@ -101,6 +101,6 @@ public class BPR extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate, regU, regI, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, numIters }, ",");
 	}
 }

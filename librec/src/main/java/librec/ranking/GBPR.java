@@ -123,11 +123,11 @@ public class GBPR extends SocialRecommender {
 
 				// update bi, bj
 				double bi = itemBias.get(i);
-				itemBias.add(i, lRate * (cmg + regB * bi));
+				itemBias.add(i, lRate * (cmg - regB * bi));
 				loss += regB * bi * bi;
 
 				double bj = itemBias.get(j);
-				itemBias.add(j, lRate * (-cmg + regB * bj));
+				itemBias.add(j, lRate * (-cmg - regB * bj));
 				loss += regB * bj * bj;
 
 				// update Pw
@@ -141,7 +141,7 @@ public class GBPR extends SocialRecommender {
 						double qjf = Q.get(j, f);
 
 						double delta_pwf = rho * n * qif + (1 - rho) * delta * qif - delta * qjf;
-						PS.add(w, f, lRate * (cmg * delta_pwf + regU * pwf));
+						PS.add(w, f, lRate * (cmg * delta_pwf - regU * pwf));
 
 						loss += regU * pwf * pwf;
 
@@ -156,11 +156,11 @@ public class GBPR extends SocialRecommender {
 					double qjf = Q.get(j, f);
 
 					double delta_qif = rho * n * sum_w[f] + (1 - rho) * puf;
-					QS.add(i, f, lRate * (cmg * delta_qif + regI * qif));
+					QS.add(i, f, lRate * (cmg * delta_qif - regI * qif));
 					loss += regI * qif * qif;
 
 					double delta_qjf = -puf;
-					QS.add(j, f, lRate * (cmg * delta_qjf + regI * qjf));
+					QS.add(j, f, lRate * (cmg * delta_qjf - regI * qjf));
 					loss += regI * qjf * qjf;
 				}
 			}

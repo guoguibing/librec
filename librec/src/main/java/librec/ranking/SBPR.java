@@ -158,15 +158,15 @@ public class SBPR extends SocialRecommender {
 
 					// update bi, bk, bj
 					double bi = itemBias.get(i);
-					itemBias.add(i, lRate * (cik / (1 + suk) + regB * bi));
+					itemBias.add(i, lRate * (cik / (1 + suk) - regB * bi));
 					loss += regB * bi * bi;
 
 					double bk = itemBias.get(k);
-					itemBias.add(k, lRate * (-cik / (1 + suk) + ckj + regB * bk));
+					itemBias.add(k, lRate * (-cik / (1 + suk) + ckj - regB * bk));
 					loss += regB * bk * bk;
 
 					double bj = itemBias.get(j);
-					itemBias.add(j, lRate * (-ckj + regB * bj));
+					itemBias.add(j, lRate * (-ckj - regB * bj));
 					loss += regB * bj * bj;
 
 					// update P, Q
@@ -176,14 +176,14 @@ public class SBPR extends SocialRecommender {
 						double qjf = Q.get(j, f);
 
 						double delta_puf = cik * (qif - qkf) / (1 + suk) + ckj * (qkf - qjf);
-						P.add(u, f, lRate * (delta_puf + regU * puf));
+						P.add(u, f, lRate * (delta_puf - regU * puf));
 
-						Q.add(i, f, lRate * (cik * puf / (1 + suk) + regI * qif));
+						Q.add(i, f, lRate * (cik * puf / (1 + suk) - regI * qif));
 
 						double delta_qkf = cik * (-puf / (1 + suk)) + ckj * puf;
-						Q.add(k, f, lRate * (delta_qkf + regI * qkf));
+						Q.add(k, f, lRate * (delta_qkf - regI * qkf));
 
-						Q.add(j, f, lRate * (cik * (-puf) + regI * qjf));
+						Q.add(j, f, lRate * (cik * (-puf) - regI * qjf));
 
 						loss += regU * puf * puf + regI * qif * qif;
 						loss += regI * qkf * qkf + regI * qjf * qjf;
@@ -199,11 +199,11 @@ public class SBPR extends SocialRecommender {
 
 					// update bi, bj
 					double bi = itemBias.get(i);
-					itemBias.add(i, lRate * (cij + regB * bi));
+					itemBias.add(i, lRate * (cij - regB * bi));
 					loss += regB * bi * bi;
 
 					double bj = itemBias.get(j);
-					itemBias.add(j, lRate * (-cij + regB * bj));
+					itemBias.add(j, lRate * (-cij - regB * bj));
 					loss += regB * bj * bj;
 
 					// update P, Q
@@ -212,9 +212,9 @@ public class SBPR extends SocialRecommender {
 						double qif = Q.get(i, f);
 						double qjf = Q.get(j, f);
 
-						P.add(u, f, lRate * (cij * (qif - qjf) + regU * puf));
-						Q.add(i, f, lRate * (cij * puf + regI * qif));
-						Q.add(j, f, lRate * (cij * (-puf) + regI * qjf));
+						P.add(u, f, lRate * (cij * (qif - qjf) - regU * puf));
+						Q.add(i, f, lRate * (cij * puf - regI * qif));
+						Q.add(j, f, lRate * (cij * (-puf) - regI * qjf));
 
 						loss += regU * puf * puf + regI * qif * qif + regI * qjf * qjf;
 					}
