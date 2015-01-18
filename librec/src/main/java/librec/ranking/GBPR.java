@@ -20,6 +20,7 @@ package librec.ranking;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 import librec.data.DenseMatrix;
@@ -29,8 +30,8 @@ import librec.data.SparseVector;
 import librec.intf.SocialRecommender;
 
 /**
- * Pan and Chen, <strong>GBPR: Group Preference Based Bayesian Personalized
- * Ranking for One-Class Collaborative Filtering</strong>, IJCAI 2013.
+ * Pan and Chen, <strong>GBPR: Group Preference Based Bayesian Personalized Ranking for One-Class Collaborative
+ * Filtering</strong>, IJCAI 2013.
  * 
  * @author guoguibing
  * 
@@ -62,16 +63,18 @@ public class GBPR extends SocialRecommender {
 	@Override
 	protected void buildModel() throws Exception {
 
+		DenseMatrix PS = null, QS = null;
+
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
 			errs = 0;
 
-			DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix QS = new DenseMatrix(numItems, numFactors);
+			PS = new DenseMatrix(numUsers, numFactors);
+			QS = new DenseMatrix(numItems, numFactors);
 
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
-				
+
 				// uniformly draw (u, i, g, j)
 				int u = 0, i = 0, j = 0;
 
@@ -172,6 +175,7 @@ public class GBPR extends SocialRecommender {
 				break;
 		}
 	}
+
 
 	@Override
 	protected double predict(int u, int j) {
