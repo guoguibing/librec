@@ -180,7 +180,7 @@ public abstract class Recommender implements Runnable {
 		} catch (Exception e) {
 			// capture error message
 			Logs.error(e.getMessage());
-			
+
 			e.printStackTrace();
 		}
 	}
@@ -203,7 +203,7 @@ public abstract class Recommender implements Runnable {
 				Logs.debug(algoName + ": " + algoInfo);
 
 			buildModel();
-			
+
 			// clean up: release intermediate memory to avoid memory leak
 			cleanUp();
 		} else {
@@ -388,9 +388,9 @@ public abstract class Recommender implements Runnable {
 	}
 
 	/**
-	 * After learning model: release some intermediate data to avoid memory leak 
+	 * After learning model: release some intermediate data to avoid memory leak
 	 */
-	protected void cleanUp() throws Exception{
+	protected void cleanUp() throws Exception {
 	}
 
 	/**
@@ -575,9 +575,9 @@ public abstract class Recommender implements Runnable {
 				Lists.sortList(itemScores, true);
 				List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || itemScores.size() <= numRecs) ? itemScores
 						: itemScores.subList(0, numRecs);
-				
+
 				for (Map.Entry<Integer, Double> kv : recomd)
-					 rankedItems.add(kv.getKey());
+					rankedItems.add(kv.getKey());
 			}
 
 			if (rankedItems.size() == 0)
@@ -695,11 +695,12 @@ public abstract class Recommender implements Runnable {
 			Collection<Integer> candItems) {
 
 		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>();
+		double min = 0;
 		for (final Integer j : candItems) {
 			// item j is not rated 
 			if (!ratedItems.contains(j)) {
 				final double rank = ranking(u, j);
-				if (!Double.isNaN(rank)) {
+				if (!Double.isNaN(rank) &&  rank > min) {
 					itemRanks.add(new Map.Entry<Integer, Double>() {
 
 						@Override
@@ -719,6 +720,7 @@ public abstract class Recommender implements Runnable {
 					});
 				}
 			}
+
 		}
 
 		return itemRanks;
