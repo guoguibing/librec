@@ -793,6 +793,14 @@ public class DenseMatrix implements Serializable {
 			data[row][j] = vals.data[j];
 	}
 
+	/**
+	 * clear and reset all entries to 0
+	 */
+	public void clear() {
+		for (int i = 0; i < numRows; i++)
+			setRow(i, 0.0);
+	}
+
 	@Override
 	public String toString() {
 		return Strings.toString(data);

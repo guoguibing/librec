@@ -63,15 +63,16 @@ public class GBPR extends SocialRecommender {
 	@Override
 	protected void buildModel() throws Exception {
 
-		DenseMatrix PS = null, QS = null;
+		DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
+		DenseMatrix QS = new DenseMatrix(numItems, numFactors);
 
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
 			errs = 0;
 
-			PS = new DenseMatrix(numUsers, numFactors);
-			QS = new DenseMatrix(numItems, numFactors);
+			PS.clear();
+			QS.clear();			
 
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
 
