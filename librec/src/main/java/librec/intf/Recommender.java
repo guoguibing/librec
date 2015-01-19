@@ -694,7 +694,7 @@ public abstract class Recommender implements Runnable {
 	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
 			Collection<Integer> candItems) {
 
-		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>((int) Math.ceil(ratedItems.size() / 0.7));
+		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>((int) Math.ceil(candItems.size() / 0.7));
 		for (final Integer j : candItems) {
 			// item j is not rated 
 			if (!ratedItems.contains(j)) {
