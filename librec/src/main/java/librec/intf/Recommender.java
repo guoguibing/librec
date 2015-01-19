@@ -694,13 +694,12 @@ public abstract class Recommender implements Runnable {
 	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
 			Collection<Integer> candItems) {
 
-		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>();
-		double min = 0;
+		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>((int) Math.ceil(ratedItems.size() / 0.7));
 		for (final Integer j : candItems) {
 			// item j is not rated 
 			if (!ratedItems.contains(j)) {
 				final double rank = ranking(u, j);
-				if (!Double.isNaN(rank) &&  rank > min) {
+				if (!Double.isNaN(rank)) {
 					itemRanks.add(new Map.Entry<Integer, Double>() {
 
 						@Override
