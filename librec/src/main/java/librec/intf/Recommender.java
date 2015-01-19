@@ -543,6 +543,9 @@ public abstract class Recommender implements Runnable {
 		// for each test user
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
+			if (verbose && ((u + 1) % 100 == 0))
+				Logs.debug("{}{} evaluates progress: {} / {}", algoName, foldInfo, u + 1, um);
+
 			// number of candidate items for all users
 			int numCand = candItems.size();
 
