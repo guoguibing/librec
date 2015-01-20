@@ -8,7 +8,7 @@
 ### librec-v1.2 (Milestone version, Under Development)
 * Cache employed
   * rowCache(), columnCache() methods added to SparseMatrix
-  * employing cache technique can greately improve the speed of item ranking
+  * employing cache technique can greatly improve the speed of item ranking
   * new config item "guava.cache.spec" used to specify cache configuration
 * Support more configurations
   * Rating predictions can be outputed now (is.prediction.out), thanks to [disc5](https://github.com/disc5)'s comment. 
