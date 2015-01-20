@@ -80,8 +80,9 @@ public class SLIM extends IterativeRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		W = new DenseMatrix(numItems, numItems);
-		W.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01))
-					// to speed up training
+		W.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01)) to speed up training
+
+		userCache = trainMatrix.rowCache(cacheSpec);
 
 		if (knn > 0) {
 			// find the nearest neighbors for each item based on item similarity
@@ -183,10 +184,10 @@ public class SLIM extends IterativeRecommender {
 	/**
 	 * @return a prediction without the contribution of excludede_item
 	 */
-	protected double predict(int u, int j, int excluded_item) {
+	protected double predict(int u, int j, int excluded_item) throws Exception {
 
 		Collection<Integer> nns = knn > 0 ? itemNNs.get(j) : allItems;
-		SparseVector Ru = trainMatrix.row(u);
+		SparseVector Ru = userCache.get(u);
 
 		double pred = 0;
 		for (int k : nns) {
@@ -200,7 +201,7 @@ public class SLIM extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j)  throws Exception {
 		return predict(u, j, -1);
 	}
 

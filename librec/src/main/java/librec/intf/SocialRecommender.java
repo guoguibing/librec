@@ -18,10 +18,13 @@
 
 package librec.intf;
 
+import com.google.common.cache.LoadingCache;
+
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import librec.data.DataDAO;
 import librec.data.SparseMatrix;
+import librec.data.SparseVector;
 
 /**
  * Recommenders in which social information is used
@@ -40,6 +43,9 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	// social regularization
 	protected static float regS;
+
+	// social cache for each social recommender
+	protected LoadingCache<Integer, SparseVector> socialCache;
 
 	// initialization
 	static {
@@ -73,29 +79,30 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	@Override
 	protected boolean isTestable(int u, int j) {
 		switch (view) {
-			case "cold-start":
-				return trainMatrix.rowSize(u) < 5 ? true : false;
-			case "trust-degree":
-				int min_deg = cf.getInt("min.trust.degree");
-				int max_deg = cf.getInt("max.trust.degree");
-				if (min_deg == -1)
-					min_deg = 0;
-				if (max_deg == -1)
-					max_deg = Integer.MAX_VALUE;
+		case "cold-start":
+			return trainMatrix.rowSize(u) < 5 ? true : false;
+		case "trust-degree":
+			int min_deg = cf.getInt("min.trust.degree");
+			int max_deg = cf.getInt("max.trust.degree");
+			if (min_deg == -1)
+				min_deg = 0;
+			if (max_deg == -1)
+				max_deg = Integer.MAX_VALUE;
 
-				// size could be indegree + outdegree
-				int in_deg = socialMatrix.columnSize(u);
-				int out_deg = socialMatrix.rowSize(u);
-				int deg = in_deg + out_deg;
+			// size could be indegree + outdegree
+			int in_deg = socialMatrix.columnSize(u);
+			int out_deg = socialMatrix.rowSize(u);
+			int deg = in_deg + out_deg;
 
-				boolean cond = (deg >= min_deg) && (deg <= max_deg);
+			boolean cond = (deg >= min_deg) && (deg <= max_deg);
 
-				return cond ? true : false;
+			return cond ? true : false;
 
-			case "all":
-			default:
-				return true;
+		case "all":
+		default:
+			return true;
 		}
 	}
+
 
 }

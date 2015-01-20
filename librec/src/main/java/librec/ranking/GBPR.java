@@ -58,6 +58,9 @@ public class GBPR extends SocialRecommender {
 
 		rho = cf.getFloat("GBPR.rho");
 		gLen = cf.getInt("GBPR.group.size");
+
+		userCache = trainMatrix.rowCache(cacheSpec);
+		itemCache = trainMatrix.columnCache(cacheSpec);
 	}
 
 	@Override
@@ -80,7 +83,7 @@ public class GBPR extends SocialRecommender {
 				SparseVector Ru = null; // row u
 				do {
 					u = Randoms.uniform(trainMatrix.numRows());
-					Ru = trainMatrix.row(u);
+					Ru = userCache.get(u);
 				} while (Ru.getCount() == 0);
 
 				// i
@@ -88,8 +91,7 @@ public class GBPR extends SocialRecommender {
 				i = is[Randoms.uniform(is.length)];
 
 				// g
-
-				SparseVector Ci = trainMatrix.column(i); // column i
+				SparseVector Ci = itemCache.get(i); // column i
 				int[] ws = Ci.getIndex();
 				List<Integer> g = new ArrayList<>();
 				if (ws.length <= gLen) {
@@ -173,7 +175,6 @@ public class GBPR extends SocialRecommender {
 				break;
 		}
 	}
-
 
 	@Override
 	protected double predict(int u, int j) {

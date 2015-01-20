@@ -142,7 +142,7 @@ public class WRMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, regU, regI, alpha, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, alpha, numFactors, regU, regI, numIters }, ",");
 	}
 
 }

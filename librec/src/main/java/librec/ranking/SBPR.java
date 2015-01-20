@@ -62,6 +62,8 @@ public class SBPR extends SocialRecommender {
 		itemBias = new DenseVector(numItems);
 		itemBias.init();
 
+		userCache = trainMatrix.rowCache(cacheSpec);
+
 		// find items rated by trusted neighbors only
 		SP = new HashMap<>();
 
@@ -90,7 +92,7 @@ public class SBPR extends SocialRecommender {
 
 		}
 	}
-	
+
 	@Override
 	protected void cleanUp() throws Exception {
 		SP = null; // no need for evaluation, release it. 
@@ -112,7 +114,7 @@ public class SBPR extends SocialRecommender {
 				SparseVector pu = null;
 				do {
 					u = Randoms.uniform(trainMatrix.numRows());
-					pu = trainMatrix.row(u);
+					pu = userCache.get(u);
 				} while (pu.getCount() == 0);
 
 				// i
@@ -233,8 +235,7 @@ public class SBPR extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, regB, numIters },
-				",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, regB, numIters });
 	}
 
 }

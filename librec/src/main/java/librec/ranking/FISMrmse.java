@@ -52,7 +52,7 @@ public class FISMrmse extends IterativeRecommender {
 	}
 
 	@Override
-	protected void initModel() {
+	protected void initModel() throws Exception {
 		P = new DenseMatrix(numItems, numFactors);
 		Q = new DenseMatrix(numItems, numFactors);
 		P.init(0.01);
@@ -66,6 +66,8 @@ public class FISMrmse extends IterativeRecommender {
 		nnz = trainMatrix.size();
 		rho = cf.getFloat("FISM.rho");
 		alpha = cf.getFloat("FISM.alpha");
+		
+		userCache = trainMatrix.rowCache(cacheSpec);
 	}
 
 	@Override
@@ -193,13 +195,13 @@ public class FISMrmse extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j)  throws Exception {
 		double pred = userBias.get(u) + itemBias.get(j);
 
 		double sum = 0;
 		int count = 0;
 
-		SparseVector Ru = trainMatrix.row(u);
+		SparseVector Ru = userCache.get(u);
 		for (VectorEntry ve : Ru) {
 			int i = ve.index();
 			// for test, i and j will be always unequal as j is unrated

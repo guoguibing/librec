@@ -105,7 +105,7 @@ public abstract class IterativeRecommender extends Recommender {
 	 * default prediction method
 	 */
 	@Override
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j) throws Exception{
 		return DenseMatrix.rowMult(P, u, Q, j);
 	}
 

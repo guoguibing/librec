@@ -47,6 +47,7 @@ import librec.data.SparseVector;
 import librec.data.SymmMatrix;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.cache.LoadingCache;
 
 /**
  * General recommenders
@@ -63,6 +64,9 @@ public abstract class Recommender implements Runnable {
 
 	// params used for multiple runs
 	public static Map<String, List<Float>> params = new HashMap<>();
+
+	// Guava cache configuration
+	protected static String cacheSpec;
 
 	// verbose
 	protected static boolean verbose;
@@ -97,6 +101,9 @@ public abstract class Recommender implements Runnable {
 	protected int fold;
 	// fold information
 	protected String foldInfo;
+
+	// user cache, item cache
+	protected LoadingCache<Integer, SparseVector> userCache, itemCache;
 
 	// rating matrix for training and testing
 	protected SparseMatrix trainMatrix, testMatrix;
@@ -153,6 +160,8 @@ public abstract class Recommender implements Runnable {
 
 			numUsers = rateDao.numUsers();
 			numItems = rateDao.numItems();
+
+			cacheSpec = cf.getString("guava.cache.spec");
 
 			verbose = cf.isOn("is.verbose");
 			isRankingPred = cf.isOn("is.ranking.pred");
@@ -497,7 +506,7 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * @return the evaluation results of ranking predictions
 	 */
-	private Map<Measure, Double> evalRankings() {
+	private Map<Measure, Double> evalRankings() throws Exception {
 
 		int capacity = testMatrix.numRows();
 
@@ -642,7 +651,7 @@ public abstract class Recommender implements Runnable {
 	 *            whether to bound the prediction
 	 * @return prediction
 	 */
-	protected double predict(int u, int j, boolean bound) {
+	protected double predict(int u, int j, boolean bound) throws Exception {
 		double pred = predict(u, j);
 
 		if (bound) {
@@ -665,7 +674,7 @@ public abstract class Recommender implements Runnable {
 	 *            item id
 	 * @return raw prediction without bounded
 	 */
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j) throws Exception {
 		return globalMean;
 	}
 
@@ -679,7 +688,7 @@ public abstract class Recommender implements Runnable {
 	 *            item id
 	 * @return a ranking score for user u on item j
 	 */
-	protected double ranking(int u, int j) {
+	protected double ranking(int u, int j) throws Exception {
 		return predict(u, j, false);
 	}
 
@@ -694,8 +703,8 @@ public abstract class Recommender implements Runnable {
 	 *            candidate items for all users
 	 * @return a map of {item, ranking scores}
 	 */
-	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
-			Collection<Integer> candItems) {
+	private List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
+			Collection<Integer> candItems) throws Exception {
 
 		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>((int) Math.ceil(candItems.size() / 0.7));
 		for (final Integer j : candItems) {

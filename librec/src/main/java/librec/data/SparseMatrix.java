@@ -28,6 +28,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -395,6 +398,46 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 
 		return sv;
+	}
+
+	/**
+	 * create a row cache of a matrix
+	 * 
+	 * @param cacheSpec
+	 *            cache specification
+	 * @return a matrix row cache
+	 */
+	public LoadingCache<Integer, SparseVector> rowCache(String cacheSpec) {
+		LoadingCache<Integer, SparseVector> cache = CacheBuilder.from(cacheSpec).build(
+				new CacheLoader<Integer, SparseVector>() {
+
+					@Override
+					public SparseVector load(Integer rowId) throws Exception {
+						return row(rowId);
+					}
+				});
+
+		return cache;
+	}
+
+	/**
+	 * create a column cache of a matrix
+	 * 
+	 * @param cacheSpec
+	 *            cache specification
+	 * @return a matrix column cache
+	 */
+	public LoadingCache<Integer, SparseVector> columnCache(String cacheSpec) {
+		LoadingCache<Integer, SparseVector> cache = CacheBuilder.from(cacheSpec).build(
+				new CacheLoader<Integer, SparseVector>() {
+
+					@Override
+					public SparseVector load(Integer columnId) throws Exception {
+						return column(columnId);
+					}
+				});
+
+		return cache;
 	}
 
 	/**

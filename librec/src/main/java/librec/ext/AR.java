@@ -18,10 +18,6 @@
 
 package librec.ext;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.collect.HashBasedTable;
@@ -58,8 +54,16 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected void buildModel() throws Exception {
+	protected void initModel() throws Exception {
+		super.initModel();
+
 		A = HashBasedTable.create(numItems, numItems);
+
+		userCache = trainMatrix.rowCache(cacheSpec);
+	}
+
+	@Override
+	protected void buildModel() throws Exception {
 
 		// simple rule: X => Y, given that each user vector is regarded as a
 		// transaction
@@ -87,44 +91,18 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems, Collection<Integer> candItems) {
-		List<Map.Entry<Integer, Double>> itemScores = new ArrayList<>();
+	protected double ranking(int u, int j) throws Exception {
+		SparseVector pu = userCache.get(u);
 
-		SparseVector pu = trainMatrix.row(u);
-		for (final Integer j : candItems) {
-			if (ratedItems.contains(j))
-				continue;
+		double rank = 0;
+		for (Entry<Integer, Double> en : A.column(j).entrySet()) {
+			int i = en.getKey();
+			double support = en.getValue();
 
-			double rank = 0;
-			for (Entry<Integer, Double> en : A.column(j).entrySet()) {
-				int i = en.getKey();
-				double support = en.getValue();
-
-				rank += pu.get(i) * support;
-			}
-			
-			final double score = rank;
-
-			itemScores.add(new Map.Entry<Integer, Double>() {
-
-				@Override
-				public Integer getKey() {
-					return j;
-				}
-
-				@Override
-				public Double getValue() {
-					return score;
-				}
-
-				@Override
-				public Double setValue(Double value) {
-					return null;
-				}
-			});
+			rank += pu.get(i) * support;
 		}
 
-		return itemScores;
+		return rank;
 	}
 
 }

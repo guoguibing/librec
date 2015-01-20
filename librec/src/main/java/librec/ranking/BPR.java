@@ -39,6 +39,13 @@ public class BPR extends IterativeRecommender {
 		isRankingPred = true;
 		initByNorm = false;
 	}
+	
+	@Override
+	protected void initModel() throws Exception {
+		super.initModel();
+		
+		userCache = trainMatrix.rowCache(cacheSpec);
+	}
 
 	@Override
 	protected void buildModel() throws Exception {
@@ -54,7 +61,7 @@ public class BPR extends IterativeRecommender {
 
 				while (true) {
 					u = Randoms.uniform(numUsers);
-					SparseVector pu = trainMatrix.row(u);
+					SparseVector pu = userCache.get(u);
 
 					if (pu.getCount() == 0)
 						continue;
