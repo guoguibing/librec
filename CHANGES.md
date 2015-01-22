@@ -4,6 +4,7 @@
 * New recommendation methods
   * CoFiSet
 * New context-aware recommenders
+  * Generative models
 
 ### librec-v1.2 (Milestone version, Under Development)
 * Cache employed
