@@ -44,7 +44,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// social regularization
 	protected static float regS;
 
-	// social cache for each social recommender
+	// shared social cache for all social recommenders
 	protected LoadingCache<Integer, SparseVector> socialCache;
 
 	// initialization
@@ -60,6 +60,8 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		try {
 			socialMatrix = socialDao.readData();
 			numUsers = socialDao.numUsers();
+			
+			//socialCache = socialMatrix.rowCache(cacheSpec);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
