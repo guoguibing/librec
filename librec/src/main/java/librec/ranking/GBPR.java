@@ -26,7 +26,6 @@ import happy.coding.math.Randoms;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
-import librec.data.SparseVector;
 import librec.intf.SocialRecommender;
 
 /**
@@ -59,8 +58,8 @@ public class GBPR extends SocialRecommender {
 		rho = cf.getFloat("GBPR.rho");
 		gLen = cf.getInt("GBPR.group.size");
 
-		userCache = trainMatrix.rowCache(cacheSpec);
-		itemCache = trainMatrix.columnCache(cacheSpec);
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+		itemUsersCache = trainMatrix.columnRowsCache(cacheSpec);
 	}
 
 	@Override
@@ -80,28 +79,25 @@ public class GBPR extends SocialRecommender {
 				int u = 0, i = 0, j = 0;
 
 				// u
-				SparseVector Ru = null; // row u
+				List<Integer> ratedItems = null; // row u
 				do {
 					u = Randoms.uniform(trainMatrix.numRows());
-					Ru = userCache.get(u);
-				} while (Ru.getCount() == 0);
+					ratedItems = userItemsCache.get(u);
+				} while (ratedItems.size() == 0);
 
 				// i
-				int[] is = Ru.getIndex();
-				i = is[Randoms.uniform(is.length)];
+				i = Randoms.random(ratedItems);
 
 				// g
-				SparseVector Ci = itemCache.get(i); // column i
-				int[] ws = Ci.getIndex();
+				List<Integer> ws = itemUsersCache.get(i); // column i
 				List<Integer> g = new ArrayList<>();
-				if (ws.length <= gLen) {
-					for (int w : ws)
-						g.add(w);
+				if (ws.size() <= gLen) {
+					g.addAll(ws);
 				} else {
 
 					g.add(u); // u in G
 					while (g.size() < gLen) {
-						Integer w = ws[Randoms.uniform(ws.length)];
+						Integer w = Randoms.random(ws);
 						if (!g.contains(w))
 							g.add(w);
 					}
@@ -113,7 +109,7 @@ public class GBPR extends SocialRecommender {
 				// j
 				do {
 					j = Randoms.uniform(numItems);
-				} while (Ru.contains(j));
+				} while (ratedItems.contains(j));
 
 				double puj = predict(u, j);
 
@@ -196,7 +192,7 @@ public class GBPR extends SocialRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { binThold, rho, gLen, numFactors, initLRate, maxLRate, regU, regI, regB,
-				numIters }, ",");
+				numIters });
 	}
 
 }

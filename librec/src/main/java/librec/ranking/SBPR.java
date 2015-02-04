@@ -62,28 +62,27 @@ public class SBPR extends SocialRecommender {
 		itemBias = new DenseVector(numItems);
 		itemBias.init();
 
-		userCache = trainMatrix.rowCache(cacheSpec);
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 
 		// find items rated by trusted neighbors only
 		SP = new HashMap<>();
 
 		for (int u = 0, um = trainMatrix.numRows(); u < um; u++) {
-			SparseVector Ru = trainMatrix.row(u);
-			if (Ru.getCount() == 0)
+			List<Integer> uRatedItems = userItemsCache.get(u);
+			if (uRatedItems.size() == 0)
 				continue; // no rated items
 
 			// SPu
-			SparseVector Tu = socialMatrix.row(u);
+			List<Integer> trustedUsers = socialMatrix.getColumns(u);
 			List<Integer> items = new ArrayList<>();
-			for (VectorEntry ve : Tu) {
-				int v = ve.index(); // friend v
-				if (v >= um)
+			for (int v : trustedUsers) {
+				if (v >= um) // friend v
 					continue;
 
-				SparseVector Rv = trainMatrix.row(v); // v's ratings
-				for (VectorEntry vj : Rv) {
-					int j = vj.index(); // v's rated items
-					if (!Ru.contains(j) && !items.contains(j)) // if not rated by user u and not already added to item list
+				List<Integer> vRatedItems = userItemsCache.get(v);
+				for (int j : vRatedItems) {
+					// v's rated items
+					if (!uRatedItems.contains(j) && !items.contains(j)) // if not rated by user u and not already added to item list
 						items.add(j);
 				}
 			}
@@ -111,15 +110,14 @@ public class SBPR extends SocialRecommender {
 				int u = 0, i = 0, j = 0;
 
 				// u
-				SparseVector pu = null;
+				List<Integer> ratedItems = null;
 				do {
 					u = Randoms.uniform(trainMatrix.numRows());
-					pu = userCache.get(u);
-				} while (pu.getCount() == 0);
+					ratedItems = userItemsCache.get(u);
+				} while (ratedItems.size() == 0);
 
 				// i
-				int[] is = pu.getIndex();
-				i = is[Randoms.uniform(is.length)];
+				i = Randoms.random(ratedItems);
 
 				double xui = predict(u, i);
 
@@ -129,13 +127,13 @@ public class SBPR extends SocialRecommender {
 				// j
 				do {
 					j = Randoms.uniform(numItems);
-				} while (pu.contains(j) || SPu.contains(j));
+				} while (ratedItems.contains(j) || SPu.contains(j));
 
 				double xuj = predict(u, j);
 
 				if (SPu.size() > 0) {
 					// if having social neighbors
-					int k = SPu.get(Randoms.uniform(SPu.size()));
+					int k = Randoms.random(SPu);
 					double xuk = predict(u, k);
 
 					SparseVector Tu = socialMatrix.row(u);

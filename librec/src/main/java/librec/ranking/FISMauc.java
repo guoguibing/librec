@@ -61,7 +61,7 @@ public class FISMauc extends IterativeRecommender {
 		rho = cf.getInt("FISM.rho");
 		alpha = cf.getFloat("FISM.alpha");
 
-		userCache = trainMatrix.rowCache(cacheSpec);
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 	}
 
 	@Override
@@ -182,9 +182,8 @@ public class FISMauc extends IterativeRecommender {
 		double sum = 0;
 		int count = 0;
 
-		SparseVector Ru = userCache.get(u);
-		for (VectorEntry ve : Ru) {
-			int j = ve.index();
+		List<Integer> items = userItemsCache.get(u);
+		for (int j : items) {
 			// for test, i and j will be always unequal as j is unrated
 			if (i != j) {
 				sum += DenseMatrix.rowMult(P, j, Q, i);
@@ -200,6 +199,6 @@ public class FISMauc extends IterativeRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { binThold, rho, alpha, numFactors, initLRate, maxLRate, regI, regB,
-				numIters }, ",");
+				numIters });
 	}
 }

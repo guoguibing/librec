@@ -401,11 +401,31 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * create a row cache of a matrix
+	 * get columns of a specific row where (row, column) entries are non-zero
+	 * 
+	 * @param row
+	 *            row id
+	 * @return a list of column index
+	 */
+	public List<Integer> getColumns(int row) {
+		List<Integer> res = new ArrayList<>();
+
+		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
+			int col = colInd[j];
+			double val = get(row, col);
+			if (val != 0.0)
+				res.add(col);
+		}
+
+		return res;
+	}
+
+	/**
+	 * create a row cache of a matrix in {row, row-specific vector}
 	 * 
 	 * @param cacheSpec
 	 *            cache specification
-	 * @return a matrix row cache
+	 * @return a matrix row cache in {row, row-specific vector}
 	 */
 	public LoadingCache<Integer, SparseVector> rowCache(String cacheSpec) {
 		LoadingCache<Integer, SparseVector> cache = CacheBuilder.from(cacheSpec).build(
@@ -414,6 +434,26 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 					@Override
 					public SparseVector load(Integer rowId) throws Exception {
 						return row(rowId);
+					}
+				});
+
+		return cache;
+	}
+
+	/**
+	 * create a row cache of a matrix in {row, row-specific columns}
+	 * 
+	 * @param cacheSpec
+	 *            cache specification
+	 * @return a matrix row cache in {row, row-specific columns}
+	 */
+	public LoadingCache<Integer, List<Integer>> rowColumnsCache(String cacheSpec) {
+		LoadingCache<Integer, List<Integer>> cache = CacheBuilder.from(cacheSpec).build(
+				new CacheLoader<Integer, List<Integer>>() {
+
+					@Override
+					public List<Integer> load(Integer rowId) throws Exception {
+						return getColumns(rowId);
 					}
 				});
 
@@ -434,6 +474,26 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 					@Override
 					public SparseVector load(Integer columnId) throws Exception {
 						return column(columnId);
+					}
+				});
+
+		return cache;
+	}
+
+	/**
+	 * create a row cache of a matrix in {row, row-specific columns}
+	 * 
+	 * @param cacheSpec
+	 *            cache specification
+	 * @return a matrix row cache in {row, row-specific columns}
+	 */
+	public LoadingCache<Integer, List<Integer>> columnRowsCache(String cacheSpec) {
+		LoadingCache<Integer, List<Integer>> cache = CacheBuilder.from(cacheSpec).build(
+				new CacheLoader<Integer, List<Integer>>() {
+
+					@Override
+					public List<Integer> load(Integer colId) throws Exception {
+						return getRows(colId);
 					}
 				});
 
@@ -558,40 +618,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * get a list of entries (for a specific column) with values 0
-	 * 
-	 * @param col
-	 *            column id
-	 * @return a list of entries
-	 * 
-	 */
-	public List<Integer> columnZeros(int col) {
-
-		List<Integer> zeros = new ArrayList<>();
-
-		for (int u = 0; u < numRows; u++)
-			zeros.add(u);
-
-		if (isCCSUsed) {
-			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
-				int row = rowInd[j];
-				double val = get(row, col);
-				if (val != 0.0)
-					zeros.remove((Integer) row); // force cast is important here as we intend to remove the element
-													// rather than the index
-			}
-		} else {
-			for (int row = 0; row < numRows; row++) {
-				double val = get(row, col);
-				if (val != 0.0)
-					zeros.remove((Integer) row);
-			}
-		}
-
-		return zeros;
-	}
-
-	/**
 	 * query the size of a specific col
 	 * 
 	 * @param col
@@ -618,6 +644,35 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 
 		return size;
+	}
+
+	/**
+	 * get rows of a specific column where (row, column) entries are non-zero
+	 * 
+	 * @param col
+	 *            column id
+	 * @return a list of column index
+	 */
+	public List<Integer> getRows(int col) {
+
+		List<Integer> res = new ArrayList<>();
+
+		if (isCCSUsed) {
+			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+				int row = rowInd[j];
+				double val = get(row, col);
+				if (val != 0.0)
+					res.add(row);
+			}
+		} else {
+			for (int row = 0; row < numRows; row++) {
+				double val = get(row, col);
+				if (val != 0.0)
+					res.add(row);
+			}
+		}
+
+		return res;
 	}
 
 	/**

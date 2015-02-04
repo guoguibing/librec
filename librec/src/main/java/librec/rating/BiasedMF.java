@@ -111,7 +111,7 @@ public class BiasedMF extends IterativeRecommender {
 
 	}
 
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j) throws Exception {
 		return globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 

@@ -18,10 +18,11 @@
 
 package librec.rating;
 
+import java.util.List;
+
 import librec.data.DenseMatrix;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
-import librec.data.SparseVector;
 
 /**
  * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model.</strong>,
@@ -46,6 +47,8 @@ public class SVDPlusPlus extends BiasedMF {
 
 		Y = new DenseMatrix(numItems, numFactors);
 		Y.init(initMean, initStd);
+
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 	}
 
 	@Override
@@ -70,9 +73,8 @@ public class SVDPlusPlus extends BiasedMF {
 				errs += euj * euj;
 				loss += euj * euj;
 
-				SparseVector uv = trainMatrix.row(u);
-				int[] items = uv.getIndex();
-				double w = Math.sqrt(items.length);
+				List<Integer> items = userItemsCache.get(u);
+				double w = Math.sqrt(items.size());
 
 				// update factors
 				double bu = userBias.get(u);
@@ -130,12 +132,12 @@ public class SVDPlusPlus extends BiasedMF {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j) throws Exception {
 		double pred = globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
-		SparseVector uv = trainMatrix.row(u);
-		double w = Math.sqrt(uv.getCount());
-		for (int k : uv.getIndex())
+		List<Integer> items = userItemsCache.get(u);
+		double w = Math.sqrt(items.size());
+		for (int k : items)
 			pred += DenseMatrix.rowMult(Y, k, Q, j) / w;
 
 		return pred;

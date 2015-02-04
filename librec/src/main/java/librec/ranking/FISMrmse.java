@@ -67,7 +67,7 @@ public class FISMrmse extends IterativeRecommender {
 		rho = cf.getFloat("FISM.rho");
 		alpha = cf.getFloat("FISM.alpha");
 		
-		userCache = trainMatrix.rowCache(cacheSpec);
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 	}
 
 	@Override
@@ -201,9 +201,8 @@ public class FISMrmse extends IterativeRecommender {
 		double sum = 0;
 		int count = 0;
 
-		SparseVector Ru = userCache.get(u);
-		for (VectorEntry ve : Ru) {
-			int i = ve.index();
+		List<Integer> items = userItemsCache.get(u);
+		for (int i: items) {
 			// for test, i and j will be always unequal as j is unrated
 			if (i != j) {
 				sum += DenseMatrix.rowMult(P, i, Q, j);

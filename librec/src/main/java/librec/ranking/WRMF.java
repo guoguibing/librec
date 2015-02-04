@@ -72,15 +72,12 @@ public class WRMF extends IterativeRecommender {
 					Logs.debug("{}{} runs at iteration = {}, user = {}/{}", algoName, foldInfo, iter, u + 1, numUsers);
 
 				// diagonal matrix C^u for each user
-				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the
-															// diagonal will be
-															// 1
+				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the diagonal will be 1
 				SparseVector pu = trainMatrix.row(u);
 
 				for (VectorEntry ve : pu) {
 					int i = ve.index();
-					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1
-													// + alpha * r_{u, i}
+					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1 + alpha * r_{u, i}
 				}
 
 				// binarize real values

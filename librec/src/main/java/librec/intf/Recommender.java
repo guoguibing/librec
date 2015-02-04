@@ -102,8 +102,11 @@ public abstract class Recommender implements Runnable {
 	// fold information
 	protected String foldInfo;
 
-	// user cache, item cache
+	// user-vector cache, item-vector cache
 	protected LoadingCache<Integer, SparseVector> userCache, itemCache;
+	
+	// user-items cache, item-users cache
+	protected LoadingCache<Integer, List<Integer>> userItemsCache, itemUsersCache;
 
 	// rating matrix for training and testing
 	protected SparseMatrix trainMatrix, testMatrix;
@@ -504,7 +507,7 @@ public abstract class Recommender implements Runnable {
 	 */
 	private Map<Measure, Double> evalRankings() throws Exception {
 
-		int capacity = testMatrix.numRows();
+		int capacity = Lists.initSize(testMatrix.numRows());
 
 		// initialization capacity to speed up
 		List<Double> ds5 = new ArrayList<>(isDiverseUsed ? capacity : 0);
@@ -552,12 +555,12 @@ public abstract class Recommender implements Runnable {
 			// number of candidate items for all users
 			int numCands = candItems.size();
 
-			// get positive items from testing data
-			SparseVector tv = testMatrix.row(u);
+			// get positive items from test matrix
+			List<Integer> testItems = testMatrix.getColumns(u);
 			List<Integer> correctItems = new ArrayList<>();
 
 			// intersect with the candidate items
-			for (Integer j : tv.getIndexList()) {
+			for (Integer j : testItems) {
 				if (candItems.contains(j))
 					correctItems.add(j);
 			}
@@ -565,8 +568,7 @@ public abstract class Recommender implements Runnable {
 				continue; // no testing data for user u
 
 			// remove rated items from candidate items
-			SparseVector rv = trainMatrix.row(u);
-			List<Integer> ratedItems = rv.getIndexList();
+			List<Integer> ratedItems = trainMatrix.getColumns(u);
 
 			// predict the ranking scores (unordered) of all candidate items
 			List<Map.Entry<Integer, Double>> itemScores = new ArrayList<>(Lists.initSize(candItems));
