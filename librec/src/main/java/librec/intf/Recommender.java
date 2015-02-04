@@ -33,7 +33,6 @@ import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -439,13 +438,9 @@ public abstract class Recommender implements Runnable {
 		String toFile = null;
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
-			preds.add("# userId itemId rating prediction"); // optional: file
-															// header
-			FileIO.makeDirectory("Results"); // in case that the fold does not
-												// exist
-			toFile = "Results" + File.separator + algoName + "-prediction" + (fold > 0 ? "-" + fold : "") + ".txt"; // the
-																													// output-file
-																													// name
+			preds.add("# userId itemId rating prediction"); // optional: file header
+			FileIO.makeDirectory("Results"); // in case that the fold does not exist
+			toFile = "Results" + File.separator + algoName + "-prediction" + (fold > 0 ? "-" + fold : "") + ".txt"; // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
@@ -557,7 +552,7 @@ public abstract class Recommender implements Runnable {
 				Logs.debug("{}{} evaluates progress: {} / {}", algoName, foldInfo, u + 1, um);
 
 			// number of candidate items for all users
-			int numCand = candItems.size();
+			int numCands = candItems.size();
 
 			// get positive items from testing data
 			SparseVector tv = testMatrix.row(u);
@@ -574,29 +569,34 @@ public abstract class Recommender implements Runnable {
 			// remove rated items from candidate items
 			SparseVector rv = trainMatrix.row(u);
 			List<Integer> ratedItems = rv.getIndexList();
-			for (Integer j : ratedItems)
-				if (candItems.contains(j))
-					numCand--;
 
 			// predict the ranking scores (unordered) of all candidate items
-			List<Map.Entry<Integer, Double>> itemScores = ranking(u, ratedItems, candItems);
-
-			// order the ranking scores from highest to lowest: List to preserve orders
-			List<Integer> rankedItems = new ArrayList<>();
-			if (itemScores.size() > 0) {
-
-				Lists.sortList(itemScores, true);
-				List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || itemScores.size() <= numRecs) ? itemScores
-						: itemScores.subList(0, numRecs);
-
-				for (Map.Entry<Integer, Double> kv : recomd)
-					rankedItems.add(kv.getKey());
+			List<Map.Entry<Integer, Double>> itemScores = new ArrayList<>(Lists.initSize(candItems));
+			for (final Integer j : candItems) {
+				// item j is not rated 
+				if (!ratedItems.contains(j)) {
+					final double rank = ranking(u, j);
+					if (!Double.isNaN(rank)) {
+						itemScores.add(new SimpleImmutableEntry<Integer, Double>(j, rank));
+					}
+				} else {
+					numCands--;
+				}
 			}
 
-			if (rankedItems.size() == 0)
+			if (itemScores.size() == 0)
 				continue; // no recommendations available for user u
 
-			int numDropped = numCand - rankedItems.size();
+			// order the ranking scores from highest to lowest: List to preserve orders
+			Lists.sortList(itemScores, true);
+			List<Map.Entry<Integer, Double>> recomd = (numRecs <= 0 || itemScores.size() <= numRecs) ? itemScores
+					: itemScores.subList(0, numRecs);
+
+			List<Integer> rankedItems = new ArrayList<>();
+			for (Map.Entry<Integer, Double> kv : recomd)
+				rankedItems.add(kv.getKey());
+
+			int numDropped = numCands - rankedItems.size();
 			double AUC = Measures.AUC(rankedItems, correctItems, numDropped);
 			double AP = Measures.AP(rankedItems, correctItems);
 			double nDCG = Measures.nDCG(rankedItems, correctItems);
@@ -691,35 +691,6 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected double ranking(int u, int j) throws Exception {
 		return predict(u, j, false);
-	}
-
-	/**
-	 * compute ranking scores for a list of candidate items
-	 * 
-	 * @param u
-	 *            user id
-	 * @param ratedItems
-	 *            items rated by user u
-	 * @param candItems
-	 *            candidate items for all users
-	 * @return a collection of entry {item, ranking scores}
-	 */
-	private List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
-			Collection<Integer> candItems) throws Exception {
-
-		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>(Lists.initSize(candItems));
-		for (final Integer j : candItems) {
-			// item j is not rated 
-			if (!ratedItems.contains(j)) {
-				final double rank = ranking(u, j);
-				if (!Double.isNaN(rank)) {
-					itemRanks.add(new SimpleImmutableEntry<Integer, Double>(j, rank));
-				}
-			}
-
-		}
-
-		return itemRanks;
 	}
 
 	/**
