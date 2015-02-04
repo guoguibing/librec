@@ -37,7 +37,7 @@ public class UserContext extends Context {
 	 * @param item
 	 *            fixed as -1
 	 */
-	public UserContext(int user, int item) {
+	private UserContext(int user, int item) {
 		super(user, -1);
 	}
 

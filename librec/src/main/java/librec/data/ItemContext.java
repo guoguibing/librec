@@ -35,12 +35,13 @@ public class ItemContext extends Context {
 	private String description;
 
 	/**
+	 * 
 	 * @param user
 	 *            fixed as -1
 	 * @param item
 	 *            item id
 	 */
-	public ItemContext(int user, int item) {
+	private ItemContext(int user, int item) {
 		super(-1, item);
 	}
 
