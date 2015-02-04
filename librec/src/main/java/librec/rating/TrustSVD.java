@@ -18,18 +18,19 @@
 
 package librec.rating;
 
+import java.util.List;
+
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
-import librec.data.SparseVector;
 import librec.intf.SocialRecommender;
 
 /**
  * Guo et al., <strong>TrustSVD: Collaborative Filtering with Both the Explicit and Implicit Influence of User Trust and
  * of Item Ratings</strong>, AAAI 2015.
  * 
- * @author guoguibing
+ * @author guoguibing 
  * 
  */
 public class TrustSVD extends SocialRecommender {
@@ -67,6 +68,9 @@ public class TrustSVD extends SocialRecommender {
 		wlr_tr = new DenseVector(numUsers);
 		wlr_j = new DenseVector(numItems);
 
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+		userFriendsCache = socialMatrix.rowColumnsCache(cacheSpec);
+
 		for (int u = 0; u < numUsers; u++) {
 			int count = socialMatrix.columnSize(u);
 			wlr_tc.set(u, count > 0 ? 1.0 / Math.sqrt(count) : 1.0);
@@ -81,6 +85,7 @@ public class TrustSVD extends SocialRecommender {
 		}
 	}
 
+	@Override
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
@@ -103,25 +108,23 @@ public class TrustSVD extends SocialRecommender {
 				double pred = globalMean + bu + bj + DenseMatrix.rowMult(P, u, Q, j);
 
 				// Y
-				SparseVector uv = trainMatrix.row(u);
-				int[] nu = uv.getIndex();
-				if (uv.getCount() > 0) {
+				List<Integer> nu = userItemsCache.get(u);
+				if (nu.size() > 0) {
 					double sum = 0;
 					for (int i : nu)
 						sum += DenseMatrix.rowMult(Y, i, Q, j);
 
-					pred += sum / Math.sqrt(uv.getCount());
+					pred += sum / Math.sqrt(nu.size());
 				}
 
 				// W
-				SparseVector tr = socialMatrix.row(u);
-				int[] tu = tr.getIndex();
-				if (tr.getCount() > 0) {
+				List<Integer> tu = userFriendsCache.get(u);
+				if (tu.size() > 0) {
 					double sum = 0.0;
 					for (int v : tu)
 						sum += DenseMatrix.rowMult(W, v, Q, j);
 
-					pred += sum / Math.sqrt(tr.getCount());
+					pred += sum / Math.sqrt(tu.size());
 				}
 
 				double euj = pred - ruj;
@@ -129,8 +132,8 @@ public class TrustSVD extends SocialRecommender {
 				errs += euj * euj;
 				loss += euj * euj;
 
-				double w_nu = Math.sqrt(nu.length);
-				double w_tu = Math.sqrt(tu.length);
+				double w_nu = Math.sqrt(nu.size());
+				double w_tu = Math.sqrt(tu.size());
 
 				// update factors
 				double reg_u = 1.0 / w_nu;
@@ -145,7 +148,7 @@ public class TrustSVD extends SocialRecommender {
 				loss += regB * reg_u * bu * bu;
 				loss += regB * reg_j * bj * bj;
 
-				double[] sum_ys = new double[numFactors];
+				double[] sum_ys = new double[numFactors]; 
 				for (int f = 0; f < numFactors; f++) {
 					double sum = 0;
 					for (int i : nu)
@@ -237,27 +240,27 @@ public class TrustSVD extends SocialRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	protected double predict(int u, int j) throws Exception {
 		double pred = globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
 		// Y
-		SparseVector uv = trainMatrix.row(u);
-		if (uv.getCount() > 0) {
+		List<Integer> nu = userItemsCache.get(u);
+		if (nu.size() > 0) {
 			double sum = 0;
-			for (int i : uv.getIndex())
+			for (int i : nu)
 				sum += DenseMatrix.rowMult(Y, i, Q, j);
 
-			pred += sum / Math.sqrt(uv.getCount());
+			pred += sum / Math.sqrt(nu.size());
 		}
 
 		// W
-		SparseVector tr = socialMatrix.row(u);
-		if (tr.getCount() > 0) {
+		List<Integer> tu = userFriendsCache.get(u);
+		if (tu.size() > 0) {
 			double sum = 0.0;
-			for (int v : tr.getIndex())
+			for (int v : tu)
 				sum += DenseMatrix.rowMult(W, v, Q, j);
 
-			pred += sum / Math.sqrt(tr.getCount());
+			pred += sum / Math.sqrt(tu.size());
 		}
 
 		return pred;

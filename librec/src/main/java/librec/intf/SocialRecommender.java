@@ -18,6 +18,8 @@
 
 package librec.intf;
 
+import java.util.List;
+
 import com.google.common.cache.LoadingCache;
 
 import happy.coding.io.Logs;
@@ -46,6 +48,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	// shared social cache for all social recommenders
 	protected LoadingCache<Integer, SparseVector> socialCache;
+	protected LoadingCache<Integer, List<Integer>> userFriendsCache;
 
 	// initialization
 	static {
