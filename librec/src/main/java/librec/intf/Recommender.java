@@ -528,21 +528,19 @@ public abstract class Recommender implements Runnable {
 
 		// ignore items for all users: most popular items
 		if (numIgnore > 0) {
-			List<Integer> ignoreItems = new ArrayList<>();
-
-			Map<Integer, Integer> itemPops = new HashMap<>();
-			for (Integer j : candItems)
-				itemPops.put(j, trainMatrix.columnSize(j));
-			List<Map.Entry<Integer, Integer>> sortedDegrees = Lists.sortMap(itemPops, true);
+			List<Map.Entry<Integer, Integer>> itemDegs = new ArrayList<>();
+			for (Integer j : candItems) {
+				itemDegs.add(new SimpleImmutableEntry<Integer, Integer>(j, trainMatrix.columnSize(j)));
+			}
+			Lists.sortList(itemDegs, true);
 			int k = 0;
-			for (Map.Entry<Integer, Integer> deg : sortedDegrees) {
-				ignoreItems.add(deg.getKey());
+			for (Map.Entry<Integer, Integer> deg : itemDegs) {
+
+				// ignore these items from candidate items
+				candItems.remove(deg.getKey());
 				if (++k >= numIgnore)
 					break;
 			}
-
-			// ignore these items from candidate items
-			candItems.removeAll(ignoreItems);
 		}
 
 		// for each test user
