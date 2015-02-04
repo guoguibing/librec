@@ -30,6 +30,7 @@ import happy.coding.system.Dates;
 import happy.coding.system.Debug;
 
 import java.io.File;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -701,34 +702,18 @@ public abstract class Recommender implements Runnable {
 	 *            items rated by user u
 	 * @param candItems
 	 *            candidate items for all users
-	 * @return a map of {item, ranking scores}
+	 * @return a collection of entry {item, ranking scores}
 	 */
 	private List<Map.Entry<Integer, Double>> ranking(int u, Collection<Integer> ratedItems,
 			Collection<Integer> candItems) throws Exception {
 
-		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>((int) Math.ceil(candItems.size() / 0.7));
+		List<Map.Entry<Integer, Double>> itemRanks = new ArrayList<>(Lists.initSize(candItems));
 		for (final Integer j : candItems) {
 			// item j is not rated 
 			if (!ratedItems.contains(j)) {
 				final double rank = ranking(u, j);
 				if (!Double.isNaN(rank)) {
-					itemRanks.add(new Map.Entry<Integer, Double>() {
-
-						@Override
-						public Integer getKey() {
-							return j;
-						}
-
-						@Override
-						public Double getValue() {
-							return rank;
-						}
-
-						@Override
-						public Double setValue(Double value) {
-							return null; // no need to assign value
-						}
-					});
+					itemRanks.add(new SimpleImmutableEntry<Integer, Double>(j, rank));
 				}
 			}
 
