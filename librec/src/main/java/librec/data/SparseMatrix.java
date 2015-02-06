@@ -501,30 +501,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * get a list of entries (for a specific row) with values 0
-	 * 
-	 * @param row
-	 *            row id
-	 * @return a list of entries
-	 * 
-	 */
-	public List<Integer> rowZeros(int row) {
-
-		List<Integer> zeros = new ArrayList<>();
-		for (int j = 0; j < numColumns; j++)
-			zeros.add(j);
-
-		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
-			int col = colInd[j];
-			double val = get(row, col);
-			if (val != 0.0)
-				zeros.remove((Integer) col); // to remove elements rather than index
-		}
-
-		return zeros;
-	}
-
-	/**
 	 * get a row sparse vector of a matrix
 	 * 
 	 * @param row
