@@ -22,7 +22,7 @@ The references for all the algorithms are summarized [here](http://www.librec.ne
 
 ### Download
 * librec-v1.2 (milestone version) is under development, see [what's new](CHANGES.md)
-  * **[librec-v1.2-rc](http://www.librec.net/release/librec-v1.2-rc.zip)**
+  * **[librec-v1.2-rc1](http://www.librec.net/release/librec-v1.2-rc1.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
