@@ -1,7 +1,9 @@
 LibRec
 ======
 
-**LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art and up-to-date recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. To learn more, check out the [how-to-use tutorial](http://www.librec.net/tutorial.html), [detailed examples & comparison with other tools](http://librec.net/example.html), and the [source code](https://github.com/guoguibing/librec). 
+**LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art and up-to-date recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. 
+
+Links: [Get Started](http://www.librec.net/tutorial.html), [Examples](http://librec.net/example.html), [Datasets](http://www.librec.net/datasets.html), [Source Code](https://github.com/guoguibing/librec). 
 
 
 ### Features
