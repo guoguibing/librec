@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>   
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"> <log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>  
 
-<appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">   
+<appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">   
     <layout class="org.apache.log4j.PatternLayout">   
         <param name="ConversionPattern" value="[%-5p] %m%n"/>   
     </layout>   
@@ -25,7 +25,7 @@
 	</filter>   
 </appender> 
 
-<appender name="INFO" class="org.apache.log4j.RollingFileAppender">   
+<appender name="RESULTS" class="org.apache.log4j.RollingFileAppender">   
     <param name="File" value="./results.txt" />   
     <param name="Append" value="false"/>   
     <param name="MaxFileSize" value="20MB"/>   
@@ -40,10 +40,10 @@
 </appender>  
 
 <root>   
-    <priority value="debug"/>   
-    <appender-ref ref="STDOUT"/>
+    <priority value="debug"/>
+    <appender-ref ref="CONSOLE"/>
     <appender-ref ref="DEBUG"/>   
-    <appender-ref ref="INFO"/>   
+    <appender-ref ref="RESULTS"/>   
 </root>   
   
 </log4j:configuration> 
