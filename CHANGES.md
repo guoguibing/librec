@@ -1,6 +1,9 @@
 ## The Changes of the LibRec Library
 
-## librec-v1.3 (Targets)
+## librec-v1.4 (schedule)
+* Tensor recommendation models
+
+## librec-v1.3 (schedule)
 * New recommendation methods
   * LLORMA, CoFiSet, Probabilistic Models
 * New context-aware recommenders
