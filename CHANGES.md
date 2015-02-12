@@ -1,5 +1,7 @@
 ## The Changes of the LibRec Library
 
+**Remarks:** If you'd like to make contributes to LibRec, please contact me without any hesitations.  
+
 ## librec-v1.4 (schedule)
 * Tensor recommendation models
 
