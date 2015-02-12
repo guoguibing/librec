@@ -2,7 +2,7 @@
 
 ## librec-v1.3 (Targets)
 * New recommendation methods
-  * CoFiSet
+  * LLORMA, CoFiSet, Probabilistic Models
 * New context-aware recommenders
   * Generative models
 
