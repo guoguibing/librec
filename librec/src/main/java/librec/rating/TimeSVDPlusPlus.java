@@ -17,51 +17,53 @@
 //
 package librec.rating;
 
-import java.io.BufferedReader;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-
 import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
+
+import java.io.BufferedReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.RatingContext;
 import librec.data.SparseMatrix;
-import librec.data.SparseVector;
-import librec.data.VectorEntry;
 import librec.intf.ContextRecommender;
+
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 /**
  * Koren, <strong>Collaborative Filtering with Temporal Dynamics</strong>, KDD 2009.
  * 
  * 
- * <p>Thank Bin Wu for sharing a version of timeSVD++ source code.</p> 
+ * <p>
+ * Thank Bin Wu for sharing a version of timeSVD++ source code.
+ * </p>
  * 
  * @author guoguibing
  * 
  */
 public class TimeSVDPlusPlus extends ContextRecommender {
 
-	// million seconds per day
-	private static long MS_PER_DAY = 24 * 60 * 60 * 1000 * 1000;
-
 	// the span of days of rating timestamps
 	private static int numDays;
+
 	// {user, mean date}
-	private static Map<Integer, Long> dateMean;
+	private static Map<Integer, Double> userMeanDate;
 
 	// minimum/maximum rating timestamp
-	private static long min, max;
+	private static long minTimestamp, maxTimestamp;
 
+	// time decay factor
 	private static float beta;
 
-	// number of bins for all the items
+	// number of bins over all the items
 	private static int numBins;
 
 	// item's implicit influence
@@ -76,25 +78,24 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	// user bias parameters
 	private DenseVector userAlpha;
 
-	// {user, day, bias} table
-	private Table<Integer, Integer, Double> Cut;
-	// user scaling
-	private DenseVector userScaling;
-
 	// {user, feature} alpha matrix
-	private DenseMatrix Auf;
+	private DenseMatrix Auk;
 
 	// {user, {feature, day, value} } map
-	private Map<Integer, Table<Integer, Integer, Double>> Puft;
+	private Map<Integer, Table<Integer, Integer, Double>> Pukt;
+
+	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds   
+	private final static TimeUnit secs = TimeUnit.SECONDS;
 
 	// read context information
 	static {
 		try {
 			readContext();
 
-			preset();
+			setup();
 
 		} catch (Exception e) {
+			Logs.error(e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -121,18 +122,14 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 		Bit = new DenseMatrix(numItems, numBins);
 		Bit.init();
 
-		userScaling = new DenseVector(numUsers); // cu
-		userScaling.init();
-
 		Y = new DenseMatrix(numItems, numFactors);
 		Y.init();
 
-		Auf = new DenseMatrix(numUsers, numFactors);
-		Auf.init();
+		Auk = new DenseMatrix(numUsers, numFactors);
+		Auk.init();
 
 		But = HashBasedTable.create();
-		Cut = HashBasedTable.create();
-		Puft = new HashMap<>();
+		Pukt = new HashMap<>();
 	}
 
 	@Override
@@ -148,58 +145,83 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				if (rui <= 0)
 					continue;
 
-				long t = ratingContexts.get(u, i).getTimestamp();
+				long timestamp = ratingContexts.get(u, i).getTimestamp();
+				// day t
+				int t = days(timestamp, minTimestamp);
 				int bin = bin(t);
-				int day = day(t);
-				double dev = dev(u, t);
+				double dev_ut = dev(u, t);
 
 				double bi = itemBias.get(i);
 				double bit = Bit.get(i, bin);
 				double bu = userBias.get(u);
-				double but = But.get(u, day);
+				double but = 0;
+				// late initialization
+				if (!But.contains(u, t))
+					But.put(u, t, Randoms.random());
+				but = But.get(u, t);
+
 				double au = userAlpha.get(u); // alpha_u
-				double cu = userScaling.get(u);
-				double cut = Cut.get(u, day);
 
-				double pui = globalMean + (bi + bit) * (cu + cut); // mu + bi(t)
-				pui += bu + au * dev(u, t) + but; // bu(t)
+				double pui = globalMean + bi + bit; // mu + bi(t)
+				pui += bu + au * dev_ut + but; // bu(t)
 
-				// qi*yi
-				SparseVector Ru = trainMatrix.row(u);
+				// qi * yj
+				List<Integer> Ru = trainMatrix.getColumns(u);
 				double sum_y = 0;
-				for (VectorEntry ve : Ru) {
-					int k = ve.index();
-					sum_y += DenseMatrix.rowMult(Y, k, Q, i);
+				for (int j : Ru) {
+					sum_y += DenseMatrix.rowMult(Y, j, Q, i);
 				}
-				if (Ru.getCount() > 0)
-					pui += sum_y / Math.pow(Ru.getCount(), -0.5);
+				if (Ru.size() > 0)
+					pui += sum_y * Math.pow(Ru.size(), -0.5);
 
-				// qi*pu(t)
-				if (!Puft.containsKey(u)) {
+				// qi * pu(t)
+				if (!Pukt.containsKey(u)) {
 					Table<Integer, Integer, Double> data = HashBasedTable.create();
-					Puft.put(u, data);
+					Pukt.put(u, data);
 				}
 
-				Table<Integer, Integer, Double> data = Puft.get(u);
-				for (int f = 0; f < numFactors; f++) {
-					double qif = Q.get(i, f);
-					if (!data.contains(f, day)) {
+				Table<Integer, Integer, Double> pkt = Pukt.get(u);
+				for (int k = 0; k < numFactors; k++) {
+					double qik = Q.get(i, k);
+					if (!pkt.contains(k, t)) {
 						// late initialization
-						data.put(f, day, Randoms.random());
+						pkt.put(k, t, Randoms.random());
 					}
-					double puf = P.get(u, f) + Auf.get(u, f) * dev + data.get(f, day);
+					double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + pkt.get(k, t);
 
-					pui += puf * qif;
+					pui += puk * qik;
 				}
 
 				double eui = pui - rui;
 				errs += eui * eui;
 				loss += eui * eui;
 
+				// update bi
+				double sgd = eui + regB * bi;
+				itemBias.add(i, -lRate * sgd);
+				loss += regB * bi * bi;
+
+				// update bi,bin(t)
+				sgd = eui + regB * bit;
+				Bit.add(i, t, -lRate * sgd);
+				loss += regB * bit * bit;
+
 				// update bu
-				double sgd = eui + regB * bu;
+				sgd = eui + regB * bu;
 				userBias.add(u, -lRate * sgd);
-				
+				loss += regB * bu * bu;
+
+				// update au
+				sgd = eui * dev_ut + regB * au;
+				userAlpha.add(u, -lRate * sgd);
+				loss += regB * au * au;
+
+				// update but
+				sgd = eui + regB * but;
+				double delta = but - lRate * sgd;
+				But.put(u, t, delta);
+				loss += regB * but * but;
+
 				// TODO: add codes here to update other variables
 			}
 
@@ -209,43 +231,43 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	protected double predict(int u, int i) {
 		// retrieve the test rating timestamp
-		long t = ratingContexts.get(u, j).getTimestamp();
+		long timestamp = ratingContexts.get(u, i).getTimestamp();
+		int t = days(timestamp, minTimestamp);
 		int bin = bin(t);
-		int day = day(t);
-		double dev = dev(u, t);
+		double dev_ut = dev(u, t);
 
 		double pred = globalMean;
 
-		// bi(t)
-		pred += (itemBias.get(j) + Bit.get(j, bin)) * (userScaling.get(u) + Cut.get(u, day));
+		// bi(t): timeSVD++ adopts eq. (6) rather than eq. (12)
+		pred += itemBias.get(i) + Bit.get(i, bin);
 
-		// bu(t)
-		pred += userBias.get(u) + userAlpha.get(u) * dev + But.get(u, day);
+		// bu(t): eq. (9)
+		pred += userBias.get(u) + userAlpha.get(u) * dev_ut + But.get(u, t);
 
-		// qi*yi
-		SparseVector Ru = trainMatrix.row(u);
+		// qi * yj
+		List<Integer> Ru = trainMatrix.getColumns(u);
 		double sum_y = 0;
-		for (VectorEntry ve : Ru) {
-			int k = ve.index();
-			sum_y += DenseMatrix.rowMult(Y, k, Q, j);
+		for (int j : Ru) {
+			sum_y += DenseMatrix.rowMult(Y, j, Q, i);
 		}
-		if (Ru.getCount() > 0)
-			pred += sum_y / Math.pow(Ru.getCount(), -0.5);
+		if (Ru.size() > 0)
+			pred += sum_y * Math.pow(Ru.size(), -0.5);
 
-		// qi*pu(t)
-		if (!Puft.containsKey(u)) {
+		// qi * pu(t)
+		if (!Pukt.containsKey(u)) {
 			Table<Integer, Integer, Double> data = HashBasedTable.create();
-			Puft.put(u, data);
+			Pukt.put(u, data);
 		}
 
-		Table<Integer, Integer, Double> data = Puft.get(u);
-		for (int f = 0; f < numFactors; f++) {
-			double qjf = Q.get(j, f);
-			double puf = P.get(u, f) + Auf.get(u, f) * dev + (data.contains(f, day) ? data.get(f, day) : 0);
+		Table<Integer, Integer, Double> pkt = Pukt.get(u);
+		for (int k = 0; k < numFactors; k++) {
+			double qik = Q.get(i, k);
+			// eq. (13)
+			double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + (pkt.contains(k, t) ? pkt.get(k, t) : 0);
 
-			pred += puf * qjf;
+			pred += puk * qik;
 		}
 
 		return pred;
@@ -257,8 +279,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	}
 
 	/**
-	 * Read rating timestamp
-	 * 
+	 * Read rating timestamps
 	 */
 	protected static void readContext() throws Exception {
 		String contextPath = cf.getPath("dataset.social");
@@ -269,13 +290,16 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 		String line = null;
 		RatingContext rc = null;
 
-		min = Long.MAX_VALUE;
-		max = Long.MIN_VALUE;
+		minTimestamp = Long.MAX_VALUE;
+		maxTimestamp = Long.MIN_VALUE;
+
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split("[ \t,]");
 			String user = data[0];
 			String item = data[1];
-			long timestamp = Long.parseLong(data[3]);
+
+			// convert to million seconds
+			long timestamp = secs.toMillis(Long.parseLong(data[3]));
 
 			int userId = rateDao.getUserId(user);
 			int itemId = rateDao.getItemId(item);
@@ -285,33 +309,34 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 			ratingContexts.put(userId, itemId, rc);
 
-			if (min > timestamp)
-				min = timestamp;
-			if (max < timestamp)
-				max = timestamp;
+			if (minTimestamp > timestamp)
+				minTimestamp = timestamp;
+			if (maxTimestamp < timestamp)
+				maxTimestamp = timestamp;
 		}
 
-		numDays = days(max - min);
+		numDays = days(maxTimestamp, minTimestamp);
 	}
 
 	/**
-	 * preset for the timeSVD++ model
+	 * setup for the timeSVD++ model
 	 */
-	protected static void preset() {
+	protected static void setup() {
 		beta = cf.getFloat("timeSVD++.beta");
 		numBins = cf.getInt("timeSVD++.item.bins");
 
 		// compute user's mean of rating timestamps
-		dateMean = new HashMap<>();
+		userMeanDate = new HashMap<>();
 		for (int u = 0; u < numUsers; u++) {
 			Map<Integer, RatingContext> rcs = ratingContexts.row(u);
 
-			long sum = 0;
+			int sum = 0;
 			for (RatingContext rc : rcs.values()) {
-				sum += rc.getTimestamp();
+				sum += days(rc.getTimestamp(), minTimestamp);
 			}
 
-			dateMean.put(u, sum / rcs.size());
+			if (sum > 0)
+				userMeanDate.put(u, (sum + 0.0) / rcs.size());
 		}
 	}
 
@@ -319,36 +344,33 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	/**
 	 * @return the time deviation for a specific timestamp t w.r.t the mean date tu
 	 */
-	protected double dev(int u, long t) {
-		long tu = dateMean.get(u);
-
-		// date difference in millionseconds;
-		long diff = t - tu;
+	protected double dev(int u, int t) {
+		double tu = userMeanDate.get(u);
 
 		// date difference in days
-		int days = days(Math.abs(diff));
+		double diff = t - tu;
 
-		return Math.signum(diff) * Math.pow(days, beta);
+		return Math.signum(diff) * Math.pow(diff, beta);
 	}
 
 	/**
 	 * @return the bin number (starting from 0) for a specific timestamp t;
 	 */
-	protected static int bin(long t) {
-		return day(t) * numBins / numDays;
+	protected static int bin(int day) {
+		return day * numBins / numDays;
 	}
 
 	/**
-	 * @return the number of days since the earliest one
+	 * @return number of days for a given time difference
 	 */
-	protected static int day(long t) {
-		return days(t - min);
+	protected static int days(long diff) {
+		return (int) TimeUnit.MILLISECONDS.toDays(diff);
 	}
 
 	/**
-	 * @return the number of days for a timestamp difference
+	 * @return number of days between two timestamps
 	 */
-	private static int days(long diff) {
-		return (int) (diff / MS_PER_DAY);
+	protected static int days(long t1, long t2) {
+		return days(Math.abs(t1 - t2));
 	}
 }
