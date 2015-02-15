@@ -11,7 +11,7 @@
 * New context-aware recommenders
   * Generative models
 
-### librec-v1.2 (Milestone version)
+### librec-v1.2 (milestone version)
 * Cache employed
   * rowCache(), columnCache(), rowColumnsCache(), columnRowsCache() methods added to SparseMatrix
   * employing cache technique can greatly improve the speed of recommendation
