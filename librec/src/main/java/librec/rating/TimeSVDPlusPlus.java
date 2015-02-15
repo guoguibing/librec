@@ -79,6 +79,12 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	// {user, {feature, day, value} } map
 	private Map<Integer, Table<Integer, Integer, Double>> Pukt;
 
+	// {user, user scaling stable part}
+	private DenseVector Cu;
+
+	// {user, day, day-specific scaling part}
+	private DenseMatrix Cut;
+
 	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds
 	private final static TimeUnit secs = TimeUnit.SECONDS;
 
@@ -126,6 +132,12 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 		But = HashBasedTable.create();
 		Pukt = new HashMap<>();
+
+		Cu = new DenseVector(numUsers);
+		Cu.init();
+
+		Cut = new DenseMatrix(numUsers, numDays);
+		Cut.init();
 
 		// cache
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
@@ -185,6 +197,9 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				double bit = Bit.get(i, bin);
 				double bu = userBias.get(u);
 
+				double cu = Cu.get(u);
+				double cut = Cut.get(u, t);
+
 				// lazy initialization
 				if (!But.contains(u, t))
 					But.put(u, t, Randoms.random());
@@ -192,7 +207,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 				double au = Alpha.get(u); // alpha_u
 
-				double pui = globalMean + bi + bit; // mu + bi(t)
+				double pui = globalMean + (bi + bit) * (cu + cut); // mu + bi(t)
 				pui += bu + au * dev_ut + but; // bu(t)
 
 				// qi * yj
@@ -228,12 +243,12 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				loss += eui * eui;
 
 				// update bi
-				double sgd = eui + regB * bi;
+				double sgd = eui * (cu + cut) + regB * bi;
 				itemBias.add(i, -lRate * sgd);
 				loss += regB * bi * bi;
 
 				// update bi,bin(t)
-				sgd = eui + regB * bit;
+				sgd = eui * (cu + cut) + regB * bit;
 				Bit.add(i, bin, -lRate * sgd);
 				loss += regB * bit * bit;
 
@@ -252,6 +267,16 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				double delta = but - lRate * sgd;
 				But.put(u, t, delta);
 				loss += regB * but * but;
+
+				// update cu
+				sgd = eui * (bi + bit) + regB * cu;
+				Cu.add(u, -lRate * sgd);
+				loss += regB * cu * cu;
+
+				// update cut
+				sgd = eui * (bi + bit) + regB * cut;
+				Cut.add(u, t, -lRate * sgd);
+				loss += regB * cut * cut;
 
 				for (int k = 0; k < numFactors; k++) {
 					double qik = Q.get(i, k);
@@ -315,8 +340,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 		double pred = globalMean;
 
-		// bi(t): timeSVD++ adopts eq. (6) rather than eq. (12)
-		pred += itemBias.get(i) + Bit.get(i, bin);
+		// bi(t): eq. (12)
+		pred += (itemBias.get(i) + Bit.get(i, bin)) * (Cu.get(u) + Cut.get(u, t));
 
 		// bu(t): eq. (9)
 		double but = But.contains(u, t) ? But.get(u, t) : 0;
@@ -393,7 +418,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				maxTimestamp = timestamp;
 		}
 
-		numDays = days(maxTimestamp, minTimestamp);
+		numDays = days(maxTimestamp, minTimestamp) + 1;
 	}
 
 	/***************************************************************** Functional Methods *******************************************/
@@ -413,7 +438,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	 * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
 	 */
 	protected int bin(int day) {
-		return (int) (day / (numDays + 1.0) * numBins);
+		return (int) (day / (numDays + 0.0) * numBins);
 	}
 
 	/**
