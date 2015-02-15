@@ -41,11 +41,6 @@ import com.google.common.collect.Table;
 /**
  * Koren, <strong>Collaborative Filtering with Temporal Dynamics</strong>, KDD 2009.
  * 
- * 
- * <p>
- * Thank Bin Wu for sharing a version of timeSVD++ source code.
- * </p>
- * 
  * @author guoguibing
  * 
  */
@@ -75,8 +70,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	// {user, day, bias} table
 	private Table<Integer, Integer, Double> But;
 
-	// user bias parameters
-	private DenseVector userAlpha;
+	// user bias weight parameters
+	private DenseVector Alpha;
 
 	// {user, feature} alpha matrix
 	private DenseMatrix Auk;
@@ -116,8 +111,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 		itemBias = new DenseVector(numItems);
 		itemBias.init();
 
-		userAlpha = new DenseVector(numUsers);
-		userAlpha.init();
+		Alpha = new DenseVector(numUsers);
+		Alpha.init();
 
 		Bit = new DenseMatrix(numItems, numBins);
 		Bit.init();
@@ -154,13 +149,13 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				double bi = itemBias.get(i);
 				double bit = Bit.get(i, bin);
 				double bu = userBias.get(u);
-				double but = 0;
-				// late initialization
+
+				// lazy initialization
 				if (!But.contains(u, t))
 					But.put(u, t, Randoms.random());
-				but = But.get(u, t);
+				double but = But.get(u, t);
 
-				double au = userAlpha.get(u); // alpha_u
+				double au = Alpha.get(u); // alpha_u
 
 				double pui = globalMean + bi + bit; // mu + bi(t)
 				pui += bu + au * dev_ut + but; // bu(t)
@@ -171,8 +166,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				for (int j : Ru) {
 					sum_y += DenseMatrix.rowMult(Y, j, Q, i);
 				}
-				if (Ru.size() > 0)
-					pui += sum_y * Math.pow(Ru.size(), -0.5);
+				double wi = Ru.size() > 0 ? Math.pow(Ru.size(), -0.5) : 0;
+				pui += sum_y * wi;
 
 				// qi * pu(t)
 				if (!Pukt.containsKey(u)) {
@@ -180,14 +175,15 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 					Pukt.put(u, data);
 				}
 
-				Table<Integer, Integer, Double> pkt = Pukt.get(u);
+				Table<Integer, Integer, Double> Pkt = Pukt.get(u);
 				for (int k = 0; k < numFactors; k++) {
 					double qik = Q.get(i, k);
-					if (!pkt.contains(k, t)) {
-						// late initialization
-						pkt.put(k, t, Randoms.random());
-					}
-					double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + pkt.get(k, t);
+
+					// lazy initialization
+					if (!Pkt.contains(k, t))
+						Pkt.put(k, t, Randoms.random());
+
+					double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + Pkt.get(k, t);
 
 					pui += puk * qik;
 				}
@@ -213,7 +209,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 				// update au
 				sgd = eui * dev_ut + regB * au;
-				userAlpha.add(u, -lRate * sgd);
+				Alpha.add(u, -lRate * sgd);
 				loss += regB * au * au;
 
 				// update but
@@ -222,8 +218,52 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 				But.put(u, t, delta);
 				loss += regB * but * but;
 
-				// TODO: add codes here to update other variables
+				for (int k = 0; k < numFactors; k++) {
+					double qik = Q.get(i, k);
+					double puk = P.get(u, k);
+					double auk = Auk.get(u, k);
+					double pkt = Pkt.get(k, t);
+
+					// update qik 
+					double pukt = puk + auk * dev_ut + pkt;
+
+					double sum_yk = 0;
+					for (int j : Ru) {
+						sum_yk += Y.get(j, k);
+					}
+
+					sgd = eui * (pukt + wi * sum_yk) + regI * qik;
+					Q.add(i, k, -lRate * sgd);
+					loss += regI * qik * qik;
+
+					// update puk
+					sgd = eui * qik + regU * puk;
+					P.add(u, k, -lRate * sgd);
+					loss += regU * puk * puk;
+
+					// update auk
+					sgd = eui * qik * dev_ut + regU * auk;
+					Auk.add(u, k, -lRate * sgd);
+					loss += regU * auk * auk;
+
+					// update pkt
+					sgd = eui * qik + regU * pkt;
+					delta = pkt - lRate * sgd;
+					Pkt.put(k, t, delta);
+					loss += regU * pkt * pkt;
+
+					// update yjk
+					for (int j : Ru) {
+						double yjk = Y.get(j, k);
+						sgd = eui * wi * qik + regI * yjk;
+						Y.add(j, k, -lRate * sgd);
+						loss += regI * yjk * yjk;
+					}
+				}
 			}
+
+			errs *= 0.5;
+			loss *= 0.5;
 
 			if (isConverged(iter))
 				break;
@@ -244,28 +284,31 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 		pred += itemBias.get(i) + Bit.get(i, bin);
 
 		// bu(t): eq. (9)
-		pred += userBias.get(u) + userAlpha.get(u) * dev_ut + But.get(u, t);
+		double but = But.contains(u, t) ? But.get(u, t) : 0;
+		pred += userBias.get(u) + Alpha.get(u) * dev_ut + but;
 
 		// qi * yj
 		List<Integer> Ru = trainMatrix.getColumns(u);
 		double sum_y = 0;
-		for (int j : Ru) {
+		for (int j : Ru)
 			sum_y += DenseMatrix.rowMult(Y, j, Q, i);
-		}
-		if (Ru.size() > 0)
-			pred += sum_y * Math.pow(Ru.size(), -0.5);
+
+		double wi = Ru.size() > 0 ? Math.pow(Ru.size(), -0.5) : 0;
+		pred += sum_y * wi;
 
 		// qi * pu(t)
-		if (!Pukt.containsKey(u)) {
-			Table<Integer, Integer, Double> data = HashBasedTable.create();
-			Pukt.put(u, data);
-		}
-
-		Table<Integer, Integer, Double> pkt = Pukt.get(u);
 		for (int k = 0; k < numFactors; k++) {
 			double qik = Q.get(i, k);
 			// eq. (13)
-			double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + (pkt.contains(k, t) ? pkt.get(k, t) : 0);
+			double puk = P.get(u, k) + Auk.get(u, k) * dev_ut;
+
+			if (Pukt.containsKey(u)) {
+				Table<Integer, Integer, Double> pkt = Pukt.get(u);
+				if (pkt != null) {
+					// eq. (13)
+					puk += (pkt.contains(k, t) ? pkt.get(k, t) : 0);
+				}
+			}
 
 			pred += puk * qik;
 		}
@@ -354,10 +397,10 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	}
 
 	/**
-	 * @return the bin number (starting from 0) for a specific timestamp t;
+	 * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
 	 */
 	protected static int bin(int day) {
-		return day * numBins / numDays;
+		return (int) (day / (numDays + 1.0) * numBins); // possible day == numDays
 	}
 
 	/**
