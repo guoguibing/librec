@@ -68,7 +68,7 @@ import librec.rating.SVDPlusPlus;
 import librec.rating.SoRec;
 import librec.rating.SoReg;
 import librec.rating.SocialMF;
-import librec.rating.TimeSVDPlusPlus;
+import librec.rating.TimeSVD;
 import librec.rating.TrustMF;
 import librec.rating.TrustSVD;
 import librec.rating.UserKNN;
@@ -376,7 +376,7 @@ public class LibRec {
 		case "svd++":
 			return new SVDPlusPlus(trainMatrix, testMatrix, fold);
 		case "timesvd++":
-			return new TimeSVDPlusPlus(trainMatrix, testMatrix, fold);
+			return new TimeSVD(trainMatrix, testMatrix, fold);
 		case "pmf":
 			return new PMF(trainMatrix, testMatrix, fold);
 		case "bpmf":
