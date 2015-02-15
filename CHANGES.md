@@ -24,9 +24,7 @@
     * -v/--version: print out version information
     * --dataset-spec: print out dataset specifications
 * New recommendation methods implemented:
-  * SLIM, FISM, SBPR, GBPR, TrustSVD
-* New recommendation methods under testing:
-  * timeSVD++
+  * SLIM, FISM, SBPR, GBPR, TrustSVD, timeSVD++
 * Interface for context-aware recommender systems added
   * Context, UserContext, ItemContext, RatingContext  -- Data Class
   * ContextRecommender -- Generic Interface
