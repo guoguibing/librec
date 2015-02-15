@@ -39,7 +39,8 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
- * Koren, <strong>Collaborative Filtering with Temporal Dynamics</strong>, KDD 2009.
+ * Koren, <strong>Collaborative Filtering with Temporal Dynamics</strong>, KDD
+ * 2009.
  * 
  * @author guoguibing
  * 
@@ -50,16 +51,16 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	private static int numDays;
 
 	// {user, mean date}
-	private static Map<Integer, Double> userMeanDate;
+	private DenseVector userMeanDate;
 
 	// minimum/maximum rating timestamp
 	private static long minTimestamp, maxTimestamp;
 
 	// time decay factor
-	private static float beta;
+	private float beta;
 
 	// number of bins over all the items
-	private static int numBins;
+	private int numBins;
 
 	// item's implicit influence
 	private DenseMatrix Y;
@@ -79,7 +80,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	// {user, {feature, day, value} } map
 	private Map<Integer, Table<Integer, Integer, Double>> Pukt;
 
-	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds   
+	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds
 	private final static TimeUnit secs = TimeUnit.SECONDS;
 
 	// read context information
@@ -87,15 +88,14 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 		try {
 			readContext();
 
-			setup();
-
 		} catch (Exception e) {
 			Logs.error(e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
-	public TimeSVDPlusPlus(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public TimeSVDPlusPlus(SparseMatrix trainMatrix, SparseMatrix testMatrix,
+			int fold) {
 		super(trainMatrix, testMatrix, fold);
 
 		algoName = "timeSVD++";
@@ -104,6 +104,9 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		super.initModel();
+
+		beta = cf.getFloat("timeSVD++.beta");
+		numBins = cf.getInt("timeSVD++.item.bins");
 
 		userBias = new DenseVector(numUsers);
 		userBias.init();
@@ -125,6 +128,37 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 		But = HashBasedTable.create();
 		Pukt = new HashMap<>();
+
+		// compute user's mean of rating timestamps
+		userMeanDate = new DenseVector(numUsers);
+
+		// global average date
+		double sum = 0;
+		int cnt = 0;
+		for (RatingContext en : ratingContexts.values()) {
+			sum += days(en.getTimestamp(), minTimestamp);
+			cnt++;
+		}
+		double globalDate = sum / cnt;
+
+		for (int u = 0; u < numUsers; u++) {
+			Map<Integer, RatingContext> rcs = ratingContexts.row(u);
+
+			sum = 0;
+			cnt = 0;
+			for (RatingContext rc : rcs.values()) {
+				int i = rc.getItem();
+
+				// if in the training set
+				if (trainMatrix.get(u, i) > 0) {
+					sum += days(rc.getTimestamp(), minTimestamp);
+					cnt++;
+				}
+			}
+
+			double mean = (cnt > 0) ? (sum + 0.0) / cnt : globalDate;
+			userMeanDate.set(u, mean);
+		}
 	}
 
 	@Override
@@ -171,7 +205,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 				// qi * pu(t)
 				if (!Pukt.containsKey(u)) {
-					Table<Integer, Integer, Double> data = HashBasedTable.create();
+					Table<Integer, Integer, Double> data = HashBasedTable
+							.create();
 					Pukt.put(u, data);
 				}
 
@@ -183,7 +218,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 					if (!Pkt.contains(k, t))
 						Pkt.put(k, t, Randoms.random());
 
-					double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + Pkt.get(k, t);
+					double puk = P.get(u, k) + Auk.get(u, k) * dev_ut
+							+ Pkt.get(k, t);
 
 					pui += puk * qik;
 				}
@@ -199,7 +235,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 				// update bi,bin(t)
 				sgd = eui + regB * bit;
-				Bit.add(i, t, -lRate * sgd);
+				Bit.add(i, bin, -lRate * sgd);
 				loss += regB * bit * bit;
 
 				// update bu
@@ -224,7 +260,7 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 					double auk = Auk.get(u, k);
 					double pkt = Pkt.get(k, t);
 
-					// update qik 
+					// update qik
 					double pukt = puk + auk * dev_ut + pkt;
 
 					double sum_yk = 0;
@@ -318,7 +354,8 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 
 	@Override
 	public String toString() {
-		return super.toString() + "," + Strings.toString(new Object[] { beta, numBins });
+		return super.toString() + ","
+				+ Strings.toString(new Object[] { beta, numBins });
 	}
 
 	/**
@@ -364,28 +401,14 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 	/**
 	 * setup for the timeSVD++ model
 	 */
-	protected static void setup() {
-		beta = cf.getFloat("timeSVD++.beta");
-		numBins = cf.getInt("timeSVD++.item.bins");
+	protected void setup() {
 
-		// compute user's mean of rating timestamps
-		userMeanDate = new HashMap<>();
-		for (int u = 0; u < numUsers; u++) {
-			Map<Integer, RatingContext> rcs = ratingContexts.row(u);
-
-			int sum = 0;
-			for (RatingContext rc : rcs.values()) {
-				sum += days(rc.getTimestamp(), minTimestamp);
-			}
-
-			if (sum > 0)
-				userMeanDate.put(u, (sum + 0.0) / rcs.size());
-		}
 	}
 
 	/***************************************************************** Functional Methods *******************************************/
 	/**
-	 * @return the time deviation for a specific timestamp t w.r.t the mean date tu
+	 * @return the time deviation for a specific timestamp t w.r.t the mean date
+	 *         tu
 	 */
 	protected double dev(int u, int t) {
 		double tu = userMeanDate.get(u);
@@ -393,14 +416,21 @@ public class TimeSVDPlusPlus extends ContextRecommender {
 		// date difference in days
 		double diff = t - tu;
 
-		return Math.signum(diff) * Math.pow(diff, beta);
+		return Math.signum(diff) * Math.pow(Math.abs(diff), beta);
 	}
 
 	/**
-	 * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
+	 * @return the bin number (starting from 0..numBins-1) for a specific
+	 *         timestamp t;
 	 */
-	protected static int bin(int day) {
-		return (int) (day / (numDays + 1.0) * numBins); // possible day == numDays
+	protected int bin(int day) {
+		int bin = (int) (day / (numDays + 1.0) * numBins); // possible day ==
+															// numDays
+
+		if (bin >= numBins) {
+			System.out.println("pause");
+		}
+		return bin;
 	}
 
 	/**
