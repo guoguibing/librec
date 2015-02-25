@@ -33,8 +33,6 @@ LibRec (c) 2015 is developped by [Guibing Guo](http://www.luckymoon.me/).
 
 LibRec (c) 2014 was developped by [Guibing Guo](http://www.luckymoon.me/), under the supervision of Dr. [Jie Zhang](http://www.ntu.edu.sg/home/zhangj/) at Nanyang Technological University. 
 
-LibRec is only allowed for non-commercial usage. 
-
-LibRec is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. LibRec is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
+LibRec is [free software](http://www.gnu.org/philosophy/free-sw.html): you can redistribute it and/or modify it under the terms of the [GNU General Public License (GPL)](http://www.gnu.org/licenses/gpl.html) as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. LibRec is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
 
 You should have received a copy of the GNU General Public License along with LibRec. If not, see http://www.gnu.org/licenses/.
