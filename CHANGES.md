@@ -5,11 +5,11 @@
 ## librec-v1.4 (schedule)
 * Tensor recommendation models
 
-## librec-v1.3 (schedule)
-* New recommendation methods
-  * LLORMA, CoFiSet, Probabilistic Models
-* New context-aware recommenders
-  * Generative models
+## librec-v1.3 (under development)
+* Schedule: new recommendation methods
+  * LLORMA, CoFiSet, Probabilistic Models, Generative models
+* Codes improved
+  * sparsematrix always keeps both CCS and CRS structures for simpicity
 
 ### librec-v1.2 (milestone version)
 * Cache employed
