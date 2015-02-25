@@ -116,42 +116,22 @@ public class DataDAO {
 	}
 
 	/**
-	 * Default relevant columns {0: user column, 1: item column, 2: rate column}; column structures are used for better
-	 * performance; and default recommendation task is rating prediction;
+	 * Default relevant columns {0: user column, 1: item column, 2: rate column}; default recommendation task is rating
+	 * prediction;
 	 * 
 	 * 
 	 * @return a sparse matrix storing all the relevant data
 	 */
 	public SparseMatrix readData() throws Exception {
-		return readData(true);
+		return readData(new int[] { 0, 1, 2 }, -1);
 	}
 
 	/**
-	 * Read data for rating prediction, or item recommendation
-	 * 
-	 * @param binThold
-	 *            a parameter to distinguish recommendation task; if binThold<0: rating prediction; binThold>=0: item
-	 *            recommendation
-	 * @return a sparse matrix storing all the relevant data
+	 * @param isCCSUsed
+	 *            whether to construct CCS structures while reading data
 	 */
 	public SparseMatrix readData(double binThold) throws Exception {
-		return readData(true, binThold);
-	}
-
-	/**
-	 * @param isCCSUsed
-	 *            whether to construct CCS structures while reading data
-	 */
-	public SparseMatrix readData(boolean isCCSUsed) throws Exception {
-		return readData(new int[] { 0, 1, 2 }, isCCSUsed, -1);
-	}
-
-	/**
-	 * @param isCCSUsed
-	 *            whether to construct CCS structures while reading data
-	 */
-	public SparseMatrix readData(boolean isCCSUsed, double binThold) throws Exception {
-		return readData(new int[] { 0, 1, 2 }, isCCSUsed, binThold);
+		return readData(new int[] { 0, 1, 2 }, binThold);
 	}
 
 	/**
@@ -167,14 +147,12 @@ public class DataDAO {
 	 *            negative value
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMatrix readData(int[] cols, boolean isCCSUsed, double binThold) throws Exception {
+	public SparseMatrix readData(int[] cols, double binThold) throws Exception {
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		// Map {col-id, multiple row-id}: used to fast build rate matrix
-		Multimap<Integer, Integer> colMap = null;
-		if (isCCSUsed)
-			colMap = HashMultimap.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
@@ -204,8 +182,7 @@ public class DataDAO {
 
 			dataTable.put(row, col, rate);
 
-			if (isCCSUsed)
-				colMap.put(col, row);
+			colMap.put(col, row);
 		}
 		br.close();
 
@@ -331,7 +308,7 @@ public class DataDAO {
 	 */
 	public void printSpecs() throws Exception {
 		if (rateMatrix == null)
-			readData(true);
+			readData();
 
 		List<String> sps = new ArrayList<>();
 
@@ -373,7 +350,7 @@ public class DataDAO {
 					userMin = size;
 			}
 		}
-		
+
 		sps.add("");
 		sps.add(String.format("Max number of ratings per user: %d", userMax));
 		sps.add(String.format("Min number of ratings per user: %d", userMin));
@@ -394,7 +371,7 @@ public class DataDAO {
 						itemMin = size;
 				}
 			}
-			
+
 			sps.add("");
 			sps.add(String.format("Max number of ratings per item: %d", itemMax));
 			sps.add(String.format("Min number of ratings per item: %d", itemMin));
@@ -415,7 +392,7 @@ public class DataDAO {
 	 */
 	public void printDistr(boolean isWriteOut) throws Exception {
 		if (rateMatrix == null)
-			readData(true);
+			readData();
 
 		// count how many users give the same number of ratings
 		Multiset<Integer> numURates = HashMultiset.create();

@@ -63,9 +63,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	protected double[] colData;
 	protected int[] colPtr, rowInd;
 
-	// is CCS enabled
-	protected boolean isCCSUsed = false;
-
 	/**
 	 * Construct a sparse matrix with both CRS and CCS structures
 	 */
@@ -114,10 +111,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		numColumns = cols;
 	}
 
-	public SparseMatrix(SparseMatrix mat) {
-		this(mat, true);
-	}
-
 	/**
 	 * Construct a sparse matrix from another sparse matrix
 	 * 
@@ -126,14 +119,13 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	 * @param deap
 	 *            whether to copy the CCS structures
 	 */
-	public SparseMatrix(SparseMatrix mat, boolean deap) {
+	public SparseMatrix(SparseMatrix mat) {
 		numRows = mat.numRows;
 		numColumns = mat.numColumns;
 
 		copyCRS(mat.rowData, mat.rowPtr, mat.colInd);
 
-		if (deap && mat.isCCSUsed)
-			copyCCS(mat.colData, mat.colPtr, mat.rowInd);
+		copyCCS(mat.colData, mat.colPtr, mat.rowInd);
 	}
 
 	private void copyCRS(double[] data, int[] ptr, int[] idx) {
@@ -151,7 +143,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	private void copyCCS(double[] data, int[] ptr, int[] idx) {
-		isCCSUsed = true;
 
 		colData = new double[data.length];
 		for (int i = 0; i < colData.length; i++)
@@ -177,19 +168,12 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	 * @return the transpose of current matrix
 	 */
 	public SparseMatrix transpose() {
-		if (isCCSUsed) {
-			SparseMatrix tr = new SparseMatrix(numColumns, numRows);
+		SparseMatrix tr = new SparseMatrix(numColumns, numRows);
 
-			tr.copyCRS(this.rowData, this.rowPtr, this.colInd);
-			tr.copyCCS(this.colData, this.colPtr, this.rowInd);
+		tr.copyCRS(this.rowData, this.rowPtr, this.colInd);
+		tr.copyCCS(this.colData, this.colPtr, this.rowInd);
 
-			return tr;
-		} else {
-			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-			for (MatrixEntry me : this)
-				dataTable.put(me.column(), me.row(), me.get());
-			return new SparseMatrix(numColumns, numRows, dataTable);
-		}
+		return tr;
 	}
 
 	/**
@@ -269,7 +253,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 			colPtr = new int[numColumns + 1];
 			rowInd = new int[nnz];
 			colData = new double[nnz];
-			isCCSUsed = true;
 
 			j = 0;
 			for (int i = 1; i <= numColumns; ++i) {
@@ -333,10 +316,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		int index = getCRSIndex(row, column);
 		rowData[index] = val;
 
-		if (isCCSUsed) {
-			index = getCCSIndex(row, column);
-			colData[index] = val;
-		}
+		index = getCCSIndex(row, column);
+		colData[index] = val;
 	}
 
 	/**
@@ -353,10 +334,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		int index = getCRSIndex(row, column);
 		rowData[index] += val;
 
-		if (isCCSUsed) {
-			index = getCCSIndex(row, column);
-			colData[index] += val;
-		}
+		index = getCCSIndex(row, column);
+		colData[index] += val;
 	}
 
 	/**
@@ -390,12 +369,14 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 
 		SparseVector sv = new SparseVector(numColumns);
 
-		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
-			int col = colInd[j];
-			double val = get(row, col);
-			if (val != 0.0)
-				sv.set(col, val);
-		}
+		if (row < numRows) {
+			for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
+				int col = colInd[j];
+				double val = get(row, col);
+				if (val != 0.0)
+					sv.set(col, val);
+			}
+		} // return an empty vector if the row does not exist in training matrix
 
 		return sv;
 	}
@@ -410,11 +391,13 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	public List<Integer> getColumns(int row) {
 		List<Integer> res = new ArrayList<>();
 
-		for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
-			int col = colInd[j];
-			double val = get(row, col);
-			if (val != 0.0)
-				res.add(col);
+		if (row < numRows) {
+			for (int j = rowPtr[row]; j < rowPtr[row + 1]; j++) {
+				int col = colInd[j];
+				double val = get(row, col);
+				if (val != 0.0)
+					res.add(col);
+			}
 		}
 
 		return res;
@@ -575,20 +558,14 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 
 		SparseVector sv = new SparseVector(numRows);
 
-		if (isCCSUsed) {
+		if (col < numColumns) {
 			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
 				int row = rowInd[j];
 				double val = get(row, col);
 				if (val != 0.0)
 					sv.set(row, val);
 			}
-		} else {
-			for (int row = 0; row < numRows; row++) {
-				double val = get(row, col);
-				if (val != 0.0)
-					sv.set(row, val);
-			}
-		}
+		} // return an empty vector if the column does not exist in training matrix
 
 		return sv;
 	}
@@ -604,19 +581,11 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 
 		int size = 0;
 
-		if (isCCSUsed) {
-			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
-				int row = rowInd[j];
-				double val = get(row, col);
-				if (val != 0.0)
-					size++;
-			}
-		} else {
-			for (int row = 0; row < numRows; row++) {
-				double val = get(row, col);
-				if (val != 0.0)
-					size++;
-			}
+		for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+			int row = rowInd[j];
+			double val = get(row, col);
+			if (val != 0.0)
+				size++;
 		}
 
 		return size;
@@ -633,15 +602,9 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 
 		List<Integer> res = new ArrayList<>();
 
-		if (isCCSUsed) {
+		if (col < numColumns) {
 			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
 				int row = rowInd[j];
-				double val = get(row, col);
-				if (val != 0.0)
-					res.add(row);
-			}
-		} else {
-			for (int row = 0; row < numRows; row++) {
 				double val = get(row, col);
 				if (val != 0.0)
 					res.add(row);
@@ -658,22 +621,12 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		List<Integer> list = new ArrayList<>();
 
 		for (int col = 0; col < numColumns; col++) {
-			if (isCCSUsed) {
-				for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
-					int row = rowInd[j];
-					double val = get(row, col);
-					if (val != 0.0) {
-						list.add(col);
-						break;
-					}
-				}
-			} else {
-				for (int row = 0; row < numRows; row++) {
-					double val = get(row, col);
-					if (val != 0.0) {
-						list.add(col);
-						break;
-					}
+			for (int j = colPtr[col]; j < colPtr[col + 1]; j++) {
+				int row = rowInd[j];
+				double val = get(row, col);
+				if (val != 0.0) {
+					list.add(col);
+					break;
 				}
 			}
 		}

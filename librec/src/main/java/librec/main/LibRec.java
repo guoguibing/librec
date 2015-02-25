@@ -279,8 +279,8 @@ public class LibRec {
 	private static void runTestFile(String path) throws Exception {
 
 		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
-		SparseMatrix testMatrix = testDao.readData(false);
-
+		SparseMatrix testMatrix = testDao.readData();
+		
 		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
 		algo.execute();
 

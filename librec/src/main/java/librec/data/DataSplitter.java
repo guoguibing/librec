@@ -78,7 +78,7 @@ public class DataSplitter {
 	private void splitFolds(int kfold) {
 		assert kfold > 0;
 
-		assignMatrix = new SparseMatrix(rateMatrix, false);
+		assignMatrix = new SparseMatrix(rateMatrix);
 
 		int numRates = rateMatrix.getData().length;
 		numFold = kfold > numRates ? numRates : kfold;
@@ -118,10 +118,8 @@ public class DataSplitter {
 
 		assert (ratio > 0 && ratio <= 1);
 
-		// keep both CRS and CCS for training matrix
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		// keep only CRS for testing matrix
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -152,10 +150,8 @@ public class DataSplitter {
 
 		assert numGiven > 0;
 
-		// keep both CRS and CCS for training matrix
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		// keep only CRS for testing matrix
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -203,10 +199,8 @@ public class DataSplitter {
 
 		assert ratio > 0 && ratio < 1;
 
-		// keep both CRS and CCS for training matrix
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		// keep only CRS for testing matrix
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
@@ -280,7 +274,7 @@ public class DataSplitter {
 
 	public SparseMatrix[] getDataView(String view) {
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		switch (view.toLowerCase()) {
 			case "cold-start":
@@ -315,7 +309,7 @@ public class DataSplitter {
 			return null;
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix, false);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
