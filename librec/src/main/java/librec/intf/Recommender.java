@@ -104,7 +104,7 @@ public abstract class Recommender implements Runnable {
 
 	// user-vector cache, item-vector cache
 	protected LoadingCache<Integer, SparseVector> userCache, itemCache;
-	
+
 	// user-items cache, item-users cache
 	protected LoadingCache<Integer, List<Integer>> userItemsCache, itemUsersCache;
 
@@ -119,8 +119,12 @@ public abstract class Recommender implements Runnable {
 	// global average of training rates
 	protected double globalMean;
 
+	/**
+	 * Recommendation measures
+	 * 
+	 */
 	public enum Measure {
-		MAE, RMSE, NMAE, ASYMM, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
+		MAE, RMSE, NMAE, ASYMM, MPE, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
 	}
 
 	/**
@@ -273,8 +277,8 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
-					measures.get(Measure.NMAE), measures.get(Measure.ASYMM));
+			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
+					measures.get(Measure.NMAE), measures.get(Measure.ASYMM), measures.get(Measure.MPE));
 
 		return evalInfo;
 	}
@@ -449,6 +453,7 @@ public abstract class Recommender implements Runnable {
 
 		double sum_maes = 0, sum_mses = 0, sum_asyms = 0;
 		int numCount = 0;
+		int numPEs = 0; // number of prediction errors in terms of classification
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
 			if (rate <= 0)
@@ -464,11 +469,15 @@ public abstract class Recommender implements Runnable {
 			if (Double.isNaN(pred))
 				continue;
 
-			double err = rate - pred;
+			double err = Math.abs(rate - pred); // absolute predictive error
 
-			sum_maes += Math.abs(err);
+			sum_maes += err;
 			sum_mses += err * err;
 			sum_asyms += Measures.ASYMMLoss(rate, pred, minRate, maxRate);
+
+			if (err > 1e-5) // if errors cannot be ignored
+				numPEs++; 
+
 			numCount++;
 
 			// output predictions
@@ -490,14 +499,16 @@ public abstract class Recommender implements Runnable {
 		double mae = sum_maes / numCount;
 		double rmse = Math.sqrt(sum_mses / numCount);
 		double asymm = sum_asyms / numCount;
+		double mpe = (numPEs + 0.0) / numCount; // mean prediction error
 
 		Map<Measure, Double> measures = new HashMap<>();
 		measures.put(Measure.MAE, mae);
-		// normalized MAE: useful for direct comparison between two systems
-		// using different rating scales.
+		// normalized MAE: useful for direct comparison among different data sets with distinct rating scales
 		measures.put(Measure.NMAE, mae / (maxRate - minRate));
 		measures.put(Measure.RMSE, rmse);
 		measures.put(Measure.ASYMM, asymm);
+		// mean prediction error: the percentage of predictions which differ from the actual rating values
+		measures.put(Measure.MPE, mpe);
 
 		return measures;
 	}
