@@ -8,8 +8,10 @@
 ## librec-v1.3 (under development)
 * Schedule: new recommendation methods
   * LLORMA, CoFiSet, Probabilistic Models, Generative models
-* Codes improved
-  * sparsematrix always keeps both CCS and CRS structures for simpicity
+* Minor improvements
+  * `SparseMatrix` always keeps both CCS and CRS structures for simpicity
+  * A new measure `MPE` (mean prediction error) for `rating prediction` is added
+    * `MPE` measures the percentage of predictions which differ from the actual rating values 
 
 ### librec-v1.2 (milestone version)
 * Cache employed
