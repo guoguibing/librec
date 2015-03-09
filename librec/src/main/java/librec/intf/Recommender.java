@@ -87,8 +87,10 @@ public abstract class Recommender implements Runnable {
 	// number of recommended items
 	protected static int numRecs, numIgnore;
 
-	// a list of rating scalses
+	// a list of rating scales
 	protected static List<Double> scales;
+	// number of rating levels
+	protected static int numLevels;
 	// Maximum, minimum values of rating scales
 	protected static double maxRate, minRate;
 	// init mean and standard deviation
@@ -164,6 +166,7 @@ public abstract class Recommender implements Runnable {
 			scales = rateDao.getScales();
 			minRate = scales.get(0);
 			maxRate = scales.get(scales.size() - 1);
+			numLevels = scales.size();
 
 			numUsers = rateDao.numUsers();
 			numItems = rateDao.numItems();
@@ -476,7 +479,7 @@ public abstract class Recommender implements Runnable {
 			sum_asyms += Measures.ASYMMLoss(rate, pred, minRate, maxRate);
 
 			if (err > 1e-5) // if errors cannot be ignored
-				numPEs++; 
+				numPEs++;
 
 			numCount++;
 

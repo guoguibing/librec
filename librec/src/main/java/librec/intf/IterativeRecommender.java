@@ -105,7 +105,7 @@ public abstract class IterativeRecommender extends Recommender {
 	 * default prediction method
 	 */
 	@Override
-	protected double predict(int u, int j) throws Exception{
+	protected double predict(int u, int j) throws Exception {
 		return DenseMatrix.rowMult(P, u, Q, j);
 	}
 
@@ -139,7 +139,7 @@ public abstract class IterativeRecommender extends Recommender {
 		}
 
 		// check if converged
-		boolean cond1 = (errs < 1e-5);
+		boolean cond1 = Math.abs(errs) < 1e-5;
 		boolean cond2 = (last_errs >= errs && last_errs - errs < 1e-5);
 		boolean converged = cond1 || cond2;
 
