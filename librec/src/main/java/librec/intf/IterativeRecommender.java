@@ -128,9 +128,10 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// print out debug info
 		if (verbose) {
-			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}, learn_rate = {}",
+			String learnRate = lRate > 0 ? ", learn_rate = " + (float) lRate : "";
+			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}{}",
 					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
-							(float) (Math.abs(last_loss) - Math.abs(loss)), (float) lRate });
+							(float) (Math.abs(last_loss) - Math.abs(loss)), learnRate });
 		}
 
 		if (!(isBoldDriver && isUndoEnabled) && (Double.isNaN(loss) || Double.isInfinite(loss))) {

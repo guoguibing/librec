@@ -37,6 +37,7 @@ import librec.baseline.ItemAverage;
 import librec.baseline.MostPopular;
 import librec.baseline.RandomGuess;
 import librec.baseline.UserAverage;
+import librec.baseline.UserCluster;
 import librec.data.DataDAO;
 import librec.data.DataSplitter;
 import librec.data.SparseMatrix;
@@ -357,6 +358,8 @@ public class LibRec {
 			return new UserAverage(trainMatrix, testMatrix, fold);
 		case "itemavg":
 			return new ItemAverage(trainMatrix, testMatrix, fold);
+		case "usercluster":
+			return new UserCluster(trainMatrix, testMatrix, fold);
 		case "random":
 			return new RandomGuess(trainMatrix, testMatrix, fold);
 		case "constant":
