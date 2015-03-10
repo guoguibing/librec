@@ -3,11 +3,11 @@
 **Remarks:** If you'd like to make contributes to LibRec, please contact me without any hesitations.  
 
 ## librec-v1.4 (schedule)
-* Tensor recommendation models
+* LLORMA, CoFiSet, Tensor recommendation models
 
 ## librec-v1.3 (under development)
-* Schedule: new recommendation methods
-  * LLORMA, CoFiSet, Probabilistic Models, Generative models
+* Generative models added
+  * UserCluster
 * Minor improvements
   * `SparseMatrix` always keeps both CCS and CRS structures for simpicity
   * A new measure `MPE` (mean prediction error) for `rating prediction` is added
