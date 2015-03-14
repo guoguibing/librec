@@ -82,7 +82,7 @@ import librec.rating.UserKNN;
  */
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
-	private static String version = "1.2";
+	private static String version = "1.3";
 
 	// configuration
 	private static Configer cf;
@@ -161,7 +161,7 @@ public class LibRec {
 
 			} else if (args[i].equals("--version")) {
 				// print out full version information
-				printMe();
+				readMe();
 				System.exit(0);
 
 			} else if (args[i].equals("--dataset-spec")) {
@@ -479,7 +479,7 @@ public class LibRec {
 	/**
 	 * Print out software information
 	 */
-	public static void printMe() {
+	private static void readMe() {
 		String readme = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
 
 		/* Description */
