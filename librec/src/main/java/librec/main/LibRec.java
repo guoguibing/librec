@@ -281,7 +281,7 @@ public class LibRec {
 
 		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
 		SparseMatrix testMatrix = testDao.readData();
-		
+
 		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
 		algo.execute();
 
@@ -309,8 +309,13 @@ public class LibRec {
 	 *            email attachment
 	 */
 	private static void notifyMe(String attachment) throws Exception {
-		if (!cf.isOn("is.email.notify"))
+
+		String hostInfo = FileIO.getCurrentFolder() + "." + algorithm + " [" + Systems.getIP() + "]";
+
+		if (!cf.isOn("is.email.notify")) {
+			System.out.println("Program " + hostInfo + " has completed!");
 			return;
+		}
 
 		EMailer notifier = new EMailer();
 		Properties props = notifier.getProps();
@@ -334,10 +339,10 @@ public class LibRec {
 		props.setProperty("mail.from", user);
 		props.setProperty("mail.to", cf.getString("mail.to"));
 
-		props.setProperty("mail.subject", FileIO.getCurrentFolder() + "." + algorithm + " [" + Systems.getIP() + "]");
-		props.setProperty("mail.text", "Program was finished @" + Dates.now());
+		props.setProperty("mail.subject", hostInfo);
+		props.setProperty("mail.text", "Program was completed @" + Dates.now());
 
-		String msg = "Program [" + algorithm + "] has been finished !";
+		String msg = "Program [" + algorithm + "] has completed !";
 		notifier.send(msg, attachment);
 	}
 
