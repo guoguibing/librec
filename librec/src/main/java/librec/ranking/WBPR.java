@@ -87,7 +87,8 @@ public class WBPR extends IterativeRecommender {
 					double popularity = itemPop.getValue();
 
 					if (!ratedItems.contains(item) && popularity > 0) {
-						itemProbs.add(itemPop);
+						// make a clone to prevent bugs from normalization
+						itemProbs.add(new AbstractMap.SimpleEntry<Integer, Double>(itemPop));
 						sum += popularity;
 					}
 				}
