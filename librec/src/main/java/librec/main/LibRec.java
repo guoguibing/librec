@@ -58,6 +58,7 @@ import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
 import librec.ranking.SBPR;
 import librec.ranking.SLIM;
+import librec.ranking.WBPR;
 import librec.ranking.WRMF;
 import librec.rating.BPMF;
 import librec.rating.BiasedMF;
@@ -418,6 +419,8 @@ public class LibRec {
 			return new WRMF(trainMatrix, testMatrix, fold);
 		case "bpr":
 			return new BPR(trainMatrix, testMatrix, fold);
+		case "wbpr":
+			return new WBPR(trainMatrix, testMatrix, fold);
 		case "gbpr":
 			return new GBPR(trainMatrix, testMatrix, fold);
 		case "sbpr":
