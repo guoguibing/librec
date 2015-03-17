@@ -6,6 +6,8 @@
 * LLORMA, CoFiSet, Tensor recommendation models
 
 ## librec-v1.3 (under development)
+* New recommenders added
+  * WBPR
 * Generative models added
   * UserCluster
 * Minor improvements
@@ -13,7 +15,7 @@
   * A new measure `MPE` (mean prediction error) for `rating prediction` is added
     * `MPE` measures the percentage of predictions which differ from the actual rating values 
 
-### librec-v1.2 (milestone version)
+## librec-v1.2 (milestone version)
 * Cache employed
   * rowCache(), columnCache(), rowColumnsCache(), columnRowsCache() methods added to SparseMatrix
   * employing cache technique can greatly improve the speed of recommendation
@@ -39,7 +41,7 @@
     * critical bug: set isCCSUsed = true (see SparseMatrix, copyCCS() method)
     * thanks to the comments of [albe91](https://github.com/albe91), Victoria Lin
 
-### librec-v1.1
+## librec-v1.1
 
 * New recommendation methods implemented: 
   * WRMF, AR, PD, RankALS, SoRec, SoReg, RSTE  
@@ -62,6 +64,6 @@
   * Code improved
   * Some bugs fixed
 
-### librec-v1.0
+## librec-v1.0
 
 * A set of recommendations have been implemented. 
