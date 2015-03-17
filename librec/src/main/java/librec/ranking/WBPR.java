@@ -94,8 +94,8 @@ public class WBPR extends IterativeRecommender {
 				}
 
 				// normalization
-				for (Entry<Integer, Double> itemPop : itemProbs) {
-					itemPop.setValue(itemPop.getValue() / sum);
+				for (Entry<Integer, Double> itemProb : itemProbs) {
+					itemProb.setValue(itemProb.getValue() / sum);
 				}
 
 				return itemProbs;
