@@ -27,11 +27,11 @@ The references for all the algorithms are summarized [here](http://www.librec.ne
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
+### Authors
+
+* [Guibing Guo](http://www.luckymoon.me/)
+
 ### GPL License
-
-LibRec (c) 2015 is developped by [Guibing Guo](http://www.luckymoon.me/). 
-
-LibRec (c) 2014 was developped by [Guibing Guo](http://www.luckymoon.me/), under the supervision of Dr. [Jie Zhang](http://www.ntu.edu.sg/home/zhangj/) at Nanyang Technological University. 
 
 LibRec is [free software](http://www.gnu.org/philosophy/free-sw.html): you can redistribute it and/or modify it under the terms of the [GNU General Public License (GPL)](http://www.gnu.org/licenses/gpl.html) as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. LibRec is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. 
 
