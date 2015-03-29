@@ -124,8 +124,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	private void copyCCS(double[] data, int[] ptr, int[] idx) {
-		if (data == null)
-			return;
 
 		colData = new double[data.length];
 		for (int i = 0; i < colData.length; i++)
