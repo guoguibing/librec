@@ -19,6 +19,8 @@
 package librec.data;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 /**
@@ -31,8 +33,8 @@ public class DiagMatrix extends SparseMatrix {
 
 	private static final long serialVersionUID = -9186836460633909994L;
 
-	public DiagMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable) {
-		super(rows, cols, dataTable);
+	public DiagMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, Multimap<Integer, Integer> colMap) {
+		super(rows, cols, dataTable, colMap);
 	}
 
 	public DiagMatrix(DiagMatrix mat) {
@@ -104,9 +106,12 @@ public class DiagMatrix extends SparseMatrix {
 
 	public static DiagMatrix eye(int n) {
 		Table<Integer, Integer, Double> vals = HashBasedTable.create();
-		for (int i = 0; i < n; i++)
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+		for (int i = 0; i < n; i++) {
 			vals.put(i, i, 1.0);
+			colMap.put(i, i);
+		}
 
-		return new DiagMatrix(n, n, vals);
+		return new DiagMatrix(n, n, vals, colMap);
 	}
 }

@@ -32,17 +32,19 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
 /**
- * Data Structure: Sparse Matrix whose implementation is modified from M4J library
+ * Data Structure: Sparse Matrix whose implementation is modified from M4J
+ * library
  * 
  * <ul>
- * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed Row Storage (CRS)</a></li>
- * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed Col Storage (CCS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed
+ * Row Storage (CRS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed
+ * Col Storage (CCS)</a></li>
  * </ul>
  * 
  * @author guoguibing
@@ -81,29 +83,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * Construct a sparse matrix with CRS structures (CCS structure optional).
-	 * 
-	 * @deprecated I don't recommend to use this method as it (takes time and) is better to constructe the column
-	 *             structure at the time when you construct the row structure (of data table). This method is put here
-	 *             (as an example) to show how to construct column structure according to the data table.
-	 */
-	public SparseMatrix(int rows, int cols, Table<Integer, Integer, Double> dataTable, boolean isCCSUsed) {
-		numRows = rows;
-		numColumns = cols;
-
-		Multimap<Integer, Integer> colMap = null;
-
-		if (isCCSUsed) {
-			colMap = HashMultimap.create();
-			for (Cell<Integer, Integer, Double> cell : dataTable.cellSet())
-				colMap.put(cell.getColumnKey(), cell.getRowKey());
-		}
-
-		construct(dataTable, colMap);
-	}
-
-	/**
-	 * Define a sparse matrix without data, only use for {@code transpose} method
+	 * Define a sparse matrix without data, only use for {@code transpose}
+	 * method
 	 * 
 	 */
 	private SparseMatrix(int rows, int cols) {
@@ -143,6 +124,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	private void copyCCS(double[] data, int[] ptr, int[] idx) {
+		if (data == null)
+			return;
 
 		colData = new double[data.length];
 		for (int i = 0; i < colData.length; i++)
@@ -249,26 +232,24 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 
 		// CCS
-		if (columnStructure != null) {
-			colPtr = new int[numColumns + 1];
-			rowInd = new int[nnz];
-			colData = new double[nnz];
+		colPtr = new int[numColumns + 1];
+		rowInd = new int[nnz];
+		colData = new double[nnz];
 
-			j = 0;
-			for (int i = 1; i <= numColumns; ++i) {
-				// dataTable.col(i-1) is very time-consuming
-				Collection<Integer> rows = columnStructure.get(i - 1);
-				colPtr[i] = colPtr[i - 1] + rows.size();
+		j = 0;
+		for (int i = 1; i <= numColumns; ++i) {
+			// dataTable.col(i-1) is more time-consuming than columnStructure.get(i-1)
+			Collection<Integer> rows = columnStructure != null ? columnStructure.get(i - 1) : dataTable.column(i - 1)
+					.keySet();
+			colPtr[i] = colPtr[i - 1] + rows.size();
 
-				for (int row : rows) {
-					rowInd[j++] = row;
-					if (row < 0 || row >= numRows)
-						throw new IllegalArgumentException("rowInd[" + j + "]=" + row
-								+ ", which is not a valid row index");
-				}
-
-				Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
+			for (int row : rows) {
+				rowInd[j++] = row;
+				if (row < 0 || row >= numRows)
+					throw new IllegalArgumentException("rowInd[" + j + "]=" + row + ", which is not a valid row index");
 			}
+
+			Arrays.sort(rowInd, colPtr[i - 1], colPtr[i]);
 		}
 
 		// set data
@@ -565,7 +546,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 				if (val != 0.0)
 					sv.set(row, val);
 			}
-		} // return an empty vector if the column does not exist in training matrix
+		} // return an empty vector if the column does not exist in training
+			// matrix
 
 		return sv;
 	}
@@ -677,7 +659,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * Standardize the matrix entries by row- or column-wise z-scores (z=(x-u)/sigma)
+	 * Standardize the matrix entries by row- or column-wise z-scores
+	 * (z=(x-u)/sigma)
 	 * 
 	 * @param isByRow
 	 *            standardize by row if true; otherwise by column
@@ -794,8 +777,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 
 		/**
-		 * Locates the first non-empty row, starting at the current. After the new row has been found, the cursor is
-		 * also updated
+		 * Locates the first non-empty row, starting at the current. After the
+		 * new row has been found, the cursor is also updated
 		 */
 		private void nextNonEmptyRow() {
 			while (row < numRows && rowPtr[row] == rowPtr[row + 1])
