@@ -42,6 +42,7 @@ import librec.data.DataDAO;
 import librec.data.DataSplitter;
 import librec.data.SparseMatrix;
 import librec.ext.AR;
+import librec.ext.External;
 import librec.ext.Hybrid;
 import librec.ext.NMF;
 import librec.ext.PD;
@@ -90,6 +91,8 @@ public class LibRec {
 	private static String configFile = "librec.conf";
 	private static String algorithm;
 
+	private static double binThold;
+
 	// rate DAO object
 	private static DataDAO rateDao;
 
@@ -115,8 +118,9 @@ public class LibRec {
 			debugInfo();
 
 			// prepare data
+			binThold = cf.getDouble("val.binary.threshold");
 			rateDao = new DataDAO(cf.getPath("dataset.training"));
-			rateMatrix = rateDao.readData(cf.getDouble("val.binary.threshold"));
+			rateMatrix = rateDao.readData(binThold);
 
 			// config general recommender
 			Recommender.cf = cf;
@@ -281,7 +285,7 @@ public class LibRec {
 	private static void runTestFile(String path) throws Exception {
 
 		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
-		SparseMatrix testMatrix = testDao.readData();
+		SparseMatrix testMatrix = testDao.readData(binThold);
 
 		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
 		algo.execute();
@@ -441,6 +445,8 @@ public class LibRec {
 			return new AR(trainMatrix, testMatrix, fold);
 		case "prankd":
 			return new PRankD(trainMatrix, testMatrix, fold);
+		case "external":
+			return new External(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");
