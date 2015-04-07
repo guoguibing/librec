@@ -76,6 +76,8 @@ public abstract class Recommender implements Runnable {
 	public static float binThold;
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
+	// is output recommendation results 
+	protected static boolean isResultsOut;
 	// view of rating predictions
 	protected static String view;
 
@@ -177,6 +179,8 @@ public abstract class Recommender implements Runnable {
 			isRankingPred = cf.isOn("is.ranking.pred");
 			binThold = cf.getFloat("val.binary.threshold");
 			isDiverseUsed = cf.isOn("is.diverse.used");
+			isResultsOut = cf.isOn("is.prediction.out");
+
 			view = cf.getString("rating.pred.view").toLowerCase();
 
 			// -1 to use as many as possible or disable
@@ -443,14 +447,14 @@ public abstract class Recommender implements Runnable {
 	 */
 	private Map<Measure, Double> evalRatings() throws Exception {
 
-		boolean isResultsOut = cf.isOn("is.prediction.out");
 		List<String> preds = null;
 		String toFile = null;
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
 			preds.add("# userId itemId rating prediction"); // optional: file header
 			FileIO.makeDirectory("Results"); // in case that the fold does not exist
-			toFile = "Results" + File.separator + algoName + "-prediction" + (fold > 0 ? "-" + fold : "") + ".txt"; // the output-file name
+			toFile = "Results" + File.separator + algoName + "-rating-predictions" + (fold > 0 ? "-" + fold : "")
+					+ ".txt"; // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
@@ -496,7 +500,7 @@ public abstract class Recommender implements Runnable {
 
 		if (isResultsOut && preds.size() > 0) {
 			FileIO.writeList(toFile, preds, true);
-			Logs.debug("{}{} has writeen rating prediction to {}", algoName, foldInfo, toFile);
+			Logs.debug("{}{} has writeen rating predictions to {}", algoName, foldInfo, toFile);
 		}
 
 		double mae = sum_maes / numCount;
@@ -540,6 +544,16 @@ public abstract class Recommender implements Runnable {
 		// use HashSet instead of ArrayList to speedup removeAll() and contains() operations: HashSet: O(1); ArrayList: O(log n).
 		Set<Integer> candItems = new HashSet<>(trainMatrix.columns());
 
+		List<String> preds = null;
+		String toFile = null;
+		if (isResultsOut) {
+			preds = new ArrayList<String>(1500);
+			preds.add("# userId: recommendations in (itemId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional: file header
+			FileIO.makeDirectory("Results"); // in case that the fold does not exist
+			toFile = "Results" + File.separator + algoName + "-top-10-items" + (fold > 0 ? "-" + fold : "") + ".txt"; // the output-file name
+			FileIO.deleteFile(toFile); // delete possibly old files
+		}
+
 		if (verbose)
 			Logs.debug("{}{} has candidate items: {}", algoName, foldInfo, candItems.size());
 
@@ -578,6 +592,7 @@ public abstract class Recommender implements Runnable {
 				if (candItems.contains(j))
 					correctItems.add(j);
 			}
+
 			if (correctItems.size() == 0)
 				continue; // no testing data for user u
 
@@ -607,22 +622,33 @@ public abstract class Recommender implements Runnable {
 					: itemScores.subList(0, numRecs);
 
 			List<Integer> rankedItems = new ArrayList<>();
-			for (Map.Entry<Integer, Double> kv : recomd)
-				rankedItems.add(kv.getKey());
+			StringBuilder sb = new StringBuilder();
+			int count = 0;
+			for (Map.Entry<Integer, Double> kv : recomd) {
+				Integer item = kv.getKey();
+				rankedItems.add(item);
+
+				if (isResultsOut && count < 10) {
+					// restore back to the original item id
+					sb.append("(").append(rateDao.getItemId(item));
+
+					if (testItems.contains(item))
+						sb.append("*"); // indicating correct recommendation
+
+					sb.append(", ").append(kv.getValue().floatValue()).append(")");
+
+					if (++count >= 10)
+						break;
+					if (count < 10)
+						sb.append(", ");
+				}
+			}
 
 			int numDropped = numCands - rankedItems.size();
 			double AUC = Measures.AUC(rankedItems, correctItems, numDropped);
 			double AP = Measures.AP(rankedItems, correctItems);
 			double nDCG = Measures.nDCG(rankedItems, correctItems);
 			double RR = Measures.RR(rankedItems, correctItems);
-
-			if (isDiverseUsed) {
-				double d5 = diverseAt(rankedItems, 5);
-				double d10 = diverseAt(rankedItems, 10);
-
-				ds5.add(d5);
-				ds10.add(d10);
-			}
 
 			List<Integer> cutoffs = Arrays.asList(5, 10);
 			Map<Integer, Double> precs = Measures.PrecAt(rankedItems, correctItems, cutoffs);
@@ -637,8 +663,34 @@ public abstract class Recommender implements Runnable {
 			aps.add(AP);
 			rrs.add(RR);
 			ndcgs.add(nDCG);
+
+			// diversity
+			if (isDiverseUsed) {
+				double d5 = diverseAt(rankedItems, 5);
+				double d10 = diverseAt(rankedItems, 10);
+
+				ds5.add(d5);
+				ds10.add(d10);
+			}
+
+			// output predictions
+			if (isResultsOut) {
+				// restore back to the original user id
+				preds.add(rateDao.getUserId(u) + ": " + sb.toString());
+				if (preds.size() >= 1000) {
+					FileIO.writeList(toFile, preds, true);
+					preds.clear();
+				}
+			}
 		}
 
+		// write results out first
+		if (isResultsOut && preds.size() > 0) {
+			FileIO.writeList(toFile, preds, true);
+			Logs.debug("{}{} has writeen item recommendations to {}", algoName, foldInfo, toFile);
+		}
+
+		// measure the performance
 		Map<Measure, Double> measures = new HashMap<>();
 		measures.put(Measure.D5, isDiverseUsed ? Stats.mean(ds5) : 0.0);
 		measures.put(Measure.D10, isDiverseUsed ? Stats.mean(ds10) : 0.0);
