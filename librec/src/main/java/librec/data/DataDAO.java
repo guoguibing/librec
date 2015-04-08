@@ -25,6 +25,7 @@ import happy.coding.math.Stats;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,10 @@ import com.google.common.collect.Table;
  */
 public class DataDAO {
 
+	// name of data file
+	private String dataFile;
+	// directory of data file
+	private String dataDir;
 	// path to data file
 	private String dataPath;
 	// store data as {user/item rate} matrix
@@ -530,6 +535,29 @@ public class DataDAO {
 	 */
 	public BiMap<String, Integer> getItemIds() {
 		return itemIds;
+	}
+
+	/**
+	 * @return name of the data file
+	 */
+	public String getDataFile() {
+		if (dataFile == null) {
+			dataFile = dataPath.substring(dataPath.lastIndexOf(File.separator) + 1);
+		}
+
+		return dataFile;
+	}
+
+	/**
+	 * @return directory of the data file
+	 */
+	public String getDataDirectory() {
+		if (dataDir == null) {
+			int pos = dataPath.lastIndexOf(File.separator);
+			dataDir = pos > 0 ? dataPath.substring(0, pos + 1) : "." + File.separator;
+		}
+
+		return dataDir;
 	}
 
 }

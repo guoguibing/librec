@@ -23,10 +23,13 @@ import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.io.net.EMailer;
+import happy.coding.math.Maths;
 import happy.coding.system.Dates;
 import happy.coding.system.Systems;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -40,6 +43,7 @@ import librec.baseline.UserAverage;
 import librec.baseline.UserCluster;
 import librec.data.DataDAO;
 import librec.data.DataSplitter;
+import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.ext.AR;
 import librec.ext.External;
@@ -154,21 +158,14 @@ public class LibRec {
 	 */
 	private static void cmdLine(String[] args) throws Exception {
 		// read arguments
-		for (int i = 0; i < args.length; i += 2) {
-			if (args[i].equals("-c")) {
-				// configuration file
+		for (int i = 0; i < args.length; i++) {
+			if (args[i].equals("-c")) { // configuration file
 				configFile = args[i + 1];
-
-			} else if (args[i].equals("-v")) {
-				// print out short version information
+				return;
+			} else if (args[i].equals("-v")) { // print out short version information
 				System.out.println("LibRec version " + version);
-				System.exit(0);
-
-			} else if (args[i].equals("--version")) {
-				// print out full version information
+			} else if (args[i].equals("--version")) { // print out full version information
 				readMe();
-				System.exit(0);
-
 			} else if (args[i].equals("--dataset-spec")) {
 				// print out data set specification
 				cf = new Configer(configFile);
@@ -178,22 +175,85 @@ public class LibRec {
 
 				String socialSet = cf.getPath("dataset.social");
 				if (!socialSet.equals("-1")) {
-					DataDAO socDao = rateDao == null ? new DataDAO(socialSet) : new DataDAO(socialSet,
-							rateDao.getUserIds());
+					DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
 					socDao.printSpecs();
 				}
 
 				String testSet = cf.getPath("dataset.testing");
 				if (!testSet.equals("-1")) {
-					DataDAO testDao = rateDao == null ? new DataDAO(testSet) : new DataDAO(testSet,
-							rateDao.getUserIds(), rateDao.getItemIds());
+					DataDAO testDao = new DataDAO(testSet, rateDao.getUserIds(), rateDao.getItemIds());
 					testDao.printSpecs();
 				}
+			} else if (args[i].equals("--dataset-split")) {
+				// split the training data set into "train-test" or "train-validation-test" subsets
+				cf = new Configer(configFile);
 
-				System.exit(0);
+				rateDao = new DataDAO(cf.getPath("dataset.training"));
+				rateMatrix = rateDao.readData();
+
+				// format: (1) train-ratio; (2) train-ratio validation-ratio
+				double trainRatio = Double.parseDouble(args[i + 1]);
+				boolean isValidationUsed = (args.length > i + 2) && Maths.isNumeric(args[i + 2]);
+				double validRatio = isValidationUsed ? Double.parseDouble(args[i + 2]) : 0;
+
+				if (trainRatio <= 0 || validRatio < 0 || (trainRatio + validRatio) >= 1) {
+					throw new Exception(
+							"Wrong format! Accepted formats are either '-dataset-split ratio' or '-dataset-split trainRatio validRatio'");
+				}
+
+				// split data
+				DataSplitter ds = new DataSplitter(rateMatrix);
+				SparseMatrix[] results = isValidationUsed ? ds.getRatio(trainRatio, validRatio) : ds
+						.getRatio(trainRatio);
+
+				// write out
+				String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
+				writeMatrix(results[0], dirPath + "training.txt");
+
+				if (isValidationUsed) {
+					writeMatrix(results[1], dirPath + "validation.txt");
+					writeMatrix(results[2], dirPath + "test.txt");
+				} else {
+					writeMatrix(results[1], dirPath + "test.txt");
+				}
 			}
+			System.exit(0);
 		}
 	}
+
+	/**
+	 * write a matrix data into a file
+	 */
+	private static void writeMatrix(SparseMatrix data, String filePath) throws Exception {
+		// delete old file first
+		FileIO.deleteFile(filePath);
+
+		List<String> lines = new ArrayList<>(1500);
+		for (MatrixEntry me : data) {
+			int u = me.row();
+			int j = me.column();
+			double ruj = me.get();
+
+			if (ruj <= 0)
+				continue;
+
+			String user = rateDao.getUserId(u);
+			String item = rateDao.getItemId(j);
+
+			lines.add(user + " " + item + " " + (float) ruj);
+
+			if (lines.size() >= 1000) {
+				FileIO.writeList(filePath, lines, true);
+				lines.clear();
+			}
+		}
+
+		if (lines.size() > 0)
+			FileIO.writeList(filePath, lines, true);
+
+		Logs.debug("Matrix data is written to: {}", filePath);
+	}
+
 
 	private static void runAlgorithm() throws Exception {
 		String testPath = cf.getPath("dataset.testing");

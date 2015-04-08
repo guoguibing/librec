@@ -109,14 +109,14 @@ public class DataSplitter {
 	}
 
 	/**
-	 * Split ratings into two parts: (1-ratio) training, (ratio) testing data
+	 * Split ratings into two parts: (1-ratio) training, (ratio) test subsets.
 	 * 
 	 * @param ratio
 	 *            the ratio of training data over all the ratings.
 	 */
 	public SparseMatrix[] getRatio(double ratio) {
 
-		assert (ratio > 0 && ratio <= 1);
+		assert (ratio > 0 && ratio < 1);
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
@@ -137,6 +137,49 @@ public class DataSplitter {
 		debugInfo(trainMatrix, testMatrix, -1);
 
 		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into: (train-ratio) training, (validation-ratio) validation, and test three subsets.
+	 * 
+	 * @param trainRatio
+	 *            training ratio
+	 * @param validRatio
+	 *            validation ratio
+	 */
+	public SparseMatrix[] getRatio(double trainRatio, double validRatio) {
+
+		assert (trainRatio > 0 && validRatio > 0 && (trainRatio + validRatio) < 1);
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix validMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+
+		double sum = trainRatio + validRatio;
+
+		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
+
+			SparseVector uv = rateMatrix.row(u);
+			for (int j : uv.getIndex()) {
+
+				double rdm = Math.random();
+				if (rdm < trainRatio) {
+					// for training
+					testMatrix.set(u, j, 0);
+					validMatrix.set(u, j, 0);
+				} else if (rdm < sum) {
+					// for validation
+					trainMatrix.set(u, j, 0);
+					testMatrix.set(u, j, 0);
+				} else {
+					// for test
+					trainMatrix.set(u, j, 0);
+					validMatrix.set(u, j, 0);
+				}
+			}
+		}
+
+		return new SparseMatrix[] { trainMatrix, validMatrix, testMatrix };
 	}
 
 	/**
@@ -277,21 +320,21 @@ public class DataSplitter {
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
 		switch (view.toLowerCase()) {
-			case "cold-start":
-				for (int u = 0, um = rateMatrix.numRows; u < um; u++) {
-					SparseVector uv = rateMatrix.row(u);
-					if (uv.getCount() < 5) {
-						for (int i : uv.getIndex())
-							trainMatrix.set(u, i, 0.0);
+		case "cold-start":
+			for (int u = 0, um = rateMatrix.numRows; u < um; u++) {
+				SparseVector uv = rateMatrix.row(u);
+				if (uv.getCount() < 5) {
+					for (int i : uv.getIndex())
+						trainMatrix.set(u, i, 0.0);
 
-					} else {
-						for (int i : uv.getIndex())
-							testMatrix.set(u, i, 0.0);
-					}
+				} else {
+					for (int i : uv.getIndex())
+						testMatrix.set(u, i, 0.0);
 				}
-				break;
-			default:
-				return null;
+			}
+			break;
+		default:
+			return null;
 		}
 
 		return new SparseMatrix[] { trainMatrix, testMatrix };
