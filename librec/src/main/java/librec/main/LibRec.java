@@ -59,6 +59,7 @@ import librec.ranking.CLiMF;
 import librec.ranking.FISMauc;
 import librec.ranking.FISMrmse;
 import librec.ranking.GBPR;
+import librec.ranking.LDA;
 import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
 import librec.ranking.SBPR;
@@ -491,6 +492,8 @@ public class LibRec {
 			return new SBPR(trainMatrix, testMatrix, fold);
 		case "slim":
 			return new SLIM(trainMatrix, testMatrix, fold);
+		case "lda":
+			return new LDA(trainMatrix, testMatrix, fold);
 
 			/* extension */
 		case "nmf":

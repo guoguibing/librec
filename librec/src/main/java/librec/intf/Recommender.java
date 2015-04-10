@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import librec.data.Configuration;
 import librec.data.DataDAO;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
@@ -54,6 +55,7 @@ import com.google.common.cache.LoadingCache;
  * 
  * @author Guibing Guo
  */
+@Configuration
 public abstract class Recommender implements Runnable {
 
 	/************************************ Static parameters for all recommenders ***********************************/
@@ -219,11 +221,15 @@ public abstract class Recommender implements Runnable {
 			// learn a recommender model
 			initModel();
 
-			// print out algorithm's settings: to indicate starting building
-			// models
+			// print out algorithm's settings: to indicate starting building models
 			String algoInfo = toString();
-			if (!algoInfo.isEmpty())
-				Logs.debug(algoName + ": " + algoInfo);
+			String algoConfig = this.getClass().getAnnotation(Configuration.class).value();
+			if (!algoInfo.isEmpty()) {
+				if (!algoConfig.isEmpty())
+					Logs.debug("{}: [{}] = [{}]", algoName, algoConfig, algoInfo);
+				else
+					Logs.debug("{}: {}", algoName, algoInfo);
+			}
 
 			buildModel();
 
