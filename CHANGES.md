@@ -16,7 +16,7 @@
   * `SparseMatrix` always keeps both CCS and CRS structures for simpicity
   * A new measure `MPE` (mean prediction error) for `rating prediction` is added
     * `MPE` measures the percentage of predictions which differ from the actual rating values 
-* LibRec commands & configurtion
+* LibRec commands & configuration
   * `--dataset-split train-ratio [validation-ratio]`: split the input data set into three parts: training, validation [optional] and test subsets. 
   * `is.prediciton.out` supports item recommendation now.
 
