@@ -17,8 +17,8 @@ LibRec
 
 * **Baseline**: GlobalAvg, UserAvg, ItemAvg, Random, Constant, MostPop
 * **Rating Prediction**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, BPMF, SocialMF, TrustMF, SoRec, SoReg, RSTE, TrustSVD;
-* **Item Ranking**: BPR, CLiMF, RankALS, RankSGD, WRMF, SLIM, GBPR, SBPR, FISM; 
-* **Extension**: NMF, SlopeOne, Hybrid, PD, AR, PRankD
+* **Item Ranking**: BPR, CLiMF, RankALS, RankSGD, WRMF, SLIM, GBPR, SBPR, WBPR, FISM, LDA; 
+* **Extension**: NMF, SlopeOne, Hybrid, PD, AR, PRankD, External;
 
 The references for all the algorithms are summarized [here](http://www.librec.net/tutorial.html#algos)
 
