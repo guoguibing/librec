@@ -17,7 +17,7 @@
   * A new measure `MPE` (mean prediction error) for `rating prediction` is added
     * `MPE` measures the percentage of predictions which differ from the actual rating values 
 * LibRec commands
-  * `--dataset-split train-ration [validation-ratio]`: split the input training data into three parts: training, validation [optional] and test subsets. 
+  * `--dataset-split train-ratio [validation-ratio]`: split the input data set into three parts: training, validation [optional] and test subsets. 
   * `is.prediciton.out` supports item recommendation now.
 
 ## librec-v1.2 (milestone version)
