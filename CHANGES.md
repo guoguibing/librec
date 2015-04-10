@@ -12,12 +12,13 @@
 * Generative models added
   * UserCluster, LDA
 * Minor improvements
-  * New Java annotation `Configuration` is added to annotate the configuration of recommenders.
+  * New Java annotation `Configuration` is added to annotate the configuration of recommenders
   * `SparseMatrix` always keeps both CCS and CRS structures for simpicity
   * A new measure `MPE` (mean prediction error) for `rating prediction` is added
     * `MPE` measures the percentage of predictions which differ from the actual rating values 
-* New commands
+* LibRec commands
   * `--dataset-split train-ration [validation-ratio]`: split the input training data into three parts: training, validation [optional] and test subsets. 
+  * `is.prediciton.out` supports item recommendation now.
 
 ## librec-v1.2 (milestone version)
 * Cache employed
