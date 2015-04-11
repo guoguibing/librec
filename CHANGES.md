@@ -30,6 +30,7 @@
     * val.ratio
     * num.given.n
     * val.given.ratio
+    * dataset.testing.wins/lins
 
 ## librec-v1.2 (milestone version)
 * Cache employed
