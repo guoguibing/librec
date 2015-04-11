@@ -18,7 +18,18 @@
     * `MPE` measures the percentage of predictions which differ from the actual rating values 
 * LibRec commands & configuration
   * `--dataset-split train-ratio [validation-ratio]`: split the input data set into three parts: training, validation [optional] and test subsets. 
-  * `is.prediciton.out` supports item recommendation now.
+  * `is.prediciton.out` supports item recommendation now
+  * New entries added for probabilistic graphic models
+    * num.burn.in
+    * num.sample.lag
+    * val.init.alpha/beta
+  * `validation.method` and `validation.settings` are used to substitute the following old entries 
+    * is.cross.validation
+    * is.parallel.folds
+    * num.kfold
+    * val.ratio
+    * num.given.n
+    * val.given.ratio
 
 ## librec-v1.2 (milestone version)
 * Cache employed
