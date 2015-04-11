@@ -122,11 +122,11 @@ public class LDA extends IterativeRecommender {
 		V = numItems;
 		K = numFactors;
 
-		burnIn = cf.getInt("LDA.burn.in");
-		sampleLag = cf.getInt("LDA.sample.lag");
+		burnIn = cf.getInt("num.burn.in");
+		sampleLag = cf.getInt("num.sample.lag");
 
-		alpha = cf.getDouble("LDA.init.alpha");
-		beta = cf.getDouble("LDA.init.beta");
+		alpha = cf.getDouble("val.init.alpha");
+		beta = cf.getDouble("val.init.beta");
 
 		thetasum = new DenseMatrix(M, K);
 		phisum = new DenseMatrix(K, V);

@@ -81,6 +81,11 @@ import librec.rating.TrustMF;
 import librec.rating.TrustSVD;
 import librec.rating.UserKNN;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
+
 /**
  * Main Class of the LibRec Library
  * 
@@ -89,20 +94,20 @@ import librec.rating.UserKNN;
  */
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
-	private static String version = "1.3";
+	protected static String version = "1.3";
 
 	// configuration
-	private static Configer cf;
-	private static String configFile = "librec.conf";
-	private static String algorithm;
+	protected static Configer cf;
+	protected static String configFile = "librec.conf";
+	protected static String algorithm;
 
-	private static double binThold;
+	protected static double binThold;
 
 	// rate DAO object
-	private static DataDAO rateDao;
+	protected static DataDAO rateDao;
 
 	// rating matrix
-	private static SparseMatrix rateMatrix = null;
+	protected static SparseMatrix rateMatrix = null;
 
 	/**
 	 * entry of the LibRec library
@@ -118,9 +123,6 @@ public class LibRec {
 
 			// get configuration file
 			cf = new Configer(configFile);
-
-			// debug info
-			debugInfo();
 
 			// prepare data
 			binThold = cf.getDouble("val.binary.threshold");
@@ -157,7 +159,7 @@ public class LibRec {
 	 * @param args
 	 *            command line arguments
 	 */
-	private static void cmdLine(String[] args) throws Exception {
+	protected static void cmdLine(String[] args) throws Exception {
 		// read arguments
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-c")) { // configuration file
@@ -255,32 +257,114 @@ public class LibRec {
 		Logs.debug("Matrix data is written to: {}", filePath);
 	}
 
+	/**
+	 * prepare training and test data, and then run a specified recommender
+	 * 
+	 */
+	protected static void runAlgorithm() throws Exception {
 
-	private static void runAlgorithm() throws Exception {
-		String testPath = cf.getPath("dataset.testing");
+		// validation method
+		String validationMethod = cf.getString("validation.method");
+		String settings = cf.getString("validation.settings");
 
-		if (!testPath.equals("-1"))
-			runTestFile(testPath);
-		else if (cf.isOn("is.cross.validation"))
-			runCrossValidation();
-		else if (cf.getDouble("val.ratio") > 0)
-			runRatio();
-		else if (cf.getInt("num.given") > 0)
-			runGiven();
+		// debug information
+		StringBuilder debugInfo = new StringBuilder();
+		debugInfo.append("With Test by ").append(validationMethod);
+
+		if (!Recommender.isRankingPred) {
+			String view = cf.getString("rating.pred.view");
+			switch (view.toLowerCase()) {
+			case "cold-start":
+				debugInfo.append(", ").append(view);
+				break;
+			case "trust-degree":
+				debugInfo.append(String.format(", %s [%d, %d]",
+						new Object[] { view, cf.getInt("min.trust.degree"), cf.getInt("max.trust.degree") }));
+				break;
+			case "all":
+			default:
+				break;
+			}
+		}
+
+		Recommender algo = null;
+
+		DataSplitter ds = new DataSplitter(rateMatrix);
+		SparseMatrix[] data = null;
+
+		int N;
+		double ratio;
+
+		switch (validationMethod.toLowerCase()) {
+		case "cv":
+			runCrossValidation(settings, debugInfo);
+			return; // make it close
+		case "leave-one-out":
+			runLeaveOneOut(Integer.parseInt(settings), debugInfo);
+			return; //
+		case "test-set":
+			Logs.debug(debugInfo.toString());
+			debugInfo = new StringBuilder();
+			debugInfo.append(String.format("Testing: %s, ", Strings.last(settings, 38)));
+
+			DataDAO testDao = new DataDAO(settings, rateDao.getUserIds(), rateDao.getItemIds());
+			SparseMatrix testMatrix = testDao.readData(binThold);
+			data = new SparseMatrix[] { rateMatrix, testMatrix };
+			break;
+		case "given-n":
+			N = Integer.parseInt(settings);
+			debugInfo.append(": ").append(N);
+
+			data = ds.getGiven(N);
+			break;
+		case "given-ratio":
+			ratio = Double.parseDouble(settings);
+			debugInfo.append(": ").append(ratio);
+
+			data = ds.getGiven(ratio);
+			break;
+		case "train-ratio":
+		default:
+			ratio = Double.parseDouble(settings);
+			debugInfo.append(": ").append(ratio);
+
+			data = ds.getRatio(Double.parseDouble(settings));
+			break;
+		}
+
+		Logs.debug(debugInfo.toString());
+
+		algo = getRecommender(data, -1);
+		algo.execute();
+
+		printEvalInfo(algo, algo.measures);
 	}
 
-	/**
-	 * interface to run cross validation approach
-	 */
-	private static void runCrossValidation() throws Exception {
+	private static void runCrossValidation(String settings, StringBuilder debugInfo) throws Exception {
 
-		int kFold = cf.getInt("num.kfold");
+		String[] sets = settings.split("[,\t ]");
+		int kFold = Integer.parseInt(sets[0]);
+		debugInfo.append(": ").append(kFold).append(" Folds ");
+
+		boolean isParallelFold = true;
+		if (sets.length >= 2) {
+			switch (sets[1]) {
+			case "fold-by-fold":
+				isParallelFold = false;
+				break;
+			case "parallel-fold":
+			default:
+				isParallelFold = true;
+				break;
+			}
+		}
+		debugInfo.append(isParallelFold ? "[Parallel]" : "[Singleton]");
+		Logs.debug(debugInfo.toString());
+
 		DataSplitter ds = new DataSplitter(rateMatrix, kFold);
 
 		Thread[] ts = new Thread[kFold];
 		Recommender[] algos = new Recommender[kFold];
-
-		boolean isPara = cf.isOn("is.parallel.folds");
 
 		for (int i = 0; i < kFold; i++) {
 			Recommender algo = getRecommender(ds.getKthFold(i + 1), i + 1);
@@ -289,11 +373,11 @@ public class LibRec {
 			ts[i] = new Thread(algo);
 			ts[i].start();
 
-			if (!isPara)
+			if (!isParallelFold)
 				ts[i].join();
 		}
 
-		if (isPara)
+		if (isParallelFold)
 			for (Thread t : ts)
 				t.join();
 
@@ -311,47 +395,89 @@ public class LibRec {
 	}
 
 	/**
-	 * Interface to run ratio-validation approach
+	 * interface to run Leave-one-out approach
 	 */
-	private static void runRatio() throws Exception {
+	private static void runLeaveOneOut(int numThreads, StringBuilder debugInfo) throws Exception {
 
-		DataSplitter ds = new DataSplitter(rateMatrix);
-		double ratio = cf.getDouble("val.ratio");
+		assert numThreads > 0;
 
-		Recommender algo = getRecommender(ds.getRatio(ratio), -1);
-		algo.execute();
+		debugInfo.append(" [").append(numThreads).append(" Threads]");
+		Logs.debug(debugInfo.toString());
 
-		printEvalInfo(algo, algo.measures);
-	}
+		Thread[] ts = new Thread[numThreads];
+		Recommender[] algos = new Recommender[numThreads];
 
-	/**
-	 * Interface to run (Given N)-validation approach
-	 */
-	private static void runGiven() throws Exception {
+		// average performance of k-fold
+		Map<Measure, Double> avgMeasure = new HashMap<>();
 
-		DataSplitter ds = new DataSplitter(rateMatrix);
-		int n = cf.getInt("num.given.n");
-		double ratio = cf.getDouble("val.given.ratio");
+		int rows = rateMatrix.numRows();
+		int cols = rateMatrix.numColumns();
 
-		Recommender algo = getRecommender(ds.getGiven(n > 0 ? n : ratio), -1);
-		algo.execute();
+		int count = 0;
+		for (MatrixEntry me : rateMatrix) {
+			double rui = me.get();
+			if (rui <= 0)
+				continue;
 
-		printEvalInfo(algo, algo.measures);
-	}
+			int u = me.row();
+			int i = me.column();
 
-	/**
-	 * Interface to run testing using data from an input file
-	 * 
-	 */
-	private static void runTestFile(String path) throws Exception {
+			// leave the current rating out
+			SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+			trainMatrix.set(u, i, 0);
 
-		DataDAO testDao = new DataDAO(path, rateDao.getUserIds(), rateDao.getItemIds());
-		SparseMatrix testMatrix = testDao.readData(binThold);
+			// build test matrix
+			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+			Multimap<Integer, Integer> colMap = HashMultimap.create();
+			dataTable.put(u, i, rui);
+			colMap.put(i, u);
+			SparseMatrix testMatrix = new SparseMatrix(rows, cols, dataTable, colMap);
 
-		Recommender algo = getRecommender(new SparseMatrix[] { rateMatrix, testMatrix }, -1);
-		algo.execute();
+			// get a recommender
+			Recommender algo = getRecommender(new SparseMatrix[] { trainMatrix, testMatrix }, count + 1);
 
-		printEvalInfo(algo, algo.measures);
+			algos[count] = algo;
+			ts[count] = new Thread(algo);
+			ts[count].start();
+
+			if (numThreads == 1) {
+				ts[count].join(); // fold by fold
+
+				for (Entry<Measure, Double> en : algo.measures.entrySet()) {
+					Measure m = en.getKey();
+					double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
+					avgMeasure.put(m, val + en.getValue());
+				}
+			} else if (count < numThreads) {
+				count++;
+			}
+
+			if (count == numThreads) {
+				// parallel fold
+				for (Thread t : ts)
+					t.join();
+				count = 0;
+
+				// record performance
+				for (Recommender algo2 : algos) {
+					for (Entry<Measure, Double> en : algo2.measures.entrySet()) {
+						Measure m = en.getKey();
+						double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
+						avgMeasure.put(m, val + en.getValue());
+					}
+				}
+			}
+		}
+
+		// normalization
+		int size = rateMatrix.size();
+		for (Entry<Measure, Double> en : avgMeasure.entrySet()) {
+			Measure m = en.getKey();
+			double val = en.getValue();
+			avgMeasure.put(m, val / size);
+		}
+
+		printEvalInfo(algos[0], avgMeasure);
 	}
 
 	/**
@@ -374,7 +500,7 @@ public class LibRec {
 	 * @param attachment
 	 *            email attachment
 	 */
-	private static void notifyMe(String attachment) throws Exception {
+	protected static void notifyMe(String attachment) throws Exception {
 
 		String hostInfo = FileIO.getCurrentFolder() + "." + algorithm + " [" + Systems.getIP() + "]";
 
@@ -514,43 +640,6 @@ public class LibRec {
 		default:
 			throw new Exception("No recommender is specified!");
 		}
-	}
-
-	/**
-	 * Print out debug information
-	 */
-	private static void debugInfo() {
-		String cv = "kFold: " + cf.getInt("num.kfold")
-				+ (cf.isOn("is.parallel.folds") ? " [Parallel]" : " [Singleton]");
-
-		float ratio = cf.getFloat("val.ratio");
-		int givenN = cf.getInt("num.given.n");
-		float givenRatio = cf.getFloat("val.given.ratio");
-
-		String cvInfo = cf.isOn("is.cross.validation") ? cv : (ratio > 0 ? "ratio: " + ratio : "given: "
-				+ (givenN > 0 ? givenN : givenRatio));
-
-		String testPath = cf.getPath("dataset.testing");
-		boolean isTestingFlie = !testPath.equals("-1");
-		String mode = isTestingFlie ? String.format("Testing:: %s.", Strings.last(testPath, 38)) : cvInfo;
-
-		if (!Recommender.isRankingPred) {
-			String view = cf.getString("rating.pred.view");
-			switch (view.toLowerCase()) {
-			case "cold-start":
-				mode += ", " + view;
-				break;
-			case "trust-degree":
-				mode += String.format(", %s [%d, %d]",
-						new Object[] { view, cf.getInt("min.trust.degree"), cf.getInt("max.trust.degree") });
-				break;
-			case "all":
-			default:
-				break;
-			}
-		}
-		String debugInfo = String.format("Training: %s, %s", Strings.last(cf.getPath("dataset.training"), 38), mode);
-		Logs.info(debugInfo);
 	}
 
 	/**

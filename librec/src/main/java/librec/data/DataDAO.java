@@ -153,6 +153,8 @@ public class DataDAO {
 	 * @return a sparse matrix storing all the relevant data
 	 */
 	public SparseMatrix readData(int[] cols, double binThold) throws Exception {
+		
+		Logs.debug(String.format("Dataset: %s", Strings.last(dataPath, 38)));
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
@@ -215,7 +217,7 @@ public class DataDAO {
 			}
 		}
 
-		Logs.debug("Dataset: {Users, {}} = {{}, {}, {}}, Scale = {{}}", (isItemAsUser ? "Users, Links"
+		Logs.debug("With Specs: {Users, {}} = {{}, {}, {}}, Scale = {{}}", (isItemAsUser ? "Users, Links"
 				: "Items, Ratings"), numRows, numCols, numRates, Strings.toString(scales, ", "));
 
 		// build rating matrix
