@@ -18,8 +18,9 @@
 
 package librec.intf;
 
-import happy.coding.io.Configer;
+import happy.coding.io.FileConfiger;
 import happy.coding.io.FileIO;
+import happy.coding.io.LineConfiger;
 import happy.coding.io.Lists;
 import happy.coding.io.Logs;
 import happy.coding.math.Measures;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 import librec.data.Configuration;
 import librec.data.DataDAO;
+import librec.data.DataSplitter;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
@@ -60,7 +62,7 @@ public abstract class Recommender implements Runnable {
 
 	/************************************ Static parameters for all recommenders ***********************************/
 	// configer
-	public static Configer cf;
+	public static FileConfiger cf;
 	// matrix of rating data
 	public static SparseMatrix rateMatrix;
 
@@ -76,12 +78,14 @@ public abstract class Recommender implements Runnable {
 	public static boolean isRankingPred;
 	// threshold to binarize ratings
 	public static float binThold;
+	// the ratio of validation data split from training data
+	public static float validationRatio;
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
 	// is output recommendation results 
 	protected static boolean isResultsOut;
 	// view of rating predictions
-	protected static String view;
+	public static String view;
 
 	// rate DAO object
 	public static DataDAO rateDao;
@@ -108,14 +112,16 @@ public abstract class Recommender implements Runnable {
 	// fold information
 	protected String foldInfo;
 
+	protected LineConfiger paramOptions;
+
 	// user-vector cache, item-vector cache
 	protected LoadingCache<Integer, SparseVector> userCache, itemCache;
 
 	// user-items cache, item-users cache
 	protected LoadingCache<Integer, List<Integer>> userItemsCache, itemUsersCache;
 
-	// rating matrix for training and testing
-	protected SparseMatrix trainMatrix, testMatrix;
+	// rating matrix for training, validation and test
+	protected SparseMatrix trainMatrix, validationMatrix, testMatrix;
 
 	// upper symmetric matrix of item-item correlations
 	protected SymmMatrix corrs;
@@ -142,7 +148,15 @@ public abstract class Recommender implements Runnable {
 	 *            test matrix
 	 */
 	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
-		this.trainMatrix = trainMatrix;
+
+		if (validationRatio > 0 && validationRatio < 1) {
+			SparseMatrix[] trainSubsets = new DataSplitter(trainMatrix).getRatio(1 - validationRatio);
+			this.trainMatrix = trainSubsets[0];
+			this.validationMatrix = trainSubsets[1];
+		} else {
+			this.trainMatrix = trainMatrix;
+		}
+
 		this.testMatrix = testMatrix;
 		this.fold = fold;
 
@@ -181,9 +195,11 @@ public abstract class Recommender implements Runnable {
 			isRankingPred = cf.isOn("is.ranking.pred");
 			binThold = cf.getFloat("val.binary.threshold");
 			isDiverseUsed = cf.isOn("is.diverse.used");
-			isResultsOut = cf.isOn("is.prediction.out");
 
-			view = cf.getString("rating.pred.view").toLowerCase();
+			paramOptions = cf.getParamOptions("evaluation.setup");
+			view = paramOptions.getString("--test-view", "all");
+			validationRatio = paramOptions.getFloat("-v", 0.0f);
+			isResultsOut = paramOptions.isOn("-o", false);
 
 			// -1 to use as many as possible or disable
 			numRecs = cf.getInt("num.reclist.len");
@@ -193,6 +209,9 @@ public abstract class Recommender implements Runnable {
 			int seed = cf.getInt("num.rand.seed");
 			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
 		}
+
+		// get parameters of an algorithm
+		paramOptions = getModelParams();
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
@@ -233,15 +252,23 @@ public abstract class Recommender implements Runnable {
 
 			buildModel();
 
-			// clean up: release intermediate memory to avoid memory leak
-			cleanUp();
+			// post-processing after building a model, e.g., release intermediate memory to avoid memory leak
+			postModel();
 		} else {
-			// load a learned model: this code will not be executed unless "Debug.OFF"
-			// ... mainly for the purpose of examplifying how to use the saved
-			// models.
+			/**
+			 * load a learned model: this code will not be executed unless "Debug.OFF" mainly for the purpose of
+			 * exemplifying how to use the saved models
+			 */
 			loadModel();
 		}
 		long trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
+
+		// validation
+		if (validationRatio > 0 && validationRatio < 1) {
+			validateModel();
+
+			trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
+		}
 
 		// evaluation
 		String foldStr = fold > 0 ? " fold [" + fold + "]" : "";
@@ -267,6 +294,12 @@ public abstract class Recommender implements Runnable {
 
 		if (cf.isOn("is.save.model"))
 			saveModel();
+	}
+
+	/**
+	 * validate model with held-out validation data
+	 */
+	protected void validateModel() {
 	}
 
 	/**
@@ -300,6 +333,14 @@ public abstract class Recommender implements Runnable {
 	 * initilize recommender model
 	 */
 	protected void initModel() throws Exception {
+	}
+
+	protected LineConfiger getModelParams() {
+		return cf.getParamOptions(algoName);
+	}
+
+	protected LineConfiger getModelParams(String algoName) {
+		return cf.getParamOptions(algoName);
 	}
 
 	/**
@@ -419,7 +460,7 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * After learning model: release some intermediate data to avoid memory leak
 	 */
-	protected void cleanUp() throws Exception {
+	protected void postModel() throws Exception {
 	}
 
 	/**
@@ -469,8 +510,6 @@ public abstract class Recommender implements Runnable {
 		int numPEs = 0; // number of prediction errors in terms of classification
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
-			if (rate <= 0)
-				continue;
 
 			int u = me.row();
 			int j = me.column();

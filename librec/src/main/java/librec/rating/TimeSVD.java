@@ -104,8 +104,9 @@ public class TimeSVD extends ContextRecommender {
 
 		algoName = "timeSVD++";
 
-		beta = cf.getFloat("timeSVD++.beta");
-		numBins = cf.getInt("timeSVD++.item.bins");
+		paramOptions = cf.getParamOptions("timeSVD++");
+		beta = paramOptions.getFloat("-beta");
+		numBins = paramOptions.getInt("-bins");
 	}
 
 	@Override
@@ -184,8 +185,6 @@ public class TimeSVD extends ContextRecommender {
 				int u = me.row();
 				int i = me.column();
 				double rui = me.get();
-				if (rui <= 0)
-					continue;
 
 				long timestamp = ratingContexts.get(u, i).getTimestamp();
 				// day t
@@ -288,7 +287,7 @@ public class TimeSVD extends ContextRecommender {
 					double pukt = puk + auk * dev_ut + pkt;
 
 					double sum_yk = 0;
-					for (int j : Ru) 
+					for (int j : Ru)
 						sum_yk += Y.get(j, k);
 
 					sgd = eui * (pukt + wi * sum_yk) + regI * qik;

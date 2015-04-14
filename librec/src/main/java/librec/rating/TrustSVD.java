@@ -97,10 +97,7 @@ public class TrustSVD extends SocialRecommender {
 			for (MatrixEntry me : trainMatrix) {
 				int u = me.row(); // user
 				int j = me.column(); // item
-
 				double ruj = me.get(); // rating
-				if (ruj <= 0.0)
-					continue;
 
 				// To speed up, directly access the prediction instead of invoking "pred = predict(u,j)"
 				double bu = userBias.get(u);

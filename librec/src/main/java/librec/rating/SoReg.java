@@ -56,7 +56,9 @@ public class SoReg extends SocialRecommender {
 		super.initModel();
 
 		userCorrs = HashBasedTable.create();
-		beta = cf.getFloat("SoReg.beta"); // suggested values: 0.01, 0.001
+
+		paramOptions = cf.getParamOptions("SoReg.params");
+		beta = paramOptions.getFloat("-beta");
 	}
 
 	/**
@@ -103,8 +105,6 @@ public class SoReg extends SocialRecommender {
 				int u = me.row();
 				int j = me.column();
 				double ruj = me.get();
-				if (ruj <= 0)
-					continue;
 
 				double pred = predict(u, j);
 				double euj = pred - ruj;

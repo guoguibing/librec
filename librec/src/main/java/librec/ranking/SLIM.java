@@ -71,10 +71,10 @@ public class SLIM extends IterativeRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		isRankingPred = true;
-		knn = cf.getInt("num.neighbors");
 
-		regL1 = cf.getFloat("SLIM.reg.l1");
-		regL2 = cf.getFloat("SLIM.reg.l2");
+		regL1 = paramOptions.getFloat("-l1");
+		regL2 = paramOptions.getFloat("-l2");
+		knn = paramOptions.getInt("-k");
 	}
 
 	@Override
@@ -201,7 +201,7 @@ public class SLIM extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j)  throws Exception {
+	protected double predict(int u, int j) throws Exception {
 		return predict(u, j, -1);
 	}
 

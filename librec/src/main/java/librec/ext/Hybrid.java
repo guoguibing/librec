@@ -54,7 +54,8 @@ public class Hybrid extends Recommender {
 
 		algoName = "Hybrid (HeatS+ProbS)";
 		isRankingPred = true;
-		lambda = cf.getFloat("Hybrid.lambda");
+
+		lambda = paramOptions.getFloat("-lambda");
 	}
 
 	@Override

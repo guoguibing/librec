@@ -58,8 +58,9 @@ public class FISMauc extends IterativeRecommender {
 		itemBias = new DenseVector(numItems);
 		itemBias.init(smallValue);
 
-		rho = cf.getInt("FISM.rho");
-		alpha = cf.getFloat("FISM.alpha");
+		paramOptions = cf.getParamOptions("FISM");
+		rho = paramOptions.getInt("-rho");
+		alpha = paramOptions.getFloat("-alpha");
 
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 	}

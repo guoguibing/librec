@@ -90,7 +90,7 @@ public class PRankD extends RankSGD {
 			s.set(j, s.get(j) / maxUsers);
 		}
 
-		alpha = cf.getFloat("PRankD.alpha");
+		alpha = paramOptions.getFloat("-alpha");
 
 		// compute item correlations by cosine similarity
 		itemCorrs = buildCorrs(false);

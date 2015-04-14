@@ -18,11 +18,12 @@
 
 package librec.ranking;
 
+import happy.coding.io.Strings;
+import happy.coding.math.Randoms;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -55,8 +56,8 @@ public class GBPR extends SocialRecommender {
 		itemBias = new DenseVector(numItems);
 		itemBias.init();
 
-		rho = cf.getFloat("GBPR.rho");
-		gLen = cf.getInt("GBPR.group.size");
+		rho = paramOptions.getFloat("-rho");
+		gLen = paramOptions.getInt("-gSize");
 
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 		itemUsersCache = trainMatrix.columnRowsCache(cacheSpec);

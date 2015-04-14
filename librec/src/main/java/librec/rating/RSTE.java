@@ -43,7 +43,7 @@ public class RSTE extends SocialRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		initByNorm = false;
-		alpha = cf.getFloat("RSTE.alpha");
+		alpha = paramOptions.getFloat("-alpha");
 	}
 
 	@Override

@@ -17,19 +17,14 @@
 //
 package librec.ranking;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-
 import java.util.List;
 
-import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
-import librec.intf.IterativeRecommender;
+import librec.intf.GraphicRecommender;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
 /**
@@ -39,111 +34,32 @@ import com.google.common.collect.Table.Cell;
  * @author Guibing Guo
  *
  */
-@Configuration("factors, alpha, beta, iters, burn.in, sample.lag")
-public class LDA extends IterativeRecommender {
-
-	/**
-	 * number of users, items, topics;
-	 */
-	protected int M, V, K;
-
-	/**
-	 * Dirichlet hyper-parameters of user-topic distribution: typical value is 50/K
-	 */
-	protected double alpha;
-
-	/**
-	 * Dirichlet hyper-parameters of topic-item distribution, typical value is 0.01
-	 */
-	protected double beta;
-
-	/**
-	 * entry[u][i]: topic assignment as sparse structure
-	 */
-	protected Table<Integer, Integer, Integer> z;
-
-	/**
-	 * entry[i][t]: number of instances of item i assigned to topic t.
-	 */
-	protected DenseMatrix itemTopicMatrix;
-
-	/**
-	 * entry[u][t]: number of items of user u assigned to topic t.
-	 */
-	protected DenseMatrix userTopicMatrix;
-
-	/**
-	 * entry[t]: total number of items assigned to topic t.
-	 */
-	protected DenseVector topicItemsVector;
-
-	/**
-	 * entry[u]: total number of items rated by user u.
-	 */
-	protected DenseVector userItemsVector;
-
-	/**
-	 * cumulative statistics of theta, phi
-	 */
-	protected DenseMatrix thetasum, phisum;
-
-	/**
-	 * posterior probabilities of parameters
-	 * 
-	 */
-	protected DenseMatrix theta, phi;
-
-	/**
-	 * burn-in period
-	 */
-	protected int burnIn;
-
-	/**
-	 * sample lag (if -1 only one sample taken)
-	 */
-	protected int sampleLag;
-
-	/**
-	 * size of statistics
-	 */
-	protected int numstats;
+public class LDA extends GraphicRecommender {
 
 	public LDA(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-
+		
 		isRankingPred = true;
 	}
 
 	@Override
 	protected void initModel() throws Exception {
 
-		// for simplicity
-		M = numUsers;
-		V = numItems;
-		K = numFactors;
+		thetaSum = new DenseMatrix(numUsers, numFactors);
+		phiSum = new DenseMatrix(numFactors, numItems);
 
-		burnIn = cf.getInt("num.burn.in");
-		sampleLag = cf.getInt("num.sample.lag");
+		// initialize count variables.
+		itemTopicMatrix = new DenseMatrix(numItems, numFactors);
+		userTopicMatrix = new DenseMatrix(numUsers, numFactors);
+		topicItemsVector = new DenseVector(numFactors);
+		userItemsVector = new DenseVector(numUsers);
 
-		alpha = cf.getDouble("val.init.alpha");
-		beta = cf.getDouble("val.init.beta");
-
-		thetasum = new DenseMatrix(M, K);
-		phisum = new DenseMatrix(K, V);
-		numstats = 0;
-
-		// initialise count variables.
-		itemTopicMatrix = new DenseMatrix(V, K);
-		userTopicMatrix = new DenseMatrix(M, K);
-		topicItemsVector = new DenseVector(K);
-		userItemsVector = new DenseVector(M);
-
-		// The z_u,i are initialised to values in [0, K-1] to determine the initial state of the Markov chain.
+		// The z_u,i are initialized to values in [0, K-1] to determine the initial state of the Markov chain.
 		z = HashBasedTable.create();
-		for (int u = 0; u < M; u++) {
+		for (int u = 0; u < numUsers; u++) {
 			List<Integer> Ru = trainMatrix.getColumns(u);
 			for (int i : Ru) {
-				int t = (int) (Math.random() * K); // 0 ~ k-1
+				int t = (int) (Math.random() * numFactors); // 0 ~ k-1
 
 				// assign a topic t to pair (u, i)
 				z.put(u, i, t);
@@ -159,88 +75,71 @@ public class LDA extends IterativeRecommender {
 		}
 
 	}
+	
+	protected void inferParams() {
 
-	@Override
-	protected void buildModel() throws Exception {
+		// Gibbs sampling from full conditional distribution
+		for (Cell<Integer, Integer, Integer> entry : z.cellSet()) {
+			int u = entry.getRowKey();
+			int i = entry.getColumnKey();
+			int t = entry.getValue(); // topic
 
-		for (int iter = 1; iter <= numIters; iter++) {
+			itemTopicMatrix.add(i, t, -1);
+			userTopicMatrix.add(u, t, -1);
+			topicItemsVector.add(t, -1);
+			userItemsVector.add(u, -1);
 
-			// Gibbs sampling from full conditional distribution
-			for (Cell<Integer, Integer, Integer> entry : z.cellSet()) {
-				int u = entry.getRowKey();
-				int i = entry.getColumnKey();
-				int t = entry.getValue(); // topic
-
-				itemTopicMatrix.add(i, t, -1);
-				userTopicMatrix.add(u, t, -1);
-				topicItemsVector.add(t, -1);
-				userItemsVector.add(u, -1);
-
-				// do multinomial sampling via cumulative method:
-				double[] p = new double[K];
-				for (int k = 0; k < K; k++) {
-					p[k] = (itemTopicMatrix.get(i, k) + beta) / (topicItemsVector.get(k) + V * beta)
-							* (userTopicMatrix.get(u, k) + alpha) / (userItemsVector.get(u) + K * alpha);
-				}
-				// cumulate multinomial parameters
-				for (int k = 1; k < p.length; k++) {
-					p[k] += p[k - 1];
-				}
-				// scaled sample because of unnormalised p[], randomly sampled a new topic t
-				double rand = Math.random() * p[K - 1];
-				for (t = 0; t < p.length; t++) {
-					if (rand < p[t])
-						break;
-				}
-
-				// add newly estimated z_i to count variables
-				itemTopicMatrix.add(i, t, 1);
-				userTopicMatrix.add(u, t, 1);
-				topicItemsVector.add(t, 1);
-				userItemsVector.add(u, 1);
-
-				z.put(u, i, t);
+			// do multinomial sampling via cumulative method:
+			double[] p = new double[numFactors];
+			for (int k = 0; k < numFactors; k++) {
+				p[k] = (itemTopicMatrix.get(i, k) + beta) / (topicItemsVector.get(k) + numItems * beta)
+						* (userTopicMatrix.get(u, k) + alpha) / (userItemsVector.get(u) + numFactors * alpha);
+			}
+			// cumulate multinomial parameters
+			for (int k = 1; k < p.length; k++) {
+				p[k] += p[k - 1];
+			}
+			// scaled sample because of unnormalised p[], randomly sampled a new topic t
+			double rand = Math.random() * p[numFactors - 1];
+			for (t = 0; t < p.length; t++) {
+				if (rand < p[t])
+					break;
 			}
 
-			// get statistics after burn-in
-			if ((iter > burnIn) && (sampleLag > 0) && (iter % sampleLag == 0)) {
-				readoutParams();
-			}
+			// add newly estimated z_i to count variables
+			itemTopicMatrix.add(i, t, 1);
+			userTopicMatrix.add(u, t, 1);
+			topicItemsVector.add(t, 1);
+			userItemsVector.add(u, 1);
 
-			if (iter % 100 == 0)
-				Logs.debug("{}{} runs at iter {}/{}", algoName, foldInfo, iter, numIters);
-		}
-
-		// get results
-		if (sampleLag > 0) {
-			theta = thetasum.scale(1.0 / numstats);
-			phi = phisum.scale(1.0 / numstats);
-		} else {
-			// read out parameters
-			readoutParams();
-			theta = thetasum;
-			phi = phisum;
+			z.put(u, i, t);
 		}
 	}
 
 	/**
 	 * Add to the statistics the values of theta and phi for the current state.
 	 */
-	private void readoutParams() {
+	protected void readoutParams() {
 		double val = 0;
-		for (int u = 0; u < M; u++) {
-			for (int k = 0; k < K; k++) {
-				val = (userTopicMatrix.get(u, k) + alpha) / (userItemsVector.get(u) + K * alpha);
-				thetasum.add(u, k, val);
+		for (int u = 0; u < numUsers; u++) {
+			for (int k = 0; k < numFactors; k++) {
+				val = (userTopicMatrix.get(u, k) + alpha) / (userItemsVector.get(u) + numFactors * alpha);
+				thetaSum.add(u, k, val);
 			}
 		}
-		for (int k = 0; k < K; k++) {
-			for (int i = 0; i < V; i++) {
-				val = (itemTopicMatrix.get(i, k) + beta) / (topicItemsVector.get(k) + V * beta);
-				phisum.add(k, i, val);
+		for (int k = 0; k < numFactors; k++) {
+			for (int i = 0; i < numItems; i++) {
+				val = (itemTopicMatrix.get(i, k) + beta) / (topicItemsVector.get(k) + numItems * beta);
+				phiSum.add(k, i, val);
 			}
 		}
 		numstats++;
+	}
+	
+	@Override
+	protected void postProbDistr() {
+		theta = thetaSum.scale(1.0 / numstats);
+		phi = phiSum.scale(1.0 / numstats);
 	}
 
 	@Override
@@ -249,8 +148,4 @@ public class LDA extends IterativeRecommender {
 		return DenseMatrix.product(theta, u, phi, j);
 	}
 
-	@Override
-	public String toString() {
-		return Strings.toString(new Object[] { K, alpha, beta, numIters, burnIn, sampleLag }, ", ");
-	}
 }

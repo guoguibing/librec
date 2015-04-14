@@ -32,19 +32,17 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
 /**
- * Data Structure: Sparse Matrix whose implementation is modified from M4J
- * library
+ * Data Structure: Sparse Matrix whose implementation is modified from M4J library
  * 
  * <ul>
- * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed
- * Row Storage (CRS)</a></li>
- * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed
- * Col Storage (CCS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node91.html">Compressed Row Storage (CRS)</a></li>
+ * <li><a href="http://netlib.org/linalg/html_templates/node92.html">Compressed Col Storage (CCS)</a></li>
  * </ul>
  * 
  * @author guoguibing
@@ -83,8 +81,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * Define a sparse matrix without data, only use for {@code transpose}
-	 * method
+	 * Define a sparse matrix without data, only use for {@code transpose} method
 	 * 
 	 */
 	private SparseMatrix(int rows, int cols) {
@@ -657,8 +654,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * Standardize the matrix entries by row- or column-wise z-scores
-	 * (z=(x-u)/sigma)
+	 * Standardize the matrix entries by row- or column-wise z-scores (z=(x-u)/sigma)
 	 * 
 	 * @param isByRow
 	 *            standardize by row if true; otherwise by column
@@ -689,6 +685,95 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 	}
 
+	/**
+	 * @return a new matrix by removing zeros from the current matrix
+	 */
+	public SparseMatrix reshape() {
+
+		SparseMatrix mat = new SparseMatrix(numRows, numColumns);
+		int nnz = this.size();
+
+		// Compressed Row Storage (CRS)
+		mat.rowData = new double[nnz];
+		mat.colInd = new int[nnz];
+		mat.rowPtr = new int[numRows + 1];
+
+		// handle row data
+		int index = 0;
+		for (int i = 1; i < rowPtr.length; i++) {
+
+			for (int j = rowPtr[i - 1]; j < rowPtr[i]; j++) {
+				// row i-1, row 0 always starts with 0
+
+				double val = rowData[j];
+				int col = colInd[j];
+				if (val != 0) {
+					mat.rowData[index] = val;
+					mat.colInd[index] = col;
+
+					index++;
+				} 
+			}
+			mat.rowPtr[i] = index;
+
+		}
+
+		// Compressed Col Storage (CCS)
+		mat.colData = new double[nnz];
+		mat.rowInd = new int[nnz];
+		mat.colPtr = new int[numColumns + 1];
+
+		// handle column data
+		index = 0;
+		for (int j = 1; j < colPtr.length; j++) {
+			for (int i = colPtr[j - 1]; i < colPtr[j]; i++) {
+				// column j-1, index i
+
+				double val = colData[i];
+				int row = rowInd[i];
+				if (val != 0) {
+					mat.colData[index] = val;
+					mat.rowInd[index] = row;
+
+					index++;
+				}
+			}
+			mat.colPtr[j] = index;
+		}
+
+		return mat;
+	}
+
+	/**
+	 * @return a new matrix with shape (rows, cols) with data from the current matrix
+	 */
+	public SparseMatrix reshape(int rows, int cols) {
+
+		Table<Integer, Integer, Double> data = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		int rowIndex, colIndex;
+		for (int i = 1; i < rowPtr.length; i++) {
+			for (int j = rowPtr[i - 1]; j < rowPtr[i]; j++) {
+				int row = i - 1;
+				int col = colInd[j];
+				double val = rowData[j]; // (row, col, val)
+
+				if (val != 0) {
+					int oldIndex = row * numColumns + col;
+
+					rowIndex = oldIndex / cols;
+					colIndex = oldIndex % cols;
+
+					data.put(rowIndex, colIndex, val);
+					colMap.put(colIndex, rowIndex);
+				}
+			}
+		}
+
+		return new SparseMatrix(rows, cols, data, colMap);
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -697,6 +782,25 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		for (MatrixEntry me : this)
 			if (me.get() != 0)
 				sb.append(String.format("%d\t%d\t%f\n", new Object[] { me.row() + 1, me.column() + 1, me.get() }));
+
+		return sb.toString();
+	}
+
+	/**
+	 * @return a matrix format string
+	 */
+	public String matString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Dimension: ").append(numRows).append(" x ").append(numColumns).append("\n");
+
+		for (int i = 0; i < numRows; i++) {
+			for (int j = 0; j < numColumns; j++) {
+				sb.append(get(i, j));
+				if (j < numColumns - 1)
+					sb.append("\t");
+			}
+			sb.append("\n");
+		}
 
 		return sb.toString();
 	}
@@ -775,8 +879,8 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 		}
 
 		/**
-		 * Locates the first non-empty row, starting at the current. After the
-		 * new row has been found, the cursor is also updated
+		 * Locates the first non-empty row, starting at the current. After the new row has been found, the cursor is
+		 * also updated
 		 */
 		private void nextNonEmptyRow() {
 			while (row < numRows && rowPtr[row] == rowPtr[row + 1])

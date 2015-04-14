@@ -34,8 +34,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Table.Cell;
 
 /**
- * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N
- * Recommender Systems</strong>, KDD 2013.
+ * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N Recommender Systems</strong>, KDD 2013.
  * 
  * @author guoguibing
  * 
@@ -64,9 +63,10 @@ public class FISMrmse extends IterativeRecommender {
 		itemBias.init(0.01);
 
 		nnz = trainMatrix.size();
-		rho = cf.getFloat("FISM.rho");
-		alpha = cf.getFloat("FISM.alpha");
-		
+		paramOptions = cf.getParamOptions("FISM");
+		rho = paramOptions.getFloat("-rho");
+		alpha = paramOptions.getFloat("-alpha");
+
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 	}
 
@@ -195,14 +195,14 @@ public class FISMrmse extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j)  throws Exception {
+	protected double predict(int u, int j) throws Exception {
 		double pred = userBias.get(u) + itemBias.get(j);
 
 		double sum = 0;
 		int count = 0;
 
 		List<Integer> items = userItemsCache.get(u);
-		for (int i: items) {
+		for (int i : items) {
 			// for test, i and j will be always unequal as j is unrated
 			if (i != j) {
 				sum += DenseMatrix.rowMult(P, i, Q, j);

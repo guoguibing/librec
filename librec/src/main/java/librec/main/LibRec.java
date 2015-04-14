@@ -18,12 +18,12 @@
 
 package librec.main;
 
-import happy.coding.io.Configer;
+import happy.coding.io.FileConfiger;
 import happy.coding.io.FileIO;
+import happy.coding.io.LineConfiger;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.io.net.EMailer;
-import happy.coding.math.Maths;
 import happy.coding.system.Dates;
 import happy.coding.system.Systems;
 
@@ -79,6 +79,7 @@ import librec.rating.SocialMF;
 import librec.rating.TimeSVD;
 import librec.rating.TrustMF;
 import librec.rating.TrustSVD;
+import librec.rating.URP;
 import librec.rating.UserKNN;
 
 import com.google.common.collect.HashBasedTable;
@@ -97,7 +98,7 @@ public class LibRec {
 	protected static String version = "1.3";
 
 	// configuration
-	protected static Configer cf;
+	protected static FileConfiger cf;
 	protected static String configFile = "librec.conf";
 	protected static String algorithm;
 
@@ -107,7 +108,7 @@ public class LibRec {
 	protected static DataDAO rateDao;
 
 	// rating matrix
-	protected static SparseMatrix rateMatrix = null;
+	protected static SparseMatrix rateMatrix;
 
 	/**
 	 * entry of the LibRec library
@@ -122,11 +123,11 @@ public class LibRec {
 			cmdLine(args);
 
 			// get configuration file
-			cf = new Configer(configFile);
+			cf = new FileConfiger(configFile);
 
 			// prepare data
 			binThold = cf.getDouble("val.binary.threshold");
-			rateDao = new DataDAO(cf.getPath("dataset.training"));
+			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
 			rateMatrix = rateDao.readData(binThold);
 
 			// config general recommender
@@ -160,68 +161,76 @@ public class LibRec {
 	 *            command line arguments
 	 */
 	protected static void cmdLine(String[] args) throws Exception {
-		// read arguments
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].equals("-c")) { // configuration file
-				configFile = args[i + 1];
-				return;
-			} else if (args[i].equals("-v")) { // print out short version information
-				System.out.println("LibRec version " + version);
-			} else if (args[i].equals("--version")) { // print out full version information
-				readMe();
-			} else if (args[i].equals("--dataset-spec")) {
-				// print out data set specification
-				cf = new Configer(configFile);
 
-				DataDAO rateDao = new DataDAO(cf.getPath("dataset.training"));
-				rateDao.printSpecs();
+		if (args.length < 1)
+			return;
 
-				String socialSet = cf.getPath("dataset.social");
-				if (!socialSet.equals("-1")) {
-					DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
-					socDao.printSpecs();
-				}
+		LineConfiger params = new LineConfiger(args);
 
-				String testSet = cf.getPath("dataset.testing");
-				if (!testSet.equals("-1")) {
-					DataDAO testDao = new DataDAO(testSet, rateDao.getUserIds(), rateDao.getItemIds());
-					testDao.printSpecs();
-				}
-			} else if (args[i].equals("--dataset-split")) {
-				// split the training data set into "train-test" or "train-validation-test" subsets
-				cf = new Configer(configFile);
+		configFile = params.getString("-c", "librec.conf");
 
-				rateDao = new DataDAO(cf.getPath("dataset.training"));
-				rateMatrix = rateDao.readData();
+		if (params.contains("-v")) {
+			// print out short version information
+			System.out.println("LibRec version " + version);
+		}
 
-				// format: (1) train-ratio; (2) train-ratio validation-ratio
-				double trainRatio = Double.parseDouble(args[i + 1]);
-				boolean isValidationUsed = (args.length > i + 2) && Maths.isNumeric(args[i + 2]);
-				double validRatio = isValidationUsed ? Double.parseDouble(args[i + 2]) : 0;
+		if (params.contains("--version")) {
+			// print out full version information
+			readMe();
+		}
 
-				if (trainRatio <= 0 || validRatio < 0 || (trainRatio + validRatio) >= 1) {
-					throw new Exception(
-							"Wrong format! Accepted formats are either '-dataset-split ratio' or '-dataset-split trainRatio validRatio'");
-				}
+		if (params.contains("--dataset-spec")) {
+			// print out data set specification
+			cf = new FileConfiger(configFile);
 
-				// split data
-				DataSplitter ds = new DataSplitter(rateMatrix);
-				SparseMatrix[] results = isValidationUsed ? ds.getRatio(trainRatio, validRatio) : ds
-						.getRatio(trainRatio);
+			DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+			rateDao.printSpecs();
 
-				// write out
-				String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
-				writeMatrix(results[0], dirPath + "training.txt");
-
-				if (isValidationUsed) {
-					writeMatrix(results[1], dirPath + "validation.txt");
-					writeMatrix(results[2], dirPath + "test.txt");
-				} else {
-					writeMatrix(results[1], dirPath + "test.txt");
-				}
+			String socialSet = cf.getPath("dataset.social");
+			if (!socialSet.equals("-1")) {
+				DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
+				socDao.printSpecs();
 			}
+
 			System.exit(0);
 		}
+
+		if (params.contains("--dataset-split")) {
+			// split the training data set into "train-test" or "train-validation-test" subsets
+			cf = new FileConfiger(configFile);
+
+			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+			rateMatrix = rateDao.readData();
+
+			// format: (1) train-ratio; (2) train-ratio validation-ratio
+			List<String> options = params.getOptions("--dataset-split");
+			double trainRatio = Strings.toDouble(options.get(0));
+			boolean isValidationUsed = options.size() >= 2;
+			double validRatio = isValidationUsed ? Strings.toDouble(options.get(1)) : 0;
+
+			if (trainRatio <= 0 || validRatio < 0 || (trainRatio + validRatio) >= 1) {
+				throw new Exception(
+						"Wrong format! Accepted formats are either '-dataset-split ratio' or '-dataset-split trainRatio validRatio'");
+			}
+
+			// split data
+			DataSplitter ds = new DataSplitter(rateMatrix);
+			SparseMatrix[] results = isValidationUsed ? ds.getRatio(trainRatio, validRatio) : ds.getRatio(trainRatio);
+
+			// write out
+			String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
+			writeMatrix(results[0], dirPath + "training.txt");
+
+			if (isValidationUsed) {
+				writeMatrix(results[1], dirPath + "validation.txt");
+				writeMatrix(results[2], dirPath + "test.txt");
+			} else {
+				writeMatrix(results[1], dirPath + "test.txt");
+			}
+
+			System.exit(0);
+		}
+
 	}
 
 	/**
@@ -263,29 +272,12 @@ public class LibRec {
 	 */
 	protected static void runAlgorithm() throws Exception {
 
-		// validation method
-		String validationMethod = cf.getString("validation.method");
-		String settings = cf.getString("validation.settings");
+		// evaluation setup
+		String setup = cf.getString("evaluation.setup");
+		LineConfiger params = new LineConfiger(setup);
 
 		// debug information
-		StringBuilder debugInfo = new StringBuilder();
-		debugInfo.append("With Test by ").append(validationMethod);
-
-		if (!Recommender.isRankingPred) {
-			String view = cf.getString("rating.pred.view");
-			switch (view.toLowerCase()) {
-			case "cold-start":
-				debugInfo.append(", ").append(view);
-				break;
-			case "trust-degree":
-				debugInfo.append(String.format(", %s [%d, %d]",
-						new Object[] { view, cf.getInt("min.trust.degree"), cf.getInt("max.trust.degree") }));
-				break;
-			case "all":
-			default:
-				break;
-			}
-		}
+		Logs.debug("With Setup: {}", setup);
 
 		Recommender algo = null;
 
@@ -295,44 +287,32 @@ public class LibRec {
 		int N;
 		double ratio;
 
-		switch (validationMethod.toLowerCase()) {
+		switch (params.getMainParam().toLowerCase()) {
 		case "cv":
-			runCrossValidation(settings, debugInfo);
+			runCrossValidation(params);
 			return; // make it close
 		case "leave-one-out":
-			runLeaveOneOut(Integer.parseInt(settings), debugInfo);
+			runLeaveOneOut(params);
 			return; //
 		case "test-set":
-			Logs.debug(debugInfo.toString());
-			debugInfo = new StringBuilder();
-			debugInfo.append(String.format("Testing: %s, ", Strings.last(settings, 38)));
-
-			DataDAO testDao = new DataDAO(settings, rateDao.getUserIds(), rateDao.getItemIds());
+			DataDAO testDao = new DataDAO(params.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			SparseMatrix testMatrix = testDao.readData(binThold);
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
 			break;
 		case "given-n":
-			N = Integer.parseInt(settings);
-			debugInfo.append(": ").append(N);
-
+			N = params.getInt("-n", 20);
 			data = ds.getGiven(N);
 			break;
 		case "given-ratio":
-			ratio = Double.parseDouble(settings);
-			debugInfo.append(": ").append(ratio);
-
+			ratio = params.getDouble("-r", 0.8);
 			data = ds.getGiven(ratio);
 			break;
 		case "train-ratio":
 		default:
-			ratio = Double.parseDouble(settings);
-			debugInfo.append(": ").append(ratio);
-
-			data = ds.getRatio(Double.parseDouble(settings));
+			ratio = params.getDouble("-r", 0.8);
+			data = ds.getRatio(ratio);
 			break;
 		}
-
-		Logs.debug(debugInfo.toString());
 
 		algo = getRecommender(data, -1);
 		algo.execute();
@@ -340,26 +320,10 @@ public class LibRec {
 		printEvalInfo(algo, algo.measures);
 	}
 
-	private static void runCrossValidation(String settings, StringBuilder debugInfo) throws Exception {
+	private static void runCrossValidation(LineConfiger params) throws Exception {
 
-		String[] sets = settings.split("[,\t ]");
-		int kFold = Integer.parseInt(sets[0]);
-		debugInfo.append(": ").append(kFold).append(" Folds ");
-
-		boolean isParallelFold = true;
-		if (sets.length >= 2) {
-			switch (sets[1]) {
-			case "fold-by-fold":
-				isParallelFold = false;
-				break;
-			case "parallel-fold":
-			default:
-				isParallelFold = true;
-				break;
-			}
-		}
-		debugInfo.append(isParallelFold ? "[Parallel]" : "[Singleton]");
-		Logs.debug(debugInfo.toString());
+		int kFold = params.getInt("-k", 5);
+		boolean isParallelFold = params.isOn("-p", true);
 
 		DataSplitter ds = new DataSplitter(rateMatrix, kFold);
 
@@ -397,12 +361,9 @@ public class LibRec {
 	/**
 	 * interface to run Leave-one-out approach
 	 */
-	private static void runLeaveOneOut(int numThreads, StringBuilder debugInfo) throws Exception {
+	private static void runLeaveOneOut(LineConfiger params) throws Exception {
 
-		assert numThreads > 0;
-
-		debugInfo.append(" [").append(numThreads).append(" Threads]");
-		Logs.debug(debugInfo.toString());
+		int numThreads = params.getInt("-t", 1);
 
 		Thread[] ts = new Thread[numThreads];
 		Recommender[] algos = new Recommender[numThreads];
@@ -593,6 +554,8 @@ public class LibRec {
 			return new RSTE(trainMatrix, testMatrix, fold);
 		case "trustsvd":
 			return new TrustSVD(trainMatrix, testMatrix, fold);
+		case "urp":
+			return new URP(trainMatrix, testMatrix, fold);
 
 			/* item ranking */
 		case "climf":

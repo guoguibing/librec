@@ -62,10 +62,7 @@ public class BiasedMF extends IterativeRecommender {
 
 				int u = me.row(); // user
 				int j = me.column(); // item
-
 				double ruj = me.get();
-				if (ruj <= 0.0)
-					continue;
 
 				double pred = predict(u, j, false);
 				double euj = ruj - pred;

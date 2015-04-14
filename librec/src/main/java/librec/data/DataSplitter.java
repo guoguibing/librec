@@ -109,7 +109,7 @@ public class DataSplitter {
 	}
 
 	/**
-	 * Split ratings into two parts: (1-ratio) training, (ratio) test subsets.
+	 * Split ratings into two parts: (ratio) training, (1-ratio) test subsets.
 	 * 
 	 * @param ratio
 	 *            the ratio of training data over all the ratings.
@@ -133,6 +133,10 @@ public class DataSplitter {
 					trainMatrix.set(u, j, 0.0);
 			}
 		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -178,6 +182,11 @@ public class DataSplitter {
 				}
 			}
 		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		validMatrix = validMatrix.reshape();
+		testMatrix = testMatrix.reshape();
 
 		return new SparseMatrix[] { trainMatrix, validMatrix, testMatrix };
 	}
@@ -226,6 +235,10 @@ public class DataSplitter {
 
 		}
 
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
 		debugInfo(trainMatrix, testMatrix, -1);
 
 		return new SparseMatrix[] { trainMatrix, testMatrix };
@@ -268,6 +281,10 @@ public class DataSplitter {
 			}
 
 		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -337,6 +354,10 @@ public class DataSplitter {
 			return null;
 		}
 
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
@@ -365,6 +386,10 @@ public class DataSplitter {
 					testMatrix.set(u, j, 0.0); // keep train data and remove test data
 			}
 		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
 
 		debugInfo(trainMatrix, testMatrix, k);
 

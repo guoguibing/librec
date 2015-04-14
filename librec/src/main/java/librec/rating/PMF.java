@@ -51,7 +51,7 @@ public class PMF extends IterativeRecommender {
 	}
 
 	@Override
-	protected void cleanUp() throws Exception {
+	protected void postModel() throws Exception {
 		userDeltas = null;
 		itemDeltas = null;
 	}
@@ -71,24 +71,23 @@ public class PMF extends IterativeRecommender {
 				int u = me.row();
 				int j = me.column();
 				double rate = me.get();
-				if (rate > 0) {
-					double pred = predict(u, j);
-					double euj = rate - pred;
-					loss += euj * euj;
-					errs += euj * euj;
+				
+				double pred = predict(u, j);
+				double euj = rate - pred;
+				loss += euj * euj;
+				errs += euj * euj;
 
-					for (int f = 0; f < numFactors; f++) {
-						double qjf = Q.get(j, f);
-						double puf = P.get(u, f);
+				for (int f = 0; f < numFactors; f++) {
+					double qjf = Q.get(j, f);
+					double puf = P.get(u, f);
 
-						double sgd_u = 2 * euj * qjf - regU * puf;
-						double sgd_j = 2 * euj * puf - regI * qjf;
+					double sgd_u = 2 * euj * qjf - regU * puf;
+					double sgd_j = 2 * euj * puf - regI * qjf;
 
-						userSgds.add(u, f, sgd_u);
-						itemSgds.add(j, f, sgd_j);
+					userSgds.add(u, f, sgd_u);
+					itemSgds.add(j, f, sgd_j);
 
-						loss += regU * puf * puf + regI * qjf * qjf;
-					}
+					loss += regU * puf * puf + regI * qjf * qjf;
 				}
 			}
 			errs /= numRates;

@@ -55,8 +55,6 @@ public class SocialMF extends SocialRecommender {
 				int u = me.row();
 				int j = me.column();
 				double ruj = me.get();
-				if (ruj <= 0.0)
-					continue;
 
 				double pred = predict(u, j, false);
 				double euj = g(pred) - normalize(ruj);

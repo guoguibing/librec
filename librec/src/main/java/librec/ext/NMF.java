@@ -125,69 +125,6 @@ public class NMF extends IterativeRecommender {
 		}
 	}
 
-	/**
-	 * Why buildingModel2 that follows the paper instructions does not work?
-	 */
-	protected void buildModel2() {
-		for (int iter = 1; iter <= numIters; iter++) {
-
-			// Step 1: update W by fixing H
-			DenseMatrix trH = H.transpose();
-
-			// V * trH
-			DenseMatrix V_trH = DenseMatrix.mult(V, trH);
-
-			// W * H * trH
-			DenseMatrix W_H_trH = W.mult(H.mult(trH));
-
-			// update: W_ij = W_ij * (V_trH)_ij / (W_H_trH)_ij
-			for (int i = 0; i < W.numRows(); i++)
-				for (int j = 0; j < W.numColumns(); j++) {
-					double denorm = W_H_trH.get(i, j) + 1e-9;
-					W.set(i, j, W.get(i, j) * (V_trH.get(i, j) / denorm));
-				}
-
-			// Step 2: update H by fixing W
-			DenseMatrix trW = W.transpose();
-
-			// trW * V
-			DenseMatrix trW_V = trW.mult(V);
-
-			// trW * W * H
-			DenseMatrix trW_W_H = trW.mult(W).mult(H);
-
-			// update: H_ij = H_ij * (trW_V)_ij / (trW_W_H)_ij
-			for (int i = 0; i < H.numRows(); i++)
-				for (int j = 0; j < H.numColumns(); j++) {
-					double denorm = trW_W_H.get(i, j) + 1e-9;
-					H.set(i, j, H.get(i, j) * (trW_V.get(i, j) / denorm));
-				}
-
-			// compute errors
-			loss = 0;
-			errs = 0;
-			for (MatrixEntry me : V) {
-				int u = me.row();
-				int j = me.column();
-				double ruj = me.get();
-
-				if (ruj > 0) {
-					double pred = predict(u, j);
-					double euj = pred - ruj;
-
-					errs += euj * euj;
-					loss += euj * euj;
-				}
-			}
-
-			errs *= 0.5;
-			loss *= 0.5;
-
-			if (isConverged(iter))
-				break;
-		}
-	}
-
 	@Override
 	protected double predict(int u, int j) {
 		return DenseMatrix.product(W, u, H, j);

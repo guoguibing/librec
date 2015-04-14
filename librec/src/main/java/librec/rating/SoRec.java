@@ -52,9 +52,9 @@ public class SoRec extends SocialRecommender {
 
 		Z = new DenseMatrix(numUsers, numFactors);
 		Z.init();
-
-		regC = cf.getFloat("SoRec.reg.c");
-		regZ = cf.getFloat("SoRec.reg.z");
+		
+		regC = paramOptions.getFloat("-c");
+		regZ = paramOptions.getFloat("-z");
 
 		inDegrees = new HashMap<>();
 		outDegrees = new HashMap<>();
@@ -83,8 +83,6 @@ public class SoRec extends SocialRecommender {
 				int u = me.row();
 				int j = me.column();
 				double ruj = me.get();
-				if (ruj <= 0)
-					continue;
 
 				double pred = predict(u, j, false);
 				double euj = g(pred) - normalize(ruj);
