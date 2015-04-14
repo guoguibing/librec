@@ -336,11 +336,11 @@ public abstract class Recommender implements Runnable {
 	}
 
 	protected LineConfiger getModelParams() {
-		return cf.getParamOptions(algoName);
+		return getModelParams(algoName);
 	}
 
 	protected LineConfiger getModelParams(String algoName) {
-		return cf.getParamOptions(algoName);
+		return cf.contains(algoName) ? cf.getParamOptions(algoName) : null;
 	}
 
 	/**
