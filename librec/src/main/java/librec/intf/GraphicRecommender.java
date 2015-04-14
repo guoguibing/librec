@@ -47,6 +47,11 @@ public class GraphicRecommender extends Recommender {
 	 */
 	protected static int numIters;
 
+	/**
+	 * intervals for printing verbose information
+	 */
+	protected static int numIntervals;
+
 	/*********************************** Method-specific Parameters ************************/
 
 	/**
@@ -57,22 +62,22 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * entry[i,t]: number of instances of item i assigned to topic t.
 	 */
-	protected DenseMatrix itemTopicMatrix;
+	protected DenseMatrix Nit;
 
 	/**
 	 * entry[u,t]: number of items of user u assigned to topic t.
 	 */
-	protected DenseMatrix userTopicMatrix;
+	protected DenseMatrix Nut;
 
 	/**
 	 * entry[t]: total number of items assigned to topic t.
 	 */
-	protected DenseVector topicItemsVector;
+	protected DenseVector Ni;
 
 	/**
 	 * entry[u]: total number of items rated by user u.
 	 */
-	protected DenseVector userItemsVector;
+	protected DenseVector Nu;
 
 	/**
 	 * cumulative statistics of theta, phi
@@ -88,7 +93,7 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * size of statistics
 	 */
-	protected int numstats = 0;
+	protected int numStats = 0;
 
 	static {
 		burnIn = cf.getInt("num.burn.in");
@@ -102,6 +107,7 @@ public class GraphicRecommender extends Recommender {
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
+		numIntervals = cf.getInt("num.verbose.interval");
 	}
 
 	public GraphicRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -119,12 +125,12 @@ public class GraphicRecommender extends Recommender {
 			// get statistics after burn-in
 			if ((iter > burnIn) && (iter % sampleLag == 0)) {
 				readoutParams();
-				
+
 				if (isConverged(iter))
 					break;
 			}
 
-			if (verbose && (iter % 100 == 0))
+			if (verbose && (iter % numIntervals == 0))
 				Logs.debug("{}{} runs at iter {}/{}", algoName, foldInfo, iter, numIters);
 		}
 
@@ -136,7 +142,8 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * employing early stopping criteria
 	 * 
-	 * @param iter current iteration
+	 * @param iter
+	 *            current iteration
 	 */
 	protected boolean isConverged(int iter) throws Exception {
 		return false;

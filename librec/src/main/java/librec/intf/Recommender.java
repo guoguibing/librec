@@ -30,7 +30,6 @@ import happy.coding.math.Stats;
 import happy.coding.system.Dates;
 import happy.coding.system.Debug;
 
-import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +65,9 @@ public abstract class Recommender implements Runnable {
 	// matrix of rating data
 	public static SparseMatrix rateMatrix;
 
+	// default temporary file directory
+	public static String tempDirPath = "./Results/";
+
 	// params used for multiple runs
 	public static Map<String, List<Float>> params = new HashMap<>();
 
@@ -84,6 +86,8 @@ public abstract class Recommender implements Runnable {
 	protected static boolean isDiverseUsed;
 	// is output recommendation results 
 	protected static boolean isResultsOut;
+	// is save model
+	protected static boolean isSaveModel;
 	// view of rating predictions
 	public static String view;
 
@@ -149,38 +153,14 @@ public abstract class Recommender implements Runnable {
 	 */
 	public Recommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 
-		if (validationRatio > 0 && validationRatio < 1) {
-			SparseMatrix[] trainSubsets = new DataSplitter(trainMatrix).getRatio(1 - validationRatio);
-			this.trainMatrix = trainSubsets[0];
-			this.validationMatrix = trainSubsets[1];
-		} else {
-			this.trainMatrix = trainMatrix;
-		}
-
-		this.testMatrix = testMatrix;
-		this.fold = fold;
-
 		// config recommender
 		if (cf == null || rateMatrix == null) {
 			Logs.error("Recommender is not well configed");
 			System.exit(-1);
 		}
 
-		// global mean
-		numRates = trainMatrix.size();
-		globalMean = trainMatrix.sum() / numRates;
-
-		// class name as the default algorithm name
-		algoName = this.getClass().getSimpleName();
-
-		// fold info
-		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
-
 		// static initialization, only done once
 		if (scales == null) {
-			initMean = 0.0;
-			initStd = 0.1;
-
 			scales = rateDao.getScales();
 			minRate = scales.get(0);
 			maxRate = scales.get(scales.size() - 1);
@@ -188,6 +168,10 @@ public abstract class Recommender implements Runnable {
 
 			numUsers = rateDao.numUsers();
 			numItems = rateDao.numItems();
+
+			// static initialization, only done once
+			initMean = 0.0;
+			initStd = 0.1;
 
 			cacheSpec = cf.getString("guava.cache.spec");
 
@@ -200,6 +184,7 @@ public abstract class Recommender implements Runnable {
 			view = paramOptions.getString("--test-view", "all");
 			validationRatio = paramOptions.getFloat("-v", 0.0f);
 			isResultsOut = paramOptions.isOn("-o", false);
+			isSaveModel = paramOptions.isOn("--save-model", false);
 
 			// -1 to use as many as possible or disable
 			numRecs = cf.getInt("num.reclist.len");
@@ -210,8 +195,29 @@ public abstract class Recommender implements Runnable {
 			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
 		}
 
+		// training, validation, test data
+		if (validationRatio > 0 && validationRatio < 1) {
+			SparseMatrix[] trainSubsets = new DataSplitter(trainMatrix).getRatio(1 - validationRatio);
+			this.trainMatrix = trainSubsets[0];
+			this.validationMatrix = trainSubsets[1];
+		} else {
+			this.trainMatrix = trainMatrix;
+		}
+
+		this.testMatrix = testMatrix;
+
+		// fold info
+		this.fold = fold;
+		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
+
+		// global mean
+		numRates = trainMatrix.size();
+		globalMean = trainMatrix.sum() / numRates;
+
+		// class name as the default algorithm name
+		algoName = this.getClass().getSimpleName();
 		// get parameters of an algorithm
-		paramOptions = getModelParams();
+		paramOptions = getModelParams(algoName);
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
@@ -271,9 +277,8 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// evaluation
-		String foldStr = fold > 0 ? " fold [" + fold + "]" : "";
 		if (verbose)
-			Logs.debug("{}{} evaluate test data ... ", algoName, foldStr);
+			Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
 		measures = isRankingPred ? evalRankings() : evalRatings();
 		String result = getEvalInfo(measures);
 		sw.stop();
@@ -283,7 +288,7 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.TrainTime, (double) trainTime);
 		measures.put(Measure.TestTime, (double) testTime);
 
-		String evalInfo = algoName + foldStr + ": " + result + "\tTime: "
+		String evalInfo = algoName + foldInfo + ": " + result + "\tTime: "
 				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
 		if (!isRankingPred)
@@ -292,7 +297,7 @@ public abstract class Recommender implements Runnable {
 		if (fold > 0)
 			Logs.debug(evalInfo);
 
-		if (cf.isOn("is.save.model"))
+		if (isSaveModel)
 			saveModel();
 	}
 
@@ -333,10 +338,6 @@ public abstract class Recommender implements Runnable {
 	 * initilize recommender model
 	 */
 	protected void initModel() throws Exception {
-	}
-
-	protected LineConfiger getModelParams() {
-		return getModelParams(algoName);
 	}
 
 	protected LineConfiger getModelParams(String algoName) {
@@ -499,9 +500,8 @@ public abstract class Recommender implements Runnable {
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
 			preds.add("# userId itemId rating prediction"); // optional: file header
-			FileIO.makeDirectory("Results"); // in case that the fold does not exist
-			toFile = "Results" + File.separator + algoName + "-rating-predictions" + (fold > 0 ? "-" + fold : "")
-					+ ".txt"; // the output-file name
+			FileIO.makeDirectory(tempDirPath); // in case that the fold does not exist
+			toFile = tempDirPath + algoName + "-rating-predictions" + foldInfo + ".txt"; // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
@@ -594,8 +594,8 @@ public abstract class Recommender implements Runnable {
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
 			preds.add("# userId: recommendations in (itemId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional: file header
-			FileIO.makeDirectory("Results"); // in case that the fold does not exist
-			toFile = "Results" + File.separator + algoName + "-top-10-items" + (fold > 0 ? "-" + fold : "") + ".txt"; // the output-file name
+			FileIO.makeDirectory(tempDirPath); // in case that the fold does not exist
+			toFile = tempDirPath + algoName + "-top-10-items" + foldInfo + ".txt"; // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 

@@ -49,10 +49,10 @@ public class LDA extends GraphicRecommender {
 		phiSum = new DenseMatrix(numFactors, numItems);
 
 		// initialize count variables.
-		itemTopicMatrix = new DenseMatrix(numItems, numFactors);
-		userTopicMatrix = new DenseMatrix(numUsers, numFactors);
-		topicItemsVector = new DenseVector(numFactors);
-		userItemsVector = new DenseVector(numUsers);
+		Nit = new DenseMatrix(numItems, numFactors);
+		Nut = new DenseMatrix(numUsers, numFactors);
+		Ni = new DenseVector(numFactors);
+		Nu = new DenseVector(numUsers);
 
 		// The z_u,i are initialized to values in [0, K-1] to determine the initial state of the Markov chain.
 		z = HashBasedTable.create();
@@ -64,14 +64,14 @@ public class LDA extends GraphicRecommender {
 				// assign a topic t to pair (u, i)
 				z.put(u, i, t);
 				// number of instances of item i assigned to topic t
-				itemTopicMatrix.add(i, t, 1);
+				Nit.add(i, t, 1);
 				// number of items of user u assigned to topic t.
-				userTopicMatrix.add(u, t, 1);
+				Nut.add(u, t, 1);
 				// total number of words assigned to topic t.
-				topicItemsVector.add(t, 1);
+				Ni.add(t, 1);
 			}
 			// total number of items of user u
-			userItemsVector.set(u, Ru.size());
+			Nu.set(u, Ru.size());
 		}
 
 	}
@@ -84,22 +84,22 @@ public class LDA extends GraphicRecommender {
 			int i = entry.getColumnKey();
 			int t = entry.getValue(); // topic
 
-			itemTopicMatrix.add(i, t, -1);
-			userTopicMatrix.add(u, t, -1);
-			topicItemsVector.add(t, -1);
-			userItemsVector.add(u, -1);
+			Nit.add(i, t, -1);
+			Nut.add(u, t, -1);
+			Ni.add(t, -1);
+			Nu.add(u, -1);
 
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (itemTopicMatrix.get(i, k) + beta) / (topicItemsVector.get(k) + numItems * beta)
-						* (userTopicMatrix.get(u, k) + alpha) / (userItemsVector.get(u) + numFactors * alpha);
+				p[k] = (Nit.get(i, k) + beta) / (Ni.get(k) + numItems * beta)
+						* (Nut.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
 			}
-			// cumulate multinomial parameters
+			// cumulating multinomial parameters
 			for (int k = 1; k < p.length; k++) {
 				p[k] += p[k - 1];
 			}
-			// scaled sample because of unnormalised p[], randomly sampled a new topic t
+			// scaled sample because of unnormalized p[], randomly sampled a new topic t
 			double rand = Math.random() * p[numFactors - 1];
 			for (t = 0; t < p.length; t++) {
 				if (rand < p[t])
@@ -107,10 +107,10 @@ public class LDA extends GraphicRecommender {
 			}
 
 			// add newly estimated z_i to count variables
-			itemTopicMatrix.add(i, t, 1);
-			userTopicMatrix.add(u, t, 1);
-			topicItemsVector.add(t, 1);
-			userItemsVector.add(u, 1);
+			Nit.add(i, t, 1);
+			Nut.add(u, t, 1);
+			Ni.add(t, 1);
+			Nu.add(u, 1);
 
 			z.put(u, i, t);
 		}
@@ -123,23 +123,23 @@ public class LDA extends GraphicRecommender {
 		double val = 0;
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
-				val = (userTopicMatrix.get(u, k) + alpha) / (userItemsVector.get(u) + numFactors * alpha);
+				val = (Nut.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
 				thetaSum.add(u, k, val);
 			}
 		}
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
-				val = (itemTopicMatrix.get(i, k) + beta) / (topicItemsVector.get(k) + numItems * beta);
+				val = (Nit.get(i, k) + beta) / (Ni.get(k) + numItems * beta);
 				phiSum.add(k, i, val);
 			}
 		}
-		numstats++;
+		numStats++;
 	}
 	
 	@Override
 	protected void postProbDistr() {
-		theta = thetaSum.scale(1.0 / numstats);
-		phi = phiSum.scale(1.0 / numstats);
+		theta = thetaSum.scale(1.0 / numStats);
+		phi = phiSum.scale(1.0 / numStats);
 	}
 
 	@Override

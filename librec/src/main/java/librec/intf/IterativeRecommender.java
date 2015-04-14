@@ -248,10 +248,10 @@ public abstract class IterativeRecommender extends Recommender {
 
 	protected void saveModel() throws Exception {
 		// make a folder
-		String dirPath = FileIO.makeDirectory("Results", algoName);
+		String dirPath = FileIO.makeDirectory(tempDirPath, algoName);
 
 		// suffix info
-		String suffix = (fold > 0 ? "-" + fold : "") + ".bin";
+		String suffix = foldInfo + ".bin";
 
 		// writing training, test data
 		FileIO.serialize(trainMatrix, dirPath + "trainMatrix" + suffix);
@@ -272,12 +272,12 @@ public abstract class IterativeRecommender extends Recommender {
 
 	protected void loadModel() throws Exception {
 		// make a folder
-		String dirPath = FileIO.makeDirectory("Results", algoName);
+		String dirPath = FileIO.makeDirectory(tempDirPath, algoName);
 
 		Logs.debug("A recommender model is loaded from {}", dirPath);
 
 		// suffix info
-		String suffix = (fold > 0 ? "-" + fold : "") + ".bin";
+		String suffix = foldInfo + ".bin";
 
 		trainMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "trainMatrix" + suffix);
 		testMatrix = (SparseMatrix) FileIO.deserialize(dirPath + "testMatrix" + suffix);
