@@ -15,7 +15,8 @@ LibRec
 * **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
 
 ### Download
-* **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)** (milestone version, [what's new](CHANGES.md))
+* librec-v1.3 (under development, [what's new](CHANGES.md))
+* **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
