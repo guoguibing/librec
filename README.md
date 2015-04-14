@@ -3,8 +3,9 @@ LibRec
 
 **LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. 
 
-**Links:** [Home](http://www.librec.net) | [Getting Started](http://www.librec.net/tutorial.html) | [Examples](http://librec.net/example.html) |  [Datasets](http://www.librec.net/datasets.html) | [Source Code](https://github.com/guoguibing/librec) 
+**Links:** [Home](http://www.librec.net) | [Getting Started](http://www.librec.net/tutorial.html) | [Algorithms](http://www.librec.net/tutorial.html#algos) | [Examples](http://librec.net/example.html) |  [Datasets](http://www.librec.net/datasets.html) | [Source Code](https://github.com/guoguibing/librec) 
 
+![LibRec Structure](http://www.librec.net/css/librec.png)
 
 ### Features
 
@@ -12,15 +13,6 @@ LibRec
 * **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://www.librec.net/example.html).
 * **Easy configuration:** LibRec configs recommenders using a configuration file: [librec.conf](http://www.librec.net/tutorial.html#config). 
 * **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
-
-### Algorithms
-
-* **Baseline**: GlobalAvg, UserAvg, ItemAvg, Random, Constant, MostPop
-* **Rating Prediction**: UserKNN, ItemKNN, RegSVD, PMF, SVD++, BiasedMF, BPMF, SocialMF, TrustMF, SoRec, SoReg, RSTE, TrustSVD;
-* **Item Ranking**: BPR, CLiMF, RankALS, RankSGD, WRMF, SLIM, GBPR, SBPR, WBPR, FISM, LDA; 
-* **Extension**: NMF, SlopeOne, Hybrid, PD, AR, PRankD, External;
-
-The references for all the algorithms are summarized [here](http://www.librec.net/tutorial.html#algos)
 
 ### Download
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)** (milestone version, [what's new](CHANGES.md))
