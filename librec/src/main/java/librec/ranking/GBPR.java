@@ -56,8 +56,8 @@ public class GBPR extends SocialRecommender {
 		itemBias = new DenseVector(numItems);
 		itemBias.init();
 
-		rho = paramOptions.getFloat("-rho");
-		gLen = paramOptions.getInt("-gSize");
+		rho = evalOptions.getFloat("-rho");
+		gLen = evalOptions.getInt("-gSize");
 
 		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
 		itemUsersCache = trainMatrix.columnRowsCache(cacheSpec);

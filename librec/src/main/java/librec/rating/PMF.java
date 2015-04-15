@@ -36,7 +36,7 @@ public class PMF extends IterativeRecommender {
 	public PMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
-		learnRateUpdate = null;
+		lRate = -1;
 	}
 
 	@Override

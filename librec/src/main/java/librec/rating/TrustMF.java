@@ -40,7 +40,7 @@ public class TrustMF extends SocialRecommender {
 	public TrustMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		model = paramOptions.getString("-m");
+		model = evalOptions.getString("-m");
 		algoName = "TrustMF (" + model + ")";
 	}
 

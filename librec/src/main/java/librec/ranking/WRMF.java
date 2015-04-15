@@ -50,7 +50,7 @@ public class WRMF extends IterativeRecommender {
 
 		isRankingPred = true; // item recommendation
 
-		alpha = paramOptions.getFloat("-alpha");
+		alpha = evalOptions.getFloat("-alpha");
 		// checkBinary();
 	}
 

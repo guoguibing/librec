@@ -47,7 +47,7 @@ public abstract class IterativeRecommender extends Recommender {
 	protected static int numIters;
 
 	// whether to adjust learning rate automatically
-	protected static String learnRateUpdate;
+	protected static boolean isBoldDriver;
 	// decay of learning rate
 	protected static float decay;
 	// small value for initialization
@@ -77,11 +77,14 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// initialization
 	static {
-		initLRate = cf.getFloat("val.learn.rate");
-		maxLRate = cf.getFloat("max.learn.rate");
-		momentum = cf.getFloat("val.momentum");
+		LineConfiger lc = cf.getParamOptions("learn.rate");
+		initLRate = Float.parseFloat(lc.getMainParam());
+		maxLRate = lc.getFloat("-max", -1);
+		isBoldDriver = lc.contains("-bold-driver");
+		decay = lc.getFloat("-decay", -1);
+		momentum = lc.getFloat("-momentum", 50);
 
-		regOptions = cf.getParamOptions("val.reg.lambda");
+		regOptions = cf.getParamOptions("reg.lambda");
 		reg = Float.parseFloat(regOptions.getMainParam());
 		regU = regOptions.getFloat("-u", reg);
 		regI = regOptions.getFloat("-i", reg);
@@ -89,10 +92,6 @@ public abstract class IterativeRecommender extends Recommender {
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
-
-		LineConfiger lc = cf.getParamOptions("learn.rate.update");
-		learnRateUpdate = lc.getMainParam();
-		decay = lc.getFloat("-r", -1);
 	}
 
 	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -172,22 +171,13 @@ public abstract class IterativeRecommender extends Recommender {
 	 */
 	protected void updateLRate(int iter) {
 
-		if ((lRate <= 0) || (learnRateUpdate == null))
+		if (lRate <= 0)
 			return;
 
-		switch (learnRateUpdate.toLowerCase()) {
-		case "bold-driver":
-			if (iter > 1)
-				lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
-			break;
-		case "decay":
-			if (decay > 0 && decay < 1)
-				lRate *= decay;
-			break;
-		case "na":
-		default:
-			break;
-		}
+		if (isBoldDriver && iter > 1)
+			lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
+		else if (decay > 0 && decay < 1)
+			lRate *= decay;
 
 		// limit to max-learn-rate after update
 		if (maxLRate > 0 && lRate > maxLRate)
@@ -259,7 +249,7 @@ public abstract class IterativeRecommender extends Recommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, numFactors, numIters,
-				learnRateUpdate }, ",");
+				isBoldDriver }, ",");
 	}
 
 }

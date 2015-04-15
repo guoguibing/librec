@@ -43,7 +43,7 @@ public class RSTE extends SocialRecommender {
 		super(trainMatrix, testMatrix, fold);
 
 		initByNorm = false;
-		alpha = paramOptions.getFloat("-alpha");
+		alpha = evalOptions.getFloat("-alpha");
 	}
 
 	@Override
@@ -182,7 +182,7 @@ public class RSTE extends SocialRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, numFactors, numIters, learnRateUpdate,
+		return Strings.toString(new Object[] { initLRate, maxLRate, regU, regI, numFactors, numIters, isBoldDriver,
 				alpha }, ",");
 	}
 }

@@ -23,6 +23,7 @@ import happy.coding.io.FileIO;
 import happy.coding.io.LineConfiger;
 import happy.coding.io.Lists;
 import happy.coding.io.Logs;
+import happy.coding.io.Strings;
 import happy.coding.math.Measures;
 import happy.coding.math.Randoms;
 import happy.coding.math.Sims;
@@ -76,6 +77,10 @@ public abstract class Recommender implements Runnable {
 
 	// verbose
 	protected static boolean verbose;
+
+	// line configer for item ranking, evaluation
+	protected static LineConfiger rankOptions, evalOptions;
+
 	// is ranking/rating prediction
 	public static boolean isRankingPred;
 	// threshold to binarize ratings
@@ -115,8 +120,6 @@ public abstract class Recommender implements Runnable {
 	protected int fold;
 	// fold information
 	protected String foldInfo;
-
-	protected LineConfiger paramOptions;
 
 	// user-vector cache, item-vector cache
 	protected LoadingCache<Integer, SparseVector> userCache, itemCache;
@@ -169,27 +172,25 @@ public abstract class Recommender implements Runnable {
 			numUsers = rateDao.numUsers();
 			numItems = rateDao.numItems();
 
-			// static initialization, only done once
 			initMean = 0.0;
 			initStd = 0.1;
 
+			verbose = cf.isOn("is.verbose");
+			binThold = cf.getFloat("val.binary.threshold");
 			cacheSpec = cf.getString("guava.cache.spec");
 
-			verbose = cf.isOn("is.verbose");
-			isRankingPred = cf.isOn("is.ranking.pred");
-			binThold = cf.getFloat("val.binary.threshold");
-			isDiverseUsed = cf.isOn("is.diverse.used");
-
-			paramOptions = cf.getParamOptions("evaluation.setup");
-			view = paramOptions.getString("--test-view", "all");
-			validationRatio = paramOptions.getFloat("-v", 0.0f);
-			isResultsOut = paramOptions.isOn("-o", false);
-			isSaveModel = paramOptions.isOn("--save-model", false);
-
-			// -1 to use as many as possible or disable
-			numRecs = cf.getInt("num.reclist.len");
-			numIgnore = cf.getInt("num.ignore.items");
-
+			rankOptions = cf.getParamOptions("item.ranking");
+			isRankingPred = Strings.isOn(rankOptions.getMainParam());
+			isDiverseUsed = rankOptions.contains("-diverse");
+			numRecs = rankOptions.getInt("-topN", -1);
+			numIgnore = rankOptions.getInt("-ignore", -1);
+			
+			evalOptions = cf.getParamOptions("evaluation.setup");
+			view = evalOptions.getString("--test-view", "all");
+			validationRatio = evalOptions.getFloat("-v", 0.0f);
+			isResultsOut = evalOptions.isOn("-o", false);
+			isSaveModel = evalOptions.isOn("--save-model", false);
+			
 			// initial random seed
 			int seed = cf.getInt("num.rand.seed");
 			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
@@ -217,7 +218,7 @@ public abstract class Recommender implements Runnable {
 		// class name as the default algorithm name
 		algoName = this.getClass().getSimpleName();
 		// get parameters of an algorithm
-		paramOptions = getModelParams(algoName);
+		evalOptions = getModelParams(algoName);
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)

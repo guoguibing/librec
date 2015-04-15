@@ -53,8 +53,8 @@ public class SoRec extends SocialRecommender {
 		Z = new DenseMatrix(numUsers, numFactors);
 		Z.init();
 		
-		regC = paramOptions.getFloat("-c");
-		regZ = paramOptions.getFloat("-z");
+		regC = evalOptions.getFloat("-c");
+		regZ = evalOptions.getFloat("-z");
 
 		inDegrees = new HashMap<>();
 		outDegrees = new HashMap<>();

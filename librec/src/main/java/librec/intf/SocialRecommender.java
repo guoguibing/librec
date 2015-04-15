@@ -79,7 +79,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, regS, numFactors, numIters,
-				learnRateUpdate }, ",");
+				isBoldDriver }, ",");
 	}
 
 	@Override
