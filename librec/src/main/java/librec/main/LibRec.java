@@ -103,9 +103,12 @@ public class LibRec {
 	protected static String algorithm;
 
 	protected static double binThold;
+	protected static int[] columns;
 
 	// rate DAO object
 	protected static DataDAO rateDao;
+	// line configer for rating data
+	protected static LineConfiger ratingOptions;
 
 	// rating matrix
 	protected static SparseMatrix rateMatrix;
@@ -126,9 +129,17 @@ public class LibRec {
 			cf = new FileConfiger(configFile);
 
 			// prepare data
-			binThold = cf.getDouble("val.binary.threshold");
 			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-			rateMatrix = rateDao.readData(binThold);
+			
+			ratingOptions = cf.getParamOptions("ratings.setup");
+
+			List<String> cols = ratingOptions.getOptions("-columns");
+			columns = new int[cols.size()];
+			for (int i = 0; i < cols.size(); i++)
+				columns[i] = Integer.parseInt(cols.get(i));
+			binThold = ratingOptions.getDouble("-threshold");
+
+			rateMatrix = rateDao.readData(columns, binThold);
 
 			// config general recommender
 			Recommender.cf = cf;
@@ -296,7 +307,7 @@ public class LibRec {
 			return; //
 		case "test-set":
 			DataDAO testDao = new DataDAO(params.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
-			SparseMatrix testMatrix = testDao.readData(binThold);
+			SparseMatrix testMatrix = testDao.readData(columns, binThold);
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
 			break;
 		case "given-n":
