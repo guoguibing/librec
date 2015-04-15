@@ -28,14 +28,17 @@ public class URP extends GraphicRecommender {
 	}
 
 	/**
-	 * cumulative statistics of {t, i, map{r: count or probability}}
+	 * number of occurrences of entry (t, i, r)
 	 */
 	private int[][][] Ntir;
+
+	/**
+	 * cumulative statistics of probabilities of (t, i, r)
+	 */
 	private double[][][] phiSum;
 
 	/**
 	 * posterior probabilities of parameters phi_{k, i, r}
-	 * 
 	 */
 	protected double[][][] phi;
 
@@ -93,7 +96,6 @@ public class URP extends GraphicRecommender {
 
 			Nut.add(u, t, -1);
 			Nu.add(u, -1);
-			// after updating, it is possible Nki_r does not contains entry (t, i)
 			Ntir[t][i][r]--;
 			Nit.add(i, t, -1);
 
@@ -107,7 +109,7 @@ public class URP extends GraphicRecommender {
 			for (int k = 1; k < p.length; k++) {
 				p[k] += p[k - 1];
 			}
-			// scaled sample because of unnormalised p[], randomly sampled a new topic t
+			// scaled sample because of unnormalized p[], randomly sampled a new topic t
 			double rand = Math.random() * p[numFactors - 1];
 			for (t = 0; t < p.length; t++) {
 				if (rand < p[t])
@@ -120,9 +122,7 @@ public class URP extends GraphicRecommender {
 			// add newly estimated z_i to count variables
 			Nut.add(u, t, 1);
 			Nu.add(u, 1);
-
 			Ntir[t][i][r]++;
-
 			Nit.add(i, t, 1);
 		}
 	}
@@ -178,9 +178,6 @@ public class URP extends GraphicRecommender {
 			int u = me.row();
 			int j = me.column();
 
-			if (!isTestable(u, j))
-				continue;
-
 			double pred = predict(u, j, true);
 			if (Double.isNaN(pred))
 				continue;
@@ -194,8 +191,10 @@ public class URP extends GraphicRecommender {
 		double RMSE = Math.sqrt(sum / numCount);
 		double delta = RMSE - preRMSE;
 
-		Logs.debug("{}{} iter {} achieves RMSE = {}, delta_RMSE = {}", algoName, foldInfo, iter, (float) RMSE,
-				(float) (delta));
+		if (verbose) {
+			Logs.debug("{}{} iter {} achieves RMSE = {}, delta_RMSE = {}", algoName, foldInfo, iter, (float) RMSE,
+					(float) (delta));
+		}
 
 		if (numStats > 1 && delta > 0)
 			return true;

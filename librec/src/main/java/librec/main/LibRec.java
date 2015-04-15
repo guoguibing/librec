@@ -612,7 +612,7 @@ public class LibRec {
 		String readme = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
 
 		/* Description */
-		+ "LibRec is a free software: you can redistribute it and/or modify \n"
+		+ "LibRec is free software: you can redistribute it and/or modify \n"
 				+ "it under the terms of the GNU General Public License as published by \n"
 				+ "the Free Software Foundation, either version 3 of the License, \n"
 				+ "or (at your option) any later version. \n\n"
