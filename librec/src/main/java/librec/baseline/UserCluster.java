@@ -22,6 +22,7 @@ import happy.coding.math.Randoms;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -37,6 +38,7 @@ import librec.intf.IterativeRecommender;
  * @author Guo Guibing
  *
  */
+@Configuration("factors, max.iters")
 public class UserCluster extends IterativeRecommender {
 
 	private DenseMatrix Pkr; // theta

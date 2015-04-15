@@ -18,15 +18,16 @@
 
 package librec.intf;
 
-import java.util.List;
-
-import com.google.common.cache.LoadingCache;
-
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
+
+import java.util.List;
+
 import librec.data.DataDAO;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
+
+import com.google.common.cache.LoadingCache;
 
 /**
  * Recommenders in which social information is used
@@ -53,7 +54,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// initialization
 	static {
 		// to support multiple tests in one time in future
-		regS = cf.getRange("val.reg.social").get(0).floatValue();
+		regS = regOptions.getFloat("-s", reg);
 
 		String socialPath = cf.getPath("dataset.social");
 		Logs.debug("Social dataset: {}", Strings.last(socialPath, 38));
@@ -63,7 +64,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		try {
 			socialMatrix = socialDao.readData();
 			numUsers = socialDao.numUsers();
-			
+
 			//socialCache = socialMatrix.rowCache(cacheSpec);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -78,7 +79,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, regS, numFactors, numIters,
-				isBoldDriver }, ",");
+				learnRateUpdate }, ",");
 	}
 
 	@Override
@@ -108,6 +109,5 @@ public abstract class SocialRecommender extends IterativeRecommender {
 			return true;
 		}
 	}
-
 
 }

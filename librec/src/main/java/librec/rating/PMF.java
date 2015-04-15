@@ -36,10 +36,7 @@ public class PMF extends IterativeRecommender {
 	public PMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
 
-		// disable bold driver
-		isBoldDriver = false;
-
-		// initByNorm = false;
+		learnRateUpdate = null;
 	}
 
 	@Override
@@ -71,7 +68,7 @@ public class PMF extends IterativeRecommender {
 				int u = me.row();
 				int j = me.column();
 				double rate = me.get();
-				
+
 				double pred = predict(u, j);
 				double euj = rate - pred;
 				loss += euj * euj;

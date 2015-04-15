@@ -19,6 +19,7 @@
 package librec.intf;
 
 import happy.coding.io.FileIO;
+import happy.coding.io.LineConfiger;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import librec.data.DenseMatrix;
@@ -36,17 +37,17 @@ public abstract class IterativeRecommender extends Recommender {
 	/************************************ Static parameters for all recommenders ***********************************/
 	// init, maximum learning rate, momentum
 	protected static float initLRate, maxLRate, momentum;
+	// line configer for regularization parameters
+	protected static LineConfiger regOptions;
 	// user, item and bias regularization
-	protected static float regU, regI, regB;
+	protected static float regU, regI, regB, reg;
 	// number of factors
 	protected static int numFactors;
 	// number of iterations
 	protected static int numIters;
 
 	// whether to adjust learning rate automatically
-	protected static boolean isBoldDriver;
-	// whether to undo last weight changes if negative loss observed when bold driving
-	protected static boolean isUndoEnabled;
+	protected static String learnRateUpdate;
 	// decay of learning rate
 	protected static float decay;
 	// small value for initialization
@@ -54,15 +55,15 @@ public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
-	protected DenseMatrix P, last_P;
+	protected DenseMatrix P;
 
 	// factorized item-factor matrix
-	protected DenseMatrix Q, last_Q;
+	protected DenseMatrix Q;
 
 	// user biases
-	protected DenseVector userBias, last_UB;
+	protected DenseVector userBias;
 	// item biases
-	protected DenseVector itemBias, last_IB;
+	protected DenseVector itemBias;
 
 	// adaptive learn rate
 	protected double lRate;
@@ -80,18 +81,18 @@ public abstract class IterativeRecommender extends Recommender {
 		maxLRate = cf.getFloat("max.learn.rate");
 		momentum = cf.getFloat("val.momentum");
 
-		// to support multiple tests in one time in future
-		regU = cf.getRange("val.reg.user").get(0).floatValue();
-		regI = cf.getRange("val.reg.item").get(0).floatValue();
-		regB = cf.getRange("val.reg.bias").get(0).floatValue();
+		regOptions = cf.getParamOptions("val.reg.lambda");
+		reg = Float.parseFloat(regOptions.getMainParam());
+		regU = regOptions.getFloat("-u", reg);
+		regI = regOptions.getFloat("-i", reg);
+		regB = regOptions.getFloat("-b", reg);
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
 
-		isBoldDriver = cf.isOn("is.bold.driver");
-		isUndoEnabled = cf.isOn("is.undo.change");
-
-		decay = cf.getFloat("val.decay.rate");
+		LineConfiger lc = cf.getParamOptions("learn.rate.update");
+		learnRateUpdate = lc.getMainParam();
+		decay = lc.getFloat("-r", -1);
 	}
 
 	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -134,8 +135,8 @@ public abstract class IterativeRecommender extends Recommender {
 							(float) (Math.abs(last_loss) - Math.abs(loss)), learnRate });
 		}
 
-		if (!(isBoldDriver && isUndoEnabled) && (Double.isNaN(loss) || Double.isInfinite(loss))) {
-			Logs.error("Loss = NaN or Infinity: current settings cannot train the recommender! Try other settings instead!");
+		if (Double.isNaN(loss) || Double.isInfinite(loss)) {
+			Logs.error("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
 			System.exit(-1);
 		}
 
@@ -145,7 +146,7 @@ public abstract class IterativeRecommender extends Recommender {
 		boolean converged = cond1 || cond2;
 
 		// if not converged, update learning rate
-		if (!converged && lRate > 0)
+		if (!converged)
 			updateLRate(iter);
 
 		last_loss = loss;
@@ -170,63 +171,27 @@ public abstract class IterativeRecommender extends Recommender {
 	 *            the current iteration
 	 */
 	protected void updateLRate(int iter) {
-		if (isBoldDriver && last_loss != 0.0) {
-			if (Math.abs(last_loss) > Math.abs(loss)) {
-				lRate *= 1.05;
 
-				// update last weight changes
-				if (isUndoEnabled)
-					updates();
-			} else {
-				lRate *= 0.5;
+		if ((lRate <= 0) || (learnRateUpdate == null))
+			return;
 
-				if (isUndoEnabled) {
-					// undo last weight changes
-					undos(iter);
-					// do not update last loss and errors, since we discard
-					// current loss and errors
-					return;
-				}
-			}
-		} else if (decay > 0 && decay < 1)
-			lRate *= decay;
-		else if (decay == 0)
-			lRate = initLRate / (1 + initLRate * ((regU + regI) / 2.0) * iter);
+		switch (learnRateUpdate.toLowerCase()) {
+		case "bold-driver":
+			if (iter > 1)
+				lRate = Math.abs(last_loss) > Math.abs(loss) ? lRate * 1.05 : lRate * 0.5;
+			break;
+		case "decay":
+			if (decay > 0 && decay < 1)
+				lRate *= decay;
+			break;
+		case "na":
+		default:
+			break;
+		}
 
 		// limit to max-learn-rate after update
 		if (maxLRate > 0 && lRate > maxLRate)
 			lRate = maxLRate;
-	}
-
-	/**
-	 * updates last weights
-	 */
-	protected void updates() {
-		if (P != null)
-			last_P = P.clone();
-		if (Q != null)
-			last_Q = Q.clone();
-		if (userBias != null)
-			last_UB = userBias.clone();
-		if (itemBias != null)
-			last_IB = itemBias.clone();
-	}
-
-	/**
-	 * undo last weight changes
-	 */
-	protected void undos(int iter) {
-		Logs.debug("{}{} iter {}: undo last weight changes and sharply decrease the learning rate !", algoName,
-				foldInfo, iter);
-
-		if (last_P != null)
-			P = last_P.clone();
-		if (last_Q != null)
-			Q = last_Q.clone();
-		if (last_UB != null)
-			userBias = last_UB.clone();
-		if (last_IB != null)
-			itemBias = last_IB.clone();
 	}
 
 	@Override
@@ -294,7 +259,7 @@ public abstract class IterativeRecommender extends Recommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, numFactors, numIters,
-				isBoldDriver }, ",");
+				learnRateUpdate }, ",");
 	}
 
 }

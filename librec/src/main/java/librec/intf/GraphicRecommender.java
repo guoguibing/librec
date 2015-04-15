@@ -1,5 +1,6 @@
 package librec.intf;
 
+import happy.coding.io.LineConfiger;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import librec.data.Configuration;
@@ -17,6 +18,11 @@ import com.google.common.collect.Table;
  */
 @Configuration("factors, alpha, beta, iters, burn.in, sample.lag")
 public class GraphicRecommender extends Recommender {
+
+	/**
+	 * line configer for general probabilistic graphic models
+	 */
+	protected static LineConfiger pgm;
 
 	/**
 	 * number of topics
@@ -96,14 +102,15 @@ public class GraphicRecommender extends Recommender {
 	protected int numStats = 0;
 
 	static {
-		burnIn = cf.getInt("num.burn.in");
-		sampleLag = cf.getInt("num.sample.lag");
+
+		pgm = cf.getParamOptions("pgm.setup");
+		burnIn = pgm.getInt("-burn-in");
+		sampleLag = pgm.getInt("-sample-lag");
+		alpha = pgm.getDouble("-alpha");
+		beta = pgm.getDouble("-beta");
 
 		assert burnIn > 0;
 		assert sampleLag > 0;
-
-		alpha = cf.getDouble("val.init.alpha");
-		beta = cf.getDouble("val.init.beta");
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
