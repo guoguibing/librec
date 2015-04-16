@@ -55,7 +55,7 @@ public class Hybrid extends Recommender {
 		algoName = "Hybrid (HeatS+ProbS)";
 		isRankingPred = true;
 
-		lambda = evalOptions.getFloat("-lambda");
+		lambda = algoOptions.getFloat("-lambda");
 	}
 
 	@Override

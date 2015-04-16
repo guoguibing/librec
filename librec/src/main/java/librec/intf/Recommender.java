@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import librec.data.AddConfiguration;
 import librec.data.Configuration;
 import librec.data.DataDAO;
 import librec.data.DataSplitter;
@@ -79,7 +80,7 @@ public abstract class Recommender implements Runnable {
 	protected static boolean verbose;
 
 	// line configer for item ranking, evaluation
-	protected static LineConfiger rankOptions, evalOptions;
+	protected static LineConfiger rankOptions, algoOptions;
 
 	// is ranking/rating prediction
 	public static boolean isRankingPred;
@@ -176,7 +177,6 @@ public abstract class Recommender implements Runnable {
 			initStd = 0.1;
 
 			verbose = cf.isOn("is.verbose");
-			binThold = cf.getFloat("val.binary.threshold");
 			cacheSpec = cf.getString("guava.cache.spec");
 
 			rankOptions = cf.getParamOptions("item.ranking");
@@ -184,13 +184,13 @@ public abstract class Recommender implements Runnable {
 			isDiverseUsed = rankOptions.contains("-diverse");
 			numRecs = rankOptions.getInt("-topN", -1);
 			numIgnore = rankOptions.getInt("-ignore", -1);
-			
-			evalOptions = cf.getParamOptions("evaluation.setup");
+
+			LineConfiger evalOptions = cf.getParamOptions("evaluation.setup");
 			view = evalOptions.getString("--test-view", "all");
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isResultsOut = evalOptions.isOn("-o", false);
 			isSaveModel = evalOptions.isOn("--save-model", false);
-			
+
 			// initial random seed
 			int seed = cf.getInt("num.rand.seed");
 			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
@@ -218,7 +218,7 @@ public abstract class Recommender implements Runnable {
 		// class name as the default algorithm name
 		algoName = this.getClass().getSimpleName();
 		// get parameters of an algorithm
-		evalOptions = getModelParams(algoName);
+		algoOptions = getModelParams(algoName);
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
@@ -249,7 +249,14 @@ public abstract class Recommender implements Runnable {
 
 			// print out algorithm's settings: to indicate starting building models
 			String algoInfo = toString();
-			String algoConfig = this.getClass().getAnnotation(Configuration.class).value();
+
+			Class<? extends Recommender> cl = this.getClass();
+			String algoConfig = cl.getAnnotation(Configuration.class).value(); // basic annotation
+			// additional algorithm-specific configuration
+			if (cl.isAnnotationPresent(AddConfiguration.class)) {
+				algoConfig += ", " + cl.getAnnotation(AddConfiguration.class).value();
+			}
+
 			if (!algoInfo.isEmpty()) {
 				if (!algoConfig.isEmpty())
 					Logs.debug("{}: [{}] = [{}]", algoName, algoConfig, algoInfo);

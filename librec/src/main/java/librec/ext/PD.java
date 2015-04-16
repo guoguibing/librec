@@ -57,7 +57,7 @@ public class PD extends Recommender {
 	@Override
 	protected void initModel() throws Exception {
 		prior = 1.0 / numUsers;
-		sigma = evalOptions.getFloat("-sigma");
+		sigma = algoOptions.getFloat("-sigma");
 	}
 
 	@Override

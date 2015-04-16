@@ -59,7 +59,7 @@ public class RankALS extends IterativeRecommender {
 	protected void initModel() throws Exception {
 		super.initModel();
 
-		isSupportWeight = evalOptions.isOn("-sw");
+		isSupportWeight = algoOptions.isOn("-sw");
 
 		s = new DenseVector(numItems);
 		sum_s = 0;

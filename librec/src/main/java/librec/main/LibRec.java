@@ -55,6 +55,7 @@ import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
 import librec.ranking.BPR;
+import librec.ranking.BUCM;
 import librec.ranking.CLiMF;
 import librec.ranking.FISMauc;
 import librec.ranking.FISMrmse;
@@ -102,7 +103,7 @@ public class LibRec {
 	protected static String configFile = "librec.conf";
 	protected static String algorithm;
 
-	protected static double binThold;
+	protected static float binThold;
 	protected static int[] columns;
 
 	// rate DAO object
@@ -137,7 +138,7 @@ public class LibRec {
 			columns = new int[cols.size()];
 			for (int i = 0; i < cols.size(); i++)
 				columns[i] = Integer.parseInt(cols.get(i));
-			binThold = ratingOptions.getDouble("-threshold");
+			binThold = ratingOptions.getFloat("-threshold");
 
 			rateMatrix = rateDao.readData(columns, binThold);
 
@@ -145,6 +146,7 @@ public class LibRec {
 			Recommender.cf = cf;
 			Recommender.rateMatrix = rateMatrix;
 			Recommender.rateDao = rateDao;
+			Recommender.binThold = binThold;
 
 			// run algorithms
 			runAlgorithm();
@@ -519,6 +521,10 @@ public class LibRec {
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
+		
+		/* under development */
+		case "bucm":
+			return new BUCM(trainMatrix, testMatrix, fold);
 
 		/* baselines */
 		case "globalavg":

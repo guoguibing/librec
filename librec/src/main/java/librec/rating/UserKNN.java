@@ -37,7 +37,7 @@ import librec.intf.Recommender;
  * 
  * <p>
  * It supports both recommendation tasks: (1) rating prediction; and (2) item ranking (by configuring
- * {@code isRankingPred=on} in the librec.conf). For item ranking, the returned score is the summation of the
+ * {@code item.ranking=on} in the librec.conf). For item ranking, the returned score is the summation of the
  * similarities of nearest neighbors.
  * </p>
  * 

@@ -49,9 +49,9 @@ public class LDA extends GraphicRecommender {
 		phiSum = new DenseMatrix(numFactors, numItems);
 
 		// initialize count variables.
-		Nit = new DenseMatrix(numItems, numFactors);
-		Nut = new DenseMatrix(numUsers, numFactors);
-		Ni = new DenseVector(numFactors);
+		Nik = new DenseMatrix(numItems, numFactors);
+		Nuk = new DenseMatrix(numUsers, numFactors);
+		Nk = new DenseVector(numFactors);
 		Nu = new DenseVector(numUsers);
 
 		// The z_u,i are initialized to values in [0, K-1] to determine the initial state of the Markov chain.
@@ -64,11 +64,11 @@ public class LDA extends GraphicRecommender {
 				// assign a topic t to pair (u, i)
 				z.put(u, i, t);
 				// number of instances of item i assigned to topic t
-				Nit.add(i, t, 1);
+				Nik.add(i, t, 1);
 				// number of items of user u assigned to topic t.
-				Nut.add(u, t, 1);
+				Nuk.add(u, t, 1);
 				// total number of words assigned to topic t.
-				Ni.add(t, 1);
+				Nk.add(t, 1);
 			}
 			// total number of items of user u
 			Nu.set(u, Ru.size());
@@ -84,16 +84,16 @@ public class LDA extends GraphicRecommender {
 			int i = entry.getColumnKey();
 			int t = entry.getValue(); // topic
 
-			Nit.add(i, t, -1);
-			Nut.add(u, t, -1);
-			Ni.add(t, -1);
+			Nik.add(i, t, -1);
+			Nuk.add(u, t, -1);
+			Nk.add(t, -1);
 			Nu.add(u, -1);
 
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nit.get(i, k) + beta) / (Ni.get(k) + numItems * beta)
-						* (Nut.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				p[k] = (Nik.get(i, k) + beta) / (Nk.get(k) + numItems * beta)
+						* (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
 			}
 			// cumulating multinomial parameters
 			for (int k = 1; k < p.length; k++) {
@@ -107,9 +107,9 @@ public class LDA extends GraphicRecommender {
 			}
 
 			// add newly estimated z_i to count variables
-			Nit.add(i, t, 1);
-			Nut.add(u, t, 1);
-			Ni.add(t, 1);
+			Nik.add(i, t, 1);
+			Nuk.add(u, t, 1);
+			Nk.add(t, 1);
 			Nu.add(u, 1);
 
 			z.put(u, i, t);
@@ -123,13 +123,13 @@ public class LDA extends GraphicRecommender {
 		double val = 0;
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
-				val = (Nut.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				val = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
 				thetaSum.add(u, k, val);
 			}
 		}
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
-				val = (Nit.get(i, k) + beta) / (Ni.get(k) + numItems * beta);
+				val = (Nik.get(i, k) + beta) / (Nk.get(k) + numItems * beta);
 				phiSum.add(k, i, val);
 			}
 		}

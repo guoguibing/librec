@@ -1,6 +1,7 @@
-package librec.rating;
+package librec.ranking;
 
 import happy.coding.io.Logs;
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -10,51 +11,55 @@ import librec.intf.GraphicRecommender;
 import com.google.common.collect.HashBasedTable;
 
 /**
- * User Rating Profile: a LDA model for rating prediction. <br>
- * 
- * Benjamin Marlin, <strong>Modeling user rating profiles for collaborative filtering</strong>, NIPS 2003.<br>
- * 
- * Nicola Barbieri, <strong>Regularized gibbs sampling for user profiling with soft constraints</strong>, ASONAM 2011.
+ * Bayesian UCM: Nicola Barbieri et al., <strong>Modeling Item Selection and Relevance for Accurate Recommendations: a
+ * Bayesian Approach</strong>, RecSys 2011.
  * 
  * @author Guo Guibing
  *
  */
-public class URP extends GraphicRecommender {
+@AddConfiguration("gamma")
+public class BUCM extends GraphicRecommender {
 
 	private double preRMSE;
+	private float gamma;
 
-	public URP(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public BUCM(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 	}
 
 	/**
 	 * number of occurrences of entry (t, i, r)
 	 */
-	private int[][][] Ntir;
+	private int[][][] Nkir;
 
 	/**
 	 * cumulative statistics of probabilities of (t, i, r)
 	 */
-	private double[][][] phiSum;
+	private double[][][] epsilonSum;
 
 	/**
-	 * posterior probabilities of parameters phi_{k, i, r}
+	 * posterior probabilities of parameters epsilon_{k, i, r}
 	 */
-	protected double[][][] phi;
+	protected double[][][] epsilon;
 
 	@Override
 	protected void initModel() throws Exception {
 
 		// cumulative parameters
 		thetaSum = new DenseMatrix(numUsers, numFactors);
-		phiSum = new double[numFactors][numItems][numLevels];
+		phiSum = new DenseMatrix(numItems, numFactors);
+		epsilonSum = new double[numFactors][numItems][numLevels];
 
 		// initialize count variables
 		Nuk = new DenseMatrix(numUsers, numFactors);
 		Nu = new DenseVector(numUsers);
 
-		Ntir = new int[numFactors][numItems][numLevels];
 		Nik = new DenseMatrix(numItems, numFactors);
+		Nk = new DenseVector(numFactors);
+
+		Nkir = new int[numFactors][numItems][numLevels];
+
+		gamma = algoOptions.getFloat("-gamma");
 
 		// initialize topics
 		z = HashBasedTable.create();
@@ -69,15 +74,14 @@ public class URP extends GraphicRecommender {
 
 			// assign a topic t to pair (u, i)
 			z.put(u, i, t);
-			// number of pairs (u, t) in (u, i, t)
+			// for users
 			Nuk.add(u, t, 1);
-			// total number of items of user u
 			Nu.add(u, 1);
-
-			// number of pairs (t, i, r)
-			Ntir[t][i][r]++;
-			// total number of words assigned to topic t
+			// for items
 			Nik.add(i, t, 1);
+			Nk.add(t, 1);
+			// for ratings
+			Nkir[t][i][r]++;
 		}
 
 	}
@@ -96,14 +100,22 @@ public class URP extends GraphicRecommender {
 
 			Nuk.add(u, t, -1);
 			Nu.add(u, -1);
-			Ntir[t][i][r]--;
 			Nik.add(i, t, -1);
+			Nk.add(t, -1);
+			Nkir[t][i][r]--;
 
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
+			double v1, v2, v3;
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha) * (Ntir[k][i][r] + beta)
-						/ (Nik.get(i, k) + numLevels * beta);
+
+				v1 = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+
+				v2 = (Nik.get(i, k) + beta) / (Nk.get(t) + numItems * beta);
+
+				v3 = (Nkir[k][i][r] + gamma) / (Nik.get(i, t) + numLevels * gamma);
+
+				p[k] = v1 * v2 * v3;
 			}
 			// cumulate multinomial parameters
 			for (int k = 1; k < p.length; k++) {
@@ -122,8 +134,9 @@ public class URP extends GraphicRecommender {
 			// add newly estimated z_i to count variables
 			Nuk.add(u, t, 1);
 			Nu.add(u, 1);
-			Ntir[t][i][r]++;
 			Nik.add(i, t, 1);
+			Nk.add(t, 1);
+			Nkir[t][i][r]++;
 		}
 	}
 
@@ -135,11 +148,19 @@ public class URP extends GraphicRecommender {
 				thetaSum.add(u, k, val);
 			}
 		}
+
+		for (int i = 0; i < numItems; i++) {
+			for (int k = 0; k < numFactors; k++) {
+				val = (Nik.get(i, k) + beta) / (Nk.get(k) + numItems * beta);
+				phiSum.add(i, k, val);
+			}
+		}
+
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					val = (Ntir[k][i][r] + beta) / (Nik.get(i, k) + numLevels * beta);
-					phiSum[k][i][r] += val;
+					val = (Nkir[k][i][r] + gamma) / (Nik.get(i, k) + numLevels * gamma);
+					epsilonSum[k][i][r] += val;
 				}
 			}
 		}
@@ -149,12 +170,13 @@ public class URP extends GraphicRecommender {
 	@Override
 	protected void postProbDistr() {
 		theta = thetaSum.scale(1.0 / numStats);
+		phi = phiSum.scale(1.0 / numStats);
 
-		phi = new double[numFactors][numItems][numLevels];
+		epsilon = new double[numFactors][numItems][numLevels];
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					phi[k][i][r] = phiSum[k][i][r] / numStats;
+					epsilon[k][i][r] = epsilonSum[k][i][r] / numStats;
 				}
 			}
 		}
@@ -212,12 +234,37 @@ public class URP extends GraphicRecommender {
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
-				prob += theta.get(u, k) * phi[k][i][r];
+				prob += theta.get(u, k) * epsilon[k][i][r];
 			}
 
 			pred += prob * rate;
 		}
 
 		return pred;
+	}
+
+	@Override
+	protected double ranking(int u, int j) throws Exception {
+		double rank = 0;
+
+		for (int k = 0; k < numFactors; k++) {
+
+			double sum = 0;
+			for (int r = 0; r < numLevels; r++) {
+				double rate = (r + 1) * minRate;
+				if (rate > globalMean) {
+					sum += epsilon[k][j][r];
+				}
+			}
+
+			rank += theta.get(u, k) * phi.get(j, k) * sum;
+		}
+
+		return rank;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + ", " + gamma;
 	}
 }

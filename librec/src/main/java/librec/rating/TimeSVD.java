@@ -104,9 +104,9 @@ public class TimeSVD extends ContextRecommender {
 
 		algoName = "timeSVD++";
 
-		evalOptions = cf.getParamOptions("timeSVD++");
-		beta = evalOptions.getFloat("-beta");
-		numBins = evalOptions.getInt("-bins");
+		algoOptions = cf.getParamOptions("timeSVD++");
+		beta = algoOptions.getFloat("-beta");
+		numBins = algoOptions.getInt("-bins");
 	}
 
 	@Override

@@ -16,7 +16,7 @@ import com.google.common.collect.Table;
  * @author guoguibing
  * 
  */
-@Configuration("factors, alpha, beta, iters, burn.in, sample.lag")
+@Configuration("factors, iters, burn.in, sample.lag, alpha, beta")
 public class GraphicRecommender extends Recommender {
 
 	/**
@@ -68,17 +68,17 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * entry[i,t]: number of instances of item i assigned to topic t.
 	 */
-	protected DenseMatrix Nit;
+	protected DenseMatrix Nik;
 
 	/**
 	 * entry[u,t]: number of items of user u assigned to topic t.
 	 */
-	protected DenseMatrix Nut;
+	protected DenseMatrix Nuk;
 
 	/**
 	 * entry[t]: total number of items assigned to topic t.
 	 */
-	protected DenseVector Ni;
+	protected DenseVector Nk;
 
 	/**
 	 * entry[u]: total number of items rated by user u.
@@ -108,13 +108,13 @@ public class GraphicRecommender extends Recommender {
 		sampleLag = pgm.getInt("-sample-lag");
 		alpha = pgm.getDouble("-alpha");
 		beta = pgm.getDouble("-beta");
+		numIntervals = pgm.getInt("-interval");
 
 		assert burnIn > 0;
 		assert sampleLag > 0;
 
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
-		numIntervals = cf.getInt("num.verbose.interval");
 	}
 
 	public GraphicRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -176,7 +176,7 @@ public class GraphicRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, alpha, beta, numIters, burnIn, sampleLag }, ", ");
+		return Strings.toString(new Object[] { numFactors, numIters, burnIn, sampleLag, alpha, beta }, ", ");
 	}
 
 }

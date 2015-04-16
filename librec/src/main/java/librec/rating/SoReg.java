@@ -56,7 +56,7 @@ public class SoReg extends SocialRecommender {
 		super.initModel();
 
 		userCorrs = HashBasedTable.create();
-		beta = evalOptions.getFloat("-beta");
+		beta = algoOptions.getFloat("-beta");
 	}
 
 	/**
