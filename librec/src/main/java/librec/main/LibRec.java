@@ -290,7 +290,7 @@ public class LibRec {
 		LineConfiger params = new LineConfiger(setup);
 
 		// debug information
-		Logs.debug("With Setup: {}", setup);
+		Logs.info("With Setup: {}", setup);
 
 		Recommender algo = null;
 
