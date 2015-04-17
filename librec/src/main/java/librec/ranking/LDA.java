@@ -17,15 +17,14 @@
 //
 package librec.ranking;
 
-import java.util.List;
-
+import static happy.coding.math.Gamma.digamma;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
+import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.GraphicRecommender;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table.Cell;
 
 /**
  * Latent Dirichlet Allocation for implicit feedback: Tom Griffiths, <strong>Gibbs sampling in the generative model of
@@ -38,7 +37,7 @@ public class LDA extends GraphicRecommender {
 
 	public LDA(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-		
+
 		isRankingPred = true;
 	}
 
@@ -54,35 +53,43 @@ public class LDA extends GraphicRecommender {
 		Nk = new DenseVector(numFactors);
 		Nu = new DenseVector(numUsers);
 
+		alpha = new DenseVector(numFactors);
+		alpha.setAll(initAlpha);
+
+		beta = new DenseVector(numItems);
+		beta.setAll(initBeta);
+
 		// The z_u,i are initialized to values in [0, K-1] to determine the initial state of the Markov chain.
 		z = HashBasedTable.create();
-		for (int u = 0; u < numUsers; u++) {
-			List<Integer> Ru = trainMatrix.getColumns(u);
-			for (int i : Ru) {
-				int t = (int) (Math.random() * numFactors); // 0 ~ k-1
+		for (MatrixEntry me : trainMatrix) {
+			int u = me.row();
+			int i = me.column();
+			int t = (int) (Math.random() * numFactors); // 0 ~ k-1
 
-				// assign a topic t to pair (u, i)
-				z.put(u, i, t);
-				// number of instances of item i assigned to topic t
-				Nik.add(i, t, 1);
-				// number of items of user u assigned to topic t.
-				Nuk.add(u, t, 1);
-				// total number of words assigned to topic t.
-				Nk.add(t, 1);
-			}
+			// assign a topic t to pair (u, i)
+			z.put(u, i, t);
+
+			// number of items of user u assigned to topic t.
+			Nuk.add(u, t, 1);
 			// total number of items of user u
-			Nu.set(u, Ru.size());
+			Nu.add(u, 1);
+			// number of instances of item i assigned to topic t
+			Nik.add(i, t, 1);
+			// total number of words assigned to topic t.
+			Nk.add(t, 1);
 		}
-
 	}
-	
+
 	protected void inferParams() {
 
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+
 		// Gibbs sampling from full conditional distribution
-		for (Cell<Integer, Integer, Integer> entry : z.cellSet()) {
-			int u = entry.getRowKey();
-			int i = entry.getColumnKey();
-			int t = entry.getValue(); // topic
+		for (MatrixEntry me : trainMatrix) {
+			int u = me.row();
+			int i = me.column();
+			int t = z.get(u, i); // topic
 
 			Nik.add(i, t, -1);
 			Nuk.add(u, t, -1);
@@ -92,8 +99,8 @@ public class LDA extends GraphicRecommender {
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nik.get(i, k) + beta) / (Nk.get(k) + numItems * beta)
-						* (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Nik.get(i, k) + beta.get(i))
+						/ (Nk.get(k) + sumBeta);
 			}
 			// cumulating multinomial parameters
 			for (int k = 1; k < p.length; k++) {
@@ -114,28 +121,66 @@ public class LDA extends GraphicRecommender {
 
 			z.put(u, i, t);
 		}
+
+	}
+
+	@Override
+	protected void updateHyperParams() {
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+		double ak, bi;
+
+		// update alpha vector
+		for (int k = 0; k < numFactors; k++) {
+
+			ak = alpha.get(k);
+			double numerator = 0, denominator = 0;
+			for (int u = 0; u < numUsers; u++) {
+				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
+				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
+			}
+			if (numerator != 0)
+				alpha.set(k, ak * (numerator / denominator));
+		}
+
+		// update beta_k
+		for (int i = 0; i < numItems; i++) {
+
+			bi = beta.get(i);
+			double numerator = 0, denominator = 0;
+			for (int k = 0; k < numFactors; k++) {
+				numerator += digamma(Nik.get(i, k) + bi) - digamma(bi);
+				denominator += digamma(Nk.get(k) + sumBeta) - digamma(sumBeta);
+			}
+			if (numerator != 0)
+				beta.set(i, bi * (numerator / denominator));
+		}
 	}
 
 	/**
 	 * Add to the statistics the values of theta and phi for the current state.
 	 */
 	protected void readoutParams() {
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+
 		double val = 0;
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
-				val = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				val = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
 				thetaSum.add(u, k, val);
 			}
 		}
+
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
-				val = (Nik.get(i, k) + beta) / (Nk.get(k) + numItems * beta);
+				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
 				phiSum.add(k, i, val);
 			}
 		}
 		numStats++;
 	}
-	
+
 	@Override
 	protected void postProbDistr() {
 		theta = thetaSum.scale(1.0 / numStats);

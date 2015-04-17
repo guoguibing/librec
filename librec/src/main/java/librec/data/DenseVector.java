@@ -132,12 +132,27 @@ public class DenseVector implements Serializable {
 	public double mean() {
 		return Stats.mean(data);
 	}
+	
+	/**
+	 * @return summation of entries
+	 */
+	public double sum(){
+		return Stats.sum(data);
+	}
 
 	/**
 	 * Set a value to entry [index]
 	 */
 	public void set(int idx, double val) {
 		data[idx] = val;
+	}
+
+	/**
+	 * Set a value to all entries
+	 */
+	public void setAll(double val) {
+		for (int i = 0; i < size; i++)
+			data[i] = val;
 	}
 
 	/**

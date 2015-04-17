@@ -1,5 +1,6 @@
 package librec.rating;
 
+import static happy.coding.math.Gamma.digamma;
 import happy.coding.io.Logs;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -56,6 +57,12 @@ public class URP extends GraphicRecommender {
 		Ntir = new int[numFactors][numItems][numLevels];
 		Nik = new DenseMatrix(numItems, numFactors);
 
+		alpha = new DenseVector(numFactors);
+		alpha.setAll(initAlpha);
+
+		beta = new DenseVector(numLevels);
+		beta.setAll(initBeta);
+
 		// initialize topics
 		z = HashBasedTable.create();
 		for (MatrixEntry me : trainMatrix) {
@@ -85,6 +92,9 @@ public class URP extends GraphicRecommender {
 	@Override
 	protected void inferParams() {
 
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+
 		// collapse Gibbs sampling
 		for (MatrixEntry me : trainMatrix) {
 			int u = me.row();
@@ -102,8 +112,7 @@ public class URP extends GraphicRecommender {
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha) * (Ntir[k][i][r] + beta)
-						/ (Nik.get(i, k) + numLevels * beta);
+				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Ntir[k][i][r] + beta.get(r)) / (Nik.get(i, k) + sumBeta);
 			}
 			// cumulate multinomial parameters
 			for (int k = 1; k < p.length; k++) {
@@ -127,18 +136,61 @@ public class URP extends GraphicRecommender {
 		}
 	}
 
+	/**
+	 * Thomas P. Minka, Estimating a Dirichlet distribution, see Eq.(55)
+	 */
+	@Override
+	protected void updateHyperParams() {
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+		double ak, br;
+
+		// update alpha vector
+		for (int k = 0; k < numFactors; k++) {
+
+			ak = alpha.get(k);
+			double numerator = 0, denominator = 0;
+			for (int u = 0; u < numUsers; u++) {
+				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
+				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
+			}
+			alpha.set(k, ak * (numerator / denominator));
+		}
+
+		// update beta_k
+		for (int r = 0; r < numLevels; r++) {
+			br = beta.get(r);
+			double numerator = 0, denominator = 0;
+			for (int i = 0; i < numItems; i++) {
+				for (int k = 0; k < numFactors; k++) {
+					numerator += digamma(Ntir[k][i][r] + br) - digamma(br);
+					denominator += digamma(Nik.get(i, k) + sumBeta) - digamma(sumBeta);
+				}
+			}
+			beta.set(r, br * (numerator / denominator));
+		}
+
+	}
+
 	protected void readoutParams() {
 		double val = 0;
+		double ak = 0, br = 0;
+		double sumAlpha = alpha.sum();
+
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
-				val = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				ak = alpha.get(k);
+				val = (Nuk.get(u, k) + ak) / (Nu.get(u) + sumAlpha);
 				thetaSum.add(u, k, val);
 			}
 		}
+
+		double sumBeta = beta.sum();
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					val = (Ntir[k][i][r] + beta) / (Nik.get(i, k) + numLevels * beta);
+					br = beta.get(r);
+					val = (Ntir[k][i][r] + br) / (Nik.get(i, k) + sumBeta);
 					phiSum[k][i][r] += val;
 				}
 			}

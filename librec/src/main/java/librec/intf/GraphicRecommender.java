@@ -32,12 +32,12 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * Dirichlet hyper-parameters of user-topic distribution: typical value is 50/K
 	 */
-	protected static double alpha;
+	protected static double initAlpha;
 
 	/**
 	 * Dirichlet hyper-parameters of topic-item distribution, typical value is 0.01
 	 */
-	protected static double beta;
+	protected static double initBeta;
 	/**
 	 * burn-in period
 	 */
@@ -84,6 +84,16 @@ public class GraphicRecommender extends Recommender {
 	 * entry[u]: total number of items rated by user u.
 	 */
 	protected DenseVector Nu;
+	
+	/**
+	 * entry[i]: total number of users having rated item i.
+	 */
+	protected DenseVector Ni;
+
+	/**
+	 * vector of hyperparameters for alpha and beta
+	 */
+	protected DenseVector alpha, beta;
 
 	/**
 	 * cumulative statistics of theta, phi
@@ -106,8 +116,8 @@ public class GraphicRecommender extends Recommender {
 		pgm = cf.getParamOptions("pgm.setup");
 		burnIn = pgm.getInt("-burn-in");
 		sampleLag = pgm.getInt("-sample-lag");
-		alpha = pgm.getDouble("-alpha");
-		beta = pgm.getDouble("-beta");
+		initAlpha = pgm.getDouble("-alpha");
+		initBeta = pgm.getDouble("-beta");
 		numIntervals = pgm.getInt("-interval");
 
 		assert burnIn > 0;
@@ -128,6 +138,9 @@ public class GraphicRecommender extends Recommender {
 
 			// infer parameters
 			inferParams();
+			
+			// update hyper-parameters
+			updateHyperParams();
 
 			// get statistics after burn-in
 			if ((iter > burnIn) && (iter % sampleLag == 0)) {
@@ -144,6 +157,12 @@ public class GraphicRecommender extends Recommender {
 		// retrieve posterior probability distributions
 		postProbDistr();
 
+	}
+
+	/**
+	 * update the hyper-parameters
+	 */
+	protected void updateHyperParams() {
 	}
 
 	/**
@@ -176,7 +195,7 @@ public class GraphicRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, numIters, burnIn, sampleLag, alpha, beta }, ", ");
+		return Strings.toString(new Object[] { numFactors, numIters, burnIn, sampleLag, initAlpha, initBeta }, ", ");
 	}
 
 }

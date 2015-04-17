@@ -1,6 +1,6 @@
 package librec.ranking;
 
-import happy.coding.io.Logs;
+import static happy.coding.math.Gamma.digamma;
 import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -20,8 +20,8 @@ import com.google.common.collect.HashBasedTable;
 @AddConfiguration("gamma")
 public class BUCM extends GraphicRecommender {
 
-	private double preRMSE;
-	private float gamma;
+	private float initGamma;
+	private DenseVector gamma;
 
 	public BUCM(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -59,7 +59,15 @@ public class BUCM extends GraphicRecommender {
 
 		Nkir = new int[numFactors][numItems][numLevels];
 
-		gamma = algoOptions.getFloat("-gamma");
+		alpha = new DenseVector(numFactors);
+		alpha.setAll(initAlpha);
+
+		beta = new DenseVector(numItems);
+		beta.setAll(initBeta);
+
+		gamma = new DenseVector(numLevels);
+		initGamma = algoOptions.getFloat("-gamma");
+		gamma.setAll(initGamma);
 
 		// initialize topics
 		z = HashBasedTable.create();
@@ -83,11 +91,14 @@ public class BUCM extends GraphicRecommender {
 			// for ratings
 			Nkir[t][i][r]++;
 		}
-
 	}
 
 	@Override
 	protected void inferParams() {
+
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+		double sumGamma = gamma.sum();
 
 		// collapse Gibbs sampling
 		for (MatrixEntry me : trainMatrix) {
@@ -109,11 +120,11 @@ public class BUCM extends GraphicRecommender {
 			double v1, v2, v3;
 			for (int k = 0; k < numFactors; k++) {
 
-				v1 = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				v1 = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
 
-				v2 = (Nik.get(i, k) + beta) / (Nk.get(t) + numItems * beta);
+				v2 = (Nik.get(i, k) + beta.get(i)) / (Nk.get(t) + sumBeta);
 
-				v3 = (Nkir[k][i][r] + gamma) / (Nik.get(i, t) + numLevels * gamma);
+				v3 = (Nkir[k][i][r] + gamma.get(r)) / (Nik.get(i, t) + sumGamma);
 
 				p[k] = v1 * v2 * v3;
 			}
@@ -140,18 +151,75 @@ public class BUCM extends GraphicRecommender {
 		}
 	}
 
+	/**
+	 * Thomas P. Minka, Estimating a Dirichlet distribution, see Eq.(55)
+	 */
+	@Override
+	protected void updateHyperParams() {
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+		double sumGamma = gamma.sum();
+		double ak, bi, gr;
+
+		// update alpha
+		for (int k = 0; k < numFactors; k++) {
+
+			ak = alpha.get(k);
+			double numerator = 0, denominator = 0;
+			for (int u = 0; u < numUsers; u++) {
+				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
+				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
+			}
+			if (numerator != 0)
+				alpha.set(k, ak * (numerator / denominator));
+		}
+
+		// update beta
+		for (int i = 0; i < numItems; i++) {
+
+			bi = beta.get(i);
+			double numerator = 0, denominator = 0;
+			for (int k = 0; k < numFactors; k++) {
+				numerator += digamma(Nik.get(i, k) + bi) - digamma(bi);
+				denominator += digamma(Nk.get(k) + sumBeta) - digamma(sumBeta);
+			}
+			if (numerator != 0)
+				beta.set(i, bi * (numerator / denominator));
+		}
+
+		// update gamma
+		for (int r = 0; r < numLevels; r++) {
+
+			gr = gamma.get(r);
+			double numerator = 0, denominator = 0;
+			for (int i = 0; i < numItems; i++) {
+				for (int k = 0; k < numFactors; k++) {
+					numerator += digamma(Nkir[k][i][r] + gr) - digamma(gr);
+					denominator += digamma(Nik.get(i, k) + sumGamma) - digamma(sumGamma);
+				}
+			}
+			if (numerator != 0)
+				gamma.set(r, gr * (numerator / denominator));
+		}
+
+	}
+
 	protected void readoutParams() {
 		double val = 0;
+		double sumAlpha = alpha.sum();
+		double sumBeta = beta.sum();
+		double sumGamma = gamma.sum();
+
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
-				val = (Nuk.get(u, k) + alpha) / (Nu.get(u) + numFactors * alpha);
+				val = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
 				thetaSum.add(u, k, val);
 			}
 		}
 
 		for (int i = 0; i < numItems; i++) {
 			for (int k = 0; k < numFactors; k++) {
-				val = (Nik.get(i, k) + beta) / (Nk.get(k) + numItems * beta);
+				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
 				phiSum.add(i, k, val);
 			}
 		}
@@ -159,7 +227,7 @@ public class BUCM extends GraphicRecommender {
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					val = (Nkir[k][i][r] + gamma) / (Nik.get(i, k) + numLevels * gamma);
+					val = (Nkir[k][i][r] + gamma.get(r)) / (Nik.get(i, k) + sumGamma);
 					epsilonSum[k][i][r] += val;
 				}
 			}
@@ -180,49 +248,6 @@ public class BUCM extends GraphicRecommender {
 				}
 			}
 		}
-	}
-
-	@Override
-	protected boolean isConverged(int iter) throws Exception {
-
-		if (validationMatrix == null)
-			return false;
-
-		// get posterior probability distribution first
-		postProbDistr();
-
-		// compute current RMSE
-		int numCount = 0;
-		double sum = 0;
-		for (MatrixEntry me : validationMatrix) {
-			double rate = me.get();
-
-			int u = me.row();
-			int j = me.column();
-
-			double pred = predict(u, j, true);
-			if (Double.isNaN(pred))
-				continue;
-
-			double err = rate - pred;
-
-			sum += err * err;
-			numCount++;
-		}
-
-		double RMSE = Math.sqrt(sum / numCount);
-		double delta = RMSE - preRMSE;
-
-		if (verbose) {
-			Logs.debug("{}{} iter {} achieves RMSE = {}, delta_RMSE = {}", algoName, foldInfo, iter, (float) RMSE,
-					(float) (delta));
-		}
-
-		if (numStats > 1 && delta > 0)
-			return true;
-
-		preRMSE = RMSE;
-		return false;
 	}
 
 	@Override
@@ -265,6 +290,6 @@ public class BUCM extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return super.toString() + ", " + gamma;
+		return super.toString() + ", " + initGamma;
 	}
 }
