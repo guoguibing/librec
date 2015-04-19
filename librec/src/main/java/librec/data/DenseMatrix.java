@@ -22,7 +22,11 @@ import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Data Structure: dense matrix <br>
@@ -361,7 +365,46 @@ public class DenseMatrix implements Serializable {
 
 		return res;
 	}
-
+	/**
+	 * @param DiagMatrix mat
+	 * @param SparseVector pv
+	 * @return  a trick for WRMF 
+	 *@create_time：2015年1月18日下午8:13:36
+	 *@modifie_time：2015年1月18日 下午8:13:36
+	  
+	 */
+	public DenseVector mult(DiagMatrix mat,SparseVector pv) {
+		assert this.numColumns == mat.numRows;
+		assert mat.numColumns==pv.size();
+		List<Integer> indexOfNoZero=new ArrayList<>();
+		Map<Integer, Double> valueOfDiagMap=new HashMap<Integer, Double>();
+		for (int i = 0; i < mat.numRows; i++)
+			if (mat.get(i, i)!=0) {
+				indexOfNoZero.add(i);
+				valueOfDiagMap.put(i,mat.get(i, i));
+			}
+		//save all non-zero Column 
+		DenseMatrix res = new DenseMatrix(this.numRows, indexOfNoZero.size());
+		DenseVector res1 = new DenseVector( this.numRows);
+		
+		for (int j = 0; j < indexOfNoZero.size(); j++) {
+			int index=indexOfNoZero.get(j);
+			for (int i = 0; i < res.numRows; i++) {
+				res.set(i, j, data[i][index]*valueOfDiagMap.get(index));
+			}
+		}
+		for (int i = 0; i < res.numRows; i++) {
+			double val=0.0;
+			for (int k = 0; k < indexOfNoZero.size(); k++) {
+				int index=indexOfNoZero.get(k);
+				if (pv.contains(index)) {
+					val+=res.get(i, k)*pv.get(index);
+				}
+			}
+			res1.set(i, val);
+		}
+		return res1;
+	}
 	/**
 	 * Matrix multiplication of a sparse matrix by a dense matrix
 	 * 
