@@ -365,6 +365,52 @@ public class DenseMatrix implements Serializable {
 
 		return res;
 	}
+	
+
+
+	/**
+	 * @param mat
+	 * @param rightMatrix
+	 * @return  a trick for WRMF 
+	 *@create_time：2015年4月20日下午10:18:35
+	 *@modifie_time：2015年4月20日 下午10:18:35
+	  
+	 */
+	public DenseMatrix mult(DiagMatrix mat,DenseMatrix rightMatrix) {
+		assert this.numColumns == mat.numRows;
+		assert mat.numColumns==rightMatrix.numRows;
+		
+		List<Integer> indexOfNoZero=new ArrayList<>();
+		Map<Integer, Double> valueOfDiagMap=new HashMap<Integer, Double>();
+		for (int i = 0; i < mat.numRows; i++)
+			if (mat.get(i, i)!=0) {
+				indexOfNoZero.add(i);
+				valueOfDiagMap.put(i,mat.get(i, i));
+			}
+		
+		DenseMatrix res = new DenseMatrix(this.numRows, indexOfNoZero.size());
+		DenseMatrix res1 = new DenseMatrix(this.numRows, rightMatrix.numColumns);
+		
+		for (int j = 0; j < indexOfNoZero.size(); j++) {
+			int index=indexOfNoZero.get(j);
+			for (int i = 0; i < res.numRows; i++) {
+				res.set(i, j, data[i][index]*valueOfDiagMap.get(index));
+			}
+		}
+		
+		for (int i = 0; i < this.numRows; i++) {
+			for (int j = 0; j < rightMatrix.numColumns; j++) {
+				double val=0.0;
+				for (int k = 0; k < indexOfNoZero.size(); k++) {
+					val+=res.get(i, k)*rightMatrix.get(indexOfNoZero.get(k), i);
+				}
+				res1.set(i, j, val);
+			}
+		}
+		
+		return res1;
+	}
+	
 	/**
 	 * @param DiagMatrix mat
 	 * @param SparseVector pv

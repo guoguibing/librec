@@ -143,7 +143,7 @@ public class WRMF extends IterativeRecommender {
 			// Cu - I
 			DiagMatrix CuI = Cu.minus(1);
 			// YtY + Yt * (Cu - I) * Y
-			DenseMatrix YtCuY = YtY.add(Yt.mult(CuI).mult(Y));
+			DenseMatrix YtCuY = YtY.add(Yt.mult(CuI,Y));
 			// (YtCuY + lambda * I)^-1
 			DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
 			// Yt * Cu
@@ -187,7 +187,7 @@ public class WRMF extends IterativeRecommender {
 			// Ci - I
 			DiagMatrix CiI = Ci.minus(1); // more efficient than DiagMatrix.eye(numUsers)
 			// XtX + Xt * (Ci - I) * X
-			DenseMatrix XtCiX = XtX.add(Xt.mult(CiI).mult(X));
+			DenseMatrix XtCiX = XtX.add(Xt.mult(CiI,X));
 			// (XtCiX + lambda * I)^-1
 			DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
 			// Xt * Ci
