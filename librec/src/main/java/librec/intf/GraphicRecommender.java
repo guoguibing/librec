@@ -136,10 +136,10 @@ public class GraphicRecommender extends Recommender {
 
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			// infer parameters
+			// E-step: infer parameters
 			inferParams();
 			
-			// update hyper-parameters
+			// M-step: update hyper-parameters
 			updateHyperParams();
 
 			// get statistics after burn-in

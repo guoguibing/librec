@@ -131,7 +131,7 @@ public class LibRec {
 
 			// prepare data
 			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-			
+
 			ratingOptions = cf.getParamOptions("ratings.setup");
 
 			List<String> cols = ratingOptions.getOptions("-columns");
@@ -151,8 +151,8 @@ public class LibRec {
 			// run algorithms
 			runAlgorithm();
 
-			// collect results to folder "Results"
-			String destPath = FileIO.makeDirectory("Results");
+			// collect results
+			String destPath = FileIO.makeDirectory(Recommender.tempDirPath);
 			String results = destPath + algorithm + "@" + Dates.now() + ".txt";
 			FileIO.copyFile("results.txt", results);
 
@@ -478,7 +478,9 @@ public class LibRec {
 
 		String hostInfo = FileIO.getCurrentFolder() + "." + algorithm + " [" + Systems.getIP() + "]";
 
-		if (!cf.isOn("is.email.notify")) {
+		LineConfiger lc = new LineConfiger(cf.getString("email.setup"));
+
+		if (!lc.isMainOn()) {
 			System.out.println("Program " + hostInfo + " has completed!");
 			return;
 		}
@@ -488,22 +490,20 @@ public class LibRec {
 
 		props.setProperty("mail.debug", "false");
 
-		String host = cf.getString("mail.smtp.host");
-		String port = cf.getString("mail.smtp.port");
-		props.setProperty("mail.smtp.host", host);
+		String port = lc.getString("-port");
+		props.setProperty("mail.smtp.host", lc.getString("-host"));
 		props.setProperty("mail.smtp.port", port);
-		props.setProperty("mail.smtp.auth", cf.getString("mail.smtp.auth"));
+		props.setProperty("mail.smtp.auth", lc.getString("-auth"));
 
 		props.put("mail.smtp.socketFactory.port", port);
 		props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 
-		final String user = cf.getString("mail.smtp.user");
-		final String pwd = cf.getString("mail.smtp.password");
+		final String user = lc.getString("-user");
 		props.setProperty("mail.smtp.user", user);
-		props.setProperty("mail.smtp.password", pwd);
+		props.setProperty("mail.smtp.password", lc.getString("-password"));
 
 		props.setProperty("mail.from", user);
-		props.setProperty("mail.to", cf.getString("mail.to"));
+		props.setProperty("mail.to", lc.getString("-to"));
 
 		props.setProperty("mail.subject", hostInfo);
 		props.setProperty("mail.text", "Program was completed @" + Dates.now());
@@ -521,10 +521,8 @@ public class LibRec {
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
-		
+
 		/* under development */
-		case "bucm":
-			return new BUCM(trainMatrix, testMatrix, fold);
 
 		/* baselines */
 		case "globalavg":
@@ -575,6 +573,8 @@ public class LibRec {
 			return new URP(trainMatrix, testMatrix, fold);
 
 			/* item ranking */
+		case "bucm":
+			return new BUCM(trainMatrix, testMatrix, fold);
 		case "climf":
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "fismrmse":

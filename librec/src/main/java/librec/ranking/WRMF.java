@@ -18,13 +18,13 @@
 
 package librec.ranking;
 
+import happy.coding.io.Strings;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.DiagMatrix;
@@ -58,7 +58,7 @@ public class WRMF extends IterativeRecommender {
 		isRankingPred = true; // item recommendation
 
 		alpha = algoOptions.getFloat("-alpha");
-		
+
 		// paramter is the number of core to used 
 		forkJoinPool = new ForkJoinPool(4);
 		// checkBinary();
@@ -67,18 +67,17 @@ public class WRMF extends IterativeRecommender {
 	@Override
 	protected void buildModel() throws Exception {
 
-		// To be consistent with the symbols in the paper
-		DenseMatrix X = P, Y = Q;
-		
 		for (int iter = 1; iter <= numIters; iter++) {
 			forkJoinPool.invoke(new userTask());
 			if (isConverged(iter))
 				break;
 		}
-		
+
 	}
 
-	class userTask extends RecursiveAction {
+	protected class userTask extends RecursiveAction {
+
+		private static final long serialVersionUID = 1L;
 
 		@Override
 		protected void compute() {
@@ -89,7 +88,7 @@ public class WRMF extends IterativeRecommender {
 			List<RecursiveAction> forks = new LinkedList<>();
 			for (int u = 0; u < numUsers; u++) {
 				// for each test user
-				updateUser temp = new updateUser(u, Yt, YtY);
+				UpdateUser temp = new UpdateUser(u, Yt, YtY);
 				forks.add(temp);
 				temp.fork();
 
@@ -113,35 +112,28 @@ public class WRMF extends IterativeRecommender {
 		}
 	}
 
-	private class updateUser extends RecursiveAction {
+	private class UpdateUser extends RecursiveAction {
+
+		private static final long serialVersionUID = 1L;
 		private final int u;
 		private DenseMatrix Yt;
 		private DenseMatrix YtY;
 
-		updateUser(int u, DenseMatrix Yt, DenseMatrix YtY) {
+		UpdateUser(int u, DenseMatrix Yt, DenseMatrix YtY) {
 			this.u = u;
 			this.Yt = Yt;
 			this.YtY = YtY;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see java.util.concurrent.RecursiveAction#compute()
-		 */
 		@Override
 		protected void compute() {
-			// TODO Auto-generated method stub
 			// diagonal matrix C^u for each user
-			DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the
-														// diagonal will be
-														// 1
+			DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the diagonal will be 1
 			SparseVector pu = trainMatrix.row(u);
 
 			for (VectorEntry ve : pu) {
 				int i = ve.index();
-				Cu.add(i, i, alpha * ve.get()); // changes some entries to 1
-												// + alpha * r_{u, i}
+				Cu.add(i, i, alpha * ve.get()); // changes some entries to 1 + alpha * r_{u, i}
 			}
 
 			// binarize real values
@@ -151,12 +143,11 @@ public class WRMF extends IterativeRecommender {
 			// Cu - I
 			DiagMatrix CuI = Cu.minus(1);
 			// YtY + Yt * (Cu - I) * Y
-			DenseMatrix YtCuY = YtY.add(Yt.mult(CuI,Y));
+			DenseMatrix YtCuY = YtY.add(Yt.mult(CuI).mult(Y));
 			// (YtCuY + lambda * I)^-1
-			DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU)))
-					.inv();
+			DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
 			// Yt * Cu
-			DenseVector YtCuPu = Yt.mult(Cu,pu);
+			DenseVector YtCuPu = Yt.mult(Cu, pu);
 
 			DenseVector xu = Wu.mult(YtCuPu);
 
@@ -166,6 +157,8 @@ public class WRMF extends IterativeRecommender {
 	}
 
 	private class updateItem extends RecursiveAction {
+
+		private static final long serialVersionUID = 1L;
 		private final int i;
 		private DenseMatrix Xt;
 		private DenseMatrix XtX;
@@ -192,15 +185,13 @@ public class WRMF extends IterativeRecommender {
 				ve.set(ve.get() > 0 ? 1 : 0);
 
 			// Ci - I
-			DiagMatrix CiI = Ci.minus(1); // more efficient than
-											// DiagMatrix.eye(numUsers)
+			DiagMatrix CiI = Ci.minus(1); // more efficient than DiagMatrix.eye(numUsers)
 			// XtX + Xt * (Ci - I) * X
-			DenseMatrix XtCiX = XtX.add(Xt.mult(CiI,X));
+			DenseMatrix XtCiX = XtX.add(Xt.mult(CiI).mult(X));
 			// (XtCiX + lambda * I)^-1
-			DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI)))
-					.inv();
+			DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
 			// Xt * Ci
-			DenseVector XtCiPi = Xt.mult(Ci,pi);
+			DenseVector XtCiPi = Xt.mult(Ci, pi);
 
 			DenseVector yi = Wi.mult(XtCiPi);
 
@@ -208,6 +199,7 @@ public class WRMF extends IterativeRecommender {
 			Y.setRow(i, yi);
 		}
 	}
+
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { binThold, alpha, numFactors, regU, regI, numIters }, ",");
