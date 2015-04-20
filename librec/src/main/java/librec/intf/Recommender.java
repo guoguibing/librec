@@ -76,6 +76,9 @@ public abstract class Recommender implements Runnable {
 	// Guava cache configuration
 	protected static String cacheSpec;
 
+	// number of cpu cores used for parallelization
+	protected static int numCPUs; 
+
 	// verbose
 	protected static boolean verbose;
 
@@ -190,6 +193,7 @@ public abstract class Recommender implements Runnable {
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isResultsOut = evalOptions.isOn("-o", false);
 			isSaveModel = evalOptions.isOn("--save-model", false);
+			numCPUs = evalOptions.getInt("-cpu", 1); // default: no parallelization
 
 			// initial random seed
 			int seed = cf.getInt("num.rand.seed");

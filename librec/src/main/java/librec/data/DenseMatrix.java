@@ -31,8 +31,9 @@ import java.util.Map;
 /**
  * Data Structure: dense matrix <br>
  * 
- * A big reason that we do not adopt original DenseMatrix from M4J libraray is because the latter using one-dimensional
- * array to store data, which will often cause OutOfMemory exception due to the limit of maximum length of a
+ * A big reason that we do not adopt original DenseMatrix from M4J libraray is
+ * because the latter using one-dimensional array to store data, which will
+ * often cause OutOfMemory exception due to the limit of maximum length of a
  * one-dimensional Java array.
  * 
  * @author guoguibing
@@ -111,8 +112,9 @@ public class DenseMatrix implements Serializable {
 	/**
 	 * Initialize a dense matrix with small Guassian values <br/>
 	 * 
-	 * <strong>NOTE:</strong> small initial values make it easier to train a model; otherwise a very small learning rate
-	 * may be needed (especially when the number of factors is large) which can cause bad performance.
+	 * <strong>NOTE:</strong> small initial values make it easier to train a
+	 * model; otherwise a very small learning rate may be needed (especially
+	 * when the number of factors is large) which can cause bad performance.
 	 */
 	public void init(double mean, double sigma) {
 		for (int i = 0; i < numRows; i++)
@@ -165,7 +167,8 @@ public class DenseMatrix implements Serializable {
 	 * @param rowId
 	 *            row id
 	 * @param deep
-	 *            whether to copy data or only shallow copy for executing speedup purpose
+	 *            whether to copy data or only shallow copy for executing
+	 *            speedup purpose
 	 * @return a vector of a specific row
 	 */
 	public DenseVector row(int rowId, boolean deep) {
@@ -272,7 +275,8 @@ public class DenseMatrix implements Serializable {
 	 *            the second matrix
 	 * @param ncol
 	 *            column id of the second matrix
-	 * @return dot product of row of the first matrix and column of the second matrix
+	 * @return dot product of row of the first matrix and column of the second
+	 *         matrix
 	 */
 	public static double product(DenseMatrix m, int mrow, DenseMatrix n, int ncol) {
 		assert m.numColumns == n.numRows;
@@ -365,92 +369,82 @@ public class DenseMatrix implements Serializable {
 
 		return res;
 	}
-	
-
 
 	/**
-	 * @param mat
-	 * @param rightMatrix
-	 * @return  a trick for WRMF 
-	 *@create_time：2015年4月20日下午10:18:35
-	 *@modifie_time：2015年4月20日 下午10:18:35
-	  
+	 * a trick for WRMF
 	 */
-	public DenseMatrix mult(DiagMatrix mat,DenseMatrix rightMatrix) {
+	public DenseMatrix nonZeroMult(DiagMatrix mat, DenseMatrix rightMatrix) {
 		assert this.numColumns == mat.numRows;
-		assert mat.numColumns==rightMatrix.numRows;
-		
-		List<Integer> indexOfNoZero=new ArrayList<>();
-		Map<Integer, Double> valueOfDiagMap=new HashMap<Integer, Double>();
+		assert mat.numColumns == rightMatrix.numRows;
+
+		List<Integer> indexOfNoZero = new ArrayList<>();
+		Map<Integer, Double> valueOfDiagMap = new HashMap<Integer, Double>();
 		for (int i = 0; i < mat.numRows; i++)
-			if (mat.get(i, i)!=0) {
+			if (mat.get(i, i) != 0) {
 				indexOfNoZero.add(i);
-				valueOfDiagMap.put(i,mat.get(i, i));
+				valueOfDiagMap.put(i, mat.get(i, i));
 			}
-		
+
 		DenseMatrix res = new DenseMatrix(this.numRows, indexOfNoZero.size());
 		DenseMatrix res1 = new DenseMatrix(this.numRows, rightMatrix.numColumns);
-		
+
 		for (int j = 0; j < indexOfNoZero.size(); j++) {
-			int index=indexOfNoZero.get(j);
+			int index = indexOfNoZero.get(j);
 			for (int i = 0; i < res.numRows; i++) {
-				res.set(i, j, data[i][index]*valueOfDiagMap.get(index));
+				res.set(i, j, data[i][index] * valueOfDiagMap.get(index));
 			}
 		}
-		
+
 		for (int i = 0; i < this.numRows; i++) {
 			for (int j = 0; j < rightMatrix.numColumns; j++) {
-				double val=0.0;
+				double val = 0.0;
 				for (int k = 0; k < indexOfNoZero.size(); k++) {
-					val+=res.get(i, k)*rightMatrix.get(indexOfNoZero.get(k), i);
+					val += res.get(i, k) * rightMatrix.get(indexOfNoZero.get(k), i);
 				}
 				res1.set(i, j, val);
 			}
 		}
-		
+
 		return res1;
 	}
-	
+
 	/**
-	 * @param DiagMatrix mat
-	 * @param SparseVector pv
-	 * @return  a trick for WRMF 
-	 *@create_time：2015年1月18日下午8:13:36
-	 *@modifie_time：2015年1月18日 下午8:13:36
-	  
+	 * a trick for WRMF
 	 */
-	public DenseVector mult(DiagMatrix mat,SparseVector pv) {
+	public DenseVector nonZeroMult(DiagMatrix mat, SparseVector pv) {
 		assert this.numColumns == mat.numRows;
-		assert mat.numColumns==pv.size();
-		List<Integer> indexOfNoZero=new ArrayList<>();
-		Map<Integer, Double> valueOfDiagMap=new HashMap<Integer, Double>();
+		assert mat.numColumns == pv.size();
+
+		List<Integer> indexOfNoZero = new ArrayList<>();
+		Map<Integer, Double> valueOfDiagMap = new HashMap<Integer, Double>();
 		for (int i = 0; i < mat.numRows; i++)
-			if (mat.get(i, i)!=0) {
+			if (mat.get(i, i) != 0) {
 				indexOfNoZero.add(i);
-				valueOfDiagMap.put(i,mat.get(i, i));
+				valueOfDiagMap.put(i, mat.get(i, i));
 			}
-		//save all non-zero Column 
+		// save all non-zero Column
 		DenseMatrix res = new DenseMatrix(this.numRows, indexOfNoZero.size());
-		DenseVector res1 = new DenseVector( this.numRows);
-		
+		DenseVector res1 = new DenseVector(this.numRows);
+
 		for (int j = 0; j < indexOfNoZero.size(); j++) {
-			int index=indexOfNoZero.get(j);
+			int index = indexOfNoZero.get(j);
 			for (int i = 0; i < res.numRows; i++) {
-				res.set(i, j, data[i][index]*valueOfDiagMap.get(index));
+				res.set(i, j, data[i][index] * valueOfDiagMap.get(index));
 			}
 		}
 		for (int i = 0; i < res.numRows; i++) {
-			double val=0.0;
+			double val = 0.0;
 			for (int k = 0; k < indexOfNoZero.size(); k++) {
-				int index=indexOfNoZero.get(k);
+				int index = indexOfNoZero.get(k);
 				if (pv.contains(index)) {
-					val+=res.get(i, k)*pv.get(index);
+					val += res.get(i, k) * pv.get(index);
 				}
 			}
 			res1.set(i, val);
 		}
 		return res1;
 	}
+
 	/**
 	 * Matrix multiplication of a sparse matrix by a dense matrix
 	 * 
@@ -550,7 +544,8 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each entries will be added by {@code c}
+	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each
+	 * entries will be added by {@code c}
 	 * 
 	 * @return a new matrix with results of {@code C = A + c}
 	 */
@@ -601,7 +596,8 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each entries will be added by {@code c}
+	 * Do {@code A + c} matrix operation, where {@code c} is a constant. Each
+	 * entries will be added by {@code c}
 	 * 
 	 * @return a new matrix with results of {@code C = A + c}
 	 */
@@ -780,8 +776,8 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * NOTE: this implementation (adopted from PREA package) is slightly faster than {@code inverse}, especailly when
-	 * {@code numRows} is large.
+	 * NOTE: this implementation (adopted from PREA package) is slightly faster
+	 * than {@code inverse}, especailly when {@code numRows} is large.
 	 * 
 	 * @return the inverse matrix of current matrix
 	 */
