@@ -23,7 +23,6 @@ import happy.coding.io.FileIO;
 import happy.coding.io.LineConfiger;
 import happy.coding.io.Lists;
 import happy.coding.io.Logs;
-import happy.coding.io.Strings;
 import happy.coding.math.Measures;
 import happy.coding.math.Randoms;
 import happy.coding.math.Sims;
@@ -183,7 +182,7 @@ public abstract class Recommender implements Runnable {
 			cacheSpec = cf.getString("guava.cache.spec");
 
 			rankOptions = cf.getParamOptions("item.ranking");
-			isRankingPred = Strings.isOn(rankOptions.getMainParam());
+			isRankingPred = rankOptions.isMainOn();
 			isDiverseUsed = rankOptions.contains("-diverse");
 			numRecs = rankOptions.getInt("-topN", -1);
 			numIgnore = rankOptions.getInt("-ignore", -1);
