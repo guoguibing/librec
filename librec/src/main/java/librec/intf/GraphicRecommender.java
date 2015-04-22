@@ -137,7 +137,7 @@ public class GraphicRecommender extends Recommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			// E-step: infer parameters
-			inferParams();
+			estimateParams();
 			
 			// M-step: update hyper-parameters
 			updateHyperParams();
@@ -182,9 +182,15 @@ public class GraphicRecommender extends Recommender {
 	}
 
 	/**
-	 * parameters inference/estimation
+	 * parameters estimation: used in the training phase
 	 */
-	protected void inferParams() {
+	protected void estimateParams() {
+	}
+	
+	/**
+	 * parameters inference: used if new user arrives in the test phase 
+	 */
+	protected void inferParams(){
 	}
 
 	/**

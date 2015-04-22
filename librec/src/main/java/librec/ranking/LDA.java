@@ -80,7 +80,7 @@ public class LDA extends GraphicRecommender {
 		}
 	}
 
-	protected void inferParams() {
+	protected void estimateParams() {
 
 		double sumAlpha = alpha.sum();
 		double sumBeta = beta.sum();

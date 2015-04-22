@@ -90,7 +90,7 @@ public class URP extends GraphicRecommender {
 	}
 
 	@Override
-	protected void inferParams() {
+	protected void estimateParams() {
 
 		double sumAlpha = alpha.sum();
 		double sumBeta = beta.sum();
