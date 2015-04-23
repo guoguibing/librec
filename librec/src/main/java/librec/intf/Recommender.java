@@ -76,7 +76,7 @@ public abstract class Recommender implements Runnable {
 	protected static String cacheSpec;
 
 	// number of cpu cores used for parallelization
-	protected static int numCPUs; 
+	protected static int numCPUs;
 
 	// verbose
 	protected static boolean verbose;
@@ -146,7 +146,7 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 */
 	public enum Measure {
-		MAE, RMSE, NMAE, ASYMM, MPE, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
+		MAE, RMSE, NMAE, rMAE, rRMSE, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
 	}
 
 	/**
@@ -329,10 +329,10 @@ public abstract class Recommender implements Runnable {
 			// metrics
 			if (isDiverseUsed)
 				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
-						measures.get(Measure.D5), measures.get(Measure.D10), measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
-						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR), numIgnore);
+						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
+						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
+						measures.get(Measure.NDCG), measures.get(Measure.MRR), measures.get(Measure.D5),
+						measures.get(Measure.D10), numIgnore);
 			else
 				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d", measures.get(Measure.Pre5),
 						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
@@ -340,7 +340,7 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.MRR), numIgnore);
 		} else
 			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
-					measures.get(Measure.NMAE), measures.get(Measure.ASYMM), measures.get(Measure.MPE));
+					measures.get(Measure.NMAE), measures.get(Measure.rMAE), measures.get(Measure.rRMSE));
 
 		return evalInfo;
 	}
@@ -516,9 +516,8 @@ public abstract class Recommender implements Runnable {
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
-		double sum_maes = 0, sum_mses = 0, sum_asyms = 0;
+		double sum_maes = 0, sum_mses = 0, sum_r_maes = 0, sum_r_rmses = 0;
 		int numCount = 0;
-		int numPEs = 0; // number of prediction errors in terms of classification
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
 
@@ -532,14 +531,17 @@ public abstract class Recommender implements Runnable {
 			if (Double.isNaN(pred))
 				continue;
 
+			// measure zero-one loss by rounding prediction to the closest rating level
+			double rPred = Math.round(pred / minRate) * minRate; 
+
 			double err = Math.abs(rate - pred); // absolute predictive error
+			double r_err = Math.abs(rate - rPred);
 
 			sum_maes += err;
 			sum_mses += err * err;
-			sum_asyms += Measures.ASYMMLoss(rate, pred, minRate, maxRate);
 
-			if (err > 1e-5) // if errors cannot be ignored
-				numPEs++;
+			sum_r_maes += r_err;
+			sum_r_rmses += r_err * r_err;
 
 			numCount++;
 
@@ -561,17 +563,18 @@ public abstract class Recommender implements Runnable {
 
 		double mae = sum_maes / numCount;
 		double rmse = Math.sqrt(sum_mses / numCount);
-		double asymm = sum_asyms / numCount;
-		double mpe = (numPEs + 0.0) / numCount; // mean prediction error
+
+		double r_mae = sum_r_maes / numCount;
+		double r_rmse = Math.sqrt(sum_r_rmses / numCount);
 
 		Map<Measure, Double> measures = new HashMap<>();
 		measures.put(Measure.MAE, mae);
 		// normalized MAE: useful for direct comparison among different data sets with distinct rating scales
 		measures.put(Measure.NMAE, mae / (maxRate - minRate));
 		measures.put(Measure.RMSE, rmse);
-		measures.put(Measure.ASYMM, asymm);
-		// mean prediction error: the percentage of predictions which differ from the actual rating values
-		measures.put(Measure.MPE, mpe);
+
+		measures.put(Measure.rMAE, r_mae);
+		measures.put(Measure.rRMSE, r_rmse);
 
 		return measures;
 	}
