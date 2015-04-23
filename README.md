@@ -20,9 +20,11 @@ LibRec
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
-### Authors
+### Contributors
 
-* [Guibing Guo](http://www.luckymoon.me/)
+* [Guibing Guo](http://www.luckymoon.me/) (Creator)
+* [Bin Wu](https://github.com/wubin7019088)
+* [Ze Zhou](https://github.com/466152112)
 
 ### GPL License
 
