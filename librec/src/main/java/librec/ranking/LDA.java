@@ -80,7 +80,7 @@ public class LDA extends GraphicRecommender {
 		}
 	}
 
-	protected void estimateParams() {
+	protected void eStep() {
 
 		double sumAlpha = alpha.sum();
 		double sumBeta = beta.sum();
@@ -125,7 +125,7 @@ public class LDA extends GraphicRecommender {
 	}
 
 	@Override
-	protected void updateHyperParams() {
+	protected void mStep() {
 		double sumAlpha = alpha.sum();
 		double sumBeta = beta.sum();
 		double ak, bi;

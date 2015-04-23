@@ -137,10 +137,10 @@ public class GraphicRecommender extends Recommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			// E-step: infer parameters
-			estimateParams();
+			eStep();
 			
 			// M-step: update hyper-parameters
-			updateHyperParams();
+			mStep();
 
 			// get statistics after burn-in
 			if ((iter > burnIn) && (iter % sampleLag == 0)) {
@@ -162,7 +162,7 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * update the hyper-parameters
 	 */
-	protected void updateHyperParams() {
+	protected void mStep() {
 	}
 
 	/**
@@ -184,13 +184,13 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * parameters estimation: used in the training phase
 	 */
-	protected void estimateParams() {
+	protected void eStep() {
 	}
 	
 	/**
 	 * parameters inference: used if new user arrives in the test phase 
 	 */
-	protected void inferParams(){
+	protected void inference(){
 	}
 
 	/**

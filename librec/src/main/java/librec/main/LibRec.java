@@ -69,6 +69,7 @@ import librec.ranking.WBPR;
 import librec.ranking.WRMF;
 import librec.rating.BPMF;
 import librec.rating.BiasedMF;
+import librec.rating.GPLSA;
 import librec.rating.ItemKNN;
 import librec.rating.PMF;
 import librec.rating.RSTE;
@@ -523,6 +524,8 @@ public class LibRec {
 		switch (algorithm.toLowerCase()) {
 
 		/* under development */
+		case "gplsa":
+			return new GPLSA(trainMatrix, testMatrix, fold);
 
 		/* baselines */
 		case "globalavg":

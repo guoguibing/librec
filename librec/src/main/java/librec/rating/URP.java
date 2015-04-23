@@ -90,7 +90,7 @@ public class URP extends GraphicRecommender {
 	}
 
 	@Override
-	protected void estimateParams() {
+	protected void eStep() {
 
 		double sumAlpha = alpha.sum();
 		double sumBeta = beta.sum();
@@ -140,7 +140,7 @@ public class URP extends GraphicRecommender {
 	 * Thomas P. Minka, Estimating a Dirichlet distribution, see Eq.(55)
 	 */
 	@Override
-	protected void updateHyperParams() {
+	protected void mStep() {
 		double sumAlpha = alpha.sum();
 		double sumBeta = beta.sum();
 		double ak, br;

@@ -339,8 +339,8 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
-					measures.get(Measure.NMAE), measures.get(Measure.rMAE), measures.get(Measure.rRMSE));
+			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
+					measures.get(Measure.NMAE), measures.get(Measure.rMAE), measures.get(Measure.rRMSE), measures.get(Measure.MPE));
 
 		return evalInfo;
 	}
@@ -531,7 +531,7 @@ public abstract class Recommender implements Runnable {
 			if (Double.isNaN(pred))
 				continue;
 
-			// measure zero-one loss by rounding prediction to the closest rating level
+			// rounding prediction to the closest rating level
 			double rPred = Math.round(pred / minRate) * minRate;
 
 			double err = Math.abs(rate - pred); // absolute predictive error
@@ -576,9 +576,11 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.NMAE, mae / (maxRate - minRate));
 		measures.put(Measure.RMSE, rmse);
 
+		// MAE and RMSE after rounding predictions to the closest rating levels
 		measures.put(Measure.rMAE, r_mae);
 		measures.put(Measure.rRMSE, r_rmse);
 
+		// measure zero-one loss
 		measures.put(Measure.MPE, (numPEs + 0.0) / numCount);
 
 		return measures;
