@@ -146,7 +146,7 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 */
 	public enum Measure {
-		MAE, RMSE, NMAE, rMAE, rRMSE, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
+		MAE, RMSE, NMAE, rMAE, rRMSE, MPE, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
 	}
 
 	/**
@@ -517,7 +517,7 @@ public abstract class Recommender implements Runnable {
 		}
 
 		double sum_maes = 0, sum_mses = 0, sum_r_maes = 0, sum_r_rmses = 0;
-		int numCount = 0;
+		int numCount = 0, numPEs = 0;
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
 
@@ -532,7 +532,7 @@ public abstract class Recommender implements Runnable {
 				continue;
 
 			// measure zero-one loss by rounding prediction to the closest rating level
-			double rPred = Math.round(pred / minRate) * minRate; 
+			double rPred = Math.round(pred / minRate) * minRate;
 
 			double err = Math.abs(rate - pred); // absolute predictive error
 			double r_err = Math.abs(rate - rPred);
@@ -544,6 +544,9 @@ public abstract class Recommender implements Runnable {
 			sum_r_rmses += r_err * r_err;
 
 			numCount++;
+
+			if (r_err > 1e-5)
+				numPEs++;
 
 			// output predictions
 			if (isResultsOut) {
@@ -575,6 +578,8 @@ public abstract class Recommender implements Runnable {
 
 		measures.put(Measure.rMAE, r_mae);
 		measures.put(Measure.rRMSE, r_rmse);
+
+		measures.put(Measure.MPE, (numPEs + 0.0) / numCount);
 
 		return measures;
 	}
