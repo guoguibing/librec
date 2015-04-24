@@ -109,16 +109,16 @@ public class GPLSA extends GraphicRecommender {
 				continue;
 
 			double mu_i = ci.mean();
+			
 			double sum = 0;
 			for (VectorEntry ve : ci) {
 				sum += Math.pow(ve.get() - mu_i, 2);
 			}
-
 			double sd_i = Math.sqrt(sum / Ni);
 
-			for (int k = 0; k < numFactors; k++) {
-				Mu.set(i, k, mu_i + smallValue * Math.random());
-				Sigma.set(i, k, sd_i + smallValue * Math.random());
+			for (int z = 0; z < numFactors; z++) {
+				Mu.set(i, z, mu_i + smallValue * Math.random());
+				Sigma.set(i, z, sd_i + smallValue * Math.random());
 			}
 		}
 	}
@@ -190,7 +190,7 @@ public class GPLSA extends GraphicRecommender {
 					numerator += r * prob;
 					denominator += prob;
 				}
-
+				
 				double mu = denominator > 0 ? numerator / denominator : 0;
 				Mu.set(i, z, mu);
 
@@ -204,8 +204,7 @@ public class GPLSA extends GraphicRecommender {
 					denominator += prob;
 				}
 
-				// it is not suitable to set 0 if denominator <= 0; 
-				double sigma = denominator > 0 ? Math.sqrt(numerator / denominator) : 1.0 / numFactors;
+				double sigma = denominator > 0 ? Math.sqrt(numerator / denominator) : 0;
 				Sigma.set(i, z, sigma);
 			}
 
