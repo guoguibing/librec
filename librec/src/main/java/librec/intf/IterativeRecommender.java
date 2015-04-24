@@ -22,6 +22,7 @@ import happy.coding.io.FileIO;
 import happy.coding.io.LineConfiger;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -32,6 +33,7 @@ import librec.data.SparseMatrix;
  * @author guoguibing
  * 
  */
+@Configuration("numFactors, initLRate, maxLRate, regB, regU, regI, numIters, isBoldDriver")
 public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
@@ -246,7 +248,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, numFactors, numIters,
+		return Strings.toString(new Object[] { numFactors, initLRate, maxLRate, regB, regU, regI, numIters,
 				isBoldDriver }, ",");
 	}
 

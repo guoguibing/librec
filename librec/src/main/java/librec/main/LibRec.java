@@ -61,6 +61,7 @@ import librec.ranking.FISMauc;
 import librec.ranking.FISMrmse;
 import librec.ranking.GBPR;
 import librec.ranking.LDA;
+import librec.ranking.LRMF;
 import librec.ranking.RankALS;
 import librec.ranking.RankSGD;
 import librec.ranking.SBPR;
@@ -585,6 +586,8 @@ public class LibRec {
 		case "fism":
 		case "fismauc":
 			return new FISMauc(trainMatrix, testMatrix, fold);
+		case "lrmf":
+			return new LRMF(trainMatrix, testMatrix, fold);
 		case "rankals":
 			return new RankALS(trainMatrix, testMatrix, fold);
 		case "ranksgd":
