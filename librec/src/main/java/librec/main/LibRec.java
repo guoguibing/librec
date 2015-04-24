@@ -524,8 +524,6 @@ public class LibRec {
 		switch (algorithm.toLowerCase()) {
 
 		/* under development */
-		case "gplsa":
-			return new GPLSA(trainMatrix, testMatrix, fold);
 
 		/* baselines */
 		case "globalavg":
@@ -552,6 +550,8 @@ public class LibRec {
 			return new RegSVD(trainMatrix, testMatrix, fold);
 		case "biasedmf":
 			return new BiasedMF(trainMatrix, testMatrix, fold);
+		case "gplsa":
+			return new GPLSA(trainMatrix, testMatrix, fold);
 		case "svd++":
 			return new SVDPlusPlus(trainMatrix, testMatrix, fold);
 		case "timesvd++":
