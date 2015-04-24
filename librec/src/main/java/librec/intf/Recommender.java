@@ -116,6 +116,9 @@ public abstract class Recommender implements Runnable {
 	// init mean and standard deviation
 	protected static double initMean, initStd;
 
+	// small value for initialization
+	protected static double smallValue = 0.01;
+
 	/************************************ Recommender-specific parameters ****************************************/
 	// algorithm's name
 	public String algoName;
@@ -339,8 +342,9 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
 		} else
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE), measures.get(Measure.RMSE),
-					measures.get(Measure.NMAE), measures.get(Measure.rMAE), measures.get(Measure.rRMSE), measures.get(Measure.MPE));
+			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
+					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),
+					measures.get(Measure.rRMSE), measures.get(Measure.MPE));
 
 		return evalInfo;
 	}

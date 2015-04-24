@@ -50,8 +50,6 @@ public abstract class IterativeRecommender extends Recommender {
 	protected static boolean isBoldDriver;
 	// decay of learning rate
 	protected static float decay;
-	// small value for initialization
-	protected static double smallValue = 0.01;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix

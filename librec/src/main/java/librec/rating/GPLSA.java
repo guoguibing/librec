@@ -47,11 +47,6 @@ public class GPLSA extends GraphicRecommender {
 
 	@Override
 	protected void initModel() throws Exception {
-		Mu = new DenseMatrix(numItems, numFactors);
-		Mu.init();
-
-		Sigma = new DenseMatrix(numItems, numFactors);
-		Sigma.init();
 
 		// Pz_u
 		theta = new DenseMatrix(numUsers, numFactors);
@@ -102,20 +97,22 @@ public class GPLSA extends GraphicRecommender {
 
 			Q.put(u, i, new HashMap<Integer, Double>());
 		}
+
+		// initialize Mu, Sigma: after data standardization, mean is 0, sd is 1
+		Mu = new DenseMatrix(numItems, numFactors);
+		Mu.init(0, 1);
+
+		Sigma = new DenseMatrix(numItems, numFactors);
+		Sigma.init(1, 1);
 	}
 
 	@Override
 	protected void eStep() {
 		// variational inference to compute Q
-		int count = 0, total = trainMatrix.size();
 		for (MatrixEntry me : trainMatrix) {
 			int u = me.row();
 			int i = me.column();
 			double r = me.get();
-
-			count++;
-			if (count % 100 == 0)
-				Logs.debug("Count = {}/{}", count, total);
 
 			double denominator = 0;
 			double[] numerator = new double[numFactors];
@@ -123,19 +120,14 @@ public class GPLSA extends GraphicRecommender {
 				double pdf = Gaussian.pdf(r, Mu.get(i, z), Sigma.get(i, z));
 				double val = theta.get(u, z) * pdf;
 
-				if (Double.isNaN(pdf))
-					System.out.println(pdf);
-
 				numerator[z] = val;
 				denominator += val;
 			}
 
-			if (denominator == 0 || Double.isNaN(denominator))
-				System.out.println();
-
 			Map<Integer, Double> factorProbs = Q.get(u, i);
 			for (int z = 0; z < numFactors; z++) {
-				factorProbs.put(z, numerator[z] / denominator);
+				double prob = (denominator > 0 ? numerator[z] / denominator : 0);
+				factorProbs.put(z, prob);
 			}
 		}
 	}
@@ -182,7 +174,7 @@ public class GPLSA extends GraphicRecommender {
 					denominator += prob;
 				}
 
-				double mu = denominator > 0 ? numerator / denominator : 0;
+				double mu = denominator > 0 ? numerator / denominator : 1.0 / numFactors;
 				Mu.set(i, z, mu);
 
 				numerator = 0;
@@ -194,7 +186,7 @@ public class GPLSA extends GraphicRecommender {
 					numerator += Math.pow(r - mu, 2) * prob;
 					denominator += prob;
 				}
-				double sigma = denominator > 0 ? Math.sqrt(numerator / denominator) : 0;
+				double sigma = denominator > 0 ? Math.sqrt(numerator / denominator) : 1.0 / numFactors;
 				Sigma.set(i, z, sigma);
 			}
 
