@@ -98,12 +98,29 @@ public class GPLSA extends GraphicRecommender {
 			Q.put(u, i, new HashMap<Integer, Double>());
 		}
 
-		// initialize Mu, Sigma: after data standardization, mean is 0, sd is 1
+		// initialize Mu, Sigma
 		Mu = new DenseMatrix(numItems, numFactors);
-		Mu.init(0, 1);
-
 		Sigma = new DenseMatrix(numItems, numFactors);
-		Sigma.init(1, 1);
+		for (int i = 0; i < numItems; i++) {
+			SparseVector ci = trainMatrix.column(i);
+			int Ni = ci.size();
+
+			if (Ni < 1)
+				continue;
+
+			double mu_i = ci.mean();
+			double sum = 0;
+			for (VectorEntry ve : ci) {
+				sum += Math.pow(ve.get() - mu_i, 2);
+			}
+
+			double sd_i = Math.sqrt(sum / Ni);
+
+			for (int k = 0; k < numFactors; k++) {
+				Mu.set(i, k, mu_i + smallValue * Math.random());
+				Sigma.set(i, k, sd_i + smallValue * Math.random());
+			}
+		}
 	}
 
 	@Override
