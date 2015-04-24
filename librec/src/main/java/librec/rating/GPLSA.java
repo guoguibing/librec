@@ -186,7 +186,7 @@ public class GPLSA extends GraphicRecommender {
 					numerator += Math.pow(r - mu, 2) * prob;
 					denominator += prob;
 				}
-				
+
 				// it is not suitable to set 0 if denominator <= 0; 
 				double sigma = denominator > 0 ? Math.sqrt(numerator / denominator) : 1.0 / numFactors;
 				Sigma.set(i, z, sigma);
@@ -240,10 +240,12 @@ public class GPLSA extends GraphicRecommender {
 					(float) (delta));
 		}
 
-		if (delta > 0)
+		if (numStats > 1 && delta > 0)
 			return true;
 
 		preRMSE = RMSE;
+		numStats++;
+
 		return false;
 	}
 
