@@ -5,7 +5,7 @@ LibRec
 
 **Links:** [Home](http://www.librec.net) | [Getting Started](http://www.librec.net/tutorial.html) | [Algorithms](http://www.librec.net/tutorial.html#algos) | [Examples](http://librec.net/example.html) |  [Datasets](http://www.librec.net/datasets.html) | [Source Code](https://github.com/guoguibing/librec) 
 
-![LibRec Structure](http://www.librec.net/css/librec.png)
+![LibRec Structure](http://www.librec.net/images/librec.png)
 
 ### Features
 
