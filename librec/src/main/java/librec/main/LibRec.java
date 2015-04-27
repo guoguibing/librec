@@ -37,6 +37,7 @@ import java.util.Properties;
 import librec.baseline.ConstantGuess;
 import librec.baseline.GlobalAverage;
 import librec.baseline.ItemAverage;
+import librec.baseline.ItemCluster;
 import librec.baseline.MostPopular;
 import librec.baseline.RandomGuess;
 import librec.baseline.UserAverage;
@@ -535,6 +536,8 @@ public class LibRec {
 			return new ItemAverage(trainMatrix, testMatrix, fold);
 		case "usercluster":
 			return new UserCluster(trainMatrix, testMatrix, fold);
+		case "itemcluster":
+			return new ItemCluster(trainMatrix, testMatrix, fold);
 		case "random":
 			return new RandomGuess(trainMatrix, testMatrix, fold);
 		case "constant":
