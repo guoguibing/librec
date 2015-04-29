@@ -110,6 +110,11 @@ public class GraphicRecommender extends Recommender {
 	 * size of statistics
 	 */
 	protected int numStats = 0;
+	
+	/**
+	 * objective loss
+	 */
+	protected double loss;
 
 	static {
 

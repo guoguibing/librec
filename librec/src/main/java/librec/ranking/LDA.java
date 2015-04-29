@@ -28,7 +28,15 @@ import com.google.common.collect.HashBasedTable;
 
 /**
  * Latent Dirichlet Allocation for implicit feedback: Tom Griffiths, <strong>Gibbs sampling in the generative model of
- * Latent Dirichlet Allocation</strong>, 2002.
+ * Latent Dirichlet Allocation</strong>, 2002. <br>
+ * 
+ * <p>
+ * <strong>Remarks:</strong> This implementation of LDA is for implicit feedback, where users are regarded as documents
+ * and items as words. To directly apply LDA to explicit ratings, Ian Porteous et al. (AAAI 2008, Section Bi-LDA)
+ * mentioned that, one way is to treat items as documents and ratings as words. We did not provide such an LDA
+ * implementation for explicit ratings. Instead, we provide recommender {@code URP} as an alternative LDA model for
+ * explicit ratings.
+ * </p>
  * 
  * @author Guibing Guo
  *

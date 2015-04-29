@@ -497,6 +497,42 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
+	 * @return the sum of data entries in a row
+	 */
+	public double sumOfRow(int row) {
+		double res = 0;
+		for (int col = 0; col < numColumns; col++)
+			res += data[row][col];
+
+		return res;
+	}
+
+	/**
+	 * @return the sum of data entries in a column
+	 */
+	public double sumOfColumn(int col) {
+		double res = 0;
+		for (int row = 0; row < numRows; row++)
+			res += data[row][col];
+
+		return res;
+	}
+
+	/**
+	 * @return the sum of all data entries
+	 */
+	public double sum() {
+		double res = 0;
+		for (int row = 0; row < numRows; row++) {
+			for (int col = 0; col < numColumns; col++) {
+				res += data[row][col];
+			}
+		}
+
+		return res;
+	}
+
+	/**
 	 * Add a value to entry [row, column]
 	 */
 	public void add(int row, int column, double val) {
