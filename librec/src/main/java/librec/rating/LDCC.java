@@ -250,7 +250,7 @@ public class LDCC extends GraphicRecommender {
 
 	@Override
 	protected double perplexity(int u, int v, double pred) throws Exception {
-		int l = (int) (pred / minRate);
+		int l = (int) (pred / minRate - 1);
 
 		// compute p(r|u,v)
 		double prob = 0;
