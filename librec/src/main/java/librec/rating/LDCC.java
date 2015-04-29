@@ -224,28 +224,20 @@ public class LDCC extends GraphicRecommender {
 		// get the parameters
 		postProbDistr();
 
-		// compute the perplexity: P(X)=\prod_{u,v} p(r|u,v)==> log P(X)=\sum_{u,v} p(r|u,v)
+		// compute the perplexity
 		int N = 0;
 		double sum = 0;
 		for (MatrixEntry me : trainMatrix) {
 			int u = me.row();
 			int v = me.column();
 			double ruv = me.get();
-			int l = scales.indexOf(ruv);
 
-			// compute p(r|u,v)
-			double prob = 0;
-			for (int i = 0; i < Ku; i++) {
-				for (int j = 0; j < Kv; j++) {
-					prob += theta[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
-				}
-			}
-			sum += Math.log(prob);
+			sum += perplexity(u, v, ruv);
 			N++;
 		}
 
-		double perp = Math.exp(-sum / N);
-		double delta = loss - perp; // perplexity should get smaller and smaller
+		double perp = Math.exp(sum / N);
+		double delta = perp - loss; // perplexity should get smaller and smaller --> delta<0
 
 		Logs.debug("{}{} iter {} achieves perplexity = {}, delta_perp = {}", algoName, foldInfo, iter, perp, delta);
 
@@ -257,30 +249,17 @@ public class LDCC extends GraphicRecommender {
 	}
 
 	@Override
-	protected void postModel() throws Exception {
-		// compute the perplexity: P(X)=\prod_{u,v} p(r|u,v)==> log P(X)=\sum_{u,v} p(r|u,v)
-		int N = 0;
-		double sum = 0;
-		for (MatrixEntry me : testMatrix) {
-			int u = me.row();
-			int v = me.column();
+	protected double perplexity(int u, int v, double pred) throws Exception {
+		int l = (int) (pred / minRate);
 
-			double ruv = predict(u, v);
-			int l = (int) (ruv / minRate);
-
-			// compute p(r|u,v)
-			double prob = 0;
-			for (int i = 0; i < Ku; i++) {
-				for (int j = 0; j < Kv; j++) {
-					prob += theta[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
-				}
+		// compute p(r|u,v)
+		double prob = 0;
+		for (int i = 0; i < Ku; i++) {
+			for (int j = 0; j < Kv; j++) {
+				prob += theta[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
 			}
-			sum += Math.log(prob);
-			N++;
 		}
-
-		double perp = Math.exp(-sum / N);
-		Logs.info("{}{} achieves perplexity = {}", algoName, foldInfo, perp);
+		return -Math.log(prob);
 	}
 
 	@Override

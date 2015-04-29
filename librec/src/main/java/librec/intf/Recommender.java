@@ -149,7 +149,12 @@ public abstract class Recommender implements Runnable {
 	 * 
 	 */
 	public enum Measure {
-		MAE, RMSE, NMAE, rMAE, rRMSE, MPE, D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC, TrainTime, TestTime
+		/* prediction-based measures */
+		MAE, RMSE, NMAE, rMAE, rRMSE, MPE, Perplexity,
+		/* ranking-based measures */
+		D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC,
+		/* execution time */
+		TrainTime, TestTime
 	}
 
 	/**
@@ -327,9 +332,6 @@ public abstract class Recommender implements Runnable {
 	public static String getEvalInfo(Map<Measure, Double> measures) {
 		String evalInfo = null;
 		if (isRankingPred) {
-			// Note: MAE and RMSE are computed, but not used here
-			// .... if you need them, add it back in the same manner as other
-			// metrics
 			if (isDiverseUsed)
 				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
 						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
@@ -341,10 +343,17 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
-		} else
+			
+		} else {
 			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
 					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),
 					measures.get(Measure.rRMSE), measures.get(Measure.MPE));
+
+			// for some graphic models
+			if (measures.containsKey(Measure.Perplexity)) {
+				evalInfo += String.format(",%.6f", measures.get(Measure.Perplexity));
+			}
+		}
 
 		return evalInfo;
 	}
@@ -520,7 +529,7 @@ public abstract class Recommender implements Runnable {
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
-		double sum_maes = 0, sum_mses = 0, sum_r_maes = 0, sum_r_rmses = 0;
+		double sum_maes = 0, sum_mses = 0, sum_r_maes = 0, sum_r_rmses = 0, sum_perps = 0;
 		int numCount = 0, numPEs = 0;
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
@@ -534,6 +543,10 @@ public abstract class Recommender implements Runnable {
 			double pred = predict(u, j, true);
 			if (Double.isNaN(pred))
 				continue;
+
+			// perplexity: for some graphic model
+			double perp = perplexity(u, j, pred);
+			sum_perps += perp;
 
 			// rounding prediction to the closest rating level
 			double rPred = Math.round(pred / minRate) * minRate;
@@ -586,6 +599,11 @@ public abstract class Recommender implements Runnable {
 
 		// measure zero-one loss
 		measures.put(Measure.MPE, (numPEs + 0.0) / numCount);
+
+		// perplexity
+		if (sum_perps > 0) {
+			measures.put(Measure.Perplexity, Math.exp(sum_perps / numCount));
+		}
 
 		return measures;
 	}
@@ -813,6 +831,10 @@ public abstract class Recommender implements Runnable {
 	 */
 	protected double predict(int u, int j) throws Exception {
 		return globalMean;
+	}
+
+	protected double perplexity(int u, int j, double r) throws Exception {
+		return 0;
 	}
 
 	/**
