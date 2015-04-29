@@ -37,8 +37,8 @@ public class LDCC extends GraphicRecommender {
 	private float au, av, bl;
 
 	// parameters
-	private DenseMatrix PIu, PIv;
-	private double[][][] theta;
+	private DenseMatrix PIu, PIv, PIuSum, PIvSum;
+	private double[][][] theta, thetaSum;
 
 	public LDCC(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -88,9 +88,10 @@ public class LDCC extends GraphicRecommender {
 		}
 
 		// parameters
-		PIu = new DenseMatrix(numUsers, Ku);
-		PIv = new DenseMatrix(numItems, Kv);
+		PIuSum = new DenseMatrix(numUsers, Ku);
+		PIvSum = new DenseMatrix(numItems, Kv);
 		theta = new double[Ku][Kv][numLevels];
+		thetaSum = new double[Ku][Kv][numLevels];
 	}
 
 	@Override
@@ -182,20 +183,20 @@ public class LDCC extends GraphicRecommender {
 	protected void readoutParams() {
 		for (int u = 0; u < numUsers; u++) {
 			for (int i = 0; i < Ku; i++) {
-				PIu.add(u, i, (Nui.get(u, i) + au) / (Nu.get(u) + Ku * au));
+				PIuSum.add(u, i, (Nui.get(u, i) + au) / (Nu.get(u) + Ku * au));
 			}
 		}
 
 		for (int v = 0; v < numItems; v++) {
 			for (int j = 0; j < Kv; j++) {
-				PIv.add(v, j, (Nvj.get(v, j) + av) / (Nv.get(v) + Kv * av));
+				PIvSum.add(v, j, (Nvj.get(v, j) + av) / (Nv.get(v) + Kv * av));
 			}
 		}
 
 		for (int i = 0; i < Ku; i++) {
 			for (int j = 0; j < Kv; j++) {
 				for (int l = 0; l < numLevels; l++) {
-					theta[i][j][l] += (Nijl[i][j][l] + bl) / (Nij.get(i, j) + numLevels * bl);
+					thetaSum[i][j][l] += (Nijl[i][j][l] + bl) / (Nij.get(i, j) + numLevels * bl);
 				}
 			}
 		}
@@ -205,13 +206,13 @@ public class LDCC extends GraphicRecommender {
 
 	@Override
 	protected void postProbDistr() {
-		PIu = PIu.scale(1.0 / numStats);
-		PIv = PIv.scale(1.0 / numStats);
+		PIu = PIuSum.scale(1.0 / numStats);
+		PIv = PIvSum.scale(1.0 / numStats);
 
 		for (int i = 0; i < Ku; i++) {
 			for (int j = 0; j < Kv; j++) {
 				for (int l = 0; l < numLevels; l++) {
-					theta[i][j][l] /= numStats;
+					theta[i][j][l] = thetaSum[i][j][l] / numStats;
 				}
 			}
 		}
@@ -219,6 +220,9 @@ public class LDCC extends GraphicRecommender {
 
 	@Override
 	protected boolean isConverged(int iter) throws Exception {
+
+		// get the parameters
+		postProbDistr();
 
 		// compute the perplexity: P(X)=\prod_{u,v} p(r|u,v)==> log P(X)=\sum_{u,v} p(r|u,v)
 		int N = 0;
