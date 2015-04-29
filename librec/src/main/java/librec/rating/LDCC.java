@@ -249,7 +249,7 @@ public class LDCC extends GraphicRecommender {
 
 		Logs.debug("{}{} iter {} achieves perplexity = {}, delta_perp = {}", algoName, foldInfo, iter, perp, delta);
 
-		if (iter > 1 && delta > 0)
+		if (numStats > 1 && delta > 0)
 			return true;
 
 		loss = perp;
