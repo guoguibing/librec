@@ -32,12 +32,12 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * Dirichlet hyper-parameters of user-topic distribution: typical value is 50/K
 	 */
-	protected static double initAlpha;
+	protected static float initAlpha;
 
 	/**
 	 * Dirichlet hyper-parameters of topic-item distribution, typical value is 0.01
 	 */
-	protected static double initBeta;
+	protected static float initBeta;
 	/**
 	 * burn-in period
 	 */
@@ -124,9 +124,10 @@ public class GraphicRecommender extends Recommender {
 		pgm = cf.getParamOptions("pgm.setup");
 		burnIn = pgm.getInt("-burn-in");
 		sampleLag = pgm.getInt("-sample-lag");
-		initAlpha = pgm.getDouble("-alpha", 1.0 / numFactors);
-		initBeta = pgm.getDouble("-beta", 1.0 / numFactors);
 		numIntervals = pgm.getInt("-interval");
+		
+		initAlpha = pgm.getFloat("-alpha", 1.0f / numFactors);
+		initBeta = pgm.getFloat("-beta", 1.0f/ numFactors);
 
 		assert burnIn > 0;
 		assert sampleLag > 0;
