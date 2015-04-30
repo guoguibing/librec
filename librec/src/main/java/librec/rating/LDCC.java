@@ -58,9 +58,9 @@ public class LDCC extends GraphicRecommender {
 		Nijl = new int[Ku][Kv][numLevels];
 		Nij = new DenseMatrix(Ku, Kv);
 
-		au = algoOptions.getFloat("-au"); // alpha for user
-		av = algoOptions.getFloat("-av"); // alpha for item
-		bl = algoOptions.getFloat("-beta"); // beta for rating levels
+		au = algoOptions.getFloat("-au", 1.0f / Ku); // alpha for user
+		av = algoOptions.getFloat("-av", 1.0f / Kv); // alpha for item
+		bl = algoOptions.getFloat("-beta", 1.0f / numLevels); // beta for rating levels
 
 		Zu = HashBasedTable.create();
 		Zv = HashBasedTable.create();
