@@ -117,6 +117,9 @@ public class GraphicRecommender extends Recommender {
 	protected double loss;
 
 	static {
+		
+		numFactors = cf.getInt("num.factors");
+		numIters = cf.getInt("num.max.iter");
 
 		pgm = cf.getParamOptions("pgm.setup");
 		burnIn = pgm.getInt("-burn-in");
@@ -127,9 +130,6 @@ public class GraphicRecommender extends Recommender {
 
 		assert burnIn > 0;
 		assert sampleLag > 0;
-
-		numFactors = cf.getInt("num.factors");
-		numIters = cf.getInt("num.max.iter");
 	}
 
 	public GraphicRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
