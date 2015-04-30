@@ -84,7 +84,7 @@ public class GraphicRecommender extends Recommender {
 	 * entry[u]: total number of items rated by user u.
 	 */
 	protected DenseVector Nu;
-	
+
 	/**
 	 * entry[i]: total number of users having rated item i.
 	 */
@@ -110,7 +110,7 @@ public class GraphicRecommender extends Recommender {
 	 * size of statistics
 	 */
 	protected int numStats = 0;
-	
+
 	/**
 	 * objective loss
 	 */
@@ -121,8 +121,8 @@ public class GraphicRecommender extends Recommender {
 		pgm = cf.getParamOptions("pgm.setup");
 		burnIn = pgm.getInt("-burn-in");
 		sampleLag = pgm.getInt("-sample-lag");
-		initAlpha = pgm.getDouble("-alpha");
-		initBeta = pgm.getDouble("-beta");
+		initAlpha = pgm.getDouble("-alpha", 1.0 / numFactors);
+		initBeta = pgm.getDouble("-beta", 1.0 / numFactors);
 		numIntervals = pgm.getInt("-interval");
 
 		assert burnIn > 0;
@@ -143,7 +143,7 @@ public class GraphicRecommender extends Recommender {
 
 			// E-step: infer parameters
 			eStep();
-			
+
 			// M-step: update hyper-parameters
 			mStep();
 
@@ -191,11 +191,11 @@ public class GraphicRecommender extends Recommender {
 	 */
 	protected void eStep() {
 	}
-	
+
 	/**
-	 * parameters inference: used if new user arrives in the test phase 
+	 * parameters inference: used if new user arrives in the test phase
 	 */
-	protected void inference(){
+	protected void inference() {
 	}
 
 	/**

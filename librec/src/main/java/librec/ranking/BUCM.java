@@ -66,7 +66,7 @@ public class BUCM extends GraphicRecommender {
 		beta.setAll(initBeta);
 
 		gamma = new DenseVector(numLevels);
-		initGamma = algoOptions.getFloat("-gamma");
+		initGamma = algoOptions.getFloat("-gamma", 1.0f / numLevels);
 		gamma.setAll(initGamma);
 
 		// initialize topics
