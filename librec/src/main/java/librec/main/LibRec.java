@@ -73,7 +73,7 @@ import librec.rating.BPMF;
 import librec.rating.BiasedMF;
 import librec.rating.GPLSA;
 import librec.rating.ItemKNN;
-import librec.rating.LDCC;
+import librec.rating.LDCC2;
 import librec.rating.PMF;
 import librec.rating.RSTE;
 import librec.rating.RegSVD;
@@ -528,7 +528,7 @@ public class LibRec {
 
 		/* under development */
 		case "ldcc":
-			return new LDCC(trainMatrix, testMatrix, fold);
+			return new LDCC2(trainMatrix, testMatrix, fold);
 
 			/* baselines */
 		case "globalavg":
