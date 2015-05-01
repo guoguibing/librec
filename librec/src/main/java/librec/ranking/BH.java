@@ -25,6 +25,7 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.GraphicRecommender;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
@@ -77,6 +78,9 @@ public class BH extends GraphicRecommender {
 		Nklr = new int[K][L][numLevels];
 		Nkli = new int[K][L][numItems];
 
+		Zk = HashBasedTable.create();
+		Zl = HashBasedTable.create();
+		
 		for (MatrixEntry me : trainMatrix) {
 			int u = me.row();
 			int i = me.column();
@@ -99,6 +103,7 @@ public class BH extends GraphicRecommender {
 			Zl.put(u, i, l);
 		}
 
+		// parameters
 		PukSum = new DenseMatrix(numUsers, K);
 		PklSum = new DenseMatrix(K, L);
 		PklrSum = new double[K][L][numLevels];
