@@ -314,14 +314,14 @@ public abstract class Recommender implements Runnable {
 		Class<? extends Recommender> cl = this.getClass();
 		// basic annotation
 		String algoConfig = cl.getAnnotation(Configuration.class).value();
-		
+
 		// additional algorithm-specific configuration
 		if (cl.isAnnotationPresent(AddConfiguration.class)) {
 			AddConfiguration add = cl.getAnnotation(AddConfiguration.class);
 
 			String before = add.before();
 			if (!Strings.isNullOrEmpty(before))
-				algoConfig = before + ", ";
+				algoConfig = before + ", " + algoConfig;
 
 			String after = add.after();
 			if (!Strings.isNullOrEmpty(after))
