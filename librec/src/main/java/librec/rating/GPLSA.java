@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import librec.data.Configuration;
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -47,7 +47,7 @@ import com.google.common.collect.Table;
  * @author Guo Guibing
  *
  */
-@Configuration("factors, iters, burn.in, sample.lag, q")
+@AddConfiguration(before = "factors, q")
 public class GPLSA extends GraphicRecommender {
 
 	// {user, item, {factor z, probability}}
@@ -127,7 +127,7 @@ public class GPLSA extends GraphicRecommender {
 				continue;
 
 			double mu_i = ci.mean();
-			
+
 			double sum = 0;
 			for (VectorEntry ve : ci) {
 				sum += Math.pow(ve.get() - mu_i, 2);
@@ -208,7 +208,7 @@ public class GPLSA extends GraphicRecommender {
 					numerator += r * prob;
 					denominator += prob;
 				}
-				
+
 				double mu = denominator > 0 ? numerator / denominator : 0;
 				Mu.set(i, z, mu);
 
@@ -285,6 +285,6 @@ public class GPLSA extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, numIters, burnIn, sampleLag, q }, ", ");
+		return Strings.toString(new Object[] { numFactors, q }) + ", " + super.toString();
 	}
 }

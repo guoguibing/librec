@@ -18,6 +18,8 @@
 package librec.ranking;
 
 import static happy.coding.math.Gamma.digamma;
+import happy.coding.io.Strings;
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -41,6 +43,7 @@ import com.google.common.collect.HashBasedTable;
  * @author Guibing Guo
  *
  */
+@AddConfiguration(before = "factors, alpha, beta")
 public class LDA extends GraphicRecommender {
 
 	public LDA(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -199,6 +202,11 @@ public class LDA extends GraphicRecommender {
 	protected double ranking(int u, int j) throws Exception {
 
 		return DenseMatrix.product(theta, u, phi, j);
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { numFactors, alpha, beta }) + ", " + super.toString();
 	}
 
 }

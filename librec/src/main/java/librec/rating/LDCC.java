@@ -20,7 +20,7 @@ package librec.rating;
 
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
-import librec.data.Configuration;
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -39,7 +39,7 @@ import com.google.common.collect.Table;
  * @author Guo Guibing
  *
  */
-@Configuration("Ku, Kv, au, av, beta, numIters, burnIn, sampleLag")
+@AddConfiguration(before = "Ku, Kv, au, av, beta")
 public class LDCC extends GraphicRecommender {
 
 	private Table<Integer, Integer, Integer> Zu, Zv;
@@ -302,7 +302,7 @@ public class LDCC extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { Ku, Kv, au, av, bl, numIters, burnIn, sampleLag }, ", ");
+		return Strings.toString(new Object[] { Ku, Kv, au, av, bl }) + ", " + super.toString();
 	}
 
 }

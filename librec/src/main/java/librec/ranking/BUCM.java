@@ -19,6 +19,7 @@
 package librec.ranking;
 
 import static happy.coding.math.Gamma.digamma;
+import happy.coding.io.Strings;
 import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -35,7 +36,7 @@ import com.google.common.collect.HashBasedTable;
  * @author Guo Guibing
  *
  */
-@AddConfiguration("gamma")
+@AddConfiguration(before = "factors, alpha, beta, gamma")
 public class BUCM extends GraphicRecommender {
 
 	private float initGamma;
@@ -308,6 +309,6 @@ public class BUCM extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return super.toString() + ", " + initGamma;
+		return Strings.toString(new Object[] { numFactors, initAlpha, initBeta, initGamma }) + ", " + super.toString();
 	}
 }

@@ -18,6 +18,7 @@
 
 package librec.ranking;
 
+import happy.coding.io.Strings;
 import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -39,7 +40,7 @@ import com.google.common.collect.Table;
  * @author Guo Guibing
  *
  */
-@AddConfiguration("gamma, delta")
+@AddConfiguration(before = "K, L, alpha, beta, gamma, delta")
 public class BH extends GraphicRecommender {
 
 	private float initGamma, initDelta;
@@ -286,7 +287,8 @@ public class BH extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return super.toString() + ", " + initGamma + ", " + initDelta;
+		return Strings.toString(new Object[] { K, L, initAlpha, initBeta, initGamma, initDelta }) + ", "
+				+ super.toString();
 	}
 
 }

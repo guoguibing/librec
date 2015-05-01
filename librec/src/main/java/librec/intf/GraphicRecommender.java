@@ -16,7 +16,7 @@ import com.google.common.collect.Table;
  * @author guoguibing
  * 
  */
-@Configuration("factors, iters, burn.in, sample.lag, alpha, beta")
+@Configuration("iters, burn.in, sample.lag")
 public class GraphicRecommender extends Recommender {
 
 	/**
@@ -117,7 +117,7 @@ public class GraphicRecommender extends Recommender {
 	protected double loss;
 
 	static {
-		
+
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
 
@@ -125,9 +125,9 @@ public class GraphicRecommender extends Recommender {
 		burnIn = pgm.getInt("-burn-in");
 		sampleLag = pgm.getInt("-sample-lag");
 		numIntervals = pgm.getInt("-interval");
-		
+
 		initAlpha = pgm.getFloat("-alpha", 1.0f / numFactors);
-		initBeta = pgm.getFloat("-beta", 1.0f/ numFactors);
+		initBeta = pgm.getFloat("-beta", 1.0f / numFactors);
 
 		assert burnIn > 0;
 		assert sampleLag > 0;
@@ -207,7 +207,7 @@ public class GraphicRecommender extends Recommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, numIters, burnIn, sampleLag, initAlpha, initBeta }, ", ");
+		return Strings.toString(new Object[] { numIters, burnIn, sampleLag }, ", ");
 	}
 
 }

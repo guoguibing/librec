@@ -20,6 +20,8 @@ package librec.rating;
 
 import static happy.coding.math.Gamma.digamma;
 import happy.coding.io.Logs;
+import happy.coding.io.Strings;
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -38,6 +40,7 @@ import com.google.common.collect.HashBasedTable;
  * @author Guo Guibing
  *
  */
+@AddConfiguration(before = "factors, alpha, beta")
 public class URP extends GraphicRecommender {
 
 	private double preRMSE;
@@ -89,7 +92,7 @@ public class URP extends GraphicRecommender {
 			int i = me.column();
 			double rui = me.get();
 
-			int r = (int) (rui / minRate - 1); // rating level 0 ~ numLevels
+			int r = scales.indexOf(rui); // rating level 0 ~ numLevels
 			int t = (int) (Math.random() * numFactors); // 0 ~ k-1
 
 			// assign a topic t to pair (u, i)
@@ -130,7 +133,8 @@ public class URP extends GraphicRecommender {
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Ntir[k][i][r] + beta.get(r)) / (Nik.get(i, k) + sumBeta);
+				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Ntir[k][i][r] + beta.get(r))
+						/ (Nik.get(i, k) + sumBeta);
 			}
 			// cumulate multinomial parameters
 			for (int k = 1; k < p.length; k++) {
@@ -278,7 +282,7 @@ public class URP extends GraphicRecommender {
 		double pred = 0;
 
 		for (int r = 0; r < numLevels; r++) {
-			double rate = (r + 1) * minRate;
+			double rate = scales.get(r);
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
@@ -289,5 +293,10 @@ public class URP extends GraphicRecommender {
 		}
 
 		return pred;
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { numFactors, alpha, beta }) + ", " + super.toString();
 	}
 }

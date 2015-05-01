@@ -50,6 +50,7 @@ import librec.data.SparseVector;
 import librec.data.SymmMatrix;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.cache.LoadingCache;
 
 /**
@@ -258,23 +259,10 @@ public abstract class Recommender implements Runnable {
 			// learn a recommender model
 			initModel();
 
-			// print out algorithm's settings: to indicate starting building models
-			String algoInfo = toString();
+			// show algorithm's configuration
+			printAlgoConfig();
 
-			Class<? extends Recommender> cl = this.getClass();
-			String algoConfig = cl.getAnnotation(Configuration.class).value(); // basic annotation
-			// additional algorithm-specific configuration
-			if (cl.isAnnotationPresent(AddConfiguration.class)) {
-				algoConfig += ", " + cl.getAnnotation(AddConfiguration.class).value();
-			}
-
-			if (!algoInfo.isEmpty()) {
-				if (!algoConfig.isEmpty())
-					Logs.debug("{}: [{}] = [{}]", algoName, algoConfig, algoInfo);
-				else
-					Logs.debug("{}: {}", algoName, algoInfo);
-			}
-
+			// build the model
 			buildModel();
 
 			// post-processing after building a model, e.g., release intermediate memory to avoid memory leak
@@ -320,6 +308,34 @@ public abstract class Recommender implements Runnable {
 			saveModel();
 	}
 
+	private void printAlgoConfig() {
+		String algoInfo = toString();
+
+		Class<? extends Recommender> cl = this.getClass();
+		// basic annotation
+		String algoConfig = cl.getAnnotation(Configuration.class).value();
+		
+		// additional algorithm-specific configuration
+		if (cl.isAnnotationPresent(AddConfiguration.class)) {
+			AddConfiguration add = cl.getAnnotation(AddConfiguration.class);
+
+			String before = add.before();
+			if (!Strings.isNullOrEmpty(before))
+				algoConfig = before + ", ";
+
+			String after = add.after();
+			if (!Strings.isNullOrEmpty(after))
+				algoConfig += ", " + after;
+		}
+
+		if (!algoInfo.isEmpty()) {
+			if (!algoConfig.isEmpty())
+				Logs.debug("{}: [{}] = [{}]", algoName, algoConfig, algoInfo);
+			else
+				Logs.debug("{}: {}", algoName, algoInfo);
+		}
+	}
+
 	/**
 	 * validate model with held-out validation data
 	 */
@@ -343,7 +359,7 @@ public abstract class Recommender implements Runnable {
 						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
 						measures.get(Measure.MRR), numIgnore);
-			
+
 		} else {
 			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
 					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),

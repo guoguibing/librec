@@ -33,5 +33,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface AddConfiguration {
-	public String value() default "";
+
+	/* add more configurations before the main configuration */
+	public String before() default "";
+	
+	/* add more configurations after the main configuration */
+	public String after() default "";
 }
