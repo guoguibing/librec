@@ -40,10 +40,10 @@ import com.google.common.collect.Table;
  * @author Guo Guibing
  *
  */
-@AddConfiguration(before = "K, L, alpha, beta, gamma, delta")
+@AddConfiguration(before = "K, L, alpha, beta, gamma, sigma")
 public class BH extends GraphicRecommender {
 
-	private float initGamma, initDelta;
+	private float initGamma, initSigma;
 	private int K, L;
 
 	private DenseMatrix Nkl;
@@ -67,8 +67,9 @@ public class BH extends GraphicRecommender {
 
 		initAlpha = pgm.getFloat("-alpha", 1.0f / K);
 		initBeta = pgm.getFloat("-beta", 1.0f / L);
+		
 		initGamma = algoOptions.getFloat("-gamma", 1.0f / numLevels);
-		initDelta = algoOptions.getFloat("-delta", 1.0f / numItems);
+		initSigma = algoOptions.getFloat("-sigma", 1.0f / numItems);
 
 		Nuk = new DenseMatrix(numUsers, K);
 		Nu = new DenseVector(numUsers);
@@ -139,7 +140,7 @@ public class BH extends GraphicRecommender {
 					double v1 = (Nuk.get(u, k) + initAlpha) / (Nu.get(u) + K * initAlpha);
 					double v2 = (Nkl.get(k, l) + initBeta) / (Nk.get(k) + L * initBeta);
 					double v3 = (Nklr[k][l][r] + initGamma) / (Nkl.get(k, l) + numLevels * initGamma);
-					double v4 = (Nkli[k][l][i] + initDelta) / (Nkl.get(k, l) + numItems * initDelta);
+					double v4 = (Nkli[k][l][i] + initSigma) / (Nkl.get(k, l) + numItems * initSigma);
 
 					double val = v1 * v2 * v3 * v4;
 					Pzw.set(z, w, val);
@@ -213,7 +214,7 @@ public class BH extends GraphicRecommender {
 		for (int k = 0; k < K; k++) {
 			for (int l = 0; l < L; l++) {
 				for (int i = 0; i < numItems; i++) {
-					PkliSum[k][l][i] += (Nklr[k][l][i] + initDelta) / (Nkl.get(k, l) + numItems * initDelta);
+					PkliSum[k][l][i] += (Nkli[k][l][i] + initSigma) / (Nkl.get(k, l) + numItems * initSigma);
 				}
 			}
 		}
@@ -287,7 +288,7 @@ public class BH extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { K, L, initAlpha, initBeta, initGamma, initDelta }) + ", "
+		return Strings.toString(new Object[] { K, L, initAlpha, initBeta, initGamma, initSigma }) + ", "
 				+ super.toString();
 	}
 
