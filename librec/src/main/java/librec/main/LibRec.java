@@ -55,6 +55,7 @@ import librec.ext.PRankD;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
+import librec.ranking.BH;
 import librec.ranking.BPR;
 import librec.ranking.BUCM;
 import librec.ranking.CLiMF;
@@ -527,7 +528,6 @@ public class LibRec {
 		switch (algorithm.toLowerCase()) {
 
 		/* under development */
-		
 
 			/* baselines */
 		case "globalavg":
@@ -584,8 +584,6 @@ public class LibRec {
 			return new LDCC(trainMatrix, testMatrix, fold);
 
 			/* item ranking */
-		case "bucm":
-			return new BUCM(trainMatrix, testMatrix, fold);
 		case "climf":
 			return new CLiMF(trainMatrix, testMatrix, fold);
 		case "fismrmse":
@@ -629,6 +627,12 @@ public class LibRec {
 			return new PRankD(trainMatrix, testMatrix, fold);
 		case "external":
 			return new External(trainMatrix, testMatrix, fold);
+			
+			/* both tasks */
+		case "bucm":
+			return new BUCM(trainMatrix, testMatrix, fold);
+		case "bh":
+			return new BH(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");
