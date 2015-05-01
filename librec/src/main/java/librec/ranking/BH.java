@@ -63,6 +63,8 @@ public class BH extends GraphicRecommender {
 		K = algoOptions.getInt("-k");
 		L = algoOptions.getInt("-l");
 
+		initAlpha = pgm.getFloat("-alpha", 1.0f / K);
+		initBeta = pgm.getFloat("-beta", 1.0f / L);
 		initGamma = algoOptions.getFloat("-gamma", 1.0f / numLevels);
 		initDelta = algoOptions.getFloat("-delta", 1.0f / numItems);
 
