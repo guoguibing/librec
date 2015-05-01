@@ -80,7 +80,7 @@ public class BH extends GraphicRecommender {
 
 		Zk = HashBasedTable.create();
 		Zl = HashBasedTable.create();
-		
+
 		for (MatrixEntry me : trainMatrix) {
 			int u = me.row();
 			int i = me.column();
@@ -132,6 +132,7 @@ public class BH extends GraphicRecommender {
 			Nkli[k][l][i]--;
 
 			DenseMatrix Pzw = new DenseMatrix(K, L);
+			double sum = 0;
 			for (int z = 0; z < K; z++) {
 				for (int w = 0; w < L; w++) {
 					double v1 = (Nuk.get(u, k) + initAlpha) / (Nu.get(u) + K * initAlpha);
@@ -139,9 +140,14 @@ public class BH extends GraphicRecommender {
 					double v3 = (Nklr[k][l][r] + initGamma) / (Nkl.get(k, l) + numLevels * initGamma);
 					double v4 = (Nkli[k][l][i] + initDelta) / (Nkl.get(k, l) + numItems * initDelta);
 
-					Pzw.set(z, w, v1 * v2 * v3 * v4);
+					double val = v1 * v2 * v3 * v4;
+					Pzw.set(z, w, val);
+					sum += val;
 				}
 			}
+
+			// normalization
+			Pzw = Pzw.scale(1.0 / sum);
 
 			// resample k
 			double[] Pz = new double[K];
