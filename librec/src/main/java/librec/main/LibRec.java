@@ -55,7 +55,7 @@ import librec.ext.PRankD;
 import librec.ext.SlopeOne;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
-import librec.ranking.BH;
+import librec.ranking.BHfree;
 import librec.ranking.BPR;
 import librec.ranking.BUCM;
 import librec.ranking.CLiMF;
@@ -631,8 +631,8 @@ public class LibRec {
 			/* both tasks */
 		case "bucm":
 			return new BUCM(trainMatrix, testMatrix, fold);
-		case "bh":
-			return new BH(trainMatrix, testMatrix, fold);
+		case "bh-free":
+			return new BHfree(trainMatrix, testMatrix, fold);
 
 		default:
 			throw new Exception("No recommender is specified!");

@@ -41,7 +41,7 @@ import com.google.common.collect.Table;
  *
  */
 @AddConfiguration(before = "K, L, alpha, beta, gamma, sigma")
-public class BH extends GraphicRecommender {
+public class BHfree extends GraphicRecommender {
 
 	private float initGamma, initSigma;
 	private int K, L;
@@ -55,8 +55,10 @@ public class BH extends GraphicRecommender {
 	private DenseMatrix Puk, Pkl, PukSum, PklSum;
 	private double[][][] Pklr, Pkli, PklrSum, PkliSum;
 
-	public BH(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public BHfree(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
+		
+		algoName = "BH-free";
 	}
 
 	@Override
@@ -67,7 +69,7 @@ public class BH extends GraphicRecommender {
 
 		initAlpha = pgm.getFloat("-alpha", 1.0f / K);
 		initBeta = pgm.getFloat("-beta", 1.0f / L);
-		
+
 		initGamma = algoOptions.getFloat("-gamma", 1.0f / numLevels);
 		initSigma = algoOptions.getFloat("-sigma", 1.0f / numItems);
 

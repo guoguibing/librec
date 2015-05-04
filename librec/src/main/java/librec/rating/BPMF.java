@@ -20,6 +20,7 @@ package librec.rating;
 
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -39,12 +40,12 @@ import librec.intf.IterativeRecommender;
  * @author guoguibing
  * 
  */
+@Configuration("factors, iters")
 public class BPMF extends IterativeRecommender {
 
 	public BPMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "BayesianPMF";
 		lRate = -1;
 	}
 
@@ -325,6 +326,6 @@ public class BPMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, numIters }, ",");
+		return Strings.toString(new Object[] { numFactors, numIters });
 	}
 }
