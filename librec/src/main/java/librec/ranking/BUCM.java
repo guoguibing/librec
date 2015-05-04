@@ -65,8 +65,8 @@ public class BUCM extends GraphicRecommender {
 	protected void initModel() throws Exception {
 
 		// cumulative parameters
-		thetaSum = new DenseMatrix(numUsers, numFactors);
-		phiSum = new DenseMatrix(numItems, numFactors);
+		PukSum = new DenseMatrix(numUsers, numFactors);
+		PkiSum = new DenseMatrix(numItems, numFactors);
 		epsilonSum = new double[numFactors][numItems][numLevels];
 
 		// initialize count variables
@@ -232,14 +232,14 @@ public class BUCM extends GraphicRecommender {
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
 				val = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
-				thetaSum.add(u, k, val);
+				PukSum.add(u, k, val);
 			}
 		}
 
 		for (int i = 0; i < numItems; i++) {
 			for (int k = 0; k < numFactors; k++) {
 				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
-				phiSum.add(i, k, val);
+				PkiSum.add(i, k, val);
 			}
 		}
 
@@ -256,8 +256,8 @@ public class BUCM extends GraphicRecommender {
 
 	@Override
 	protected void postProbDistr() {
-		theta = thetaSum.scale(1.0 / numStats);
-		phi = phiSum.scale(1.0 / numStats);
+		Puk = PukSum.scale(1.0 / numStats);
+		Pki = PkiSum.scale(1.0 / numStats);
 
 		epsilon = new double[numFactors][numItems][numLevels];
 		for (int k = 0; k < numFactors; k++) {
@@ -278,7 +278,7 @@ public class BUCM extends GraphicRecommender {
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
-				prob += theta.get(u, k) * epsilon[k][i][r];
+				prob += Puk.get(u, k) * epsilon[k][i][r];
 			}
 
 			pred += prob * rate;
@@ -301,7 +301,7 @@ public class BUCM extends GraphicRecommender {
 				}
 			}
 
-			rank += theta.get(u, k) * phi.get(j, k) * sum;
+			rank += Puk.get(u, k) * Pki.get(j, k) * sum;
 		}
 
 		return rank;

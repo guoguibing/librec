@@ -67,8 +67,8 @@ public class BHfree extends GraphicRecommender {
 		K = algoOptions.getInt("-k");
 		L = algoOptions.getInt("-l");
 
-		initAlpha = pgm.getFloat("-alpha", 1.0f / K);
-		initBeta = pgm.getFloat("-beta", 1.0f / L);
+		initAlpha = pgmOptions.getFloat("-alpha", 1.0f / K);
+		initBeta = pgmOptions.getFloat("-beta", 1.0f / L);
 
 		initGamma = algoOptions.getFloat("-gamma", 1.0f / numLevels);
 		initSigma = algoOptions.getFloat("-sigma", 1.0f / numItems);

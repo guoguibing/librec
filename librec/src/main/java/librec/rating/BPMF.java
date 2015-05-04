@@ -236,14 +236,11 @@ public class BPMF extends IterativeRecommender {
 				int u = me.row();
 				int j = me.column();
 				double ruj = me.get();
-				if (ruj > 0) {
-					double pred = predict(u, j);
-					double euj = ruj - pred;
+				double pred = predict(u, j);
+				double euj = ruj - pred;
 
-					errs += euj * euj;
-					loss += euj * euj;
-				}
-
+				errs += euj * euj;
+				loss += euj * euj;
 			}
 			errs *= 0.5;
 			loss *= 0.5;

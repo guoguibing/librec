@@ -57,19 +57,19 @@ public class URP extends GraphicRecommender {
 	/**
 	 * cumulative statistics of probabilities of (t, i, r)
 	 */
-	private double[][][] phiSum;
+	private double[][][] PkirSum;
 
 	/**
 	 * posterior probabilities of parameters phi_{k, i, r}
 	 */
-	protected double[][][] phi;
+	protected double[][][] Pkir;
 
 	@Override
 	protected void initModel() throws Exception {
 
 		// cumulative parameters
-		thetaSum = new DenseMatrix(numUsers, numFactors);
-		phiSum = new double[numFactors][numItems][numLevels];
+		PukSum = new DenseMatrix(numUsers, numFactors);
+		PkirSum = new double[numFactors][numItems][numLevels];
 
 		// initialize count variables
 		Nuk = new DenseMatrix(numUsers, numFactors);
@@ -203,7 +203,7 @@ public class URP extends GraphicRecommender {
 			for (int k = 0; k < numFactors; k++) {
 				ak = alpha.get(k);
 				val = (Nuk.get(u, k) + ak) / (Nu.get(u) + sumAlpha);
-				thetaSum.add(u, k, val);
+				PukSum.add(u, k, val);
 			}
 		}
 
@@ -213,7 +213,7 @@ public class URP extends GraphicRecommender {
 				for (int r = 0; r < numLevels; r++) {
 					br = beta.get(r);
 					val = (Ntir[k][i][r] + br) / (Nik.get(i, k) + sumBeta);
-					phiSum[k][i][r] += val;
+					PkirSum[k][i][r] += val;
 				}
 			}
 		}
@@ -222,13 +222,13 @@ public class URP extends GraphicRecommender {
 
 	@Override
 	protected void postProbDistr() {
-		theta = thetaSum.scale(1.0 / numStats);
+		Puk = PukSum.scale(1.0 / numStats);
 
-		phi = new double[numFactors][numItems][numLevels];
+		Pkir = new double[numFactors][numItems][numLevels];
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					phi[k][i][r] = phiSum[k][i][r] / numStats;
+					Pkir[k][i][r] = PkirSum[k][i][r] / numStats;
 				}
 			}
 		}
@@ -286,7 +286,7 @@ public class URP extends GraphicRecommender {
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
-				prob += theta.get(u, k) * phi[k][i][r];
+				prob += Puk.get(u, k) * Pkir[k][i][r];
 			}
 
 			pred += prob * rate;

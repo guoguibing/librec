@@ -67,11 +67,11 @@ public class GPLSA extends GraphicRecommender {
 	protected void initModel() throws Exception {
 
 		// Pz_u
-		theta = new DenseMatrix(numUsers, numFactors);
+		Puk = new DenseMatrix(numUsers, numFactors);
 		for (int u = 0; u < numUsers; u++) {
 			double[] probs = Randoms.randProbs(numFactors);
 			for (int k = 0; k < numFactors; k++) {
-				theta.set(u, k, probs[k]);
+				Puk.set(u, k, probs[k]);
 			}
 		}
 
@@ -153,7 +153,7 @@ public class GPLSA extends GraphicRecommender {
 			double[] numerator = new double[numFactors];
 			for (int z = 0; z < numFactors; z++) {
 				double pdf = Gaussian.pdf(r, Mu.get(i, z), Sigma.get(i, z));
-				double val = theta.get(u, z) * pdf;
+				double val = Puk.get(u, z) * pdf;
 
 				numerator[z] = val;
 				denominator += val;
@@ -188,7 +188,7 @@ public class GPLSA extends GraphicRecommender {
 			}
 
 			for (int z = 0; z < numFactors; z++) {
-				theta.set(u, z, numerator[z] / denominator);
+				Puk.set(u, z, numerator[z] / denominator);
 			}
 		}
 
@@ -235,7 +235,7 @@ public class GPLSA extends GraphicRecommender {
 
 		double sum = 0;
 		for (int z = 0; z < numFactors; z++) {
-			sum += theta.get(u, z) * Mu.get(i, z);
+			sum += Puk.get(u, z) * Mu.get(i, z);
 		}
 
 		return mu.get(u) + sigma.get(u) * sum;

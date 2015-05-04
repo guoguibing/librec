@@ -22,7 +22,7 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * line configer for general probabilistic graphic models
 	 */
-	protected static LineConfiger pgm;
+	protected static LineConfiger pgmOptions;
 
 	/**
 	 * number of topics
@@ -98,13 +98,13 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * cumulative statistics of theta, phi
 	 */
-	protected DenseMatrix thetaSum, phiSum;
+	protected DenseMatrix PukSum, PkiSum;
 
 	/**
 	 * posterior probabilities of parameters
 	 * 
 	 */
-	protected DenseMatrix theta, phi;
+	protected DenseMatrix Puk, Pki;
 
 	/**
 	 * size of statistics
@@ -121,13 +121,13 @@ public class GraphicRecommender extends Recommender {
 		numFactors = cf.getInt("num.factors");
 		numIters = cf.getInt("num.max.iter");
 
-		pgm = cf.getParamOptions("pgm.setup");
-		burnIn = pgm.getInt("-burn-in");
-		sampleLag = pgm.getInt("-sample-lag");
-		numIntervals = pgm.getInt("-interval");
+		pgmOptions = cf.getParamOptions("pgm.setup");
+		burnIn = pgmOptions.getInt("-burn-in");
+		sampleLag = pgmOptions.getInt("-sample-lag");
+		numIntervals = pgmOptions.getInt("-interval");
 
-		initAlpha = pgm.getFloat("-alpha", 1.0f / numFactors);
-		initBeta = pgm.getFloat("-beta", 1.0f / numFactors);
+		initAlpha = pgmOptions.getFloat("-alpha", 1.0f / numFactors);
+		initBeta = pgmOptions.getFloat("-beta", 1.0f / numFactors);
 
 		assert burnIn > 0;
 		assert sampleLag > 0;

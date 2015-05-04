@@ -55,8 +55,8 @@ public class LDA extends GraphicRecommender {
 	@Override
 	protected void initModel() throws Exception {
 
-		thetaSum = new DenseMatrix(numUsers, numFactors);
-		phiSum = new DenseMatrix(numFactors, numItems);
+		PukSum = new DenseMatrix(numUsers, numFactors);
+		PkiSum = new DenseMatrix(numFactors, numItems);
 
 		// initialize count variables.
 		Nik = new DenseMatrix(numItems, numFactors);
@@ -179,14 +179,14 @@ public class LDA extends GraphicRecommender {
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
 				val = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
-				thetaSum.add(u, k, val);
+				PukSum.add(u, k, val);
 			}
 		}
 
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
-				phiSum.add(k, i, val);
+				PkiSum.add(k, i, val);
 			}
 		}
 		numStats++;
@@ -194,14 +194,14 @@ public class LDA extends GraphicRecommender {
 
 	@Override
 	protected void postProbDistr() {
-		theta = thetaSum.scale(1.0 / numStats);
-		phi = phiSum.scale(1.0 / numStats);
+		Puk = PukSum.scale(1.0 / numStats);
+		Pki = PkiSum.scale(1.0 / numStats);
 	}
 
 	@Override
 	protected double ranking(int u, int j) throws Exception {
 
-		return DenseMatrix.product(theta, u, phi, j);
+		return DenseMatrix.product(Puk, u, Pki, j);
 	}
 
 	@Override

@@ -56,7 +56,7 @@ public class LDCC extends GraphicRecommender {
 
 	// parameters
 	private DenseMatrix PIu, PIv, PIuSum, PIvSum;
-	private double[][][] theta, thetaSum;
+	private double[][][] Pijl, PijlSum;
 
 	public LDCC(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -108,8 +108,8 @@ public class LDCC extends GraphicRecommender {
 		// parameters
 		PIuSum = new DenseMatrix(numUsers, Ku);
 		PIvSum = new DenseMatrix(numItems, Kv);
-		theta = new double[Ku][Kv][numLevels];
-		thetaSum = new double[Ku][Kv][numLevels];
+		Pijl = new double[Ku][Kv][numLevels];
+		PijlSum = new double[Ku][Kv][numLevels];
 	}
 
 	@Override
@@ -214,7 +214,7 @@ public class LDCC extends GraphicRecommender {
 		for (int i = 0; i < Ku; i++) {
 			for (int j = 0; j < Kv; j++) {
 				for (int l = 0; l < numLevels; l++) {
-					thetaSum[i][j][l] += (Nijl[i][j][l] + bl) / (Nij.get(i, j) + numLevels * bl);
+					PijlSum[i][j][l] += (Nijl[i][j][l] + bl) / (Nij.get(i, j) + numLevels * bl);
 				}
 			}
 		}
@@ -230,7 +230,7 @@ public class LDCC extends GraphicRecommender {
 		for (int i = 0; i < Ku; i++) {
 			for (int j = 0; j < Kv; j++) {
 				for (int l = 0; l < numLevels; l++) {
-					theta[i][j][l] = thetaSum[i][j][l] / numStats;
+					Pijl[i][j][l] = PijlSum[i][j][l] / numStats;
 				}
 			}
 		}
@@ -274,7 +274,7 @@ public class LDCC extends GraphicRecommender {
 		double prob = 0;
 		for (int i = 0; i < Ku; i++) {
 			for (int j = 0; j < Kv; j++) {
-				prob += theta[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
+				prob += Pijl[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
 			}
 		}
 		return -Math.log(prob);
@@ -290,7 +290,7 @@ public class LDCC extends GraphicRecommender {
 			double prob = 0; // P(r|u,v)=\sum_{i,j} P(r|i,j)P(i|u)P(j|v)
 			for (int i = 0; i < Ku; i++) {
 				for (int j = 0; j < Kv; j++) {
-					prob += theta[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
+					prob += Pijl[i][j][l] * PIu.get(u, i) * PIv.get(v, j);
 				}
 			}
 
