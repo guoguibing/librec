@@ -57,8 +57,6 @@ public class BHfree extends GraphicRecommender {
 
 	public BHfree(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-		
-		algoName = "BH-free";
 	}
 
 	@Override
