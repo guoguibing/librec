@@ -225,7 +225,7 @@ public class BHfree extends GraphicRecommender {
 	}
 
 	@Override
-	protected void postProbDistr() {
+	protected void estimateParams() {
 
 		double scale = 1.0 / numStats;
 		Puk = PukSum.scale(scale);

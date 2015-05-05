@@ -221,7 +221,7 @@ public class URP extends GraphicRecommender {
 	}
 
 	@Override
-	protected void postProbDistr() {
+	protected void estimateParams() {
 		Puk = PukSum.scale(1.0 / numStats);
 
 		Pkir = new double[numFactors][numItems][numLevels];
@@ -241,7 +241,7 @@ public class URP extends GraphicRecommender {
 			return false;
 
 		// get posterior probability distribution first
-		postProbDistr();
+		estimateParams();
 
 		// compute current RMSE
 		int numCount = 0;

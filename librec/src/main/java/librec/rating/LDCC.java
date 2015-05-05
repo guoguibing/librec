@@ -223,7 +223,7 @@ public class LDCC extends GraphicRecommender {
 	}
 
 	@Override
-	protected void postProbDistr() {
+	protected void estimateParams() {
 		PIu = PIuSum.scale(1.0 / numStats);
 		PIv = PIvSum.scale(1.0 / numStats);
 
@@ -240,7 +240,7 @@ public class LDCC extends GraphicRecommender {
 	protected boolean isConverged(int iter) throws Exception {
 
 		// get the parameters
-		postProbDistr();
+		estimateParams();
 
 		// compute the perplexity
 		int N = 0;

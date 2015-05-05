@@ -193,7 +193,7 @@ public class LDA extends GraphicRecommender {
 	}
 
 	@Override
-	protected void postProbDistr() {
+	protected void estimateParams() {
 		Puk = PukSum.scale(1.0 / numStats);
 		Pki = PkiSum.scale(1.0 / numStats);
 	}

@@ -161,7 +161,7 @@ public class GraphicRecommender extends Recommender {
 		}
 
 		// retrieve posterior probability distributions
-		postProbDistr();
+		estimateParams();
 
 	}
 
@@ -182,9 +182,9 @@ public class GraphicRecommender extends Recommender {
 	}
 
 	/**
-	 * retrieve the posterior probability distributions
+	 * estimate the model parameters
 	 */
-	protected void postProbDistr() {
+	protected void estimateParams() {
 	}
 
 	/**
