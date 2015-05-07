@@ -76,7 +76,7 @@ public class ItemCluster extends IterativeRecommender {
 
 			for (VectorEntry ve : ri) {
 				double rui = ve.get();
-				int r = scales.indexOf(rui);
+				int r = ratingScale.indexOf(rui);
 
 				Nir.add(i, r, 1);
 			}
@@ -100,7 +100,7 @@ public class ItemCluster extends IterativeRecommender {
 
 					for (VectorEntry ve : ri) {
 						double rui = ve.get();
-						int r = scales.indexOf(rui);
+						int r = ratingScale.indexOf(rui);
 						BigDecimal pkr = new BigDecimal(Pkr.get(k, r));
 
 						pik = pik.multiply(pkr);
@@ -184,7 +184,7 @@ public class ItemCluster extends IterativeRecommender {
 			double pred_k = 0;
 
 			for (int r = 0; r < numLevels; r++) {
-				double rui = scales.get(r);
+				double rui = ratingScale.get(r);
 				double pkr = Pkr.get(k, r);
 
 				pred_k += rui * pkr;

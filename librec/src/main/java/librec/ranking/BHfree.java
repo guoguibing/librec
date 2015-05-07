@@ -87,7 +87,7 @@ public class BHfree extends GraphicRecommender {
 			int u = me.row();
 			int i = me.column();
 			double rate = me.get();
-			int r = scales.indexOf(rate);
+			int r = ratingScale.indexOf(rate);
 
 			int k = (int) (K * Math.random()); // user's topic k
 			int l = (int) (L * Math.random()); // item's topic l
@@ -121,7 +121,7 @@ public class BHfree extends GraphicRecommender {
 			int u = me.row();
 			int i = me.column();
 			double rate = me.get();
-			int r = scales.indexOf(rate);
+			int r = ratingScale.indexOf(rate);
 
 			int k = Zk.get(u, i);
 			int l = Zl.get(u, i);
@@ -251,7 +251,7 @@ public class BHfree extends GraphicRecommender {
 		double pred = 0;
 
 		for (int r = 0; r < numLevels; r++) {
-			double rate = scales.get(r);
+			double rate = ratingScale.get(r);
 
 			double prob = 0;
 			for (int k = 0; k < K; k++) {
@@ -271,7 +271,7 @@ public class BHfree extends GraphicRecommender {
 		double rank = 0;
 
 		for (int r = 0; r < numLevels; r++) {
-			double rate = scales.get(r);
+			double rate = ratingScale.get(r);
 
 			double prob = 0;
 			for (int k = 0; k < K; k++) {

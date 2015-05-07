@@ -52,6 +52,7 @@ import librec.data.SymmMatrix;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Table;
 
 /**
  * General recommenders
@@ -109,14 +110,19 @@ public abstract class Recommender implements Runnable {
 	protected static int numRecs, numIgnore;
 
 	// a list of rating scales
-	protected static List<Double> scales;
+	protected static List<Double> ratingScale;
 	// number of rating levels
 	protected static int numLevels;
 	// Maximum, minimum values of rating scales
 	protected static double maxRate, minRate;
+
+	// ratings' timestamps
+	protected static Table<Integer, Integer, Long> timestamps;
+	// minimum, maximum timestamp
+	protected static long minTimestamp, maxTimestamp;
+
 	// init mean and standard deviation
 	protected static double initMean, initStd;
-
 	// small value for initialization
 	protected static double smallValue = 0.01;
 
@@ -175,14 +181,19 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// static initialization, only done once
-		if (scales == null) {
-			scales = rateDao.getScales();
-			minRate = scales.get(0);
-			maxRate = scales.get(scales.size() - 1);
-			numLevels = scales.size();
+		if (ratingScale == null) {
+			ratingScale = rateDao.getRatingScale();
+			minRate = ratingScale.get(0);
+			maxRate = ratingScale.get(ratingScale.size() - 1);
+			numLevels = ratingScale.size();
 
 			numUsers = rateDao.numUsers();
 			numItems = rateDao.numItems();
+			
+			// ratings' timestamps
+			minTimestamp = rateDao.getMinTimestamp();
+			maxTimestamp = rateDao.getMaxTimestamp();
+			timestamps = rateDao.getTimestampTable();
 
 			initMean = 0.0;
 			initStd = 0.1;

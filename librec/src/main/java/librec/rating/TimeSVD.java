@@ -17,12 +17,9 @@
 //
 package librec.rating;
 
-import happy.coding.io.FileIO;
-import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
-import java.io.BufferedReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +28,8 @@ import java.util.concurrent.TimeUnit;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
-import librec.data.RatingContext;
 import librec.data.SparseMatrix;
-import librec.intf.ContextRecommender;
+import librec.intf.IterativeRecommender;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -44,16 +40,13 @@ import com.google.common.collect.Table;
  * @author guoguibing
  * 
  */
-public class TimeSVD extends ContextRecommender {
-
+public class TimeSVD extends IterativeRecommender {
+	
 	// the span of days of rating timestamps
 	private static int numDays;
 
 	// {user, mean date}
 	private DenseVector userMeanDate;
-
-	// minimum/maximum rating timestamp
-	private static long minTimestamp, maxTimestamp;
 
 	// time decay factor
 	private float beta;
@@ -85,20 +78,6 @@ public class TimeSVD extends ContextRecommender {
 	// {user, day, day-specific scaling part}
 	private DenseMatrix Cut;
 
-	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds
-	private final static TimeUnit secs = TimeUnit.SECONDS;
-
-	// read context information
-	static {
-		try {
-			readContext();
-
-		} catch (Exception e) {
-			Logs.error(e.getMessage());
-			e.printStackTrace();
-		}
-	}
-
 	public TimeSVD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
@@ -112,6 +91,11 @@ public class TimeSVD extends ContextRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		super.initModel();
+		
+		timestamps = rateDao.getTimestampTable();
+		minTimestamp = rateDao.getMinTimestamp();
+		maxTimestamp = rateDao.getMaxTimestamp();
+		numDays = days(maxTimestamp, minTimestamp) + 1;
 
 		userBias = new DenseVector(numUsers);
 		userBias.init();
@@ -154,7 +138,7 @@ public class TimeSVD extends ContextRecommender {
 			if (rui <= 0)
 				continue;
 
-			sum += days(ratingContexts.get(u, i).getTimestamp(), minTimestamp);
+			sum += days(timestamps.get(u, i), minTimestamp);
 			cnt++;
 		}
 		double globalMeanDate = sum / cnt;
@@ -167,7 +151,7 @@ public class TimeSVD extends ContextRecommender {
 			sum = 0;
 			Ru = userItemsCache.get(u);
 			for (int i : Ru) {
-				sum += days(ratingContexts.get(u, i).getTimestamp(), minTimestamp);
+				sum += days(timestamps.get(u, i), minTimestamp);
 			}
 
 			double mean = (Ru.size() > 0) ? (sum + 0.0) / Ru.size() : globalMeanDate;
@@ -186,7 +170,7 @@ public class TimeSVD extends ContextRecommender {
 				int i = me.column();
 				double rui = me.get();
 
-				long timestamp = ratingContexts.get(u, i).getTimestamp();
+				long timestamp = timestamps.get(u, i);
 				// day t
 				int t = days(timestamp, minTimestamp);
 				int bin = bin(t);
@@ -331,7 +315,7 @@ public class TimeSVD extends ContextRecommender {
 	@Override
 	protected double predict(int u, int i) throws Exception {
 		// retrieve the test rating timestamp
-		long timestamp = ratingContexts.get(u, i).getTimestamp();
+		long timestamp = timestamps.get(u, i);
 		int t = days(timestamp, minTimestamp);
 		int bin = bin(t);
 		double dev_ut = dev(u, t);
@@ -377,46 +361,6 @@ public class TimeSVD extends ContextRecommender {
 	@Override
 	public String toString() {
 		return super.toString() + "," + Strings.toString(new Object[] { beta, numBins });
-	}
-
-	/**
-	 * Read rating timestamps
-	 */
-	protected static void readContext() throws Exception {
-		String contextPath = cf.getPath("dataset.social");
-		Logs.debug("Context dataset: {}", Strings.last(contextPath, 38));
-
-		ratingContexts = HashBasedTable.create();
-		BufferedReader br = FileIO.getReader(contextPath);
-		String line = null;
-		RatingContext rc = null;
-
-		minTimestamp = Long.MAX_VALUE;
-		maxTimestamp = Long.MIN_VALUE;
-
-		while ((line = br.readLine()) != null) {
-			String[] data = line.split("[ \t,]");
-			String user = data[0];
-			String item = data[1];
-
-			// convert to million seconds
-			long timestamp = secs.toMillis(Long.parseLong(data[3]));
-
-			int userId = rateDao.getUserId(user);
-			int itemId = rateDao.getItemId(item);
-
-			rc = new RatingContext(userId, itemId);
-			rc.setTimestamp(timestamp);
-
-			ratingContexts.put(userId, itemId, rc);
-
-			if (minTimestamp > timestamp)
-				minTimestamp = timestamp;
-			if (maxTimestamp < timestamp)
-				maxTimestamp = timestamp;
-		}
-
-		numDays = days(maxTimestamp, minTimestamp) + 1;
 	}
 
 	/***************************************************************** Functional Methods *******************************************/

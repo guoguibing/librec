@@ -87,7 +87,7 @@ public class LDCC extends GraphicRecommender {
 			int u = me.row();
 			int v = me.column();
 			double rate = me.get();
-			int l = scales.indexOf(rate);
+			int l = ratingScale.indexOf(rate);
 
 			int i = (int) (Ku * Math.random());
 			int j = (int) (Kv * Math.random());
@@ -118,7 +118,7 @@ public class LDCC extends GraphicRecommender {
 			int u = me.row();
 			int v = me.column();
 			double rate = me.get();
-			int l = scales.indexOf(rate);
+			int l = ratingScale.indexOf(rate);
 
 			// user and item's factors
 			int i = Zu.get(u, v);
@@ -285,7 +285,7 @@ public class LDCC extends GraphicRecommender {
 		double pred = 0;
 
 		for (int l = 0; l < numLevels; l++) {
-			double rate = scales.get(l);
+			double rate = ratingScale.get(l);
 
 			double prob = 0; // P(r|u,v)=\sum_{i,j} P(r|i,j)P(i|u)P(j|v)
 			for (int i = 0; i < Ku; i++) {

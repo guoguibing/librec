@@ -130,7 +130,7 @@ public class BUCM extends GraphicRecommender {
 			int i = me.column();
 			double rui = me.get();
 
-			int r = scales.indexOf(rui); // rating level 0 ~ numLevels
+			int r = ratingScale.indexOf(rui); // rating level 0 ~ numLevels
 			int t = z.get(u, i);
 
 			Nuk.add(u, t, -1);
@@ -239,7 +239,7 @@ public class BUCM extends GraphicRecommender {
 			int u = me.row();
 			int i = me.column();
 			double rui = me.get();
-			int r = scales.indexOf(rui);
+			int r = ratingScale.indexOf(rui);
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
@@ -317,7 +317,7 @@ public class BUCM extends GraphicRecommender {
 		double pred = 0;
 
 		for (int r = 0; r < numLevels; r++) {
-			double rate = scales.get(r);
+			double rate = ratingScale.get(r);
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
@@ -338,7 +338,7 @@ public class BUCM extends GraphicRecommender {
 
 			double sum = 0;
 			for (int r = 0; r < numLevels; r++) {
-				double rate = scales.get(r);
+				double rate = ratingScale.get(r);
 				if (rate > globalMean) {
 					sum += Pkir[k][j][r];
 				}

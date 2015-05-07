@@ -66,7 +66,7 @@ public class PD extends Recommender {
 		SparseVector pa = trainMatrix.row(a);
 		SparseVector qj = trainMatrix.column(j);
 
-		for (double h : scales) {
+		for (double h : ratingScale) {
 
 			double prob = 0.0;
 			for (VectorEntry ve : qj) {

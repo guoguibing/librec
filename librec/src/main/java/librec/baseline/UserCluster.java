@@ -78,7 +78,7 @@ public class UserCluster extends IterativeRecommender {
 
 			for (VectorEntry ve : ru) {
 				double rui = ve.get();
-				int r = scales.indexOf(rui);
+				int r = ratingScale.indexOf(rui);
 
 				Nur.add(u, r, 1);
 			}
@@ -102,7 +102,7 @@ public class UserCluster extends IterativeRecommender {
 
 					for (VectorEntry ve : ru) {
 						double rui = ve.get();
-						int r = scales.indexOf(rui);
+						int r = ratingScale.indexOf(rui);
 						BigDecimal pkr = new BigDecimal(Pkr.get(k, r));
 
 						puk = puk.multiply(pkr);
@@ -186,7 +186,7 @@ public class UserCluster extends IterativeRecommender {
 			double pred_k = 0;
 
 			for (int r = 0; r < numLevels; r++) {
-				double rui = scales.get(r);
+				double rui = ratingScale.get(r);
 				double pkr = Pkr.get(k, r);
 
 				pred_k += rui * pkr;

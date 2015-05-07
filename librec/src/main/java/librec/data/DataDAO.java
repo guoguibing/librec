@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
@@ -60,18 +61,27 @@ public class DataDAO {
 	private boolean isItemAsUser;
 
 	// data scales
-	private List<Double> scales;
+	private List<Double> ratingScale;
 	// scale distribution
 	private Multiset<Double> scaleDist;
 
 	// number of rates
-	private int numRates;
+	private int numRatings;
 
 	// user/item {raw id, inner id} map
 	private BiMap<String, Integer> userIds, itemIds;
 
 	// inverse views of userIds, itemIds
 	private BiMap<Integer, String> idUsers, idItems;
+
+	// Table: {user, item, rating time}
+	private Table<Integer, Integer, Long> timestampTable;
+
+	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds
+	private TimeUnit timeUnit;
+
+	// minimum/maximum rating timestamp
+	private long minTimestamp, maxTimestamp;
 
 	/**
 	 * Constructor for a data DAO object
@@ -100,6 +110,7 @@ public class DataDAO {
 		scaleDist = HashMultiset.create();
 
 		isItemAsUser = this.userIds == this.itemIds;
+		timeUnit = TimeUnit.SECONDS;
 	}
 
 	/**
@@ -143,7 +154,7 @@ public class DataDAO {
 	 * Read data from the data file. Note that we didn't take care of the duplicated lines.
 	 * 
 	 * @param cols
-	 *            the indexes of the relevant columns in the data file
+	 *            the indexes of the relevant columns in the data file: {user, item, [rating, timestamp] (optional)}
 	 * @param isCCSUsed
 	 *            whether to store the CCS structures of the rating matrix
 	 * @param binThold
@@ -153,16 +164,18 @@ public class DataDAO {
 	 * @return a sparse matrix storing all the relevant data
 	 */
 	public SparseMatrix readData(int[] cols, double binThold) throws Exception {
-		
+
 		Logs.info(String.format("Dataset: %s", Strings.last(dataPath, 38)));
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-		// Map {col-id, multiple row-id}: used to fast build rate matrix
+		// Map {col-id, multiple row-id}: used to fast build a rating matrix
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
+		minTimestamp = Long.MAX_VALUE;
+		maxTimestamp = Long.MIN_VALUE;
 		while ((line = br.readLine()) != null) {
 			String[] data = line.split("[ \t,]");
 
@@ -171,12 +184,8 @@ public class DataDAO {
 			Double rate = (cols.length >= 3 && data.length >= 3) ? Double.valueOf(data[cols[2]]) : 1.0;
 
 			// binarize the rating for item recommendation task
-			if (binThold >= 0) {
-				if (rate > binThold)
-					rate = 1.0;
-				else
-					continue;
-			}
+			if (binThold >= 0)
+				rate = rate > binThold ? 1.0 : 0.0;
 
 			scaleDist.add(rate);
 
@@ -188,25 +197,42 @@ public class DataDAO {
 			itemIds.put(item, col);
 
 			dataTable.put(row, col, rate);
-
 			colMap.put(col, row);
+
+			// record rating's issuing time
+			if (cols.length >= 4 && data.length >= 4) {
+				if (timestampTable == null)
+					timestampTable = HashBasedTable.create();
+
+				// convert to million-seconds
+				long timestamp = timeUnit.toMillis(Long.parseLong(data[cols[3]]));
+
+				if (minTimestamp > timestamp)
+					minTimestamp = timestamp;
+
+				if (maxTimestamp < timestamp)
+					maxTimestamp = timestamp;
+
+				timestampTable.put(row, col, timestamp);
+			}
+
 		}
 		br.close();
 
-		numRates = scaleDist.size();
-		scales = new ArrayList<>(scaleDist.elementSet());
-		Collections.sort(scales);
+		numRatings = scaleDist.size();
+		ratingScale = new ArrayList<>(scaleDist.elementSet());
+		Collections.sort(ratingScale);
 
 		int numRows = numUsers(), numCols = numItems();
 
 		// if min-rate = 0.0, shift upper a scale
-		double minRate = scales.get(0).doubleValue();
-		double epsilon = minRate == 0.0 ? scales.get(1).doubleValue() - minRate : 0;
+		double minRate = ratingScale.get(0).doubleValue();
+		double epsilon = minRate == 0.0 ? ratingScale.get(1).doubleValue() - minRate : 0;
 		if (epsilon > 0) {
 			// shift upper a scale
-			for (int i = 0, im = scales.size(); i < im; i++) {
-				double val = scales.get(i);
-				scales.set(i, val + epsilon);
+			for (int i = 0, im = ratingScale.size(); i < im; i++) {
+				double val = ratingScale.get(i);
+				ratingScale.set(i, val + epsilon);
 			}
 			// udpate data table
 			for (int row = 0; row < numRows; row++) {
@@ -218,7 +244,7 @@ public class DataDAO {
 		}
 
 		Logs.debug("With Specs: {Users, {}} = {{}, {}, {}}, Scale = {{}}", (isItemAsUser ? "Users, Links"
-				: "Items, Ratings"), numRows, numCols, numRates, Strings.toString(scales, ", "));
+				: "Items, Ratings"), numRows, numCols, numRatings, Strings.toString(ratingScale, ", "));
 
 		// build rating matrix
 		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
@@ -449,8 +475,15 @@ public class DataDAO {
 	/**
 	 * @return number of rates
 	 */
-	public int numRates() {
-		return numRates;
+	public int numRatings() {
+		return numRatings;
+	}
+
+	/**
+	 * @return number of days
+	 */
+	public int numDays() {
+		return (int) TimeUnit.MILLISECONDS.toDays(maxTimestamp - minTimestamp);
 	}
 
 	/**
@@ -521,8 +554,8 @@ public class DataDAO {
 	/**
 	 * @return rating scales
 	 */
-	public List<Double> getScales() {
-		return scales;
+	public List<Double> getRatingScale() {
+		return ratingScale;
 	}
 
 	/**
@@ -560,6 +593,34 @@ public class DataDAO {
 		}
 
 		return dataDir;
+	}
+
+	/**
+	 * @return the time table of the data file
+	 */
+	public Table<Integer, Integer, Long> getTimestampTable() {
+		return timestampTable;
+	}
+
+	/**
+	 * set the time unit of the data file
+	 */
+	public void setTimeUnit(TimeUnit timeUnit) {
+		this.timeUnit = timeUnit;
+	}
+
+	/**
+	 * @return the minimum timestamp
+	 */
+	public long getMinTimestamp() {
+		return minTimestamp;
+	}
+
+	/**
+	 * @return the maximum timestamp
+	 */
+	public long getMaxTimestamp() {
+		return maxTimestamp;
 	}
 
 }
