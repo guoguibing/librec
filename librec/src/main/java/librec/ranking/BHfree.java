@@ -248,7 +248,7 @@ public class BHfree extends GraphicRecommender {
 
 	@Override
 	protected double predict(int u, int j) throws Exception {
-		double pred = 0;
+		double sum = 0, probs = 0;
 
 		for (int r = 0; r < numLevels; r++) {
 			double rate = ratingScale.get(r);
@@ -260,10 +260,11 @@ public class BHfree extends GraphicRecommender {
 				}
 			}
 
-			pred += rate * prob;
+			sum += rate * prob;
+			probs += prob;
 		}
 
-		return pred;
+		return sum / probs;
 	}
 
 	@Override

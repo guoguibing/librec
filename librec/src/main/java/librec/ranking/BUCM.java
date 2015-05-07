@@ -333,7 +333,7 @@ public class BUCM extends GraphicRecommender {
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
-				prob += Puk.get(u, k) * Pkir[k][i][r];
+				prob += Puk.get(u, k) * Pki.get(k, i) * Pkir[k][i][r];
 			}
 
 			pred += prob * rate;
