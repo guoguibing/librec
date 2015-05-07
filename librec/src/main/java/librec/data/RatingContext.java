@@ -17,14 +17,13 @@
 //
 package librec.data;
 
-
 /**
  * Rating-related Context Information
  * 
  * @author guoguibing
  * 
  */
-public class RatingContext extends Context {
+public class RatingContext extends Context implements Comparable<RatingContext> {
 
 	// rating time stamp, we prefer long to Date or Timestamp for computational convenience  
 	private long timestamp;
@@ -46,6 +45,11 @@ public class RatingContext extends Context {
 	 */
 	public RatingContext(int user, int item) {
 		super(user, item);
+	}
+
+	public RatingContext(int user, int item, long timestamp) {
+		this(user, item);
+		this.timestamp = timestamp;
 	}
 
 	/**
@@ -106,6 +110,11 @@ public class RatingContext extends Context {
 	 */
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	@Override
+	public int compareTo(RatingContext that) {
+		return this.timestamp > that.timestamp ? 1 : -1;
 	}
 
 }

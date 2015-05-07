@@ -598,7 +598,7 @@ public class DataDAO {
 	/**
 	 * @return the time table of the data file
 	 */
-	public Table<Integer, Integer, Long> getTimestampTable() {
+	public Table<Integer, Integer, Long> getTimestamps() {
 		return timestampTable;
 	}
 

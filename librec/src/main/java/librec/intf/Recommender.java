@@ -98,6 +98,8 @@ public abstract class Recommender implements Runnable {
 	protected static boolean isResultsOut;
 	// is save model
 	protected static boolean isSaveModel;
+	// is split data by date
+	protected static boolean isSplitByDate;
 	// view of rating predictions
 	public static String view;
 
@@ -189,11 +191,11 @@ public abstract class Recommender implements Runnable {
 
 			numUsers = rateDao.numUsers();
 			numItems = rateDao.numItems();
-			
+
 			// ratings' timestamps
 			minTimestamp = rateDao.getMinTimestamp();
 			maxTimestamp = rateDao.getMaxTimestamp();
-			timestamps = rateDao.getTimestampTable();
+			timestamps = rateDao.getTimestamps();
 
 			initMean = 0.0;
 			initStd = 0.1;
@@ -210,6 +212,7 @@ public abstract class Recommender implements Runnable {
 			LineConfiger evalOptions = cf.getParamOptions("evaluation.setup");
 			view = evalOptions.getString("--test-view", "all");
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
+			isSplitByDate = evalOptions.contains("--by-date");
 			isResultsOut = evalOptions.isOn("-o", false);
 			isSaveModel = evalOptions.isOn("--save-model", false);
 			numCPUs = evalOptions.getInt("-cpu", 1); // default: no parallelization
@@ -221,7 +224,10 @@ public abstract class Recommender implements Runnable {
 
 		// training, validation, test data
 		if (validationRatio > 0 && validationRatio < 1) {
-			SparseMatrix[] trainSubsets = new DataSplitter(trainMatrix).getRatio(1 - validationRatio);
+			DataSplitter ds = new DataSplitter(trainMatrix);
+			double ratio = 1 - validationRatio;
+			
+			SparseMatrix[] trainSubsets = isSplitByDate? ds.getRatio(ratio, rateDao.getTimestamps()): ds.getRatio(ratio);
 			this.trainMatrix = trainSubsets[0];
 			this.validationMatrix = trainSubsets[1];
 		} else {

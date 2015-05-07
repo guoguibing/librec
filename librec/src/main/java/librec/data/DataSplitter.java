@@ -26,7 +26,10 @@ import happy.coding.system.Debug;
 import happy.coding.system.Systems;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.Table;
 
 /**
  * Class to split/sample rating matrix
@@ -133,6 +136,57 @@ public class DataSplitter {
 					trainMatrix.set(u, j, 0.0);
 			}
 		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts: (ratio) training, (1-ratio) test subsets.
+	 * 
+	 * @param ratio
+	 *            the ratio of training data over all the ratings.
+	 * @param timestamps
+	 *            the timestamps of all rating data
+	 */
+	public SparseMatrix[] getRatio(double ratio, Table<Integer, Integer, Long> timestamps) {
+
+		assert (ratio > 0 && ratio < 1);
+
+		// sort timestamps from smaller to larger
+		List<RatingContext> rcs = new ArrayList<>(timestamps.size());
+		int u, i, j;
+		long timestamp;
+		for (MatrixEntry me : rateMatrix) {
+			u = me.row();
+			i = me.column();
+			timestamp = timestamps.get(u, i);
+			rcs.add(new RatingContext(u, i, timestamp));
+		}
+		Collections.sort(rcs);
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+
+		int trainSize = (int) (rcs.size() * ratio);
+		for (i = 0; i < rcs.size(); i++) {
+			RatingContext rc = rcs.get(i);
+			u = rc.getUser();
+			j = rc.getItem();
+
+			if (i < trainSize)
+				testMatrix.set(u, j, 0.0);
+			else
+				trainMatrix.set(u, j, 0.0);
+		}
+
+		// release memory
+		rcs = null;
 
 		// remove zero entries
 		trainMatrix = trainMatrix.reshape();

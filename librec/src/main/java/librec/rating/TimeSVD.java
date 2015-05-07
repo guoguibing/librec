@@ -92,7 +92,7 @@ public class TimeSVD extends IterativeRecommender {
 	protected void initModel() throws Exception {
 		super.initModel();
 		
-		timestamps = rateDao.getTimestampTable();
+		timestamps = rateDao.getTimestamps();
 		minTimestamp = rateDao.getMinTimestamp();
 		maxTimestamp = rateDao.getMaxTimestamp();
 		numDays = days(maxTimestamp, minTimestamp) + 1;

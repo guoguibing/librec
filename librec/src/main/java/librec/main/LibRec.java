@@ -292,7 +292,7 @@ public class LibRec {
 
 		// evaluation setup
 		String setup = cf.getString("evaluation.setup");
-		LineConfiger params = new LineConfiger(setup);
+		LineConfiger evalOptions = new LineConfiger(setup);
 
 		// debug information
 		Logs.info("With Setup: {}", setup);
@@ -305,29 +305,32 @@ public class LibRec {
 		int N;
 		double ratio;
 
-		switch (params.getMainParam().toLowerCase()) {
+		switch (evalOptions.getMainParam().toLowerCase()) {
 		case "cv":
-			runCrossValidation(params);
+			runCrossValidation(evalOptions);
 			return; // make it close
 		case "leave-one-out":
-			runLeaveOneOut(params);
+			runLeaveOneOut(evalOptions);
 			return; //
 		case "test-set":
-			DataDAO testDao = new DataDAO(params.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
+			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			SparseMatrix testMatrix = testDao.readData(columns, binThold);
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
 			break;
 		case "given-n":
-			N = params.getInt("-n", 20);
+			N = evalOptions.getInt("-n", 20);
 			data = ds.getGiven(N);
 			break;
 		case "given-ratio":
-			ratio = params.getDouble("-r", 0.8);
+			ratio = evalOptions.getDouble("-r", 0.8);
 			data = ds.getGiven(ratio);
 			break;
 		case "train-ratio":
+			ratio = evalOptions.getDouble("-r", 0.8);
+			data = evalOptions.contains("--by-date") ? ds.getRatio(ratio, rateDao.getTimestamps()) : ds.getRatio(ratio);
+			break;
 		default:
-			ratio = params.getDouble("-r", 0.8);
+			ratio = evalOptions.getDouble("-r", 0.8);
 			data = ds.getRatio(ratio);
 			break;
 		}
@@ -529,7 +532,7 @@ public class LibRec {
 
 		/* under development */
 
-			/* baselines */
+		/* baselines */
 		case "globalavg":
 			return new GlobalAverage(trainMatrix, testMatrix, fold);
 		case "useravg":
@@ -627,7 +630,7 @@ public class LibRec {
 			return new PRankD(trainMatrix, testMatrix, fold);
 		case "external":
 			return new External(trainMatrix, testMatrix, fold);
-			
+
 			/* both tasks */
 		case "bucm":
 			return new BUCM(trainMatrix, testMatrix, fold);
