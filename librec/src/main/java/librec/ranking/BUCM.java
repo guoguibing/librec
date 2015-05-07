@@ -33,6 +33,10 @@ import com.google.common.collect.HashBasedTable;
  * Bayesian UCM: Nicola Barbieri et al., <strong>Modeling Item Selection and Relevance for Accurate Recommendations: a
  * Bayesian Approach</strong>, RecSys 2011.
  * 
+ * <p>
+ * Thank the paper authors for providing source code and for having valuable discussion.
+ * </p>
+ * 
  * @author Guo Guibing
  *
  */
@@ -54,20 +58,20 @@ public class BUCM extends GraphicRecommender {
 	/**
 	 * cumulative statistics of probabilities of (t, i, r)
 	 */
-	private double[][][] epsilonSum;
+	private double[][][] PkirSum;
 
 	/**
 	 * posterior probabilities of parameters epsilon_{k, i, r}
 	 */
-	protected double[][][] epsilon;
+	protected double[][][] Pkir;
 
 	@Override
 	protected void initModel() throws Exception {
 
 		// cumulative parameters
 		PukSum = new DenseMatrix(numUsers, numFactors);
-		PkiSum = new DenseMatrix(numItems, numFactors);
-		epsilonSum = new double[numFactors][numItems][numLevels];
+		PkiSum = new DenseMatrix(numFactors, numItems);
+		PkirSum = new double[numFactors][numItems][numLevels];
 
 		// initialize count variables
 		Nuk = new DenseMatrix(numUsers, numFactors);
@@ -125,7 +129,7 @@ public class BUCM extends GraphicRecommender {
 			int i = me.column();
 			double rui = me.get();
 
-			int r = (int) (rui / minRate - 1); // rating level 0 ~ numLevels
+			int r = scales.indexOf(rui); // rating level 0 ~ numLevels
 			int t = z.get(u, i);
 
 			Nuk.add(u, t, -1);
@@ -239,7 +243,7 @@ public class BUCM extends GraphicRecommender {
 		for (int i = 0; i < numItems; i++) {
 			for (int k = 0; k < numFactors; k++) {
 				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
-				PkiSum.add(i, k, val);
+				PkiSum.add(k, i, val);
 			}
 		}
 
@@ -247,7 +251,7 @@ public class BUCM extends GraphicRecommender {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
 					val = (Nkir[k][i][r] + gamma.get(r)) / (Nik.get(i, k) + sumGamma);
-					epsilonSum[k][i][r] += val;
+					PkirSum[k][i][r] += val;
 				}
 			}
 		}
@@ -259,11 +263,11 @@ public class BUCM extends GraphicRecommender {
 		Puk = PukSum.scale(1.0 / numStats);
 		Pki = PkiSum.scale(1.0 / numStats);
 
-		epsilon = new double[numFactors][numItems][numLevels];
+		Pkir = new double[numFactors][numItems][numLevels];
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					epsilon[k][i][r] = epsilonSum[k][i][r] / numStats;
+					Pkir[k][i][r] = PkirSum[k][i][r] / numStats;
 				}
 			}
 		}
@@ -274,11 +278,11 @@ public class BUCM extends GraphicRecommender {
 		double pred = 0;
 
 		for (int r = 0; r < numLevels; r++) {
-			double rate = (r + 1) * minRate;
+			double rate = scales.get(r);
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
-				prob += Puk.get(u, k) * epsilon[k][i][r];
+				prob += Puk.get(u, k) * Pki.get(k, i) * Pkir[k][i][r];
 			}
 
 			pred += prob * rate;
@@ -295,13 +299,13 @@ public class BUCM extends GraphicRecommender {
 
 			double sum = 0;
 			for (int r = 0; r < numLevels; r++) {
-				double rate = (r + 1) * minRate;
+				double rate = scales.get(r);
 				if (rate > globalMean) {
-					sum += epsilon[k][j][r];
+					sum += Pkir[k][j][r];
 				}
 			}
 
-			rank += Puk.get(u, k) * Pki.get(j, k) * sum;
+			rank += Puk.get(u, k) * Pki.get(k, j) * sum;
 		}
 
 		return rank;
