@@ -101,7 +101,7 @@ public class BUCM extends GraphicRecommender {
 			int i = me.column();
 			double rui = me.get();
 
-			int r = (int) (rui / minRate - 1); // rating level 0 ~ numLevels
+			int r = ratingScale.indexOf(rui); // rating level 0 ~ numLevels
 			int t = (int) (Math.random() * numFactors); // 0 ~ k-1
 
 			// assign a topic t to pair (u, i)
@@ -279,8 +279,8 @@ public class BUCM extends GraphicRecommender {
 			}
 		}
 
-		for (int i = 0; i < numItems; i++) {
-			for (int k = 0; k < numFactors; k++) {
+		for (int k = 0; k < numFactors; k++) {
+			for (int i = 0; i < numItems; i++) {
 				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
 				PkiSum.add(k, i, val);
 			}
@@ -313,8 +313,20 @@ public class BUCM extends GraphicRecommender {
 	}
 
 	@Override
+	protected double perplexity(int u, int j, double ruj) throws Exception {
+		int r = (int) (ruj / minRate) - 1;
+
+		double prob = 0;
+		for (int k = 0; k < numFactors; k++) {
+			prob += Puk.get(u, k) * Pki.get(k, j) * Pkir[k][j][r];
+		}
+
+		return -Math.log(prob);
+	}
+
+	@Override
 	protected double predict(int u, int i) throws Exception {
-		double pred = 0;
+		double pred = 0, probs = 0;
 
 		for (int r = 0; r < numLevels; r++) {
 			double rate = ratingScale.get(r);
@@ -325,9 +337,10 @@ public class BUCM extends GraphicRecommender {
 			}
 
 			pred += prob * rate;
+			probs += prob;
 		}
 
-		return pred;
+		return pred / probs;
 	}
 
 	@Override
