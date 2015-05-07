@@ -114,7 +114,7 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * objective loss
 	 */
-	protected double loss;
+	protected double loss, lastLoss;
 
 	static {
 

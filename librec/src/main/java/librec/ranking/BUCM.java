@@ -19,6 +19,7 @@
 package librec.ranking;
 
 import static happy.coding.math.Gamma.digamma;
+import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
@@ -144,9 +145,7 @@ public class BUCM extends GraphicRecommender {
 			for (int k = 0; k < numFactors; k++) {
 
 				v1 = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
-
 				v2 = (Nik.get(i, k) + beta.get(i)) / (Nk.get(t) + sumBeta);
-
 				v3 = (Nkir[k][i][r] + gamma.get(r)) / (Nik.get(i, t) + sumGamma);
 
 				p[k] = v1 * v2 * v3;
@@ -227,6 +226,46 @@ public class BUCM extends GraphicRecommender {
 
 	}
 
+	@Override
+	protected boolean isConverged(int iter) throws Exception {
+		loss = 0;
+
+		// get params
+		estimateParams();
+
+		// compute likelihood
+		int count = 0;
+		for (MatrixEntry me : trainMatrix) {
+			int u = me.row();
+			int i = me.column();
+			double rui = me.get();
+			int r = scales.indexOf(rui);
+
+			double prob = 0;
+			for (int k = 0; k < numFactors; k++) {
+				prob += Puk.get(u, k) * Pki.get(k, i) * Pkir[k][i][r];
+			}
+
+			loss += -Math.log(prob);
+			count++;
+		}
+		loss /= count;
+
+		float delta = (float) (loss - lastLoss); // loss gets smaller, delta <= 0
+
+		Logs.debug("{}{} iter {} achieves log likelihood = {}, delta_LogLLH = {}", algoName, foldInfo, iter,
+				(float) loss, delta);
+
+		if (numStats > 1 && delta > 0) {
+			Logs.debug("{}{} has converged at iter {}", algoName, foldInfo, iter);
+			return true;
+		}
+
+		lastLoss = loss;
+
+		return false;
+	}
+
 	protected void readoutParams() {
 		double val = 0;
 		double sumAlpha = alpha.sum();
@@ -282,7 +321,7 @@ public class BUCM extends GraphicRecommender {
 
 			double prob = 0;
 			for (int k = 0; k < numFactors; k++) {
-				prob += Puk.get(u, k) * Pki.get(k, i) * Pkir[k][i][r];
+				prob += Puk.get(u, k) * Pkir[k][i][r];
 			}
 
 			pred += prob * rate;
