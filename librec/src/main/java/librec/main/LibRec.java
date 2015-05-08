@@ -62,6 +62,7 @@ import librec.ranking.CLiMF;
 import librec.ranking.FISMauc;
 import librec.ranking.FISMrmse;
 import librec.ranking.GBPR;
+import librec.ranking.ItemBigram;
 import librec.ranking.LDA;
 import librec.ranking.LRMF;
 import librec.ranking.RankALS;
@@ -531,6 +532,8 @@ public class LibRec {
 		switch (algorithm.toLowerCase()) {
 
 		/* under development */
+		case "itembigram":
+			return new ItemBigram(trainMatrix, testMatrix, fold);
 
 		/* baselines */
 		case "globalavg":

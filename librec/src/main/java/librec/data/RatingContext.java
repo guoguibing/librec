@@ -114,7 +114,14 @@ public class RatingContext extends Context implements Comparable<RatingContext> 
 
 	@Override
 	public int compareTo(RatingContext that) {
-		return this.timestamp > that.timestamp ? 1 : -1;
+		double res = this.timestamp - this.timestamp;
+
+		if (res > 0)
+			return 1;
+		else if (res < 0)
+			return -1;
+
+		return 0;
 	}
 
 }
