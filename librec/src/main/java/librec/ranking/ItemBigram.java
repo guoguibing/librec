@@ -18,6 +18,9 @@
 
 package librec.ranking;
 
+import static happy.coding.math.Gamma.digamma;
+import happy.coding.io.Strings;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,11 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.RatingContext;
 import librec.data.SparseMatrix;
 import librec.intf.GraphicRecommender;
+
+import com.google.common.collect.HashBasedTable;
 
 /**
  * Hanna M. Wallach, <strong>Topic Modeling: Beyond Bag-of-Words</strong>, ICML 2006.
@@ -37,9 +43,10 @@ import librec.intf.GraphicRecommender;
  * @author Guo Guibing
  *
  */
+@AddConfiguration(before = "factors, alpha, beta")
 public class ItemBigram extends GraphicRecommender {
 
-	private Map<Integer, List<Integer>> userItems;
+	private Map<Integer, List<Integer>> userItemsMap;
 
 	/**
 	 * k: current topic; j: previously rated item; i: current item
@@ -52,12 +59,14 @@ public class ItemBigram extends GraphicRecommender {
 
 	public ItemBigram(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
+
+		isRankingPred = true;
 	}
 
 	@Override
 	protected void initModel() throws Exception {
 		// build the training data, sorting by date
-		userItems = new HashMap<>();
+		userItemsMap = new HashMap<>();
 		for (int u = 0; u < numUsers; u++) {
 			List<Integer> unsortedItems = trainMatrix.getColumns(u);
 			int size = unsortedItems.size();
@@ -73,7 +82,7 @@ public class ItemBigram extends GraphicRecommender {
 				sortedItems.add(rc.getItem());
 			}
 
-			userItems.put(u, sortedItems);
+			userItemsMap.put(u, sortedItems);
 		}
 
 		// count variables
@@ -97,14 +106,161 @@ public class ItemBigram extends GraphicRecommender {
 		beta.setAll(initBeta);
 
 		// initialization
-		for (Entry<Integer, List<Integer>> en : userItems.entrySet()) {
-			int user = en.getKey();
+		z = HashBasedTable.create();
+		for (Entry<Integer, List<Integer>> en : userItemsMap.entrySet()) {
+			int u = en.getKey();
 			List<Integer> items = en.getValue();
-			
-			for(int item: items){
-				// TODO: add codes here 
+
+			for (int m = 0; m < items.size(); m++) {
+				int i = items.get(m);
+
+				int k = (int) (Math.random() * numFactors);
+				z.put(u, i, k);
+
+				Nuk.add(u, k, 1.0);
+				Nu.add(u, 1.0);
+
+				int j = m > 0 ? items.get(m - 1) : i; // j==i to indicate no previous item
+				Nkji[k][j][i]++;
+				Nkj.add(k, j, 1);
 			}
 		}
+	}
+
+	@Override
+	protected void eStep() {
+		double sumAlpha = alpha.sum();
+		double v1, v2;
+
+		for (Entry<Integer, List<Integer>> en : userItemsMap.entrySet()) {
+			int u = en.getKey();
+			List<Integer> items = en.getValue();
+
+			for (int m = 0; m < items.size(); m++) {
+				int i = items.get(m);
+				int k = z.get(u, i);
+
+				Nuk.add(u, k, -1.0);
+				Nu.add(u, -1.0);
+
+				int j = m > 0 ? items.get(m - 1) : i; // j==i to indicate no previous item
+				Nkji[k][j][i]--;
+				Nkj.add(k, j, -1);
+
+				double[] Pk = new double[numFactors];
+				for (int t = 0; t < numFactors; t++) {
+					v1 = (Nuk.get(u, t) + alpha.get(t)) / (Nu.get(u) + sumAlpha);
+					v2 = (Nkji[t][j][i] + beta.get(t, j)) / (Nkj.get(t, j) + beta.sumOfRow(t));
+
+					Pk[t] = v1 * v2;
+				}
+
+				for (int t = 1; t < numFactors; t++) {
+					Pk[t] += Pk[t - 1];
+				}
+
+				double rand = Math.random() * Pk[numFactors - 1];
+				for (k = 0; k < numFactors; k++) {
+					if (rand < Pk[k])
+						break;
+				}
+
+				z.put(u, i, k);
+
+				Nuk.add(u, k, 1.0);
+				Nu.add(u, 1.0);
+
+				Nkji[k][j][i]++;
+				Nkj.add(k, j, 1.0);
+			}
+		}
+	}
+
+	@Override
+	protected void mStep() {
+		double sumAlpha = alpha.sum();
+		for (int k = 0; k < numFactors; k++) {
+			double ak = alpha.get(k);
+			double numerator = 0, denominator = 0;
+			for (int u = 0; u < numUsers; u++) {
+				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
+				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
+			}
+
+			if (numerator != 0)
+				alpha.set(k, ak * (numerator / denominator));
+		}
+
+		for (int k = 0; k < numFactors; k++) {
+			double bk = beta.sumOfRow(k);
+			for (int j = 0; j < numItems; j++) {
+				double bkj = beta.get(k, j);
+				double numerator = 0, denominator = 0;
+				for (int i = 0; i < numItems; i++) {
+					numerator += digamma(Nkji[k][j][i] + beta.get(k, j)) - digamma(beta.get(k, j));
+					denominator += digamma(Nkj.get(k, j) + bk) - digamma(bk);
+				}
+
+				if (numerator != 0)
+					beta.set(k, j, bkj * (numerator / denominator));
+			}
+		}
+	}
+
+	@Override
+	protected void readoutParams() {
+		double val = 0.0;
+		double sumAlpha = alpha.sum();
+
+		for (int u = 0; u < numFactors; u++) {
+			for (int k = 0; k < numFactors; k++) {
+				val = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
+				PukSum.add(u, k, val);
+			}
+		}
+
+		for (int k = 0; k < numFactors; k++) {
+			double bk = beta.sumOfRow(k);
+			for (int j = 0; j < numItems; j++) {
+				for (int i = 0; i < numItems; i++) {
+					val = (Nkji[k][j][i] + beta.get(k, j)) / (Nkj.get(k, j) + bk);
+					PkjiSum[k][j][i] += val;
+				}
+			}
+		}
+
+		numStats++;
+	}
+
+	@Override
+	protected void estimateParams() {
+		Puk = PukSum.scale(1.0 / numStats);
+
+		for (int k = 0; k < numFactors; k++) {
+			for (int j = 0; j < numItems; j++) {
+				for (int i = 0; i < numItems; i++) {
+					Pkji[k][j][i] = PkjiSum[k][j][i] / numStats;
+				}
+			}
+		}
+	}
+
+	@Override
+	protected double ranking(int u, int i) throws Exception {
+		List<Integer> items = userItemsMap.get(u);
+		int j = items.size() == 0 ? i : items.get(items.size() - 1); // last rated item
+
+		double rank = 0;
+		for (int k = 0; k < numFactors; k++) {
+			rank += Puk.get(u, k) * Pkji[k][j][i];
+		}
+
+		return rank;
+	}
+
+	@Override
+	public String toString() {
+		return Strings.toString(new Object[] { numFactors, initAlpha, initBeta }) + ", " + super.toString();
 	}
 
 }
