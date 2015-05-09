@@ -196,13 +196,11 @@ public class URP extends GraphicRecommender {
 
 	protected void readoutParams() {
 		double val = 0;
-		double ak = 0, br = 0;
 		double sumAlpha = alpha.sum();
 
 		for (int u = 0; u < numUsers; u++) {
 			for (int k = 0; k < numFactors; k++) {
-				ak = alpha.get(k);
-				val = (Nuk.get(u, k) + ak) / (Nu.get(u) + sumAlpha);
+				val = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha);
 				PukSum.add(u, k, val);
 			}
 		}
@@ -211,8 +209,7 @@ public class URP extends GraphicRecommender {
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					br = beta.get(r);
-					val = (Ntir[k][i][r] + br) / (Nik.get(i, k) + sumBeta);
+					val = (Ntir[k][i][r] + beta.get(r)) / (Nik.get(i, k) + sumBeta);
 					PkirSum[k][i][r] += val;
 				}
 			}

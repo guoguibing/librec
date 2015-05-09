@@ -102,68 +102,73 @@ import com.google.common.collect.Table;
  */
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
-	protected static String version = "1.3";
+	protected String version = "1.3";
 
 	// configuration
-	protected static FileConfiger cf;
-	protected static String configFile = "librec.conf";
-	protected static String algorithm;
+	protected FileConfiger cf;
+	protected String configFile = "librec.conf";
+	protected String algorithm;
 
-	protected static float binThold;
-	protected static int[] columns;
+	protected float binThold;
+	protected int[] columns;
 
 	// rate DAO object
-	protected static DataDAO rateDao;
+	protected DataDAO rateDao;
 	// line configer for rating data
-	protected static LineConfiger ratingOptions;
+	protected LineConfiger ratingOptions;
 
 	// rating matrix
-	protected static SparseMatrix rateMatrix;
+	protected SparseMatrix rateMatrix;
+
+	/**
+	 * run the LibRec library
+	 */
+	protected void execute(String[] args) throws Exception {
+		// process librec arguments
+		cmdLine(args);
+
+		// get configuration file
+		cf = new FileConfiger(configFile);
+
+		// prepare data
+		rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+
+		ratingOptions = cf.getParamOptions("ratings.setup");
+
+		List<String> cols = ratingOptions.getOptions("-columns");
+		columns = new int[cols.size()];
+		for (int i = 0; i < cols.size(); i++)
+			columns[i] = Integer.parseInt(cols.get(i));
+		binThold = ratingOptions.getFloat("-threshold");
+
+		rateMatrix = rateDao.readData(columns, binThold);
+
+		// config general recommender
+		Recommender.cf = cf;
+		Recommender.rateMatrix = rateMatrix;
+		Recommender.rateDao = rateDao;
+		Recommender.binThold = binThold;
+
+		// run algorithms
+		runAlgorithm();
+
+		// collect results
+		String destPath = FileIO.makeDirectory(Recommender.tempDirPath);
+		String results = destPath + algorithm + "@" + Dates.now() + ".txt";
+		FileIO.copyFile("results.txt", results);
+
+		// send notification
+		notifyMe(results);
+	}
 
 	/**
 	 * entry of the LibRec library
 	 * 
-	 * @param args
-	 *            command line arguments
 	 */
 	public static void main(String[] args) {
 
 		try {
-			// process librec arguments
-			cmdLine(args);
-
-			// get configuration file
-			cf = new FileConfiger(configFile);
-
-			// prepare data
-			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-
-			ratingOptions = cf.getParamOptions("ratings.setup");
-
-			List<String> cols = ratingOptions.getOptions("-columns");
-			columns = new int[cols.size()];
-			for (int i = 0; i < cols.size(); i++)
-				columns[i] = Integer.parseInt(cols.get(i));
-			binThold = ratingOptions.getFloat("-threshold");
-
-			rateMatrix = rateDao.readData(columns, binThold);
-
-			// config general recommender
-			Recommender.cf = cf;
-			Recommender.rateMatrix = rateMatrix;
-			Recommender.rateDao = rateDao;
-			Recommender.binThold = binThold;
-
-			// run algorithms
-			runAlgorithm();
-
-			// collect results
-			String destPath = FileIO.makeDirectory(Recommender.tempDirPath);
-			String results = destPath + algorithm + "@" + Dates.now() + ".txt";
-			FileIO.copyFile("results.txt", results);
-
-			// send notification
-			notifyMe(results);
+			new LibRec().execute(args);
 
 		} catch (Exception e) {
 			// capture exception to log file
@@ -179,7 +184,7 @@ public class LibRec {
 	 * @param args
 	 *            command line arguments
 	 */
-	protected static void cmdLine(String[] args) throws Exception {
+	protected void cmdLine(String[] args) throws Exception {
 
 		if (args.length < 1)
 			return;
@@ -255,7 +260,7 @@ public class LibRec {
 	/**
 	 * write a matrix data into a file
 	 */
-	private static void writeMatrix(SparseMatrix data, String filePath) throws Exception {
+	private void writeMatrix(SparseMatrix data, String filePath) throws Exception {
 		// delete old file first
 		FileIO.deleteFile(filePath);
 
@@ -289,7 +294,7 @@ public class LibRec {
 	 * prepare training and test data, and then run a specified recommender
 	 * 
 	 */
-	protected static void runAlgorithm() throws Exception {
+	protected void runAlgorithm() throws Exception {
 
 		// evaluation setup
 		String setup = cf.getString("evaluation.setup");
@@ -342,7 +347,7 @@ public class LibRec {
 		printEvalInfo(algo, algo.measures);
 	}
 
-	private static void runCrossValidation(LineConfiger params) throws Exception {
+	private void runCrossValidation(LineConfiger params) throws Exception {
 
 		int kFold = params.getInt("-k", 5);
 		boolean isParallelFold = params.isOn("-p", true);
@@ -383,7 +388,7 @@ public class LibRec {
 	/**
 	 * interface to run Leave-one-out approach
 	 */
-	private static void runLeaveOneOut(LineConfiger params) throws Exception {
+	private void runLeaveOneOut(LineConfiger params) throws Exception {
 
 		int numThreads = params.getInt("-t", 1);
 
@@ -466,7 +471,7 @@ public class LibRec {
 	/**
 	 * print out the evaluation information for a specific algorithm
 	 */
-	private static void printEvalInfo(Recommender algo, Map<Measure, Double> ms) {
+	private void printEvalInfo(Recommender algo, Map<Measure, Double> ms) {
 
 		String result = Recommender.getEvalInfo(ms);
 		// we add quota symbol to indicate the textual format of time 
@@ -483,7 +488,7 @@ public class LibRec {
 	 * @param attachment
 	 *            email attachment
 	 */
-	protected static void notifyMe(String attachment) throws Exception {
+	protected void notifyMe(String attachment) throws Exception {
 
 		String hostInfo = FileIO.getCurrentFolder() + "." + algorithm + " [" + Systems.getIP() + "]";
 
@@ -524,18 +529,14 @@ public class LibRec {
 	/**
 	 * @return a recommender to be run
 	 */
-	private static Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
+	protected Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
 
 		SparseMatrix trainMatrix = data[0], testMatrix = data[1];
 		algorithm = cf.getString("recommender");
 
 		switch (algorithm.toLowerCase()) {
 
-		/* under development */
-		case "itembigram":
-			return new ItemBigram(trainMatrix, testMatrix, fold);
-
-		/* baselines */
+			/* baselines */
 		case "globalavg":
 			return new GlobalAverage(trainMatrix, testMatrix, fold);
 		case "useravg":
@@ -558,6 +559,8 @@ public class LibRec {
 			return new UserKNN(trainMatrix, testMatrix, fold);
 		case "itemknn":
 			return new ItemKNN(trainMatrix, testMatrix, fold);
+		case "itembigram":
+			return new ItemBigram(trainMatrix, testMatrix, fold);
 		case "regsvd":
 			return new RegSVD(trainMatrix, testMatrix, fold);
 		case "biasedmf":
@@ -648,7 +651,7 @@ public class LibRec {
 	/**
 	 * Print out software information
 	 */
-	private static void readMe() {
+	private void readMe() {
 		String readme = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
 
 		/* Description */

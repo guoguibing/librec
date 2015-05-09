@@ -88,21 +88,21 @@ public class ItemBigram extends GraphicRecommender {
 		// count variables
 		Nuk = new DenseMatrix(numUsers, numFactors);
 		Nu = new DenseVector(numUsers);
-		Nkji = new int[numFactors][numItems][numItems];
-		Nkj = new DenseMatrix(numFactors, numItems);
+		Nkji = new int[numFactors][numItems + 1][numItems];
+		Nkj = new DenseMatrix(numFactors, numItems + 1);
 
 		// Logs.debug("Nkji consumes {} bytes", Strings.toString(Memory.bytes(Nkji)));
 
 		// parameters
 		PukSum = new DenseMatrix(numUsers, numFactors);
-		PkjiSum = new double[numFactors][numItems][numItems];
-		Pkji = new double[numFactors][numItems][numItems];
+		PkjiSum = new double[numFactors][numItems + 1][numItems];
+		Pkji = new double[numFactors][numItems + 1][numItems];
 
 		// hyper-parameters
 		alpha = new DenseVector(numFactors);
 		alpha.setAll(initAlpha);
 
-		beta = new DenseMatrix(numFactors, numItems);
+		beta = new DenseMatrix(numFactors, numItems + 1);
 		beta.setAll(initBeta);
 
 		// initialization
@@ -120,7 +120,7 @@ public class ItemBigram extends GraphicRecommender {
 				Nuk.add(u, k, 1.0);
 				Nu.add(u, 1.0);
 
-				int j = m > 0 ? items.get(m - 1) : i; // j==i to indicate no previous item
+				int j = m > 0 ? items.get(m - 1) : numItems;
 				Nkji[k][j][i]++;
 				Nkj.add(k, j, 1);
 			}
@@ -143,7 +143,7 @@ public class ItemBigram extends GraphicRecommender {
 				Nuk.add(u, k, -1.0);
 				Nu.add(u, -1.0);
 
-				int j = m > 0 ? items.get(m - 1) : i; // j==i to indicate no previous item
+				int j = m > 0 ? items.get(m - 1) : numItems;
 				Nkji[k][j][i]--;
 				Nkj.add(k, j, -1);
 
@@ -193,11 +193,11 @@ public class ItemBigram extends GraphicRecommender {
 
 		for (int k = 0; k < numFactors; k++) {
 			double bk = beta.sumOfRow(k);
-			for (int j = 0; j < numItems; j++) {
+			for (int j = 0; j < numItems + 1; j++) {
 				double bkj = beta.get(k, j);
 				double numerator = 0, denominator = 0;
 				for (int i = 0; i < numItems; i++) {
-					numerator += digamma(Nkji[k][j][i] + beta.get(k, j)) - digamma(beta.get(k, j));
+					numerator += digamma(Nkji[k][j][i] + bkj) - digamma(bkj);
 					denominator += digamma(Nkj.get(k, j) + bk) - digamma(bk);
 				}
 
@@ -221,7 +221,7 @@ public class ItemBigram extends GraphicRecommender {
 
 		for (int k = 0; k < numFactors; k++) {
 			double bk = beta.sumOfRow(k);
-			for (int j = 0; j < numItems; j++) {
+			for (int j = 0; j < numItems + 1; j++) {
 				for (int i = 0; i < numItems; i++) {
 					val = (Nkji[k][j][i] + beta.get(k, j)) / (Nkj.get(k, j) + bk);
 					PkjiSum[k][j][i] += val;
@@ -237,7 +237,7 @@ public class ItemBigram extends GraphicRecommender {
 		Puk = PukSum.scale(1.0 / numStats);
 
 		for (int k = 0; k < numFactors; k++) {
-			for (int j = 0; j < numItems; j++) {
+			for (int j = 0; j < numItems + 1; j++) {
 				for (int i = 0; i < numItems; i++) {
 					Pkji[k][j][i] = PkjiSum[k][j][i] / numStats;
 				}
@@ -248,7 +248,7 @@ public class ItemBigram extends GraphicRecommender {
 	@Override
 	protected double ranking(int u, int i) throws Exception {
 		List<Integer> items = userItemsMap.get(u);
-		int j = items.size() == 0 ? i : items.get(items.size() - 1); // last rated item
+		int j = items.size() < 1 ? numItems : items.get(items.size() - 1); // last rated item
 
 		double rank = 0;
 		for (int k = 0; k < numFactors; k++) {
