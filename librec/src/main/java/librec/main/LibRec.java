@@ -224,7 +224,16 @@ public class LibRec {
 			cf = new FileConfiger(configFile);
 
 			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-			rateMatrix = rateDao.readData();
+			
+			ratingOptions = cf.getParamOptions("ratings.setup");
+
+			List<String> cols = ratingOptions.getOptions("-columns");
+			columns = new int[cols.size()];
+			for (int i = 0; i < cols.size(); i++)
+				columns[i] = Integer.parseInt(cols.get(i));
+			binThold = ratingOptions.getFloat("-threshold");
+
+			rateMatrix = rateDao.readData(columns, binThold);
 
 			// format: (1) train-ratio; (2) train-ratio validation-ratio
 			List<String> options = paramOptions.getOptions("--dataset-split");
