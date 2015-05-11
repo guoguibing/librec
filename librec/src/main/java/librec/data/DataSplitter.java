@@ -213,7 +213,7 @@ public class DataSplitter {
 		assert (ratio > 0 && ratio < 1);
 
 		// sort timestamps from smaller to larger
-		Map<Integer, List<Integer>> userItemsMap = new HashMap<>();
+		Map<Integer, List<RatingContext>> userRCs = new HashMap<>();
 		for (int user = 0, um = rateMatrix.numRows; user < um; user++) {
 			List<Integer> unsortedItems = rateMatrix.getColumns(user);
 
@@ -224,24 +224,20 @@ public class DataSplitter {
 			}
 			Collections.sort(rcs);
 
-			List<Integer> sortedItems = new ArrayList<Integer>(size);
-			for (RatingContext rc : rcs) {
-				sortedItems.add(rc.getItem());
-			}
-
-			userItemsMap.put(user, sortedItems);
+			userRCs.put(user, rcs);
 		}
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
-		for (Entry<Integer, List<Integer>> en : userItemsMap.entrySet()) {
-			int u = en.getKey();
-			List<Integer> items = en.getValue();
+		for (Entry<Integer, List<RatingContext>> en : userRCs.entrySet()) {
+			List<RatingContext> rcs = en.getValue();
 
-			int trainSize = (int) (items.size() * ratio);
-			for (int i = 0; i < items.size(); i++) {
-				int j = items.get(i);
+			int trainSize = (int) (rcs.size() * ratio);
+			for (int i = 0; i < rcs.size(); i++) {
+				RatingContext rc = rcs.get(i);
+				int u = rc.getUser();
+				int j = rc.getItem();
 
 				if (i < trainSize)
 					testMatrix.set(u, j, 0.0);
@@ -272,7 +268,7 @@ public class DataSplitter {
 		assert (ratio > 0 && ratio < 1);
 
 		// sort timestamps from smaller to larger
-		Map<Integer, List<Integer>> itemUsersMap = new HashMap<>();
+		Map<Integer, List<RatingContext>> itemRCs = new HashMap<>();
 		for (int item = 0, im = rateMatrix.numColumns; item < im; item++) {
 			List<Integer> unsortedUsers = rateMatrix.getRows(item);
 
@@ -283,24 +279,20 @@ public class DataSplitter {
 			}
 			Collections.sort(rcs);
 
-			List<Integer> sortedUsers = new ArrayList<Integer>(size);
-			for (RatingContext rc : rcs) {
-				sortedUsers.add(rc.getUser());
-			}
-
-			itemUsersMap.put(item, sortedUsers);
+			itemRCs.put(item, rcs);
 		}
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
 
-		for (Entry<Integer, List<Integer>> en : itemUsersMap.entrySet()) {
-			int j = en.getKey();
-			List<Integer> users = en.getValue();
+		for (Entry<Integer, List<RatingContext>> en : itemRCs.entrySet()) {
+			List<RatingContext> rcs = en.getValue();
 
-			int trainSize = (int) (users.size() * ratio);
-			for (int i = 0; i < users.size(); i++) {
-				int u = users.get(i);
+			int trainSize = (int) (rcs.size() * ratio);
+			for (int i = 0; i < rcs.size(); i++) {
+				RatingContext rc = rcs.get(i);
+				int u = rc.getUser();
+				int j = rc.getItem();
 
 				if (i < trainSize)
 					testMatrix.set(u, j, 0.0);
