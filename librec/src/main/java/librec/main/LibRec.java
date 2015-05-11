@@ -189,21 +189,21 @@ public class LibRec {
 		if (args.length < 1)
 			return;
 
-		LineConfiger params = new LineConfiger(args);
+		LineConfiger paramOptions = new LineConfiger(args);
 
-		configFile = params.getString("-c", "librec.conf");
+		configFile = paramOptions.getString("-c", "librec.conf");
 
-		if (params.contains("-v")) {
+		if (paramOptions.contains("-v")) {
 			// print out short version information
 			System.out.println("LibRec version " + version);
 		}
 
-		if (params.contains("--version")) {
+		if (paramOptions.contains("--version")) {
 			// print out full version information
 			readMe();
 		}
 
-		if (params.contains("--dataset-spec")) {
+		if (paramOptions.contains("--dataset-spec")) {
 			// print out data set specification
 			cf = new FileConfiger(configFile);
 
@@ -219,7 +219,7 @@ public class LibRec {
 			System.exit(0);
 		}
 
-		if (params.contains("--dataset-split")) {
+		if (paramOptions.contains("--dataset-split")) {
 			// split the training data set into "train-test" or "train-validation-test" subsets
 			cf = new FileConfiger(configFile);
 
@@ -227,7 +227,7 @@ public class LibRec {
 			rateMatrix = rateDao.readData();
 
 			// format: (1) train-ratio; (2) train-ratio validation-ratio
-			List<String> options = params.getOptions("--dataset-split");
+			List<String> options = paramOptions.getOptions("--dataset-split");
 			double trainRatio = Strings.toDouble(options.get(0));
 			boolean isValidationUsed = options.size() >= 2;
 			double validRatio = isValidationUsed ? Strings.toDouble(options.get(1)) : 0;
@@ -239,7 +239,13 @@ public class LibRec {
 
 			// split data
 			DataSplitter ds = new DataSplitter(rateMatrix);
-			SparseMatrix[] results = isValidationUsed ? ds.getRatio(trainRatio, validRatio) : ds.getRatio(trainRatio);
+			SparseMatrix[] results = null;
+			if (isValidationUsed) {
+				results = ds.getRatio(trainRatio, validRatio);
+			} else {
+				results = paramOptions.contains("--by-date") ? ds.getRatio(trainRatio, rateDao.getTimestamps()) : ds
+						.getRatio(trainRatio);
+			}
 
 			// write out
 			String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
@@ -264,6 +270,8 @@ public class LibRec {
 		// delete old file first
 		FileIO.deleteFile(filePath);
 
+		Table<Integer, Integer, Long> timestamps = rateDao.getTimestamps();
+
 		List<String> lines = new ArrayList<>(1500);
 		for (MatrixEntry me : data) {
 			int u = me.row();
@@ -275,8 +283,9 @@ public class LibRec {
 
 			String user = rateDao.getUserId(u);
 			String item = rateDao.getItemId(j);
+			String timestamp = timestamps != null ? " " + timestamps.get(u, j) : "";
 
-			lines.add(user + " " + item + " " + (float) ruj);
+			lines.add(user + " " + item + " " + (float) ruj + timestamp);
 
 			if (lines.size() >= 1000) {
 				FileIO.writeList(filePath, lines, true);
@@ -536,7 +545,7 @@ public class LibRec {
 
 		switch (algorithm.toLowerCase()) {
 
-			/* baselines */
+		/* baselines */
 		case "globalavg":
 			return new GlobalAverage(trainMatrix, testMatrix, fold);
 		case "useravg":
