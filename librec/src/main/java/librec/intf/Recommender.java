@@ -227,7 +227,7 @@ public abstract class Recommender implements Runnable {
 			DataSplitter ds = new DataSplitter(trainMatrix);
 			double ratio = 1 - validationRatio;
 			
-			SparseMatrix[] trainSubsets = isSplitByDate? ds.getRatio(ratio, rateDao.getTimestamps()): ds.getRatio(ratio);
+			SparseMatrix[] trainSubsets = isSplitByDate? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()): ds.getRatio(ratio);
 			this.trainMatrix = trainSubsets[0];
 			this.validationMatrix = trainSubsets[1];
 		} else {

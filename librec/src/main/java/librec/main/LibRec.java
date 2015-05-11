@@ -239,23 +239,29 @@ public class LibRec {
 
 			// split data
 			DataSplitter ds = new DataSplitter(rateMatrix);
-			SparseMatrix[] results = null;
+			SparseMatrix[] data = null;
 			if (isValidationUsed) {
-				results = ds.getRatio(trainRatio, validRatio);
+				data = ds.getRatio(trainRatio, validRatio);
 			} else {
-				results = paramOptions.contains("--by-date") ? ds.getRatio(trainRatio, rateDao.getTimestamps()) : ds
-						.getRatio(trainRatio);
+				if(paramOptions.contains("--by-user-date"))
+					data = ds.getRatioByUserDate(trainRatio, rateDao.getTimestamps());
+				else if(paramOptions.contains("--by-item-date"))
+					data = ds.getRatioByItemDate(trainRatio, rateDao.getTimestamps());
+				else if(paramOptions.contains("--by-rating-date"))
+					data = ds.getRatioByRatingDate(trainRatio, rateDao.getTimestamps());
+				else
+					data = ds.getRatio(trainRatio);
 			}
 
 			// write out
 			String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
-			writeMatrix(results[0], dirPath + "training.txt");
+			writeMatrix(data[0], dirPath + "training.txt");
 
 			if (isValidationUsed) {
-				writeMatrix(results[1], dirPath + "validation.txt");
-				writeMatrix(results[2], dirPath + "test.txt");
+				writeMatrix(data[1], dirPath + "validation.txt");
+				writeMatrix(data[2], dirPath + "test.txt");
 			} else {
-				writeMatrix(results[1], dirPath + "test.txt");
+				writeMatrix(data[1], dirPath + "test.txt");
 			}
 
 			System.exit(0);
@@ -342,7 +348,16 @@ public class LibRec {
 			break;
 		case "train-ratio":
 			ratio = evalOptions.getDouble("-r", 0.8);
-			data = evalOptions.contains("--by-date") ? ds.getRatio(ratio, rateDao.getTimestamps()) : ds.getRatio(ratio);
+			
+			if(evalOptions.contains("--by-user-date"))
+				data = ds.getRatioByUserDate(ratio, rateDao.getTimestamps());
+			else if(evalOptions.contains("--by-item-date"))
+				data = ds.getRatioByItemDate(ratio, rateDao.getTimestamps());
+			else if(evalOptions.contains("--by-rating-date"))
+				data = ds.getRatioByRatingDate(ratio, rateDao.getTimestamps());
+			else
+				data = ds.getRatio(ratio);
+			
 			break;
 		default:
 			ratio = evalOptions.getDouble("-r", 0.8);

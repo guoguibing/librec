@@ -27,7 +27,10 @@ import happy.coding.system.Systems;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.common.collect.Table;
 
@@ -147,14 +150,14 @@ public class DataSplitter {
 	}
 
 	/**
-	 * Split ratings into two parts: (ratio) training, (1-ratio) test subsets.
+	 * Split the ratings (by date) into two parts: (ratio) training, (1-ratio) test subsets
 	 * 
 	 * @param ratio
-	 *            the ratio of training data over all the ratings.
+	 *            the ratio of training data
 	 * @param timestamps
 	 *            the timestamps of all rating data
 	 */
-	public SparseMatrix[] getRatio(double ratio, Table<Integer, Integer, Long> timestamps) {
+	public SparseMatrix[] getRatioByRatingDate(double ratio, Table<Integer, Integer, Long> timestamps) {
 
 		assert (ratio > 0 && ratio < 1);
 
@@ -194,6 +197,126 @@ public class DataSplitter {
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split the ratings of each user (by date) into two parts: (ratio) training, (1-ratio) test subsets
+	 * 
+	 * @param ratio
+	 *            the ratio of training data
+	 * @param timestamps
+	 *            the timestamps of all rating data
+	 */
+	public SparseMatrix[] getRatioByUserDate(double ratio, Table<Integer, Integer, Long> timestamps) {
+
+		assert (ratio > 0 && ratio < 1);
+
+		// sort timestamps from smaller to larger
+		Map<Integer, List<RatingContext>> userRCs = new HashMap<>();
+		for (int user = 0, um = rateMatrix.numRows; user < um; user++) {
+			List<Integer> unsortedItems = rateMatrix.getColumns(user);
+			
+			int size = unsortedItems.size();
+			List<RatingContext> rcs = new ArrayList<>(size);
+			for (int item : unsortedItems) {
+				rcs.add(new RatingContext(user, item, timestamps.get(user, item)));
+			}
+			Collections.sort(rcs);
+
+			List<Integer> sortedItems = new ArrayList<Integer>(size);
+			for (RatingContext rc : rcs) {
+				sortedItems.add(rc.getItem());
+			}
+			
+			userRCs.put(user, rcs);
+		}
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+
+		for(Entry<Integer, List<RatingContext>> en: userRCs.entrySet()){
+			int u = en.getKey();
+			List<RatingContext> rcs = en.getValue();
+
+			for (RatingContext rc : rcs) {
+				int j = rc.getItem();
+
+				double rand = Math.random();
+
+				if (rand < ratio)
+					testMatrix.set(u, j, 0.0);
+				else
+					trainMatrix.set(u, j, 0.0);
+			}
+		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+	
+	/**
+	 * Split the ratings of each item (by date) into two parts: (ratio) training, (1-ratio) test subsets
+	 * 
+	 * @param ratio
+	 *            the ratio of training data
+	 * @param timestamps
+	 *            the timestamps of all rating data
+	 */
+	public SparseMatrix[] getRatioByItemDate(double ratio, Table<Integer, Integer, Long> timestamps) {
+		
+		assert (ratio > 0 && ratio < 1);
+		
+		// sort timestamps from smaller to larger
+		Map<Integer, List<RatingContext>> itemRCs = new HashMap<>();
+		for (int item = 0, im = rateMatrix.numColumns; item < im; item++) {
+			List<Integer> unsortedUsers = rateMatrix.getRows(item);
+			
+			int size = unsortedUsers.size();
+			List<RatingContext> rcs = new ArrayList<>(size);
+			for (int user : unsortedUsers) {
+				rcs.add(new RatingContext(user, item, timestamps.get(user, item)));
+			}
+			Collections.sort(rcs);
+			
+			List<Integer> sortedUsers = new ArrayList<Integer>(size);
+			for (RatingContext rc : rcs) {
+				sortedUsers.add(rc.getUser());
+			}
+			
+			itemRCs.put(item, rcs);
+		}
+		
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+		
+		for(Entry<Integer, List<RatingContext>> en: itemRCs.entrySet()){
+			int j = en.getKey();
+			List<RatingContext> rcs = en.getValue();
+			
+			for (RatingContext rc : rcs) {
+				int u = rc.getUser();
+				
+				double rand = Math.random();
+				
+				if (rand < ratio)
+					testMatrix.set(u, j, 0.0);
+				else
+					trainMatrix.set(u, j, 0.0);
+			}
+		}
+		
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+		
+		debugInfo(trainMatrix, testMatrix, -1);
+		
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
