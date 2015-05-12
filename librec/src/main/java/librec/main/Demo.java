@@ -59,6 +59,7 @@ public class Demo {
 		candOptions.add("General Usage:");
 		candOptions.add(" 0: the format of rating prediction results;");
 		candOptions.add(" 1: the format of item recommendation results;");
+		candOptions.add(" 2: run an algorithm by name [Input: 2 algoName];");
 		candOptions.add("-1: quit the demo!");
 		candOptions.add("");
 		candOptions.add("Part I: baselines");
@@ -163,6 +164,11 @@ public class Demo {
 				Logs.info("Ranking results: Prec@5, Prec@10, Recall@5, Recall@10, AUC, MAP, NDCG, MRR, <configuration>, training time, test time\n");
 				Systems.pause();
 				continue;
+			case 2:
+				// System.out.print("Please input the method name: ");
+				String algoName = reader.next().trim();
+				configFile = algoName + ".conf";
+				break;
 			default:
 				Logs.error("Wrong input id!\n");
 				Systems.pause();
