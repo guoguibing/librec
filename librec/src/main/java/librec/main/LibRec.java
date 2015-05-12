@@ -186,7 +186,7 @@ public class LibRec {
 	 */
 	protected void cmdLine(String[] args) throws Exception {
 
-		if (args.length < 1)
+		if (args == null || args.length < 1)
 			return;
 
 		LineConfiger paramOptions = new LineConfiger(args);
@@ -224,7 +224,7 @@ public class LibRec {
 			cf = new FileConfiger(configFile);
 
 			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-			
+
 			ratingOptions = cf.getParamOptions("ratings.setup");
 
 			List<String> cols = ratingOptions.getOptions("-columns");
@@ -252,11 +252,11 @@ public class LibRec {
 			if (isValidationUsed) {
 				data = ds.getRatio(trainRatio, validRatio);
 			} else {
-				if(paramOptions.contains("--by-user-date"))
+				if (paramOptions.contains("--by-user-date"))
 					data = ds.getRatioByUserDate(trainRatio, rateDao.getTimestamps());
-				else if(paramOptions.contains("--by-item-date"))
+				else if (paramOptions.contains("--by-item-date"))
 					data = ds.getRatioByItemDate(trainRatio, rateDao.getTimestamps());
-				else if(paramOptions.contains("--by-rating-date"))
+				else if (paramOptions.contains("--by-rating-date"))
 					data = ds.getRatioByRatingDate(trainRatio, rateDao.getTimestamps());
 				else
 					data = ds.getRatio(trainRatio);
@@ -357,16 +357,16 @@ public class LibRec {
 			break;
 		case "train-ratio":
 			ratio = evalOptions.getDouble("-r", 0.8);
-			
-			if(evalOptions.contains("--by-user-date"))
+
+			if (evalOptions.contains("--by-user-date"))
 				data = ds.getRatioByUserDate(ratio, rateDao.getTimestamps());
-			else if(evalOptions.contains("--by-item-date"))
+			else if (evalOptions.contains("--by-item-date"))
 				data = ds.getRatioByItemDate(ratio, rateDao.getTimestamps());
-			else if(evalOptions.contains("--by-rating-date"))
+			else if (evalOptions.contains("--by-rating-date"))
 				data = ds.getRatioByRatingDate(ratio, rateDao.getTimestamps());
 			else
 				data = ds.getRatio(ratio);
-			
+
 			break;
 		default:
 			ratio = evalOptions.getDouble("-r", 0.8);
@@ -682,6 +682,13 @@ public class LibRec {
 	}
 
 	/**
+	 * set the configuration file to be used
+	 */
+	public void setConfigFile(String configFile) {
+		this.configFile = configFile;
+	}
+
+	/**
 	 * Print out software information
 	 */
 	private void readMe() {
@@ -705,4 +712,5 @@ public class LibRec {
 
 		System.out.println(readme);
 	}
+
 }
