@@ -60,6 +60,7 @@ public class Demo {
 		candOptions.add(" 0: the format of rating prediction results;");
 		candOptions.add(" 1: the format of item recommendation results;");
 		candOptions.add(" 2: run an algorithm by name [Input: 2 algoName];");
+		candOptions.add(" 3: help & about this demo;");
 		candOptions.add("-1: quit the demo!");
 		candOptions.add("");
 		candOptions.add("Part I: baselines");
@@ -73,7 +74,7 @@ public class Demo {
 		candOptions.add("");
 		candOptions.add("Part III: item recommendation");
 		candOptions.add("30: LDA;    \t 31: BPR;     \t 32: FISM; ");
-		candOptions.add("33: WRMF;   \t 34: SLIM;    \t 35: RankALS; ");
+		candOptions.add("33: WRMF;   \t 34: SLIM;    \t 35: RankALS. ");
 
 		int option = 0;
 		boolean flag = false;
@@ -169,6 +170,19 @@ public class Demo {
 				String algoName = reader.next().trim();
 				configFile = algoName + ".conf";
 				break;
+			case 3:
+				StringBuilder about = new StringBuilder();
+				about.append("About. This demo was created by Guo Guibing, the author of the LibRec library.\n")
+						.append("It is based on LibRec-v1.3 (http://www.librec.net/). Although initially designed\n")
+						.append("for a demo session at UMAP'15, it may be useful for those who want to take a \n")
+						.append("quick trial of LibRec.\n\n")
+						.append("Usage. To run a predefined recommender, simply choose a recommender id.\n")
+						.append("To run a customized recommender, give the input '2 algoName' (e.g., '2 RegSVD').\n")
+						.append("For case 2, make sure you have a configuration file named by 'algoName.conf'\n");
+
+				Logs.debug(about.toString());
+				Systems.pause();
+				continue;
 			default:
 				Logs.error("Wrong input id!\n");
 				Systems.pause();
