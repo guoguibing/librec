@@ -19,6 +19,7 @@
 package librec.data;
 
 import happy.coding.io.FileIO;
+import happy.coding.io.Lists;
 import happy.coding.io.Logs;
 import happy.coding.math.Randoms;
 import happy.coding.math.Sortor;
@@ -27,10 +28,7 @@ import happy.coding.system.Systems;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.common.collect.Table;
 
@@ -120,7 +118,7 @@ public class DataSplitter {
 	 * @param ratio
 	 *            the ratio of training data over all the ratings.
 	 */
-	public SparseMatrix[] getRatio(double ratio) {
+	public SparseMatrix[] getRatioByRating(double ratio) {
 
 		assert (ratio > 0 && ratio < 1);
 
@@ -212,8 +210,9 @@ public class DataSplitter {
 
 		assert (ratio > 0 && ratio < 1);
 
-		// sort timestamps from smaller to larger
-		Map<Integer, List<RatingContext>> userRCs = new HashMap<>();
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+		
 		for (int user = 0, um = rateMatrix.numRows; user < um; user++) {
 			List<Integer> unsortedItems = rateMatrix.getColumns(user);
 
@@ -223,15 +222,6 @@ public class DataSplitter {
 				rcs.add(new RatingContext(user, item, timestamps.get(user, item)));
 			}
 			Collections.sort(rcs);
-
-			userRCs.put(user, rcs);
-		}
-
-		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
-
-		for (Entry<Integer, List<RatingContext>> en : userRCs.entrySet()) {
-			List<RatingContext> rcs = en.getValue();
 
 			int trainSize = (int) (rcs.size() * ratio);
 			for (int i = 0; i < rcs.size(); i++) {
@@ -267,8 +257,9 @@ public class DataSplitter {
 
 		assert (ratio > 0 && ratio < 1);
 
-		// sort timestamps from smaller to larger
-		Map<Integer, List<RatingContext>> itemRCs = new HashMap<>();
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+		
 		for (int item = 0, im = rateMatrix.numColumns; item < im; item++) {
 			List<Integer> unsortedUsers = rateMatrix.getRows(item);
 
@@ -278,15 +269,6 @@ public class DataSplitter {
 				rcs.add(new RatingContext(user, item, timestamps.get(user, item)));
 			}
 			Collections.sort(rcs);
-
-			itemRCs.put(item, rcs);
-		}
-
-		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
-		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
-
-		for (Entry<Integer, List<RatingContext>> en : itemRCs.entrySet()) {
-			List<RatingContext> rcs = en.getValue();
 
 			int trainSize = (int) (rcs.size() * ratio);
 			for (int i = 0; i < rcs.size(); i++) {
@@ -362,10 +344,8 @@ public class DataSplitter {
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
 	 * preserved for each user, and the rest are used as the testing data
 	 * 
-	 * @param numGiven
-	 *            the number of ratings given to each user
 	 */
-	public SparseMatrix[] getGiven(int numGiven) throws Exception {
+	public SparseMatrix[] getGivenNByUser(int numGiven) throws Exception {
 
 		assert numGiven > 0;
 
@@ -374,30 +354,28 @@ public class DataSplitter {
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
-			SparseVector uv = rateMatrix.row(u);
-			int numRated = uv.getCount();
+			List<Integer> items = rateMatrix.getColumns(u);
+			int numRated = items.size();
 
 			if (numRated > numGiven) {
-				// a set of rated items
-				int[] ratedItems = uv.getIndex();
 
 				// a set of sampled indices of rated items
 				int[] givenIndex = Randoms.nextIntArray(numGiven, numRated);
 
-				for (int i = 0, j = 0; j < ratedItems.length; j++) {
+				for (int i = 0, j = 0; j < numRated; j++) {
 					if (i < givenIndex.length && givenIndex[i] == j) {
 						// for training
-						testMatrix.set(u, ratedItems[j], 0.0);
+						testMatrix.set(u, items.get(j), 0.0);
 						i++;
 					} else {
 						// for testing
-						trainMatrix.set(u, ratedItems[j], 0.0);
+						trainMatrix.set(u, items.get(j), 0.0);
 					}
 				}
 			} else {
 				// all ratings are used for training
-				for (VectorEntry ve : uv)
-					testMatrix.set(u, ve.index(), 0.0);
+				for (int j : items)
+					testMatrix.set(u, j, 0.0);
 			}
 
 		}
@@ -412,13 +390,145 @@ public class DataSplitter {
 	}
 
 	/**
-	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
-	 * preserved for each user, and the rest are used as the testing data
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} earliest
+	 * ratings are preserved for each user, and the rest are used as the testing data
 	 * 
-	 * @param numGiven
-	 *            the number of ratings given to each user
 	 */
-	public SparseMatrix[] getGiven(double ratio) throws Exception {
+	public SparseMatrix[] getGivenNByUserDate(int numGiven, Table<Integer, Integer, Long> timestamps) throws Exception {
+
+		assert numGiven > 0;
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+
+		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
+
+			List<Integer> items = rateMatrix.getColumns(u);
+			int capacity = Lists.initSize(items.size());
+
+			List<RatingContext> rcs = new ArrayList<>(capacity);
+			for (int j : items) {
+				rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
+			}
+			Collections.sort(rcs);
+
+			for (int i = 0; i < rcs.size(); i++) {
+				RatingContext rc = rcs.get(i);
+				int j = rc.getItem();
+
+				if (i < numGiven)
+					testMatrix.set(u, j, 0.0);
+				else
+					trainMatrix.set(u, j, 0.0);
+			}
+		}
+		
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+	/**
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} earliest
+	 * ratings are preserved for each item, and the rest are used as the testing data
+	 * 
+	 */
+	public SparseMatrix[] getGivenNByItemDate(int numGiven, Table<Integer, Integer, Long> timestamps) throws Exception {
+		
+		assert numGiven > 0;
+		
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+		
+		for (int j = 0, jm = rateMatrix.numRows(); j < jm; j++) {
+			
+			List<Integer> users = rateMatrix.getRows(j);
+			int capacity = Lists.initSize(users.size());
+			
+			List<RatingContext> rcs = new ArrayList<>(capacity);
+			for (int u : users) {
+				rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
+			}
+			Collections.sort(rcs);
+			
+			for (int i = 0; i < rcs.size(); i++) {
+				RatingContext rc = rcs.get(i);
+				int u = rc.getUser();
+				
+				if (i < numGiven)
+					testMatrix.set(u, j, 0.0);
+				else
+					trainMatrix.set(u, j, 0.0);
+			}
+		}
+		
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+		
+		debugInfo(trainMatrix, testMatrix, -1);
+		
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} ratings are
+	 * preserved for each item, and the rest are used as the testing data
+	 * 
+	 */
+	public SparseMatrix[] getGivenNByItem(int numGiven) throws Exception {
+
+		assert numGiven > 0;
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+
+		for (int j = 0, jm = rateMatrix.numColumns(); j < jm; j++) {
+
+			List<Integer> users = rateMatrix.getRows(j);
+			int numRated = users.size();
+
+			if (numRated > numGiven) {
+
+				// a set of sampled indices of rated items
+				int[] givenIndex = Randoms.nextIntArray(numGiven, numRated);
+
+				for (int i = 0, k = 0; k < numRated; k++) {
+					if (i < givenIndex.length && givenIndex[i] == k) {
+						// for training
+						testMatrix.set(users.get(k), j, 0.0);
+						i++;
+					} else {
+						// for testing
+						trainMatrix.set(users.get(k), j, 0.0);
+					}
+				}
+			} else {
+				// all ratings are used for training
+				for (int u : users)
+					testMatrix.set(u, j, 0.0);
+			}
+
+		}
+
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code ratio} percentage of
+	 * ratings are preserved for each user, and the rest are used as the testing data
+	 * 
+	 */
+	public SparseMatrix[] getRatioByUser(double ratio) throws Exception {
 
 		assert ratio > 0 && ratio < 1;
 
@@ -427,24 +537,52 @@ public class DataSplitter {
 
 		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
 
-			SparseVector uv = rateMatrix.row(u);
-			int numRated = uv.getCount();
+			List<Integer> items = rateMatrix.getColumns(u);
 
-			// a set of rated items
-			int[] ratedItems = uv.getIndex();
+			for (int j : items) {
+				double rand = Math.random();
+				if (rand < ratio)
+					testMatrix.set(u, j, 0.0); // for training
+				else
+					trainMatrix.set(u, j, 0.0); // for testing
+			}
 
-			// a set of sampled indices of rated items
-			int[] givenIndex = Randoms.nextIntArray((int) (numRated * ratio), numRated);
+		}
 
-			for (int i = 0, j = 0; j < ratedItems.length; j++) {
-				if (i < givenIndex.length && givenIndex[i] == j) {
+		// remove zero entries
+		trainMatrix = trainMatrix.reshape();
+		testMatrix = testMatrix.reshape();
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code ratio} percentage of
+	 * ratings are preserved for each item, and the rest are used as the testing data
+	 * 
+	 */
+	public SparseMatrix[] getRatioByItem(double ratio) throws Exception {
+
+		assert ratio > 0 && ratio < 1;
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
+
+		for (int i = 0, im = rateMatrix.numColumns(); i < im; i++) {
+
+			List<Integer> users = rateMatrix.getRows(i);
+
+			for (int u : users) {
+
+				double rand = Math.random();
+				if (rand < ratio)
 					// for training
-					testMatrix.set(u, ratedItems[j], 0.0);
-					i++;
-				} else {
+					testMatrix.set(u, i, 0.0);
+				else
 					// for testing
-					trainMatrix.set(u, ratedItems[j], 0.0);
-				}
+					trainMatrix.set(u, i, 0.0);
 			}
 
 		}

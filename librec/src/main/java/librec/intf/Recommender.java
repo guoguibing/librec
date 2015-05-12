@@ -220,7 +220,7 @@ public abstract class Recommender implements Runnable {
 			view = evalOptions.getString("--test-view", "all");
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isSplitByDate = evalOptions.contains("--by-date");
-			isResultsOut = evalOptions.isOn("-o", false);
+			isResultsOut = evalOptions.isOn("-output", false);
 			isSaveModel = evalOptions.isOn("--save-model", false);
 			numCPUs = evalOptions.getInt("-cpu", 1); // default: no parallelization
 
@@ -239,7 +239,7 @@ public abstract class Recommender implements Runnable {
 			double ratio = 1 - validationRatio;
 
 			SparseMatrix[] trainSubsets = isSplitByDate ? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()) : ds
-					.getRatio(ratio);
+					.getRatioByRating(ratio);
 			this.trainMatrix = trainSubsets[0];
 			this.validationMatrix = trainSubsets[1];
 		} else {

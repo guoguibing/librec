@@ -22,7 +22,6 @@ import happy.coding.io.FileConfiger;
 import happy.coding.io.FileIO;
 import happy.coding.io.LineConfiger;
 import happy.coding.io.Logs;
-import happy.coding.io.Strings;
 import happy.coding.io.net.EMailer;
 import happy.coding.system.Dates;
 import happy.coding.system.Systems;
@@ -235,11 +234,9 @@ public class LibRec {
 
 			rateMatrix = rateDao.readData(columns, binThold);
 
-			// format: (1) train-ratio; (2) train-ratio validation-ratio
-			List<String> options = paramOptions.getOptions("--dataset-split");
-			double trainRatio = Strings.toDouble(options.get(0));
-			boolean isValidationUsed = options.size() >= 2;
-			double validRatio = isValidationUsed ? Strings.toDouble(options.get(1)) : 0;
+			double trainRatio = paramOptions.getDouble("-r", 0.8);
+			boolean isValidationUsed = paramOptions.contains("-v");
+			double validRatio = isValidationUsed ? paramOptions.getDouble("-v") : 0;
 
 			if (trainRatio <= 0 || validRatio < 0 || (trainRatio + validRatio) >= 1) {
 				throw new Exception(
@@ -248,18 +245,27 @@ public class LibRec {
 
 			// split data
 			DataSplitter ds = new DataSplitter(rateMatrix);
+
 			SparseMatrix[] data = null;
 			if (isValidationUsed) {
 				data = ds.getRatio(trainRatio, validRatio);
 			} else {
-				if (paramOptions.contains("--by-user-date"))
-					data = ds.getRatioByUserDate(trainRatio, rateDao.getTimestamps());
-				else if (paramOptions.contains("--by-item-date"))
-					data = ds.getRatioByItemDate(trainRatio, rateDao.getTimestamps());
-				else if (paramOptions.contains("--by-rating-date"))
-					data = ds.getRatioByRatingDate(trainRatio, rateDao.getTimestamps());
-				else
-					data = ds.getRatio(trainRatio);
+
+				switch (paramOptions.getString("-target")) {
+				case "u":
+					data = paramOptions.contains("--by-date") ? ds.getRatioByUserDate(trainRatio,
+							rateDao.getTimestamps()) : ds.getRatioByUser(trainRatio);
+					break;
+				case "i":
+					data = paramOptions.contains("--by-date") ? ds.getRatioByItemDate(trainRatio,
+							rateDao.getTimestamps()) : ds.getRatioByItem(trainRatio);
+					break;
+				case "r":
+				default:
+					data = paramOptions.contains("--by-date") ? ds.getRatioByRatingDate(trainRatio,
+							rateDao.getTimestamps()) : ds.getRatioByRating(trainRatio);
+					break;
+				}
 			}
 
 			// write out
@@ -348,29 +354,43 @@ public class LibRec {
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
 			break;
 		case "given-n":
-			N = evalOptions.getInt("-n", 20);
-			data = ds.getGiven(N);
+			N = evalOptions.getInt("-N", 20);
+
+			switch (evalOptions.getString("-target")) {
+			case "i":
+				data = evalOptions.contains("--by-date") ? ds.getGivenNByItemDate(N, rateDao.getTimestamps()) : ds
+						.getGivenNByItem(N);
+				break;
+			case "u":
+			default:
+				data = evalOptions.contains("--by-date") ? ds.getGivenNByUserDate(N, rateDao.getTimestamps()) : ds
+						.getGivenNByUser(N);
+				break;
+			}
 			break;
 		case "given-ratio":
 			ratio = evalOptions.getDouble("-r", 0.8);
-			data = ds.getGiven(ratio);
-			break;
-		case "train-ratio":
-			ratio = evalOptions.getDouble("-r", 0.8);
 
-			if (evalOptions.contains("--by-user-date"))
-				data = ds.getRatioByUserDate(ratio, rateDao.getTimestamps());
-			else if (evalOptions.contains("--by-item-date"))
-				data = ds.getRatioByItemDate(ratio, rateDao.getTimestamps());
-			else if (evalOptions.contains("--by-rating-date"))
-				data = ds.getRatioByRatingDate(ratio, rateDao.getTimestamps());
-			else
-				data = ds.getRatio(ratio);
+			switch (evalOptions.getString("-target")) {
+			case "u":
+				data = evalOptions.contains("--by-date") ? ds.getRatioByUserDate(ratio, rateDao.getTimestamps()) : ds
+						.getRatioByUser(ratio);
+				break;
+			case "i":
+				data = evalOptions.contains("--by-date") ? ds.getRatioByItemDate(ratio, rateDao.getTimestamps()) : ds
+						.getRatioByItem(ratio);
+				break;
+			case "r":
+			default:
+				data = evalOptions.contains("--by-date") ? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()) : ds
+						.getRatioByRating(ratio);
+				break;
+			}
 
 			break;
 		default:
 			ratio = evalOptions.getDouble("-r", 0.8);
-			data = ds.getRatio(ratio);
+			data = ds.getRatioByRating(ratio);
 			break;
 		}
 
