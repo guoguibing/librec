@@ -1,4 +1,4 @@
-// Copyright (C) 2014 Guibing Guo
+// Copyright (C) 2014-2015 Guibing Guo
 //
 // This file is part of LibRec.
 //
@@ -18,13 +18,9 @@
 
 package librec.ranking;
 
+import happy.coding.io.Logs;
 import happy.coding.io.Strings;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
-
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.DiagMatrix;
@@ -46,11 +42,10 @@ import librec.intf.IterativeRecommender;
  * @author guoguibing
  * 
  */
+@Configuration("binThold, alpha, factors, regU, regI, numIters")
 public class WRMF extends IterativeRecommender {
+
 	private float alpha;
-	// To be consistent with the symbols in the paper
-	DenseMatrix X, Y;
-	private static ForkJoinPool forkJoinPool;
 
 	public WRMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -58,145 +53,89 @@ public class WRMF extends IterativeRecommender {
 		isRankingPred = true; // item recommendation
 
 		alpha = algoOptions.getFloat("-alpha");
-
-		// paramter is the number of core to used 
-		forkJoinPool = new ForkJoinPool(4);
 		// checkBinary();
 	}
 
 	@Override
 	protected void buildModel() throws Exception {
 
+		// To be consistent with the symbols in the paper
+		DenseMatrix X = P, Y = Q;
+
+		// Updating by using alternative least square (ALS)
+		// due to large amount of entries to be processed (SGD will be too slow)
 		for (int iter = 1; iter <= numIters; iter++) {
-			forkJoinPool.invoke(new userTask());
-			if (isConverged(iter))
-				break;
-		}
 
-	}
-
-	protected class userTask extends RecursiveAction {
-
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		protected void compute() {
 			// Step 1: update user factors;
 			DenseMatrix Yt = Y.transpose();
 			DenseMatrix YtY = Yt.mult(Y);
-			// run in parallel
-			List<RecursiveAction> forks = new LinkedList<>();
 			for (int u = 0; u < numUsers; u++) {
-				// for each test user
-				UpdateUser temp = new UpdateUser(u, Yt, YtY);
-				forks.add(temp);
-				temp.fork();
+				if (verbose && (u + 1) % 100 == 0)
+					Logs.debug("{}{} runs at iteration = {}, user = {}/{}", algoName, foldInfo, iter, u + 1, numUsers);
 
-			}
-			for (RecursiveAction recursiveAction : forks) {
-				recursiveAction.join();
+				// diagonal matrix C^u for each user
+				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the diagonal will be 1
+				SparseVector pu = trainMatrix.row(u);
+
+				for (VectorEntry ve : pu) {
+					int i = ve.index();
+					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1 + alpha * r_{u, i}
+				}
+
+				// binarize real values
+				for (VectorEntry ve : pu)
+					ve.set(ve.get() > 0 ? 1 : 0);
+
+				// Cu - I
+				DiagMatrix CuI = Cu.minus(1);
+				// YtY + Yt * (Cu - I) * Y
+				DenseMatrix YtCuY = YtY.add(Yt.mult(CuI).mult(Y));
+				// (YtCuY + lambda * I)^-1
+				DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
+				// Yt * Cu
+				DenseMatrix YtCu = Yt.mult(Cu);
+
+				DenseVector xu = Wu.mult(YtCu).mult(pu);
+
+				// udpate user factors
+				X.setRow(u, xu);
 			}
 
 			// Step 2: update item factors;
 			DenseMatrix Xt = X.transpose();
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
-				// for each test user
-				updateItem temp = new updateItem(i, Xt, XtX);
-				forks.add(temp);
-				temp.fork();
+				if (verbose && (i + 1) % 100 == 0)
+					Logs.debug("{}{} runs at iteration = {}, item = {}/{}", algoName, foldInfo, iter, i + 1, numItems);
+
+				// diagonal matrix C^i for each item
+				DiagMatrix Ci = DiagMatrix.eye(numUsers);
+				SparseVector pi = trainMatrix.column(i);
+
+				for (VectorEntry ve : pi) {
+					int u = ve.index();
+					Ci.add(u, u, alpha * ve.get());
+				}
+
+				// binarize real values
+				for (VectorEntry ve : pi)
+					ve.set(ve.get() > 0 ? 1 : 0);
+
+				// Ci - I
+				DiagMatrix CiI = Ci.minus(1); // more efficient than
+												// DiagMatrix.eye(numUsers)
+				// XtX + Xt * (Ci - I) * X
+				DenseMatrix XtCiX = XtX.add(Xt.mult(CiI).mult(X));
+				// (XtCiX + lambda * I)^-1
+				DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
+				// Xt * Ci
+				DenseMatrix XtCi = Xt.mult(Ci);
+
+				DenseVector yi = Wi.mult(XtCi).mult(pi);
+
+				// udpate item factors
+				Y.setRow(i, yi);
 			}
-			for (RecursiveAction recursiveAction : forks) {
-				recursiveAction.join();
-			}
-		}
-	}
-
-	private class UpdateUser extends RecursiveAction {
-
-		private static final long serialVersionUID = 1L;
-		private final int u;
-		private DenseMatrix Yt;
-		private DenseMatrix YtY;
-
-		UpdateUser(int u, DenseMatrix Yt, DenseMatrix YtY) {
-			this.u = u;
-			this.Yt = Yt;
-			this.YtY = YtY;
-		}
-
-		@Override
-		protected void compute() {
-			// diagonal matrix C^u for each user
-			DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the diagonal will be 1
-			SparseVector pu = trainMatrix.row(u);
-
-			for (VectorEntry ve : pu) {
-				int i = ve.index();
-				Cu.add(i, i, alpha * ve.get()); // changes some entries to 1 + alpha * r_{u, i}
-			}
-
-			// binarize real values
-			for (VectorEntry ve : pu)
-				ve.set(ve.get() > 0 ? 1 : 0);
-
-			// Cu - I
-			DiagMatrix CuI = Cu.minus(1);
-			// YtY + Yt * (Cu - I) * Y
-			DenseMatrix YtCuY = YtY.add(Yt.nonZeroMult(CuI,Y));
-			// (YtCuY + lambda * I)^-1
-			DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
-			// Yt * Cu
-			DenseVector YtCuPu = Yt.nonZeroMult(Cu, pu);
-
-			DenseVector xu = Wu.mult(YtCuPu);
-
-			// udpate user factors
-			X.setRow(u, xu);
-		}
-	}
-
-	private class updateItem extends RecursiveAction {
-
-		private static final long serialVersionUID = 1L;
-		private final int i;
-		private DenseMatrix Xt;
-		private DenseMatrix XtX;
-
-		updateItem(int i, DenseMatrix Xt, DenseMatrix XtX) {
-			this.i = i;
-			this.Xt = Xt;
-			this.XtX = XtX;
-		}
-
-		@Override
-		protected void compute() {
-			// diagonal matrix C^i for each item
-			DiagMatrix Ci = DiagMatrix.eye(numUsers);
-			SparseVector pi = trainMatrix.column(i);
-
-			for (VectorEntry ve : pi) {
-				int u = ve.index();
-				Ci.add(u, u, alpha * ve.get());
-			}
-
-			// binarize real values
-			for (VectorEntry ve : pi)
-				ve.set(ve.get() > 0 ? 1 : 0);
-
-			// Ci - I
-			DiagMatrix CiI = Ci.minus(1); // more efficient than DiagMatrix.eye(numUsers)
-			// XtX + Xt * (Ci - I) * X
-			DenseMatrix XtCiX = XtX.add(Xt.nonZeroMult(CiI,X));
-			// (XtCiX + lambda * I)^-1
-			DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
-			// Xt * Ci
-			DenseVector XtCiPi = Xt.nonZeroMult(Ci, pi);
-
-			DenseVector yi = Wi.mult(XtCiPi);
-
-			// udpate item factors
-			Y.setRow(i, yi);
 		}
 	}
 

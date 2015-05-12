@@ -525,9 +525,9 @@ public class LibRec {
 
 		String hostInfo = FileIO.getCurrentFolder() + "." + algorithm + " [" + Systems.getIP() + "]";
 
-		LineConfiger lc = new LineConfiger(cf.getString("email.setup"));
+		LineConfiger emailOptions = cf.getParamOptions("email.setup");
 
-		if (!lc.isMainOn()) {
+		if (emailOptions == null || !emailOptions.isMainOn()) {
 			System.out.println("Program " + hostInfo + " has completed!");
 			return;
 		}
@@ -537,20 +537,20 @@ public class LibRec {
 
 		props.setProperty("mail.debug", "false");
 
-		String port = lc.getString("-port");
-		props.setProperty("mail.smtp.host", lc.getString("-host"));
+		String port = emailOptions.getString("-port");
+		props.setProperty("mail.smtp.host", emailOptions.getString("-host"));
 		props.setProperty("mail.smtp.port", port);
-		props.setProperty("mail.smtp.auth", lc.getString("-auth"));
+		props.setProperty("mail.smtp.auth", emailOptions.getString("-auth"));
 
 		props.put("mail.smtp.socketFactory.port", port);
 		props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 
-		final String user = lc.getString("-user");
+		final String user = emailOptions.getString("-user");
 		props.setProperty("mail.smtp.user", user);
-		props.setProperty("mail.smtp.password", lc.getString("-password"));
+		props.setProperty("mail.smtp.password", emailOptions.getString("-password"));
 
 		props.setProperty("mail.from", user);
-		props.setProperty("mail.to", lc.getString("-to"));
+		props.setProperty("mail.to", emailOptions.getString("-to"));
 
 		props.setProperty("mail.subject", hostInfo);
 		props.setProperty("mail.text", "Program was completed @" + Dates.now());

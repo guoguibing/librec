@@ -128,6 +128,13 @@ public abstract class Recommender implements Runnable {
 	// small value for initialization
 	protected static double smallValue = 0.01;
 
+	// number of nearest neighbors
+	protected static int knn;
+	// similarity measure
+	protected static String similarityMeasure;
+	// number of shrinkage
+	protected static int similarityShrinkage;
+
 	/************************************ Recommender-specific parameters ****************************************/
 	// algorithm's name
 	public String algoName;
@@ -200,8 +207,8 @@ public abstract class Recommender implements Runnable {
 			initMean = 0.0;
 			initStd = 0.1;
 
-			verbose = cf.isOn("is.verbose");
-			cacheSpec = cf.getString("guava.cache.spec");
+			verbose = cf.isOn("is.verbose", true);
+			cacheSpec = cf.getString("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
 
 			rankOptions = cf.getParamOptions("item.ranking");
 			isRankingPred = rankOptions.isMainOn();
@@ -217,8 +224,12 @@ public abstract class Recommender implements Runnable {
 			isSaveModel = evalOptions.isOn("--save-model", false);
 			numCPUs = evalOptions.getInt("-cpu", 1); // default: no parallelization
 
+			knn = cf.getInt("num.neighbors", 20);
+			similarityMeasure = cf.getString("similarity", "PCC");
+			similarityShrinkage = cf.getInt("num.shrinkage", 30);
+
 			// initial random seed
-			int seed = cf.getInt("num.rand.seed");
+			int seed = cf.getInt("num.rand.seed", 1);
 			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
 		}
 
@@ -226,8 +237,9 @@ public abstract class Recommender implements Runnable {
 		if (validationRatio > 0 && validationRatio < 1) {
 			DataSplitter ds = new DataSplitter(trainMatrix);
 			double ratio = 1 - validationRatio;
-			
-			SparseMatrix[] trainSubsets = isSplitByDate? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()): ds.getRatio(ratio);
+
+			SparseMatrix[] trainSubsets = isSplitByDate ? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()) : ds
+					.getRatio(ratio);
 			this.trainMatrix = trainSubsets[0];
 			this.validationMatrix = trainSubsets[1];
 		} else {
@@ -444,7 +456,7 @@ public abstract class Recommender implements Runnable {
 	 * @return the correlation between vectors i and j
 	 */
 	protected double correlation(SparseVector iv, SparseVector jv) {
-		return correlation(iv, jv, cf.getString("similarity"));
+		return correlation(iv, jv, similarityMeasure);
 	}
 
 	/**

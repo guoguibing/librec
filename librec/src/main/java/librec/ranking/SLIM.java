@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
@@ -53,10 +54,10 @@ import com.google.common.collect.Multimap;
  * @author guoguibing
  * 
  */
+@Configuration("binThold, knn, regL2, regL1, similarity, numIters")
 public class SLIM extends IterativeRecommender {
 
 	private DenseMatrix W;
-	private int knn;
 
 	// item's nearest neighbors for kNN > 0
 	private Multimap<Integer, Integer> itemNNs;
@@ -74,7 +75,6 @@ public class SLIM extends IterativeRecommender {
 
 		regL1 = algoOptions.getFloat("-l1");
 		regL2 = algoOptions.getFloat("-l2");
-		knn = algoOptions.getInt("-k");
 	}
 
 	@Override
@@ -219,7 +219,7 @@ public class SLIM extends IterativeRecommender {
 	@Override
 	public String toString() {
 		return Strings
-				.toString(new Object[] { binThold, knn, regL2, regL1, cf.getString("similarity"), numIters }, ",");
+				.toString(new Object[] { binThold, knn, regL2, regL1, similarityMeasure, numIters });
 	}
 
 }

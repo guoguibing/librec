@@ -19,6 +19,7 @@
 package librec.rating;
 
 import happy.coding.io.Lists;
+import happy.coding.io.Strings;
 import happy.coding.math.Stats;
 
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import librec.data.Configuration;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
@@ -52,17 +54,15 @@ import librec.intf.Recommender;
  * @author guoguibing
  * 
  */
+@Configuration("knn, similarity, shrinkage")
 public class ItemKNN extends Recommender {
 
 	// user: nearest neighborhood
 	private SymmMatrix itemCorrs;
 	private DenseVector itemMeans;
-	private int knn;
 
 	public ItemKNN(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-
-		knn = cf.getInt("num.neighbors");
 	}
 
 	@Override
@@ -127,6 +127,6 @@ public class ItemKNN extends Recommender {
 
 	@Override
 	public String toString() {
-		return super.toString() + "," + knn + "," + cf.getString("similarity") + "," + cf.getInt("num.shrinkage");
+		return Strings.toString(new Object[] { knn, similarityMeasure, similarityShrinkage });
 	}
 }

@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -38,7 +39,7 @@ import librec.intf.IterativeRecommender;
  * @author guoguibing
  * 
  */
-
+@Configuration("binThold, factors, isSupportWeight, numIters")
 public class RankALS extends IterativeRecommender {
 
 	// whether support based weighting is used ($s_i=|U_i|$) or not ($s_i=1$)
@@ -198,6 +199,6 @@ public class RankALS extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, isSupportWeight, numIters }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, isSupportWeight, numIters });
 	}
 }

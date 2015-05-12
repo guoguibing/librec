@@ -78,20 +78,24 @@ public abstract class IterativeRecommender extends Recommender {
 	// initialization
 	static {
 		LineConfiger lc = cf.getParamOptions("learn.rate");
-		initLRate = Float.parseFloat(lc.getMainParam());
-		maxLRate = lc.getFloat("-max", -1);
-		isBoldDriver = lc.contains("-bold-driver");
-		decay = lc.getFloat("-decay", -1);
-		momentum = lc.getFloat("-momentum", 50);
+		if (lc != null) {
+			initLRate = Float.parseFloat(lc.getMainParam());
+			maxLRate = lc.getFloat("-max", -1);
+			isBoldDriver = lc.contains("-bold-driver");
+			decay = lc.getFloat("-decay", -1);
+			momentum = lc.getFloat("-momentum", 50);
+		}
 
 		regOptions = cf.getParamOptions("reg.lambda");
-		reg = Float.parseFloat(regOptions.getMainParam());
-		regU = regOptions.getFloat("-u", reg);
-		regI = regOptions.getFloat("-i", reg);
-		regB = regOptions.getFloat("-b", reg);
+		if (regOptions != null) {
+			reg = Float.parseFloat(regOptions.getMainParam());
+			regU = regOptions.getFloat("-u", reg);
+			regI = regOptions.getFloat("-i", reg);
+			regB = regOptions.getFloat("-b", reg);
+		}
 
-		numFactors = cf.getInt("num.factors");
-		numIters = cf.getInt("num.max.iter");
+		numFactors = cf.getInt("num.factors", 10);
+		numIters = cf.getInt("num.max.iter", 100);
 	}
 
 	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {

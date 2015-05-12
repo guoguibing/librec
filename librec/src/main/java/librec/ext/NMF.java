@@ -19,6 +19,7 @@
 package librec.ext;
 
 import happy.coding.io.Strings;
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
@@ -32,6 +33,7 @@ import librec.intf.IterativeRecommender;
  * @author guoguibing
  * 
  */
+@Configuration("factors, numIters")
 public class NMF extends IterativeRecommender {
 
 	// V = W * H
@@ -132,6 +134,6 @@ public class NMF extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, numIters }, ",");
+		return Strings.toString(new Object[] { numFactors, numIters });
 	}
 }

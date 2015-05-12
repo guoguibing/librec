@@ -118,19 +118,21 @@ public class GraphicRecommender extends Recommender {
 
 	static {
 
-		numFactors = cf.getInt("num.factors");
-		numIters = cf.getInt("num.max.iter");
+		numFactors = cf.getInt("num.factors", 10);
+		numIters = cf.getInt("num.max.iter", 30);
 
 		pgmOptions = cf.getParamOptions("pgm.setup");
-		burnIn = pgmOptions.getInt("-burn-in");
-		sampleLag = pgmOptions.getInt("-sample-lag");
-		numIntervals = pgmOptions.getInt("-interval");
+		if (pgmOptions != null) {
+			burnIn = pgmOptions.getInt("-burn-in");
+			sampleLag = pgmOptions.getInt("-sample-lag");
+			numIntervals = pgmOptions.getInt("-interval");
 
-		initAlpha = pgmOptions.getFloat("-alpha", 1.0f / numFactors);
-		initBeta = pgmOptions.getFloat("-beta", 1.0f / numFactors);
+			initAlpha = pgmOptions.getFloat("-alpha", 1.0f / numFactors);
+			initBeta = pgmOptions.getFloat("-beta", 1.0f / numFactors);
 
-		assert burnIn > 0;
-		assert sampleLag > 0;
+			assert burnIn > 0;
+			assert sampleLag > 0;
+		}
 	}
 
 	public GraphicRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {

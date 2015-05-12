@@ -17,6 +17,7 @@
 //
 package librec.baseline;
 
+import happy.coding.io.Logs;
 import happy.coding.math.Randoms;
 
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ import librec.data.DenseVector;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
-import librec.intf.IterativeRecommender;
+import librec.intf.GraphicRecommender;
 
 /**
  * It is a graphical model that clusters users into K groups for recommendation, see reference: Barbieri et al.,
@@ -39,7 +40,7 @@ import librec.intf.IterativeRecommender;
  *
  */
 @Configuration("factors, max.iters")
-public class UserCluster extends IterativeRecommender {
+public class UserCluster extends GraphicRecommender {
 
 	private DenseMatrix Pkr; // theta
 	private DenseVector Pi; // pi
@@ -50,8 +51,6 @@ public class UserCluster extends IterativeRecommender {
 
 	public UserCluster(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
-
-		lRate = -1; // disable the use of learning rate
 	}
 
 	@Override
@@ -170,11 +169,25 @@ public class UserCluster extends IterativeRecommender {
 			}
 
 			loss = -loss; // turn to minimization problem instead
-			errs = loss;
 
 			if (isConverged(iter))
 				break;
 		}
+	}
+
+	@Override
+	protected boolean isConverged(int iter) throws Exception {
+		float deltaLoss = (float) (loss - lastLoss);
+
+		Logs.debug("{}{} iter {} achives loss = {}, delta_loss = {}", algoName, foldInfo, iter, (float) loss, deltaLoss);
+
+		if (iter > 1 && (deltaLoss > 0 || Double.isNaN(deltaLoss))) {
+			Logs.debug("{}{} converges at iter {}", algoName, foldInfo, iter);
+			return true;
+		}
+
+		lastLoss = loss;
+		return false;
 	}
 
 	@Override

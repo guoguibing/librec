@@ -206,7 +206,7 @@ public class LDA extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, alpha, beta }) + ", " + super.toString();
+		return Strings.toString(new Object[] { numFactors, initAlpha, initBeta }) + ", " + super.toString();
 	}
 
 }
