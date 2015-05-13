@@ -23,6 +23,7 @@ import happy.coding.io.Strings;
 
 import java.util.List;
 
+import librec.data.Configuration;
 import librec.data.DataDAO;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
@@ -35,6 +36,7 @@ import com.google.common.cache.LoadingCache;
  * @author guoguibing
  * 
  */
+@Configuration("factors, lRate, maxLRate, regB, regU, regI, regS, iters, boldDriver")
 public abstract class SocialRecommender extends IterativeRecommender {
 
 	// social data dao
@@ -78,8 +80,8 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { initLRate, maxLRate, regB, regU, regI, regS, numFactors, numIters,
-				isBoldDriver }, ",");
+		return Strings.toString(new Object[] { numFactors, initLRate, maxLRate, regB, regU, regI, regS, numIters,
+				isBoldDriver });
 	}
 
 	@Override

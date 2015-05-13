@@ -70,7 +70,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix Yt = Y.transpose();
 			DenseMatrix YtY = Yt.mult(Y);
 			for (int u = 0; u < numUsers; u++) {
-				if (verbose && (u + 1) % 100 == 0)
+				if (verbose && (u + 1) % 200 == 0)
 					Logs.debug("{}{} runs at iteration = {}, user = {}/{}", algoName, foldInfo, iter, u + 1, numUsers);
 
 				// diagonal matrix C^u for each user
@@ -105,7 +105,7 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix Xt = X.transpose();
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
-				if (verbose && (i + 1) % 100 == 0)
+				if (verbose && (i + 1) % 200 == 0)
 					Logs.debug("{}{} runs at iteration = {}, item = {}/{}", algoName, foldInfo, iter, i + 1, numItems);
 
 				// diagonal matrix C^i for each item
