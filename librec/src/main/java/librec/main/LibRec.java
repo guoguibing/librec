@@ -130,25 +130,12 @@ public class LibRec {
 		cf = new FileConfiger(configFile);
 
 		// prepare data
-		rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-
-		ratingOptions = cf.getParamOptions("ratings.setup");
-
-		List<String> cols = ratingOptions.getOptions("-columns");
-		columns = new int[cols.size()];
-		for (int i = 0; i < cols.size(); i++)
-			columns[i] = Integer.parseInt(cols.get(i));
-		binThold = ratingOptions.getFloat("-threshold");
-
-		rateMatrix = rateDao.readData(columns, binThold);
+		readData();
 
 		// config general recommender
-		Recommender.cf = cf;
-		Recommender.rateMatrix = rateMatrix;
-		Recommender.rateDao = rateDao;
-		Recommender.binThold = binThold;
+		initRecommender();
 
-		// run algorithms
+		// run a specific algorithm
 		runAlgorithm();
 
 		// collect results
@@ -158,6 +145,44 @@ public class LibRec {
 
 		// send notification
 		notifyMe(results);
+	}
+
+	/**
+	 * read input data
+	 */
+	private void readData() throws Exception {
+		// DAO object
+		rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+
+		// data configuration
+		ratingOptions = cf.getParamOptions("ratings.setup");
+
+		// data columns to use
+		List<String> cols = ratingOptions.getOptions("-columns");
+		columns = new int[cols.size()];
+		for (int i = 0; i < cols.size(); i++)
+			columns[i] = Integer.parseInt(cols.get(i));
+
+		// rating threshold
+		binThold = ratingOptions.getFloat("-threshold");
+
+		// load data
+		rateMatrix = rateDao.readData(columns, binThold);
+	}
+
+	/**
+	 * initialize general (and static) recommender
+	 */
+	private void initRecommender() {
+
+		// ensuring the general recommender should be initialized, especially useful for multiple runs (see the Demo) 
+		Recommender.isInitialized = false;
+
+		// seeding the general recommender
+		Recommender.cf = cf;
+		Recommender.rateMatrix = rateMatrix;
+		Recommender.rateDao = rateDao;
+		Recommender.binThold = binThold;
 	}
 
 	/**
@@ -222,17 +247,7 @@ public class LibRec {
 			// split the training data set into "train-test" or "train-validation-test" subsets
 			cf = new FileConfiger(configFile);
 
-			rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-
-			ratingOptions = cf.getParamOptions("ratings.setup");
-
-			List<String> cols = ratingOptions.getOptions("-columns");
-			columns = new int[cols.size()];
-			for (int i = 0; i < cols.size(); i++)
-				columns[i] = Integer.parseInt(cols.get(i));
-			binThold = ratingOptions.getFloat("-threshold");
-
-			rateMatrix = rateDao.readData(columns, binThold);
+			readData();
 
 			double trainRatio = paramOptions.getDouble("-r", 0.8);
 			boolean isValidationUsed = paramOptions.contains("-v");

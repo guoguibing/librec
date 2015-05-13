@@ -47,8 +47,6 @@ public class Demo {
 	}
 
 	public void execute(String[] args) throws Exception {
-		// main class
-		LibRec librec = new LibRec();
 
 		// config logger
 		String dirPath = FileIO.makeDirPath("demo");
@@ -196,6 +194,7 @@ public class Demo {
 			Recommender.tempDirPath = FileIO.makeDirPath(dirPath, "Results");
 
 			// run algorithm
+			LibRec librec = new LibRec();
 			String configPath = FileIO.makeDirPath(dirPath, "config") + configFile;
 			librec.setConfigFile(configPath);
 			librec.execute(args);

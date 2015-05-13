@@ -135,6 +135,9 @@ public abstract class Recommender implements Runnable {
 	// number of shrinkage
 	protected static int similarityShrinkage;
 
+	// indicator of initialization of the general recommender
+	public static boolean isInitialized = false;
+
 	/************************************ Recommender-specific parameters ****************************************/
 	// algorithm's name
 	public String algoName;
@@ -190,7 +193,10 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// static initialization, only done once
-		if (ratingScale == null) {
+		if (!isInitialized) {
+			// change the indicator
+			isInitialized = true;
+			
 			ratingScale = rateDao.getRatingScale();
 			minRate = ratingScale.get(0);
 			maxRate = ratingScale.get(ratingScale.size() - 1);
