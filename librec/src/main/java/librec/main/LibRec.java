@@ -530,7 +530,8 @@ public class LibRec {
 		// we add quota symbol to indicate the textual format of time 
 		String time = String.format("'%s','%s'", Dates.parse(ms.get(Measure.TrainTime).longValue()),
 				Dates.parse(ms.get(Measure.TestTime).longValue()));
-		String evalInfo = String.format("%s,%s,%s,%s", algo.algoName, result, algo.toString(), time);
+		// double commas as the separation of results and configuration
+		String evalInfo = String.format("%s,%s,,%s,%s", algo.algoName, result, algo.toString(), time);
 
 		Logs.info(evalInfo);
 	}

@@ -23,6 +23,7 @@ import happy.coding.math.Randoms;
 
 import java.util.List;
 
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -39,6 +40,7 @@ import com.google.common.collect.Table.Cell;
  * @author guoguibing
  * 
  */
+@Configuration("binThold, rho, alpha, factors, lRate, maxLRate, regI, regB, iters")
 public class FISMrmse extends IterativeRecommender {
 
 	private float rho, alpha;

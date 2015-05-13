@@ -378,16 +378,16 @@ public abstract class Recommender implements Runnable {
 		String evalInfo = null;
 		if (isRankingPred) {
 			if (isDiverseUsed)
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d",
+				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
 						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
 						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
 						measures.get(Measure.NDCG), measures.get(Measure.MRR), measures.get(Measure.D5),
-						measures.get(Measure.D10), numIgnore);
+						measures.get(Measure.D10));
 			else
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%2d", measures.get(Measure.Pre5),
+				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.Pre5),
 						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
 						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR), numIgnore);
+						measures.get(Measure.MRR));
 
 		} else {
 			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),

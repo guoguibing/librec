@@ -24,6 +24,7 @@ import happy.coding.math.Randoms;
 import java.util.ArrayList;
 import java.util.List;
 
+import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -37,6 +38,7 @@ import librec.intf.IterativeRecommender;
  * @author guoguibing
  * 
  */
+@Configuration("binThold, rho, alpha, factors, lRate, maxLRate, regI, regB, iters")
 public class FISMauc extends IterativeRecommender {
 
 	private int rho;
