@@ -49,15 +49,15 @@ public abstract class SocialRecommender extends IterativeRecommender {
 	// social regularization
 	protected static float regS;
 
+	// indicator of static field initialization or reset
+	public static boolean resetStatics = true;
+
 	// shared social cache for all social recommenders
 	protected LoadingCache<Integer, SparseVector> socialCache;
 	protected LoadingCache<Integer, List<Integer>> userFriendsCache;
 
 	// initialization
 	static {
-		// to support multiple tests in one time in future
-		regS = regOptions.getFloat("-s", reg);
-
 		String socialPath = cf.getPath("dataset.social");
 		Logs.debug("Social dataset: {}", Strings.last(socialPath, 38));
 
@@ -76,6 +76,11 @@ public abstract class SocialRecommender extends IterativeRecommender {
 
 	public SocialRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
+
+		if (resetStatics) {
+			resetStatics = false;
+			regS = regOptions.getFloat("-s", reg);
+		}
 	}
 
 	@Override

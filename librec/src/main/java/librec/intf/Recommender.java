@@ -135,8 +135,13 @@ public abstract class Recommender implements Runnable {
 	// number of shrinkage
 	protected static int similarityShrinkage;
 
-	// indicator of initialization of the general recommender
-	public static boolean isInitialized = false;
+	/**
+	 * An indicator of initialization of static fields. This enables us to control when static fields are initialized,
+	 * while "static block" will be always initialized or executed. The latter could cause unexpected exceptions when
+	 * multiple runs (with different configuration files) are conducted sequentially, because some static settings will
+	 * not be override in such a "staic block".
+	 */
+	public static boolean resetStatics = true;
 
 	/************************************ Recommender-specific parameters ****************************************/
 	// algorithm's name
@@ -192,11 +197,11 @@ public abstract class Recommender implements Runnable {
 			System.exit(-1);
 		}
 
-		// static initialization, only done once
-		if (!isInitialized) {
+		// static initialization (reset), only done once
+		if (resetStatics) {
 			// change the indicator
-			isInitialized = true;
-			
+			resetStatics = false;
+
 			ratingScale = rateDao.getRatingScale();
 			minRate = ratingScale.get(0);
 			maxRate = ratingScale.get(ratingScale.size() - 1);

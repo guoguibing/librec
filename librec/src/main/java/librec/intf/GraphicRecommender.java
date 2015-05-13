@@ -58,6 +58,9 @@ public class GraphicRecommender extends Recommender {
 	 */
 	protected static int numIntervals;
 
+	// indicator of initialization of the general recommender
+	public static boolean isInitialized = false;
+
 	/*********************************** Method-specific Parameters ************************/
 
 	/**
@@ -116,27 +119,28 @@ public class GraphicRecommender extends Recommender {
 	 */
 	protected double loss, lastLoss;
 
-	static {
-
-		numFactors = cf.getInt("num.factors", 10);
-		numIters = cf.getInt("num.max.iter", 30);
-
-		pgmOptions = cf.getParamOptions("pgm.setup");
-		if (pgmOptions != null) {
-			burnIn = pgmOptions.getInt("-burn-in");
-			sampleLag = pgmOptions.getInt("-sample-lag");
-			numIntervals = pgmOptions.getInt("-interval");
-
-			initAlpha = pgmOptions.getFloat("-alpha", 1.0f / numFactors);
-			initBeta = pgmOptions.getFloat("-beta", 1.0f / numFactors);
-
-			assert burnIn > 0;
-			assert sampleLag > 0;
-		}
-	}
-
 	public GraphicRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
+
+		if (!isInitialized) {
+			isInitialized = true;
+			
+			numFactors = cf.getInt("num.factors", 10);
+			numIters = cf.getInt("num.max.iter", 30);
+
+			pgmOptions = cf.getParamOptions("pgm.setup");
+			if (pgmOptions != null) {
+				burnIn = pgmOptions.getInt("-burn-in");
+				sampleLag = pgmOptions.getInt("-sample-lag");
+				numIntervals = pgmOptions.getInt("-interval");
+
+				initAlpha = pgmOptions.getFloat("-alpha", 1.0f / numFactors);
+				initBeta = pgmOptions.getFloat("-beta", 1.0f / numFactors);
+
+				assert burnIn > 0;
+				assert sampleLag > 0;
+			}
+		}
 	}
 
 	@Override

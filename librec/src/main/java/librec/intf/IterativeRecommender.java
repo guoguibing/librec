@@ -53,6 +53,9 @@ public abstract class IterativeRecommender extends Recommender {
 	// decay of learning rate
 	protected static float decay;
 
+	// indicator of static field initialization
+	public static boolean resetStatics = true;
+
 	/************************************ Recommender-specific parameters ****************************************/
 	// factorized user-factor matrix
 	protected DenseMatrix P;
@@ -75,32 +78,35 @@ public abstract class IterativeRecommender extends Recommender {
 	// initial models using normal distribution
 	protected boolean initByNorm;
 
-	// initialization
-	static {
-		LineConfiger lc = cf.getParamOptions("learn.rate");
-		if (lc != null) {
-			initLRate = Float.parseFloat(lc.getMainParam());
-			maxLRate = lc.getFloat("-max", -1);
-			isBoldDriver = lc.contains("-bold-driver");
-			decay = lc.getFloat("-decay", -1);
-			momentum = lc.getFloat("-momentum", 50);
-		}
-
-		regOptions = cf.getParamOptions("reg.lambda");
-		if (regOptions != null) {
-			reg = Float.parseFloat(regOptions.getMainParam());
-			regU = regOptions.getFloat("-u", reg);
-			regI = regOptions.getFloat("-i", reg);
-			regB = regOptions.getFloat("-b", reg);
-		}
-
-		numFactors = cf.getInt("num.factors", 10);
-		numIters = cf.getInt("num.max.iter", 100);
-	}
-
 	public IterativeRecommender(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
+		// initialization 
+		if (resetStatics) {
+			resetStatics = false;
+
+			LineConfiger lc = cf.getParamOptions("learn.rate");
+			if (lc != null) {
+				initLRate = Float.parseFloat(lc.getMainParam());
+				maxLRate = lc.getFloat("-max", -1);
+				isBoldDriver = lc.contains("-bold-driver");
+				decay = lc.getFloat("-decay", -1);
+				momentum = lc.getFloat("-momentum", 50);
+			}
+
+			regOptions = cf.getParamOptions("reg.lambda");
+			if (regOptions != null) {
+				reg = Float.parseFloat(regOptions.getMainParam());
+				regU = regOptions.getFloat("-u", reg);
+				regI = regOptions.getFloat("-i", reg);
+				regB = regOptions.getFloat("-b", reg);
+			}
+
+			numFactors = cf.getInt("num.factors", 10);
+			numIters = cf.getInt("num.max.iter", 100);
+		}
+
+		// method-specific settings
 		lRate = initLRate;
 		initByNorm = true;
 	}

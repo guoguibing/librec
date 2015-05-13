@@ -52,6 +52,8 @@ import librec.ext.NMF;
 import librec.ext.PD;
 import librec.ext.PRankD;
 import librec.ext.SlopeOne;
+import librec.intf.GraphicRecommender;
+import librec.intf.IterativeRecommender;
 import librec.intf.Recommender;
 import librec.intf.Recommender.Measure;
 import librec.ranking.BHfree;
@@ -175,8 +177,10 @@ public class LibRec {
 	 */
 	private void initRecommender() {
 
-		// ensuring the general recommender should be initialized, especially useful for multiple runs (see the Demo) 
-		Recommender.isInitialized = false;
+		// reset recommenders' static properties 
+		Recommender.resetStatics = true;
+		IterativeRecommender.resetStatics = true;
+		GraphicRecommender.resetStatics = true;
 
 		// seeding the general recommender
 		Recommender.cf = cf;
