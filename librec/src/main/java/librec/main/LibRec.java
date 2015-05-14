@@ -27,6 +27,7 @@ import happy.coding.system.Dates;
 import happy.coding.system.Systems;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +108,7 @@ public class LibRec {
 
 	// configuration
 	protected FileConfiger cf;
-	protected String configFile = "librec.conf";
+	protected List<String> configFiles;
 	protected String algorithm;
 
 	protected float binThold;
@@ -128,21 +129,25 @@ public class LibRec {
 		// process librec arguments
 		cmdLine(args);
 
-		// get configuration file
-		cf = new FileConfiger(configFile);
+		// multiple runs at one time
+		for (String configFile : configFiles) {
 
-		// prepare data
-		readData();
+			// a new configer
+			cf = new FileConfiger(configFile);
 
-		// config general recommender
-		initRecommender();
+			// prepare data
+			readData();
 
-		// run a specific algorithm
-		runAlgorithm();
+			// reset general recommenders
+			resetRecommender();
+
+			// run a specific algorithm
+			runAlgorithm();
+		}
 
 		// collect results
-		String destPath = FileIO.makeDirectory(Recommender.tempDirPath);
-		String results = destPath + algorithm + "@" + Dates.now() + ".txt";
+		String filename = (configFiles.size() > 1 ? "multiAlgorithms" : algorithm) + "@" + Dates.now() + ".txt";
+		String results = Recommender.tempDirPath + filename;
 		FileIO.copyFile("results.txt", results);
 
 		// send notification
@@ -152,7 +157,7 @@ public class LibRec {
 	/**
 	 * read input data
 	 */
-	private void readData() throws Exception {
+	protected void readData() throws Exception {
 		// DAO object
 		rateDao = new DataDAO(cf.getPath("dataset.ratings"));
 
@@ -175,7 +180,7 @@ public class LibRec {
 	/**
 	 * initialize general (and static) recommender
 	 */
-	private void initRecommender() {
+	protected void resetRecommender() {
 
 		// reset recommenders' static properties 
 		Recommender.resetStatics = true;
@@ -187,6 +192,9 @@ public class LibRec {
 		Recommender.rateMatrix = rateMatrix;
 		Recommender.rateDao = rateDao;
 		Recommender.binThold = binThold;
+
+		// make the folder (if necessary) and return the path
+		Recommender.tempDirPath = FileIO.makeDirectory(Recommender.tempDirPath);
 	}
 
 	/**
@@ -214,12 +222,15 @@ public class LibRec {
 	 */
 	protected void cmdLine(String[] args) throws Exception {
 
-		if (args == null || args.length < 1)
+		if (args == null || args.length < 1) {
+			if (configFiles == null)
+				configFiles = Arrays.asList("librec.conf");
 			return;
+		}
 
 		LineConfiger paramOptions = new LineConfiger(args);
 
-		configFile = paramOptions.getString("-c", "librec.conf");
+		configFiles = paramOptions.contains("-c") ? paramOptions.getOptions("-c") : Arrays.asList("librec.conf");
 
 		if (paramOptions.contains("-v")) {
 			// print out short version information
@@ -232,70 +243,75 @@ public class LibRec {
 		}
 
 		if (paramOptions.contains("--dataset-spec")) {
-			// print out data set specification
-			cf = new FileConfiger(configFile);
+			for (String configFile : configFiles) {
+				// print out data set specification
+				cf = new FileConfiger(configFile);
 
-			DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
-			rateDao.printSpecs();
+				DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+				rateDao.printSpecs();
 
-			String socialSet = cf.getPath("dataset.social");
-			if (!socialSet.equals("-1")) {
-				DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
-				socDao.printSpecs();
+				String socialSet = cf.getPath("dataset.social");
+				if (!socialSet.equals("-1")) {
+					DataDAO socDao = new DataDAO(socialSet, rateDao.getUserIds());
+					socDao.printSpecs();
+				}
 			}
 
 			System.exit(0);
 		}
 
 		if (paramOptions.contains("--dataset-split")) {
-			// split the training data set into "train-test" or "train-validation-test" subsets
-			cf = new FileConfiger(configFile);
 
-			readData();
+			for (String configFile : configFiles) {
+				// split the training data set into "train-test" or "train-validation-test" subsets
+				cf = new FileConfiger(configFile);
 
-			double trainRatio = paramOptions.getDouble("-r", 0.8);
-			boolean isValidationUsed = paramOptions.contains("-v");
-			double validRatio = isValidationUsed ? paramOptions.getDouble("-v") : 0;
+				readData();
 
-			if (trainRatio <= 0 || validRatio < 0 || (trainRatio + validRatio) >= 1) {
-				throw new Exception(
-						"Wrong format! Accepted formats are either '-dataset-split ratio' or '-dataset-split trainRatio validRatio'");
-			}
+				double trainRatio = paramOptions.getDouble("-r", 0.8);
+				boolean isValidationUsed = paramOptions.contains("-v");
+				double validRatio = isValidationUsed ? paramOptions.getDouble("-v") : 0;
 
-			// split data
-			DataSplitter ds = new DataSplitter(rateMatrix);
-
-			SparseMatrix[] data = null;
-			if (isValidationUsed) {
-				data = ds.getRatio(trainRatio, validRatio);
-			} else {
-
-				switch (paramOptions.getString("-target")) {
-				case "u":
-					data = paramOptions.contains("--by-date") ? ds.getRatioByUserDate(trainRatio,
-							rateDao.getTimestamps()) : ds.getRatioByUser(trainRatio);
-					break;
-				case "i":
-					data = paramOptions.contains("--by-date") ? ds.getRatioByItemDate(trainRatio,
-							rateDao.getTimestamps()) : ds.getRatioByItem(trainRatio);
-					break;
-				case "r":
-				default:
-					data = paramOptions.contains("--by-date") ? ds.getRatioByRatingDate(trainRatio,
-							rateDao.getTimestamps()) : ds.getRatioByRating(trainRatio);
-					break;
+				if (trainRatio <= 0 || validRatio < 0 || (trainRatio + validRatio) >= 1) {
+					throw new Exception(
+							"Wrong format! Accepted formats are either '-dataset-split ratio' or '-dataset-split trainRatio validRatio'");
 				}
-			}
 
-			// write out
-			String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
-			writeMatrix(data[0], dirPath + "training.txt");
+				// split data
+				DataSplitter ds = new DataSplitter(rateMatrix);
 
-			if (isValidationUsed) {
-				writeMatrix(data[1], dirPath + "validation.txt");
-				writeMatrix(data[2], dirPath + "test.txt");
-			} else {
-				writeMatrix(data[1], dirPath + "test.txt");
+				SparseMatrix[] data = null;
+				if (isValidationUsed) {
+					data = ds.getRatio(trainRatio, validRatio);
+				} else {
+
+					switch (paramOptions.getString("-target")) {
+					case "u":
+						data = paramOptions.contains("--by-date") ? ds.getRatioByUserDate(trainRatio,
+								rateDao.getTimestamps()) : ds.getRatioByUser(trainRatio);
+						break;
+					case "i":
+						data = paramOptions.contains("--by-date") ? ds.getRatioByItemDate(trainRatio,
+								rateDao.getTimestamps()) : ds.getRatioByItem(trainRatio);
+						break;
+					case "r":
+					default:
+						data = paramOptions.contains("--by-date") ? ds.getRatioByRatingDate(trainRatio,
+								rateDao.getTimestamps()) : ds.getRatioByRating(trainRatio);
+						break;
+					}
+				}
+
+				// write out
+				String dirPath = FileIO.makeDirectory(rateDao.getDataDirectory(), "split");
+				writeMatrix(data[0], dirPath + "training.txt");
+
+				if (isValidationUsed) {
+					writeMatrix(data[1], dirPath + "validation.txt");
+					writeMatrix(data[2], dirPath + "test.txt");
+				} else {
+					writeMatrix(data[1], dirPath + "test.txt");
+				}
 			}
 
 			System.exit(0);
@@ -550,7 +566,7 @@ public class LibRec {
 		String time = String.format("'%s','%s'", Dates.parse(ms.get(Measure.TrainTime).longValue()),
 				Dates.parse(ms.get(Measure.TestTime).longValue()));
 		// double commas as the separation of results and configuration
-		String evalInfo = String.format("%s,%s,,%s,%s", algo.algoName, result, algo.toString(), time);
+		String evalInfo = String.format("%s,%s,,%s,%s\n", algo.algoName, result, algo.toString(), time);
 
 		Logs.info(evalInfo);
 	}
@@ -724,8 +740,8 @@ public class LibRec {
 	/**
 	 * set the configuration file to be used
 	 */
-	public void setConfigFile(String configFile) {
-		this.configFile = configFile;
+	public void setConfigFiles(String... configurations) {
+		configFiles = Arrays.asList(configurations);
 	}
 
 	/**

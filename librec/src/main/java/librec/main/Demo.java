@@ -52,6 +52,11 @@ public class Demo {
 		String dirPath = FileIO.makeDirPath("demo");
 		Logs.config(dirPath + "log4j.xml", true);
 
+		// set the folder path for output results
+		Recommender.tempDirPath = FileIO.makeDirPath(dirPath, "Results");
+		// set the folder path for configuration files
+		String configDirPath = FileIO.makeDirPath(dirPath, "config");
+
 		// prepare candidate options
 		List<String> candOptions = new ArrayList<>();
 		candOptions.add("General Usage:");
@@ -156,11 +161,11 @@ public class Demo {
 				flag = true;
 				break;
 			case 0:
-				Logs.info("Prediction results: MAE, RMSE, NMAE, rMAE, rRMSE, MPE, <configuration>, training time, test time\n");
+				Logs.debug("Prediction results: MAE, RMSE, NMAE, rMAE, rRMSE, MPE, <configuration>, training time, test time\n");
 				Systems.pause();
 				continue;
 			case 1:
-				Logs.info("Ranking results: Prec@5, Prec@10, Recall@5, Recall@10, AUC, MAP, NDCG, MRR, <configuration>, training time, test time\n");
+				Logs.debug("Ranking results: Prec@5, Prec@10, Recall@5, Recall@10, AUC, MAP, NDCG, MRR, <configuration>, training time, test time\n");
 				Systems.pause();
 				continue;
 			case 2:
@@ -190,13 +195,9 @@ public class Demo {
 			if (flag)
 				break;
 
-			// set the folder path for output results
-			Recommender.tempDirPath = FileIO.makeDirPath(dirPath, "Results");
-
 			// run algorithm
 			LibRec librec = new LibRec();
-			String configPath = FileIO.makeDirPath(dirPath, "config") + configFile;
-			librec.setConfigFile(configPath);
+			librec.setConfigFiles(configDirPath + configFile);
 			librec.execute(args);
 
 			// await next command
@@ -208,5 +209,4 @@ public class Demo {
 
 		Logs.debug("Thanks for trying out LibRec! See you again!");
 	}
-
 }
