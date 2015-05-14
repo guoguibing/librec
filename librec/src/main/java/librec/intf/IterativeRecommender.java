@@ -33,7 +33,7 @@ import librec.data.SparseMatrix;
  * @author guoguibing
  * 
  */
-@Configuration("numFactors, initLRate, maxLRate, regB, regU, regI, numIters, isBoldDriver")
+@Configuration("factors, lRate, maxLRate, regB, regU, regI, iters, boldDriver")
 public abstract class IterativeRecommender extends Recommender {
 
 	/************************************ Static parameters for all recommenders ***********************************/
@@ -259,7 +259,7 @@ public abstract class IterativeRecommender extends Recommender {
 	@Override
 	public String toString() {
 		return Strings.toString(new Object[] { numFactors, initLRate, maxLRate, regB, regU, regI, numIters,
-				isBoldDriver }, ",");
+				isBoldDriver });
 	}
 
 }
