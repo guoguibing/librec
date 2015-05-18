@@ -407,7 +407,7 @@ public class LibRec {
 			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			testDao.setTimeUnit(timeUnit);
 			Recommender.testDao = testDao;
-			
+
 			SparseMatrix testMatrix = testDao.readData(columns, binThold);
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
 			break;
@@ -767,7 +767,7 @@ public class LibRec {
 	protected void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		if (outputOptions != null && outputOptions.contains("--fold-data")) {
 
-			String prefix = Recommender.tempDirPath + rateDao.getDataName();
+			String prefix = rateDao.getDataDirectory() + rateDao.getDataName();
 			String suffix = ((fold >= 0) ? "-" + fold : "") + ".txt";
 
 			try {
