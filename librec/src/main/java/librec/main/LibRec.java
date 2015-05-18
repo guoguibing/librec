@@ -118,6 +118,7 @@ public class LibRec {
 
 	protected float binThold;
 	protected int[] columns;
+	protected TimeUnit timeUnit;
 
 	// rate DAO object
 	protected DataDAO rateDao;
@@ -176,8 +177,8 @@ public class LibRec {
 		binThold = ratingOptions.getFloat("-threshold");
 
 		// time unit of ratings' timestamps
-		String timeUnit = ratingOptions.getString("--time-unit", "seconds");
-		rateDao.setTimeUnit(TimeUnit.valueOf(timeUnit.toUpperCase()));
+		timeUnit = TimeUnit.valueOf(ratingOptions.getString("--time-unit", "seconds").toUpperCase());
+		rateDao.setTimeUnit(timeUnit);
 
 		rateMatrix = rateDao.readData(columns, binThold);
 
@@ -404,6 +405,8 @@ public class LibRec {
 			return; //
 		case "test-set":
 			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
+			testDao.setTimeUnit(timeUnit);
+			
 			SparseMatrix testMatrix = testDao.readData(columns, binThold);
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
 			break;
