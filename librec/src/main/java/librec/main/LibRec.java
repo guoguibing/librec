@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import librec.baseline.ConstantGuess;
 import librec.baseline.GlobalAverage;
@@ -174,7 +175,10 @@ public class LibRec {
 		// rating threshold
 		binThold = ratingOptions.getFloat("-threshold");
 
-		// load data
+		// time unit of ratings' timestamps
+		String timeUnit = ratingOptions.getString("--time-unit", "seconds");
+		rateDao.setTimeUnit(TimeUnit.valueOf(timeUnit.toUpperCase()));
+
 		rateMatrix = rateDao.readData(columns, binThold);
 
 		Recommender.rateMatrix = rateMatrix;
