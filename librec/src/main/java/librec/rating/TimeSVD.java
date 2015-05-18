@@ -41,7 +41,7 @@ import com.google.common.collect.Table;
  * 
  */
 public class TimeSVD extends IterativeRecommender {
-	
+
 	// the span of days of rating timestamps
 	private static int numDays;
 
@@ -91,7 +91,7 @@ public class TimeSVD extends IterativeRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		super.initModel();
-		
+
 		numDays = days(maxTimestamp, minTimestamp) + 1;
 
 		userBias = new DenseVector(numUsers);
@@ -312,7 +312,7 @@ public class TimeSVD extends IterativeRecommender {
 	@Override
 	protected double predict(int u, int i) throws Exception {
 		// retrieve the test rating timestamp
-		long timestamp = timestamps.get(u, i);
+		long timestamp = testTimestamps.get(u, i);
 		int t = days(timestamp, minTimestamp);
 		int bin = bin(t);
 		double dev_ut = dev(u, t);

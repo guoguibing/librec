@@ -104,7 +104,7 @@ public abstract class Recommender implements Runnable {
 	public static String view;
 
 	// rate DAO object
-	public static DataDAO rateDao;
+	public static DataDAO rateDao, testDao;
 
 	// number of users, items, ratings
 	protected static int numUsers, numItems, numRates;
@@ -119,7 +119,7 @@ public abstract class Recommender implements Runnable {
 	protected static double maxRate, minRate;
 
 	// ratings' timestamps
-	protected static Table<Integer, Integer, Long> timestamps;
+	protected static Table<Integer, Integer, Long> timestamps, testTimestamps;
 	// minimum, maximum timestamp
 	protected static long minTimestamp, maxTimestamp;
 
@@ -214,6 +214,8 @@ public abstract class Recommender implements Runnable {
 			minTimestamp = rateDao.getMinTimestamp();
 			maxTimestamp = rateDao.getMaxTimestamp();
 			timestamps = rateDao.getTimestamps();
+
+			testTimestamps = testDao==null? timestamps: testDao.getTimestamps();
 
 			initMean = 0.0;
 			initStd = 0.1;
