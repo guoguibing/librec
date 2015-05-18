@@ -104,7 +104,11 @@ import com.google.common.collect.Table;
  */
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
-	protected String version = "1.3";
+	protected static String version = "1.3";
+	// is only to print measurements
+	public static boolean isMeasuresOnly = false;
+	// output directory path
+	protected static String tempDirPath;
 
 	// configuration
 	protected FileConfiger cf;
@@ -116,8 +120,8 @@ public class LibRec {
 
 	// rate DAO object
 	protected DataDAO rateDao;
-	// line configer for rating data
-	protected LineConfiger ratingOptions;
+	// line configer for rating data, LibRec outputs
+	protected LineConfiger ratingOptions, outputOptions;
 
 	// rating matrix
 	protected SparseMatrix rateMatrix;
@@ -135,11 +139,11 @@ public class LibRec {
 			// a new configer
 			cf = new FileConfiger(configFile);
 
+			// reset general settings
+			reset();
+
 			// prepare data
 			readData();
-
-			// reset general recommenders
-			resetRecommender();
 
 			// run a specific algorithm
 			runAlgorithm();
@@ -178,9 +182,9 @@ public class LibRec {
 	}
 
 	/**
-	 * initialize general (and static) recommender
+	 * reset general (and static) settings
 	 */
-	protected void resetRecommender() {
+	protected void reset() {
 
 		// reset recommenders' static properties 
 		Recommender.resetStatics = true;
@@ -193,8 +197,13 @@ public class LibRec {
 		Recommender.rateDao = rateDao;
 		Recommender.binThold = binThold;
 
-		// make the folder (if necessary) and return the path
-		Recommender.tempDirPath = FileIO.makeDirectory(Recommender.tempDirPath);
+		// LibRec outputs
+		outputOptions = cf.getParamOptions("output.setup");
+		isMeasuresOnly = outputOptions.contains("--measures-only");
+		
+		// make output directory
+		tempDirPath = outputOptions.getString("-dir", "./Results/");
+		Recommender.tempDirPath = FileIO.makeDirectory(tempDirPath);
 	}
 
 	/**
@@ -239,7 +248,7 @@ public class LibRec {
 
 		if (paramOptions.contains("--version")) {
 			// print out full version information
-			readMe();
+			about();
 		}
 
 		if (paramOptions.contains("--dataset-spec")) {
@@ -366,7 +375,10 @@ public class LibRec {
 		LineConfiger evalOptions = new LineConfiger(setup);
 
 		// debug information
-		Logs.info("With Setup: {}", setup);
+		if (isMeasuresOnly)
+			Logs.debug("With Setup: {}", setup);
+		else
+			Logs.info("With Setup: {}", setup);
 
 		Recommender algo = null;
 
@@ -621,8 +633,11 @@ public class LibRec {
 	protected Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
 
 		SparseMatrix trainMatrix = data[0], testMatrix = data[1];
-		algorithm = cf.getString("recommender");
 
+		// output data
+		writeData(trainMatrix, testMatrix, fold);
+
+		algorithm = cf.getString("recommender");
 		switch (algorithm.toLowerCase()) {
 
 		/* baselines */
@@ -737,6 +752,21 @@ public class LibRec {
 		}
 	}
 
+	private void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+		if (outputOptions.contains("--used-data")) {
+			String foldInfo = (fold >= 0) ? "-" + fold : "";
+
+			try {
+				writeMatrix(trainMatrix, Recommender.tempDirPath + "train" + foldInfo + ".txt");
+				writeMatrix(testMatrix, Recommender.tempDirPath + "test" + foldInfo + ".txt");
+			} catch (Exception e) {
+				Logs.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+
+	}
+
 	/**
 	 * set the configuration file to be used
 	 */
@@ -747,8 +777,8 @@ public class LibRec {
 	/**
 	 * Print out software information
 	 */
-	private void readMe() {
-		String readme = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
+	private void about() {
+		String about = "\nLibRec version " + version + ", copyright (C) 2014-2015 Guibing Guo \n\n"
 
 		/* Description */
 		+ "LibRec is free software: you can redistribute it and/or modify \n"
@@ -766,7 +796,7 @@ public class LibRec {
 				+ "You should have received a copy of the GNU General Public License \n"
 				+ "along with LibRec. If not, see <http://www.gnu.org/licenses/>.";
 
-		System.out.println(readme);
+		System.out.println(about);
 	}
 
 }

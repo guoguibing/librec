@@ -69,7 +69,7 @@ public abstract class Recommender implements Runnable {
 	public static SparseMatrix rateMatrix;
 
 	// default temporary file directory
-	public static String tempDirPath = "./Results/";
+	public static String tempDirPath;
 
 	// params used for multiple runs
 	public static Map<String, List<Float>> params = new HashMap<>();
@@ -218,7 +218,6 @@ public abstract class Recommender implements Runnable {
 			initMean = 0.0;
 			initStd = 0.1;
 
-			verbose = cf.isOn("is.verbose", true);
 			cacheSpec = cf.getString("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
 
 			rankOptions = cf.getParamOptions("item.ranking");
@@ -231,17 +230,18 @@ public abstract class Recommender implements Runnable {
 			view = evalOptions.getString("--test-view", "all");
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isSplitByDate = evalOptions.contains("--by-date");
-			isResultsOut = evalOptions.isOn("-output", false);
-			isSaveModel = evalOptions.isOn("--save-model", false);
 			numCPUs = evalOptions.getInt("-cpu", 1); // default: no parallelization
+			Randoms.seed(evalOptions.getLong("--rand-seed", System.currentTimeMillis())); // initial random seed
+
+			// output options
+			LineConfiger outputOptions = cf.getParamOptions("output.setup");
+			isResultsOut = outputOptions.isMainOn();
+			verbose = outputOptions.isOn("-verbose", true);
+			isSaveModel = outputOptions.contains("--save-model");
 
 			knn = cf.getInt("num.neighbors", 20);
 			similarityMeasure = cf.getString("similarity", "PCC");
 			similarityShrinkage = cf.getInt("num.shrinkage", 30);
-
-			// initial random seed
-			int seed = cf.getInt("num.rand.seed", 1);
-			Randoms.seed(seed <= 0 ? System.currentTimeMillis() : seed);
 		}
 
 		// training, validation, test data
@@ -327,7 +327,7 @@ public abstract class Recommender implements Runnable {
 		if (verbose)
 			Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
 		measures = isRankingPred ? evalRankings() : evalRatings();
-		String result = getEvalInfo(measures);
+		String measurements = getEvalInfo(measures);
 		sw.stop();
 		long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
 
@@ -335,7 +335,7 @@ public abstract class Recommender implements Runnable {
 		measures.put(Measure.TrainTime, (double) trainTime);
 		measures.put(Measure.TestTime, (double) testTime);
 
-		String evalInfo = algoName + foldInfo + ": " + result + "\tTime: "
+		String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
 				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
 				+ Dates.parse(measures.get(Measure.TestTime).longValue());
 		if (!isRankingPred)
@@ -580,7 +580,6 @@ public abstract class Recommender implements Runnable {
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
 			preds.add("# userId itemId rating prediction"); // optional: file header
-			FileIO.makeDirectory(tempDirPath); // in case that the fold does not exist
 			toFile = tempDirPath + algoName + "-rating-predictions" + foldInfo + ".txt"; // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
@@ -693,7 +692,6 @@ public abstract class Recommender implements Runnable {
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
 			preds.add("# userId: recommendations in (itemId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional: file header
-			FileIO.makeDirectory(tempDirPath); // in case that the fold does not exist
 			toFile = tempDirPath + algoName + "-top-10-items" + foldInfo + ".txt"; // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
