@@ -406,6 +406,7 @@ public class LibRec {
 		case "test-set":
 			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			testDao.setTimeUnit(timeUnit);
+			Recommender.testDao = testDao;
 			
 			SparseMatrix testMatrix = testDao.readData(columns, binThold);
 			data = new SparseMatrix[] { rateMatrix, testMatrix };
