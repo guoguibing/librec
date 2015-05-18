@@ -635,12 +635,13 @@ public class LibRec {
 	 */
 	protected Recommender getRecommender(SparseMatrix[] data, int fold) throws Exception {
 
+		algorithm = cf.getString("recommender");
+
 		SparseMatrix trainMatrix = data[0], testMatrix = data[1];
 
 		// output data
 		writeData(trainMatrix, testMatrix, fold);
 
-		algorithm = cf.getString("recommender");
 		switch (algorithm.toLowerCase()) {
 
 		/* baselines */
@@ -747,7 +748,7 @@ public class LibRec {
 			/* both tasks */
 		case "bucm":
 			return new BUCM(trainMatrix, testMatrix, fold);
-		case "bh-free":
+		case "bhfree":
 			return new BHfree(trainMatrix, testMatrix, fold);
 
 		default:
@@ -755,13 +756,15 @@ public class LibRec {
 		}
 	}
 
-	private void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	protected void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		if (outputOptions != null && outputOptions.contains("--fold-data")) {
-			String foldInfo = (fold >= 0) ? "-" + fold : "";
+
+			String prefix = Recommender.tempDirPath + algorithm;
+			String suffix = ((fold >= 0) ? "-" + fold : "") + ".txt";
 
 			try {
-				writeMatrix(trainMatrix, Recommender.tempDirPath + "train" + foldInfo + ".txt");
-				writeMatrix(testMatrix, Recommender.tempDirPath + "test" + foldInfo + ".txt");
+				writeMatrix(trainMatrix, prefix + "-train" + suffix);
+				writeMatrix(testMatrix, prefix + "-test" + suffix);
 			} catch (Exception e) {
 				Logs.error(e.getMessage());
 				e.printStackTrace();

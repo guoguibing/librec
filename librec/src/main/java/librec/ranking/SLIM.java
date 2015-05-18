@@ -54,7 +54,7 @@ import com.google.common.collect.Multimap;
  * @author guoguibing
  * 
  */
-@Configuration("binThold, knn, regL2, regL1, similarity, numIters")
+@Configuration("binThold, knn, regL2, regL1, similarity, iters")
 public class SLIM extends IterativeRecommender {
 
 	private DenseMatrix W;
@@ -218,8 +218,7 @@ public class SLIM extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings
-				.toString(new Object[] { binThold, knn, regL2, regL1, similarityMeasure, numIters });
+		return Strings.toString(new Object[] { binThold, knn, regL2, regL1, similarityMeasure, numIters });
 	}
 
 }
