@@ -108,7 +108,7 @@ public class LibRec {
 	// is only to print measurements
 	public static boolean isMeasuresOnly = false;
 	// output directory path
-	protected static String tempDirPath;
+	protected static String tempDirPath = "./Results/";
 
 	// configuration
 	protected FileConfiger cf;
@@ -134,13 +134,10 @@ public class LibRec {
 		cmdLine(args);
 
 		// multiple runs at one time
-		for (String configFile : configFiles) {
-
-			// a new configer
-			cf = new FileConfiger(configFile);
+		for (String config : configFiles) {
 
 			// reset general settings
-			reset();
+			preset(config);
 
 			// prepare data
 			readData();
@@ -151,7 +148,7 @@ public class LibRec {
 
 		// collect results
 		String filename = (configFiles.size() > 1 ? "multiAlgorithms" : algorithm) + "@" + Dates.now() + ".txt";
-		String results = Recommender.tempDirPath + filename;
+		String results = tempDirPath + filename;
 		FileIO.copyFile("results.txt", results);
 
 		// send notification
@@ -179,30 +176,36 @@ public class LibRec {
 
 		// load data
 		rateMatrix = rateDao.readData(columns, binThold);
+
+		Recommender.rateMatrix = rateMatrix;
+		Recommender.rateDao = rateDao;
+		Recommender.binThold = binThold;
 	}
 
 	/**
 	 * reset general (and static) settings
 	 */
-	protected void reset() {
+	protected void preset(String configFile) throws Exception {
+
+		// a new configer
+		cf = new FileConfiger(configFile);
+
+		// seeding the general recommender
+		Recommender.cf = cf;
 
 		// reset recommenders' static properties 
 		Recommender.resetStatics = true;
 		IterativeRecommender.resetStatics = true;
 		GraphicRecommender.resetStatics = true;
 
-		// seeding the general recommender
-		Recommender.cf = cf;
-		Recommender.rateMatrix = rateMatrix;
-		Recommender.rateDao = rateDao;
-		Recommender.binThold = binThold;
-
 		// LibRec outputs
 		outputOptions = cf.getParamOptions("output.setup");
-		isMeasuresOnly = outputOptions.contains("--measures-only");
-		
+		if (outputOptions != null) {
+			isMeasuresOnly = outputOptions.contains("--measures-only");
+			tempDirPath = outputOptions.getString("-dir", "./Results/");
+		}
+
 		// make output directory
-		tempDirPath = outputOptions.getString("-dir", "./Results/");
 		Recommender.tempDirPath = FileIO.makeDirectory(tempDirPath);
 	}
 
@@ -753,7 +756,7 @@ public class LibRec {
 	}
 
 	private void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
-		if (outputOptions.contains("--fold-data")) {
+		if (outputOptions != null && outputOptions.contains("--fold-data")) {
 			String foldInfo = (fold >= 0) ? "-" + fold : "";
 
 			try {

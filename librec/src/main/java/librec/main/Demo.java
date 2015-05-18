@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import librec.intf.Recommender;
-
 /**
  * A demo created for the UMAP'15 demo session, could be useful for other users.
  * 
@@ -52,8 +50,6 @@ public class Demo {
 		String dirPath = FileIO.makeDirPath("demo");
 		Logs.config(dirPath + "log4j.xml", true);
 
-		// set the folder path for output results
-		Recommender.tempDirPath = FileIO.makeDirPath(dirPath, "Results");
 		// set the folder path for configuration files
 		String configDirPath = FileIO.makeDirPath(dirPath, "config");
 

@@ -81,7 +81,7 @@ public abstract class Recommender implements Runnable {
 	protected static int numCPUs;
 
 	// verbose
-	protected static boolean verbose;
+	protected static boolean verbose = true;
 
 	// line configer for item ranking, evaluation
 	protected static LineConfiger rankOptions, algoOptions;
@@ -95,9 +95,9 @@ public abstract class Recommender implements Runnable {
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
 	// is output recommendation results 
-	protected static boolean isResultsOut;
+	protected static boolean isResultsOut = true;
 	// is save model
-	protected static boolean isSaveModel;
+	protected static boolean isSaveModel = false;
 	// is split data by date
 	protected static boolean isSplitByDate;
 	// view of rating predictions
@@ -235,9 +235,11 @@ public abstract class Recommender implements Runnable {
 
 			// output options
 			LineConfiger outputOptions = cf.getParamOptions("output.setup");
-			isResultsOut = outputOptions.isMainOn();
-			verbose = outputOptions.isOn("-verbose", true);
-			isSaveModel = outputOptions.contains("--save-model");
+			if (outputOptions != null) {
+				isResultsOut = outputOptions.isMainOn();
+				verbose = outputOptions.isOn("-verbose", true);
+				isSaveModel = outputOptions.contains("--save-model");
+			}
 
 			knn = cf.getInt("num.neighbors", 20);
 			similarityMeasure = cf.getString("similarity", "PCC");
