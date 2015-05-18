@@ -22,6 +22,7 @@ import happy.coding.io.FileIO;
 import happy.coding.io.Logs;
 import happy.coding.io.Strings;
 import happy.coding.math.Stats;
+import happy.coding.system.Dates;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -248,8 +249,13 @@ public class DataDAO {
 			}
 		}
 
-		Logs.debug("With Specs: {Users, {}} = {{}, {}, {}}, Scale = {{}}", (isItemAsUser ? "Users, Links"
-				: "Items, Ratings"), numRows, numCols, numRatings, Strings.toString(ratingScale, ", "));
+		String dateRange = "";
+		if (cols.length >= 4)
+			dateRange = String.format(", Timestamps = {%s, %s}", Dates.toString(minTimestamp),
+					Dates.toString(maxTimestamp));
+
+		Logs.debug("With Specs: {Users, {}} = {{}, {}, {}}, Scale = {{}}{}", (isItemAsUser ? "Users, Links"
+				: "Items, Ratings"), numRows, numCols, numRatings, Strings.toString(ratingScale), dateRange);
 
 		// build rating matrix
 		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
