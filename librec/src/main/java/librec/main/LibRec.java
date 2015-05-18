@@ -759,7 +759,7 @@ public class LibRec {
 	protected void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		if (outputOptions != null && outputOptions.contains("--fold-data")) {
 
-			String prefix = Recommender.tempDirPath + algorithm;
+			String prefix = Recommender.tempDirPath + rateDao.getDataName();
 			String suffix = ((fold >= 0) ? "-" + fold : "") + ".txt";
 
 			try {

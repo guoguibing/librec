@@ -51,7 +51,7 @@ import com.google.common.collect.Table;
 public class DataDAO {
 
 	// name of data file
-	private String dataFile;
+	private String dataName;
 	// directory of data file
 	private String dataDir;
 	// path to data file
@@ -578,14 +578,14 @@ public class DataDAO {
 	}
 
 	/**
-	 * @return name of the data file
+	 * @return name of the data file with file type extension
 	 */
-	public String getDataFile() {
-		if (dataFile == null) {
-			dataFile = dataPath.substring(dataPath.lastIndexOf(File.separator) + 1);
+	public String getDataName() {
+		if (dataName == null) {
+			dataName = dataPath.substring(dataPath.lastIndexOf(File.separator) + 1, dataPath.lastIndexOf("."));
 		}
 
-		return dataFile;
+		return dataName;
 	}
 
 	/**
