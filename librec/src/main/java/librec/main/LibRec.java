@@ -753,7 +753,7 @@ public class LibRec {
 	}
 
 	private void writeData(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
-		if (outputOptions.contains("--used-data")) {
+		if (outputOptions.contains("--fold-data")) {
 			String foldInfo = (fold >= 0) ? "-" + fold : "";
 
 			try {
