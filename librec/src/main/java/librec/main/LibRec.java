@@ -589,7 +589,8 @@ public class LibRec {
 		String time = String.format("'%s','%s'", Dates.parse(ms.get(Measure.TrainTime).longValue()),
 				Dates.parse(ms.get(Measure.TestTime).longValue()));
 		// double commas as the separation of results and configuration
-		String evalInfo = String.format("%s,%s,,%s,%s\n", algo.algoName, result, algo.toString(), time);
+		String evalInfo = String.format("%s,%s,,%s,%s%s", algo.algoName, result, algo.toString(), time,
+				(outputOptions.contains("--measures-only") ? "" : "\n"));
 
 		Logs.info(evalInfo);
 	}
