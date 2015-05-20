@@ -64,32 +64,37 @@ public class GraphicRecommender extends Recommender {
 	/*********************************** Method-specific Parameters ************************/
 
 	/**
-	 * entry[u,i]: topic assignment as sparse structure
+	 * entry[u, i, k]: topic assignment as sparse structure
 	 */
 	protected Table<Integer, Integer, Integer> z;
 
 	/**
-	 * entry[i,t]: number of instances of item i assigned to topic t.
+	 * entry[i, k]: number of tokens assigned to topic k, given item i.
 	 */
 	protected DenseMatrix Nik;
+	
+	/**
+	 * entry[k, i]: number of tokens assigned to topic k, given item i.
+	 */
+	protected DenseMatrix Nki;
 
 	/**
-	 * entry[u,t]: number of items of user u assigned to topic t.
+	 * entry[u, k]: number of tokens assigned to topic k, given user u.
 	 */
 	protected DenseMatrix Nuk;
 
 	/**
-	 * entry[t]: total number of items assigned to topic t.
+	 * entry[k]: number of tokens assigned to topic t.
 	 */
 	protected DenseVector Nk;
 
 	/**
-	 * entry[u]: total number of items rated by user u.
+	 * entry[u]: number of tokens rated by user u.
 	 */
 	protected DenseVector Nu;
 
 	/**
-	 * entry[i]: total number of users having rated item i.
+	 * entry[i]: number of tokens rating item i.
 	 */
 	protected DenseVector Ni;
 
@@ -101,13 +106,13 @@ public class GraphicRecommender extends Recommender {
 	/**
 	 * cumulative statistics of theta, phi
 	 */
-	protected DenseMatrix PukSum, PkiSum;
+	protected DenseMatrix PukSum, PikSum, PkiSum;
 
 	/**
 	 * posterior probabilities of parameters
 	 * 
 	 */
-	protected DenseMatrix Puk, Pki;
+	protected DenseMatrix Puk, Pki, Pik;
 
 	/**
 	 * size of statistics

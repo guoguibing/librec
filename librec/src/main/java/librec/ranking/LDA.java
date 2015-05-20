@@ -59,10 +59,11 @@ public class LDA extends GraphicRecommender {
 		PkiSum = new DenseMatrix(numFactors, numItems);
 
 		// initialize count variables.
-		Nik = new DenseMatrix(numItems, numFactors);
 		Nuk = new DenseMatrix(numUsers, numFactors);
-		Nk = new DenseVector(numFactors);
 		Nu = new DenseVector(numUsers);
+
+		Nki = new DenseMatrix(numFactors, numItems);
+		Nk = new DenseVector(numFactors);
 
 		alpha = new DenseVector(numFactors);
 		alpha.setAll(initAlpha);
@@ -85,7 +86,7 @@ public class LDA extends GraphicRecommender {
 			// total number of items of user u
 			Nu.add(u, 1);
 			// number of instances of item i assigned to topic t
-			Nik.add(i, t, 1);
+			Nki.add(t, i, 1);
 			// total number of words assigned to topic t.
 			Nk.add(t, 1);
 		}
@@ -102,15 +103,15 @@ public class LDA extends GraphicRecommender {
 			int i = me.column();
 			int t = z.get(u, i); // topic
 
-			Nik.add(i, t, -1);
 			Nuk.add(u, t, -1);
-			Nk.add(t, -1);
 			Nu.add(u, -1);
+			Nki.add(t, i, -1);
+			Nk.add(t, -1);
 
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Nik.get(i, k) + beta.get(i))
+				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Nki.get(k, i) + beta.get(i))
 						/ (Nk.get(k) + sumBeta);
 			}
 			// cumulating multinomial parameters
@@ -125,10 +126,10 @@ public class LDA extends GraphicRecommender {
 			}
 
 			// add newly estimated z_i to count variables
-			Nik.add(i, t, 1);
 			Nuk.add(u, t, 1);
-			Nk.add(t, 1);
 			Nu.add(u, 1);
+			Nki.add(t, i, 1);
+			Nk.add(t, 1);
 
 			z.put(u, i, t);
 		}
@@ -150,8 +151,7 @@ public class LDA extends GraphicRecommender {
 				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
 				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
 			}
-			if (numerator != 0)
-				alpha.set(k, ak * (numerator / denominator));
+			alpha.set(k, ak * (numerator / denominator));
 		}
 
 		// update beta_k
@@ -160,11 +160,10 @@ public class LDA extends GraphicRecommender {
 			bi = beta.get(i);
 			double numerator = 0, denominator = 0;
 			for (int k = 0; k < numFactors; k++) {
-				numerator += digamma(Nik.get(i, k) + bi) - digamma(bi);
+				numerator += digamma(Nki.get(k, i) + bi) - digamma(bi);
 				denominator += digamma(Nk.get(k) + sumBeta) - digamma(sumBeta);
 			}
-			if (numerator != 0)
-				beta.set(i, bi * (numerator / denominator));
+			beta.set(i, bi * (numerator / denominator));
 		}
 	}
 
@@ -185,7 +184,7 @@ public class LDA extends GraphicRecommender {
 
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
-				val = (Nik.get(i, k) + beta.get(i)) / (Nk.get(k) + sumBeta);
+				val = (Nki.get(k, i) + beta.get(i)) / (Nk.get(k) + sumBeta);
 				PkiSum.add(k, i, val);
 			}
 		}

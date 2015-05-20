@@ -52,7 +52,7 @@ public class URP extends GraphicRecommender {
 	/**
 	 * number of occurrences of entry (t, i, r)
 	 */
-	private int[][][] Ntir;
+	private int[][][] Nkir;
 
 	/**
 	 * cumulative statistics of probabilities of (t, i, r)
@@ -75,8 +75,8 @@ public class URP extends GraphicRecommender {
 		Nuk = new DenseMatrix(numUsers, numFactors);
 		Nu = new DenseVector(numUsers);
 
-		Ntir = new int[numFactors][numItems][numLevels];
-		Nik = new DenseMatrix(numItems, numFactors);
+		Nkir = new int[numFactors][numItems][numLevels];
+		Nki = new DenseMatrix(numFactors, numItems);
 
 		alpha = new DenseVector(numFactors);
 		alpha.setAll(initAlpha);
@@ -103,9 +103,9 @@ public class URP extends GraphicRecommender {
 			Nu.add(u, 1);
 
 			// number of pairs (t, i, r)
-			Ntir[t][i][r]++;
+			Nkir[t][i][r]++;
 			// total number of words assigned to topic t
-			Nik.add(i, t, 1);
+			Nki.add(t, i, 1);
 		}
 
 	}
@@ -127,14 +127,14 @@ public class URP extends GraphicRecommender {
 
 			Nuk.add(u, t, -1);
 			Nu.add(u, -1);
-			Ntir[t][i][r]--;
-			Nik.add(i, t, -1);
+			Nkir[t][i][r]--;
+			Nki.add(t, i, -1);
 
 			// do multinomial sampling via cumulative method:
 			double[] p = new double[numFactors];
 			for (int k = 0; k < numFactors; k++) {
-				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Ntir[k][i][r] + beta.get(r))
-						/ (Nik.get(i, k) + sumBeta);
+				p[k] = (Nuk.get(u, k) + alpha.get(k)) / (Nu.get(u) + sumAlpha) * (Nkir[k][i][r] + beta.get(r))
+						/ (Nki.get(k, i) + sumBeta);
 			}
 			// cumulate multinomial parameters
 			for (int k = 1; k < p.length; k++) {
@@ -153,8 +153,8 @@ public class URP extends GraphicRecommender {
 			// add newly estimated z_i to count variables
 			Nuk.add(u, t, 1);
 			Nu.add(u, 1);
-			Ntir[t][i][r]++;
-			Nik.add(i, t, 1);
+			Nkir[t][i][r]++;
+			Nki.add(t, i, 1);
 		}
 	}
 
@@ -185,8 +185,8 @@ public class URP extends GraphicRecommender {
 			double numerator = 0, denominator = 0;
 			for (int i = 0; i < numItems; i++) {
 				for (int k = 0; k < numFactors; k++) {
-					numerator += digamma(Ntir[k][i][r] + br) - digamma(br);
-					denominator += digamma(Nik.get(i, k) + sumBeta) - digamma(sumBeta);
+					numerator += digamma(Nkir[k][i][r] + br) - digamma(br);
+					denominator += digamma(Nki.get(k, i) + sumBeta) - digamma(sumBeta);
 				}
 			}
 			beta.set(r, br * (numerator / denominator));
@@ -209,7 +209,7 @@ public class URP extends GraphicRecommender {
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					val = (Ntir[k][i][r] + beta.get(r)) / (Nik.get(i, k) + sumBeta);
+					val = (Nkir[k][i][r] + beta.get(r)) / (Nki.get(k, i) + sumBeta);
 					PkirSum[k][i][r] += val;
 				}
 			}
