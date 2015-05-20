@@ -176,7 +176,8 @@ public class URP extends GraphicRecommender {
 				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
 				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
 			}
-			alpha.set(k, ak * (numerator / denominator));
+			if (numerator != 0)
+				alpha.set(k, ak * (numerator / denominator));
 		}
 
 		// update beta_k
@@ -189,7 +190,8 @@ public class URP extends GraphicRecommender {
 					denominator += digamma(Nki.get(k, i) + sumBeta) - digamma(sumBeta);
 				}
 			}
-			beta.set(r, br * (numerator / denominator));
+			if (numerator != 0)
+				beta.set(r, br * (numerator / denominator));
 		}
 
 	}

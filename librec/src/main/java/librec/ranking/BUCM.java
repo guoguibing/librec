@@ -192,18 +192,22 @@ public class BUCM extends GraphicRecommender {
 				numerator += digamma(Nuk.get(u, k) + ak) - digamma(ak);
 				denominator += digamma(Nu.get(u) + sumAlpha) - digamma(sumAlpha);
 			}
-			alpha.set(k, ak * (numerator / denominator));
+
+			if (numerator != 0)
+				alpha.set(k, ak * (numerator / denominator));
 		}
 
 		// update beta
 		for (int i = 0; i < numItems; i++) {
+
 			bi = beta.get(i);
 			double numerator = 0, denominator = 0;
 			for (int k = 0; k < numFactors; k++) {
 				numerator += digamma(Nki.get(k, i) + bi) - digamma(bi);
 				denominator += digamma(Nk.get(k) + sumBeta) - digamma(sumBeta);
 			}
-			beta.set(i, bi * (numerator / denominator));
+			if (numerator != 0)
+				beta.set(i, bi * (numerator / denominator));
 		}
 
 		// update gamma
@@ -217,7 +221,8 @@ public class BUCM extends GraphicRecommender {
 					denominator += digamma(Nki.get(k, i) + sumGamma) - digamma(sumGamma);
 				}
 			}
-			gamma.set(r, gr * (numerator / denominator));
+			if (numerator != 0)
+				gamma.set(r, gr * (numerator / denominator));
 		}
 
 	}
@@ -285,7 +290,7 @@ public class BUCM extends GraphicRecommender {
 		for (int k = 0; k < numFactors; k++) {
 			for (int i = 0; i < numItems; i++) {
 				for (int r = 0; r < numLevels; r++) {
-					val = (Nkir[k][i][r] + gamma.get(r)) / (Nik.get(i, k) + sumGamma);
+					val = (Nkir[k][i][r] + gamma.get(r)) / (Nki.get(k, i) + sumGamma);
 					PkirSum[k][i][r] += val;
 				}
 			}
