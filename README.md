@@ -22,9 +22,9 @@ LibRec
 
 ### Acknowledgement
 
-I'd like to thank the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). 
+I would like to expression my appreciation to the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). 
 
-I also thank many others for generously contributing to LibRec by reporting bugs and issues; and by providing valuable suggestions and support. 
+I also thank many others for reporting bugs and issues, and for providing valuable suggestions and encouraging support. 
 
 ### GPL License
 
