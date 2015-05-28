@@ -20,11 +20,11 @@ LibRec
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
-### Main Contributors
+### Acknowledgement
 
-* [Guibing Guo](http://www.luckymoon.me/) (Creator)
-* [Bin Wu](https://github.com/wubin7019088)
-* [Ge Zhou](https://github.com/466152112)
+I'd like to thank the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). 
+
+I also thank many others for generously contributing to LibRec by reporting bugs and issues; and by providing valuable suggestions and support. 
 
 ### GPL License
 
