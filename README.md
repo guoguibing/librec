@@ -15,7 +15,7 @@ LibRec
 * **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
 
 ### Download
-* librec-v1.3 (under development, [what's new](CHANGES.md))
+* librec-v1.3 (coming soon, [what's new](CHANGES.md))
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
@@ -23,13 +23,20 @@ LibRec
 ### Reference
 Please cite the following papers if LibRec is helpful to your research. 
 
-> Guibing Guo, Jie Zhang, Zhu Sun and Neil Yorke-Smith, LibRec: A Java Library for Recommender Systems, in Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
+1. Guibing Guo, Jie Zhang, Zhu Sun and Neil Yorke-Smith, LibRec: A Java Library for Recommender Systems, in Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
 
 ### Acknowledgement
 
 I would like to expression my appreciation to the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). 
 
 I also thank many others for reporting bugs and issues, and for providing valuable suggestions and encouraging support. 
+
+### Publications
+LibRec has been used in the following publications (let me know if your paper is not listed):
+
+1. G. Guo, J. Zhang and N. Yorke-Smith, TrustSVD: Collaborative Filtering with Both the Explicit and Implicit Influence of User Trust and of Item Ratings, in Proceedings of the 29th AAAI Conference on Artificial Intelligence (AAAI), 2015.
+2. Z. Sun, G. Guo and J. Zhang, Exploiting Implicit Item Relationships for Recommender Systems, in Proceedings of the 23rd International Conference on User Modeling, Adaptation and Personalization (UMAP), 2015.
+
 
 ### GPL License
 
