@@ -27,9 +27,7 @@ Please cite the following papers if LibRec is helpful to your research.
 
 ### Acknowledgement
 
-I would like to expression my appreciation to the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). 
-
-I also thank many others for reporting bugs and issues, and for providing valuable suggestions and encouraging support. 
+I would like to expression my appreciation to the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). I also appreciate many others for reporting bugs and issues, and for providing valuable suggestions and support. 
 
 ### Publications
 LibRec has been used in the following publications (let me know if your paper is not listed):
