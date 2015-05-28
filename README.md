@@ -20,6 +20,11 @@ LibRec
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
+### Reference
+Please cite the following papers if LibRec is helpful to your research. 
+
+> Guibing Guo, Jie Zhang, Zhu Sun and Neil Yorke-Smith, LibRec: A Java Library for Recommender Systems, in Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
+
 ### Acknowledgement
 
 I would like to expression my appreciation to the following people for contributing source codes to LibRec, including [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112). 
