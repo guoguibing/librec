@@ -686,62 +686,63 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	}
 
 	/**
-	 * @return a new matrix by removing zeros from the current matrix
+	 * remove zero entries of the given matrix
 	 */
-	public SparseMatrix reshape() {
+	public static void reshape(SparseMatrix mat) {
 
-		SparseMatrix mat = new SparseMatrix(numRows, numColumns);
-		int nnz = this.size();
+		SparseMatrix res = new SparseMatrix(mat.numRows, mat.numColumns);
+		int nnz = mat.size();
 
 		// Compressed Row Storage (CRS)
-		mat.rowData = new double[nnz];
-		mat.colInd = new int[nnz];
-		mat.rowPtr = new int[numRows + 1];
+		res.rowData = new double[nnz];
+		res.colInd = new int[nnz];
+		res.rowPtr = new int[mat.numRows + 1];
 
 		// handle row data
 		int index = 0;
-		for (int i = 1; i < rowPtr.length; i++) {
+		for (int i = 1; i < mat.rowPtr.length; i++) {
 
-			for (int j = rowPtr[i - 1]; j < rowPtr[i]; j++) {
+			for (int j = mat.rowPtr[i - 1]; j < mat.rowPtr[i]; j++) {
 				// row i-1, row 0 always starts with 0
 
-				double val = rowData[j];
-				int col = colInd[j];
+				double val = mat.rowData[j];
+				int col = mat.colInd[j];
 				if (val != 0) {
-					mat.rowData[index] = val;
-					mat.colInd[index] = col;
-
-					index++;
-				} 
-			}
-			mat.rowPtr[i] = index;
-
-		}
-
-		// Compressed Col Storage (CCS)
-		mat.colData = new double[nnz];
-		mat.rowInd = new int[nnz];
-		mat.colPtr = new int[numColumns + 1];
-
-		// handle column data
-		index = 0;
-		for (int j = 1; j < colPtr.length; j++) {
-			for (int i = colPtr[j - 1]; i < colPtr[j]; i++) {
-				// column j-1, index i
-
-				double val = colData[i];
-				int row = rowInd[i];
-				if (val != 0) {
-					mat.colData[index] = val;
-					mat.rowInd[index] = row;
+					res.rowData[index] = val;
+					res.colInd[index] = col;
 
 					index++;
 				}
 			}
-			mat.colPtr[j] = index;
+			res.rowPtr[i] = index;
+
 		}
 
-		return mat;
+		// Compressed Col Storage (CCS)
+		res.colData = new double[nnz];
+		res.rowInd = new int[nnz];
+		res.colPtr = new int[mat.numColumns + 1];
+
+		// handle column data
+		index = 0;
+		for (int j = 1; j < mat.colPtr.length; j++) {
+			for (int i = mat.colPtr[j - 1]; i < mat.colPtr[j]; i++) {
+				// column j-1, index i
+
+				double val = mat.colData[i];
+				int row = mat.rowInd[i];
+				if (val != 0) {
+					res.colData[index] = val;
+					res.rowInd[index] = row;
+
+					index++;
+				}
+			}
+			res.colPtr[j] = index;
+		}
+
+		// write back to the given matrix
+		mat = res;
 	}
 
 	/**

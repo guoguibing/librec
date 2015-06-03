@@ -30,6 +30,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 
 /**
@@ -139,8 +142,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -190,8 +193,8 @@ public class DataSplitter {
 		rcs = null;
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -212,7 +215,7 @@ public class DataSplitter {
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
-		
+
 		for (int user = 0, um = rateMatrix.numRows; user < um; user++) {
 			List<Integer> unsortedItems = rateMatrix.getColumns(user);
 
@@ -237,8 +240,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -259,7 +262,7 @@ public class DataSplitter {
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
-		
+
 		for (int item = 0, im = rateMatrix.numColumns; item < im; item++) {
 			List<Integer> unsortedUsers = rateMatrix.getRows(item);
 
@@ -284,8 +287,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -333,11 +336,111 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		validMatrix = validMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(validMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		return new SparseMatrix[] { trainMatrix, validMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts where one rating per user is preserved as the test set and the remaining data as the
+	 * training set
+	 * 
+	 */
+	public SparseMatrix[] getLOOByUser(boolean isByDate, Table<Integer, Integer, Long> timestamps) throws Exception {
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+
+		// for building test matrix
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		for (int u = 0, um = rateMatrix.numRows(); u < um; u++) {
+
+			List<Integer> items = rateMatrix.getColumns(u);
+			int i = -1;
+
+			if (!isByDate) {
+				// by random
+				int randIdx = (int) (items.size() * Math.random());
+				i = items.get(randIdx);
+			} else {
+				// by date
+				List<RatingContext> rcs = new ArrayList<>();
+				for (int j : items) {
+					rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
+				}
+				Collections.sort(rcs);
+
+				i = rcs.get(rcs.size() - 1).getItem(); // most recent item
+			}
+
+			trainMatrix.set(u, i, 0); // remove from training
+
+			dataTable.put(u, i, rateMatrix.get(u, i));
+			colMap.put(i, u);
+		}
+
+		// remove zero entries
+		SparseMatrix.reshape(trainMatrix);
+
+		// build test matrix
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix.numRows, rateMatrix.numColumns, dataTable, colMap);
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
+	}
+
+	/**
+	 * Split ratings into two parts where one rating per item is preserved as the test set and the remaining data as the
+	 * training set
+	 * 
+	 */
+	public SparseMatrix[] getLOOByItem(boolean isByDate, Table<Integer, Integer, Long> timestamps) throws Exception {
+
+		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
+
+		// for building test matrix
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		for (int i = 0, im = rateMatrix.numColumns(); i < im; i++) {
+
+			List<Integer> users = rateMatrix.getRows(i);
+			int u = -1;
+
+			if (!isByDate) {
+				// by random
+				int randIdx = (int) (users.size() * Math.random());
+				u = users.get(randIdx);
+			} else {
+				// by date
+				List<RatingContext> rcs = new ArrayList<>();
+				for (int v : users) {
+					rcs.add(new RatingContext(v, i, timestamps.get(v, i)));
+				}
+				Collections.sort(rcs);
+
+				u = rcs.get(rcs.size() - 1).getUser(); // most recent rating user
+			}
+
+			trainMatrix.set(u, i, 0); // remove from training
+
+			dataTable.put(u, i, rateMatrix.get(u, i));
+			colMap.put(i, u);
+		}
+
+		// remove zero entries
+		SparseMatrix.reshape(trainMatrix);
+
+		// build test matrix
+		SparseMatrix testMatrix = new SparseMatrix(rateMatrix.numRows, rateMatrix.numColumns, dataTable, colMap);
+
+		debugInfo(trainMatrix, testMatrix, -1);
+
+		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
 	/**
@@ -381,8 +484,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -422,55 +525,56 @@ public class DataSplitter {
 					trainMatrix.set(u, j, 0.0);
 			}
 		}
-		
+
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
+
 	/**
 	 * Split ratings into two parts: the training set consisting of user-item ratings where {@code numGiven} earliest
 	 * ratings are preserved for each item, and the rest are used as the testing data
 	 * 
 	 */
 	public SparseMatrix[] getGivenNByItemDate(int numGiven, Table<Integer, Integer, Long> timestamps) throws Exception {
-		
+
 		assert numGiven > 0;
-		
+
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 		SparseMatrix testMatrix = new SparseMatrix(rateMatrix);
-		
+
 		for (int j = 0, jm = rateMatrix.numRows(); j < jm; j++) {
-			
+
 			List<Integer> users = rateMatrix.getRows(j);
 			int capacity = Lists.initSize(users.size());
-			
+
 			List<RatingContext> rcs = new ArrayList<>(capacity);
 			for (int u : users) {
 				rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
 			}
 			Collections.sort(rcs);
-			
+
 			for (int i = 0; i < rcs.size(); i++) {
 				RatingContext rc = rcs.get(i);
 				int u = rc.getUser();
-				
+
 				if (i < numGiven)
 					testMatrix.set(u, j, 0.0);
 				else
 					trainMatrix.set(u, j, 0.0);
 			}
 		}
-		
+
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
-		
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
+
 		debugInfo(trainMatrix, testMatrix, -1);
-		
+
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
 
@@ -515,8 +619,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -550,8 +654,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -588,8 +692,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, -1);
 
@@ -660,8 +764,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		return new SparseMatrix[] { trainMatrix, testMatrix };
 	}
@@ -693,8 +797,8 @@ public class DataSplitter {
 		}
 
 		// remove zero entries
-		trainMatrix = trainMatrix.reshape();
-		testMatrix = testMatrix.reshape();
+		SparseMatrix.reshape(trainMatrix);
+		SparseMatrix.reshape(testMatrix);
 
 		debugInfo(trainMatrix, testMatrix, k);
 

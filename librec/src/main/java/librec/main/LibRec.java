@@ -401,8 +401,20 @@ public class LibRec {
 			runCrossValidation(evalOptions);
 			return; // make it close
 		case "leave-one-out":
-			runLeaveOneOut(evalOptions);
-			return; //
+			boolean isByDate = evalOptions.contains("--by-date");
+			switch (evalOptions.getString("-target", "r")) {
+			case "u":
+				data = ds.getLOOByUser(isByDate, rateDao.getTimestamps());
+				break;
+			case "i":
+				data = ds.getLOOByItem(isByDate, rateDao.getTimestamps());
+				break;
+			case "r":
+			default:
+				runLeaveOneOut(evalOptions);
+				return; //
+			}
+			break;
 		case "test-set":
 			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			testDao.setTimeUnit(timeUnit);
@@ -524,6 +536,7 @@ public class LibRec {
 			// leave the current rating out
 			SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 			trainMatrix.set(u, i, 0);
+			SparseMatrix.reshape(trainMatrix);
 
 			// build test matrix
 			Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
