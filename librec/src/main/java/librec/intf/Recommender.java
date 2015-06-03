@@ -232,7 +232,9 @@ public abstract class Recommender implements Runnable {
 			view = evalOptions.getString("--test-view", "all");
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isSplitByDate = evalOptions.contains("--by-date");
-			numCPUs = evalOptions.getInt("-cpu", 1); // default: no parallelization
+			
+			int numProcessors = Runtime.getRuntime().availableProcessors();
+			numCPUs = evalOptions.getInt("-cpu", numProcessors); 
 			Randoms.seed(evalOptions.getLong("--rand-seed", System.currentTimeMillis())); // initial random seed
 
 			// output options

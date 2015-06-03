@@ -513,7 +513,7 @@ public class LibRec {
 	 */
 	private void runLeaveOneOut(LineConfiger params) throws Exception {
 
-		int numThreads = params.getInt("-t", 1);
+		int numThreads = params.getInt("-t", Runtime.getRuntime().availableProcessors()); // default by number of processors
 
 		Thread[] ts = new Thread[numThreads];
 		Recommender[] algos = new Recommender[numThreads];
