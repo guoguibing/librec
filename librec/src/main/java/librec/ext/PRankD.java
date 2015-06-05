@@ -113,7 +113,6 @@ public class PRankD extends RankSGD {
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			errs = 0;
 			loss = 0;
 
 			// for each rated user-item (u,i) pair
@@ -154,7 +153,6 @@ public class PRankD extends RankSGD {
 
 					double e = sj * (pui - puj - dij * (rui - ruj));
 
-					errs += e * e;
 					loss += e * e;
 
 					// update vectors
@@ -171,7 +169,6 @@ public class PRankD extends RankSGD {
 				}
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

@@ -741,8 +741,14 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 			res.colPtr[j] = index;
 		}
 
-		// write back to the given matrix
-		mat = res;
+		// write back to the given matrix, note that here mat is just a reference copy of the original matrix
+		mat.rowData = res.rowData;
+		mat.colInd = res.colInd;
+		mat.rowPtr = res.rowPtr;
+
+		mat.colData = res.colData;
+		mat.rowInd = res.rowInd;
+		mat.colPtr = res.colPtr;
 	}
 
 	/**

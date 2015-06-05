@@ -57,7 +57,6 @@ public class BiasedMF extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 			for (MatrixEntry me : trainMatrix) {
 
 				int u = me.row(); // user
@@ -67,7 +66,6 @@ public class BiasedMF extends IterativeRecommender {
 				double pred = predict(u, j, false);
 				double euj = ruj - pred;
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				// update factors
@@ -97,8 +95,6 @@ public class BiasedMF extends IterativeRecommender {
 				}
 
 			}
-
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

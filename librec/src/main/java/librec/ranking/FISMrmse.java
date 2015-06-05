@@ -80,7 +80,6 @@ public class FISMrmse extends IterativeRecommender {
 
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			errs = 0;
 			loss = 0;
 
 			// temporal data
@@ -141,7 +140,6 @@ public class FISMrmse extends IterativeRecommender {
 
 				double euj = puj - ruj;
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				// update bu
@@ -188,7 +186,6 @@ public class FISMrmse extends IterativeRecommender {
 			P = P.add(PS);
 			Q = Q.add(QS);
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

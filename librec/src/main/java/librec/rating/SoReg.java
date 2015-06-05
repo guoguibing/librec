@@ -91,7 +91,6 @@ public class SoReg extends SocialRecommender {
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			errs = 0;
 			loss = 0;
 
 			// temp data
@@ -107,7 +106,6 @@ public class SoReg extends SocialRecommender {
 				double pred = predict(u, j);
 				double euj = pred - ruj;
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				for (int f = 0; f < numFactors; f++) {
@@ -155,7 +153,6 @@ public class SoReg extends SocialRecommender {
 			P = P.add(PS.scale(-lRate));
 			Q = Q.add(QS.scale(-lRate));
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

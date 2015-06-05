@@ -57,7 +57,6 @@ public class SVDPlusPlus extends BiasedMF {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 			for (MatrixEntry me : trainMatrix) {
 
 				int u = me.row(); // user
@@ -67,7 +66,6 @@ public class SVDPlusPlus extends BiasedMF {
 				double pred = predict(u, j);
 				double euj = ruj - pred;
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				List<Integer> items = userItemsCache.get(u);
@@ -118,7 +116,6 @@ public class SVDPlusPlus extends BiasedMF {
 
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

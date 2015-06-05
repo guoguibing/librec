@@ -103,10 +103,9 @@ public class TrustMF extends SocialRecommender {
 	/**
 	 * Build TrusterMF model: Br*Vr
 	 */
-	protected void TrusterMF() {
+	protected void TrusterMF() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
-			errs = 0;
 
 			// gradients of B, V, W
 			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
@@ -124,7 +123,6 @@ public class TrustMF extends SocialRecommender {
 				double euj = g(pred) - normalize(ruj);
 
 				loss += euj * euj;
-				errs += euj * euj;
 
 				double csgd = gd(pred) * euj;
 
@@ -167,7 +165,6 @@ public class TrustMF extends SocialRecommender {
 			Wr = Wr.add(WS.scale(-lRate));
 
 			loss *= 0.5;
-			errs *= 0.5;
 
 			if (isConverged(iter))
 				break;
@@ -177,10 +174,9 @@ public class TrustMF extends SocialRecommender {
 	/**
 	 * Build TrusteeMF model: We*Ve
 	 */
-	protected void TrusteeMF() {
+	protected void TrusteeMF() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
-			errs = 0;
 
 			// gradients of B, V, W
 			DenseMatrix BS = new DenseMatrix(numUsers, numFactors);
@@ -198,7 +194,6 @@ public class TrustMF extends SocialRecommender {
 				double euj = g(pred) - normalize(ruj);
 
 				loss += euj * euj;
-				errs += euj * euj;
 
 				double csgd = gd(pred) * euj;
 
@@ -241,7 +236,6 @@ public class TrustMF extends SocialRecommender {
 			We = We.add(WS.scale(-lRate));
 
 			loss *= 0.5;
-			errs *= 0.5;
 
 			if (isConverged(iter))
 				break;

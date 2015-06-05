@@ -18,13 +18,14 @@
 
 package librec.ranking;
 
+import happy.coding.io.Strings;
+import happy.coding.math.Randoms;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
@@ -103,7 +104,6 @@ public class SBPR extends SocialRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
 
 				// uniformly draw (u, i, k, j)
@@ -152,7 +152,6 @@ public class SBPR extends SocialRecommender {
 
 					double vals = -Math.log(g(xuik)) - Math.log(g(xukj));
 					loss += vals;
-					errs += vals;
 
 					double cik = g(-xuik), ckj = g(-xukj);
 
@@ -192,7 +191,6 @@ public class SBPR extends SocialRecommender {
 					// if no social neighbors, the same as BPR
 					double xuij = xui - xuj;
 					double vals = -Math.log(g(xuij));
-					errs += vals;
 					loss += vals;
 
 					double cij = g(-xuij);

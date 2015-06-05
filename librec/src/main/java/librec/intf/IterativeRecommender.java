@@ -70,10 +70,10 @@ public abstract class IterativeRecommender extends Recommender {
 
 	// adaptive learn rate
 	protected double lRate;
-	// training errors
-	protected double errs, last_errs = 0;
 	// objective loss
 	protected double loss, last_loss = 0;
+	// predictive measure
+	protected double measure, last_measure = 0;
 
 	// initial models using normal distribution
 	protected boolean initByNorm;
@@ -134,14 +134,38 @@ public abstract class IterativeRecommender extends Recommender {
 	 * @return boolean: true if it is converged; false otherwise
 	 * 
 	 */
-	protected boolean isConverged(int iter) {
+	protected boolean isConverged(int iter) throws Exception {
+
+		float delta_loss = (float) (last_loss - loss);
+
+		switch (earlyStopMeasure) {
+		case Loss:
+			measure = loss;
+			last_measure = last_loss;
+			break;
+
+		default:
+			boolean flag = isResultsOut;
+			isResultsOut = false; // to stop outputs
+			measure = evalRatings().get(earlyStopMeasure);
+			isResultsOut = flag; // recover the flag
+			break;
+		}
+
+		float delta_measure = (float) (last_measure - measure);
 
 		// print out debug info
 		if (verbose) {
 			String learnRate = lRate > 0 ? ", learn_rate = " + (float) lRate : "";
-			Logs.debug("{}{} iter {}: errs = {}, delta_errs = {}, loss = {}, delta_loss = {}{}",
-					new Object[] { algoName, foldInfo, iter, (float) errs, (float) (last_errs - errs), (float) loss,
-							(float) (Math.abs(last_loss) - Math.abs(loss)), learnRate });
+
+			String earlyStop = "";
+			if (earlyStopMeasure != Measure.Loss) {
+				earlyStop = String.format(", %s = %.6f, delta_%s = %.6f", new Object[] { earlyStopMeasure, (float) measure,
+						earlyStopMeasure, delta_measure });
+			}
+
+			Logs.debug("{}{} iter {}: loss = {}, delta_loss = {}{}{}", new Object[] { algoName, foldInfo, iter,
+					(float) loss, delta_loss, earlyStop, learnRate });
 		}
 
 		if (Double.isNaN(loss) || Double.isInfinite(loss)) {
@@ -150,8 +174,8 @@ public abstract class IterativeRecommender extends Recommender {
 		}
 
 		// check if converged
-		boolean cond1 = Math.abs(errs) < 1e-5;
-		boolean cond2 = (last_errs >= errs && last_errs - errs < 1e-5);
+		boolean cond1 = Math.abs(loss) < 1e-5;
+		boolean cond2 = (iter > 2) && (delta_measure < 1e-5);
 		boolean converged = cond1 || cond2;
 
 		// if not converged, update learning rate
@@ -159,7 +183,7 @@ public abstract class IterativeRecommender extends Recommender {
 			updateLRate(iter);
 
 		last_loss = loss;
-		last_errs = errs;
+		last_measure = measure;
 
 		return converged;
 	}

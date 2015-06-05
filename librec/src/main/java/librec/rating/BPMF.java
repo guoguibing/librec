@@ -230,7 +230,6 @@ public class BPMF extends IterativeRecommender {
 				}
 			} // end of gibbs
 
-			errs = 0;
 			loss = 0;
 			for (MatrixEntry me : trainMatrix) {
 				int u = me.row();
@@ -239,10 +238,8 @@ public class BPMF extends IterativeRecommender {
 				double pred = predict(u, j);
 				double euj = ruj - pred;
 
-				errs += euj * euj;
 				loss += euj * euj;
 			}
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

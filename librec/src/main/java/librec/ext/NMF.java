@@ -105,7 +105,6 @@ public class NMF extends IterativeRecommender {
 
 			// compute errors
 			loss = 0;
-			errs = 0;
 			for (MatrixEntry me : V) {
 				int u = me.row();
 				int j = me.column();
@@ -114,12 +113,10 @@ public class NMF extends IterativeRecommender {
 				if (ruj > 0) {
 					double euj = predict(u, j) - ruj;
 
-					errs += euj * euj;
 					loss += euj * euj;
 				}
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

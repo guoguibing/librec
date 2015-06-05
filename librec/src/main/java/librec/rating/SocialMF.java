@@ -44,7 +44,6 @@ public class SocialMF extends SocialRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 
 			DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
 			DenseMatrix QS = new DenseMatrix(numItems, numFactors);
@@ -59,7 +58,6 @@ public class SocialMF extends SocialRecommender {
 				double pred = predict(u, j, false);
 				double euj = g(pred) - normalize(ruj);
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				double csgd = gd(pred) * euj;
@@ -117,7 +115,6 @@ public class SocialMF extends SocialRecommender {
 			P = P.add(PS.scale(-lRate));
 			Q = Q.add(QS.scale(-lRate));
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

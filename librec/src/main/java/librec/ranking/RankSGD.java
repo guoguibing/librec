@@ -70,7 +70,6 @@ public class RankSGD extends IterativeRecommender {
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			errs = 0;
 			loss = 0;
 
 			// for each rated user-item (u,i) pair
@@ -108,8 +107,6 @@ public class RankSGD extends IterativeRecommender {
 					double pui = predict(u, i), puj = predict(u, j);
 
 					double e = (pui - puj) - (rui - ruj);
-
-					errs += e * e;
 					loss += e * e;
 
 					// update vectors
@@ -127,7 +124,6 @@ public class RankSGD extends IterativeRecommender {
 				}
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

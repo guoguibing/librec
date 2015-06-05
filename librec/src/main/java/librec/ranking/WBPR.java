@@ -109,7 +109,6 @@ public class WBPR extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 			for (int s = 0, smax = numUsers * 100; s < smax; s++) {
 
 				// randomly draw (u, i, j)
@@ -149,7 +148,6 @@ public class WBPR extends IterativeRecommender {
 
 				double vals = -Math.log(g(xuij));
 				loss += vals;
-				errs += vals;
 
 				double cmg = g(-xuij);
 

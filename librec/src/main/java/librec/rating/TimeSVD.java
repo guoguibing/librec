@@ -159,7 +159,6 @@ public class TimeSVD extends IterativeRecommender {
 	@Override
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
-			errs = 0;
 			loss = 0;
 
 			for (MatrixEntry me : trainMatrix) {
@@ -219,7 +218,6 @@ public class TimeSVD extends IterativeRecommender {
 				}
 
 				double eui = pui - rui;
-				errs += eui * eui;
 				loss += eui * eui;
 
 				// update bi
@@ -301,7 +299,6 @@ public class TimeSVD extends IterativeRecommender {
 				}
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

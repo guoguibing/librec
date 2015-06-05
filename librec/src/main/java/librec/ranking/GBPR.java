@@ -69,7 +69,6 @@ public class GBPR extends SocialRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 
 			DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
 			DenseMatrix QS = new DenseMatrix(numItems, numFactors);
@@ -117,7 +116,6 @@ public class GBPR extends SocialRecommender {
 				double pgij = pgui - puj;
 				double vals = -Math.log(g(pgij));
 				loss += vals;
-				errs += vals;
 
 				double cmg = g(-pgij);
 

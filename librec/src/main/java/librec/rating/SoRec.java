@@ -71,7 +71,6 @@ public class SoRec extends SocialRecommender {
 	@Override
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
-			errs = 0;
 			loss = 0;
 
 			DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
@@ -87,7 +86,6 @@ public class SoRec extends SocialRecommender {
 				double pred = predict(u, j, false);
 				double euj = g(pred) - normalize(ruj);
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				for (int f = 0; f < numFactors; f++) {
@@ -133,7 +131,6 @@ public class SoRec extends SocialRecommender {
 			Q = Q.add(QS.scale(-lRate));
 			Z = Z.add(ZS.scale(-lRate));
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

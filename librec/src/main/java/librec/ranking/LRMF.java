@@ -68,7 +68,6 @@ public class LRMF extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 			for (MatrixEntry me : trainMatrix) {
 
 				int u = me.row(); // user
@@ -84,7 +83,6 @@ public class LRMF extends IterativeRecommender {
 				}
 
 				loss -= Math.exp(ruj) / userExp.get(u) * Math.log(Math.exp(pred) / uexp);
-				errs -= Math.exp(ruj) / userExp.get(u) * Math.log(Math.exp(pred) / uexp);
 
 				// update factors
 				for (int f = 0; f < numFactors; f++) {

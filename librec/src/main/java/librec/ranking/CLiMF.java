@@ -46,7 +46,6 @@ public class CLiMF extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 
 			for (int u = 0; u < numUsers; u++) {
 
@@ -125,9 +124,7 @@ public class CLiMF extends IterativeRecommender {
 
 					if (uv.contains(j)) {
 						double fuj = predict(u, j);
-						double ruj = uv.get(j);
 
-						errs += (ruj - fuj) * (ruj - fuj);
 						loss += Math.log(g(fuj));
 
 						for (int k : uv.getIndex()) {
@@ -145,7 +142,6 @@ public class CLiMF extends IterativeRecommender {
 				}
 
 			}
-			errs *= 0.5;
 
 			if (isConverged(iter))
 				break;

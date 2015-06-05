@@ -94,6 +94,8 @@ public abstract class Recommender implements Runnable {
 	public static float validationRatio;
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
+
+	protected static Measure earlyStopMeasure;
 	// is output recommendation results 
 	protected static boolean isResultsOut = true;
 	// is save model
@@ -178,7 +180,9 @@ public abstract class Recommender implements Runnable {
 		/* ranking-based measures */
 		D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC,
 		/* execution time */
-		TrainTime, TestTime
+		TrainTime, TestTime,
+		/* loss value */
+		Loss
 	}
 
 	/**
@@ -215,7 +219,7 @@ public abstract class Recommender implements Runnable {
 			maxTimestamp = rateDao.getMaxTimestamp();
 			timestamps = rateDao.getTimestamps();
 
-			testTimestamps = testDao==null? timestamps: testDao.getTimestamps();
+			testTimestamps = testDao == null ? timestamps : testDao.getTimestamps();
 
 			initMean = 0.0;
 			initStd = 0.1;
@@ -233,8 +237,16 @@ public abstract class Recommender implements Runnable {
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isSplitByDate = evalOptions.contains("--by-date");
 			
+			String earlyStop = evalOptions.getString("--early-stop", "loss");
+			for (Measure m : Measure.values()) {
+				if (m.name().equalsIgnoreCase(earlyStop)) {
+					earlyStopMeasure = m;
+					break;
+				}
+			}
+
 			int numProcessors = Runtime.getRuntime().availableProcessors();
-			numCPUs = evalOptions.getInt("-cpu", numProcessors); 
+			numCPUs = evalOptions.getInt("-cpu", numProcessors);
 			Randoms.seed(evalOptions.getLong("--rand-seed", System.currentTimeMillis())); // initial random seed
 
 			// output options
@@ -579,7 +591,7 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * @return the evaluation results of rating predictions
 	 */
-	private Map<Measure, Double> evalRatings() throws Exception {
+	protected Map<Measure, Double> evalRatings() throws Exception {
 
 		List<String> preds = null;
 		String toFile = null;
@@ -672,7 +684,7 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * @return the evaluation results of ranking predictions
 	 */
-	private Map<Measure, Double> evalRankings() throws Exception {
+	protected Map<Measure, Double> evalRankings() throws Exception {
 
 		int capacity = Lists.initSize(testMatrix.numRows());
 

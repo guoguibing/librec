@@ -51,7 +51,6 @@ public class RSTE extends SocialRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 
 			DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
 			DenseMatrix QS = new DenseMatrix(numItems, numFactors);
@@ -90,7 +89,6 @@ public class RSTE extends SocialRecommender {
 					// prediction error
 					double euj = g(pred) - ruj;
 
-					errs += euj * euj;
 					loss += euj * euj;
 
 					double csgd = gd(pred) * euj;
@@ -148,7 +146,6 @@ public class RSTE extends SocialRecommender {
 			}
 
 			loss *= 0.5;
-			errs *= 0.5;
 
 			P = P.add(PS.scale(-lRate));
 			Q = Q.add(QS.scale(-lRate));

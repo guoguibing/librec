@@ -72,7 +72,6 @@ public class FISMauc extends IterativeRecommender {
 
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			errs = 0;
 			loss = 0;
 
 			// update throughout each (u, i, j) cell
@@ -120,7 +119,6 @@ public class FISMauc extends IterativeRecommender {
 
 						double eij = (rui - ruj) - (pui - puj);
 
-						errs += eij * eij;
 						loss += eij * eij;
 
 						// update bi
@@ -171,7 +169,6 @@ public class FISMauc extends IterativeRecommender {
 
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

@@ -44,7 +44,6 @@ public class PMF extends IterativeRecommender {
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			loss = 0;
-			errs = 0;
 			for (MatrixEntry me : trainMatrix) {
 
 				int u = me.row(); // user
@@ -54,7 +53,6 @@ public class PMF extends IterativeRecommender {
 				double puj = predict(u, j, false);
 				double euj = ruj - puj;
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				// update factors
@@ -69,7 +67,6 @@ public class PMF extends IterativeRecommender {
 
 			}
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))

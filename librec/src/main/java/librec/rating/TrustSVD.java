@@ -89,7 +89,6 @@ public class TrustSVD extends SocialRecommender {
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter <= numIters; iter++) {
 			loss = 0;
-			errs = 0;
 
 			DenseMatrix PS = new DenseMatrix(numUsers, numFactors);
 			DenseMatrix WS = new DenseMatrix(numUsers, numFactors);
@@ -126,7 +125,6 @@ public class TrustSVD extends SocialRecommender {
 
 				double euj = pred - ruj;
 
-				errs += euj * euj;
 				loss += euj * euj;
 
 				double w_nu = Math.sqrt(nu.size());
@@ -227,7 +225,6 @@ public class TrustSVD extends SocialRecommender {
 			P = P.add(PS.scale(-lRate));
 			W = W.add(WS.scale(-lRate));
 
-			errs *= 0.5;
 			loss *= 0.5;
 
 			if (isConverged(iter))
