@@ -81,7 +81,6 @@ import librec.rating.ItemKNN;
 import librec.rating.LDCC;
 import librec.rating.PMF;
 import librec.rating.RSTE;
-import librec.rating.RegSVD;
 import librec.rating.SVDPlusPlus;
 import librec.rating.SoRec;
 import librec.rating.SoReg;
@@ -692,7 +691,7 @@ public class LibRec {
 		case "itembigram":
 			return new ItemBigram(trainMatrix, testMatrix, fold);
 		case "regsvd":
-			return new RegSVD(trainMatrix, testMatrix, fold);
+			return new PMF(trainMatrix, testMatrix, fold);
 		case "biasedmf":
 			return new BiasedMF(trainMatrix, testMatrix, fold);
 		case "gplsa":

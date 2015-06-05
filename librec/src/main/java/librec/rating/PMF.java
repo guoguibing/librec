@@ -18,87 +18,65 @@
 
 package librec.rating;
 
-import librec.data.DenseMatrix;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
 
 /**
- * Ruslan Salakhutdinov and Andriy Mnih, <strong>Probabilistic Matrix Factorization</strong>, NIPS 2008. <br/>
+ * <ul>
+ * <li><strong>PMF:</strong> Ruslan Salakhutdinov and Andriy Mnih, Probabilistic Matrix Factorization, NIPS 2008.</li>
+ * <li><strong>RegSVD:</strong> Arkadiusz Paterek, <strong>Improving Regularized Singular Value Decomposition
+ * Collaborative Filtering, Proceedings of KDD Cup and Workshop, 2007.</li>
+ * </ul>
  * 
- * @author guoguibing
+ * @author Guo Guibing
  * 
  */
 public class PMF extends IterativeRecommender {
 
-	protected DenseMatrix userDeltas, itemDeltas;
-
 	public PMF(SparseMatrix rm, SparseMatrix tm, int fold) {
 		super(rm, tm, fold);
-
-		lRate = -1;
-	}
-
-	@Override
-	protected void initModel() throws Exception {
-		super.initModel();
-
-		userDeltas = new DenseMatrix(numUsers, numFactors);
-		itemDeltas = new DenseMatrix(numItems, numFactors);
-	}
-
-	@Override
-	protected void postModel() throws Exception {
-		userDeltas = null;
-		itemDeltas = null;
 	}
 
 	@Override
 	protected void buildModel() throws Exception {
 
-		// batch updates with momentums
 		for (int iter = 1; iter <= numIters; iter++) {
 
-			DenseMatrix userSgds = new DenseMatrix(numUsers, numFactors);
-			DenseMatrix itemSgds = new DenseMatrix(numItems, numFactors);
 			loss = 0;
 			errs = 0;
-
 			for (MatrixEntry me : trainMatrix) {
-				int u = me.row();
-				int j = me.column();
-				double rate = me.get();
 
-				double pred = predict(u, j);
-				double euj = rate - pred;
-				loss += euj * euj;
+				int u = me.row(); // user
+				int j = me.column(); // item
+				double ruj = me.get();
+
+				double puj = predict(u, j, false);
+				double euj = ruj - puj;
+
 				errs += euj * euj;
+				loss += euj * euj;
 
+				// update factors
 				for (int f = 0; f < numFactors; f++) {
-					double qjf = Q.get(j, f);
-					double puf = P.get(u, f);
+					double puf = P.get(u, f), qjf = Q.get(j, f);
 
-					double sgd_u = 2 * euj * qjf - regU * puf;
-					double sgd_j = 2 * euj * puf - regI * qjf;
-
-					userSgds.add(u, f, sgd_u);
-					itemSgds.add(j, f, sgd_j);
+					P.add(u, f, lRate * (euj * qjf - regU * puf));
+					Q.add(j, f, lRate * (euj * puf - regI * qjf));
 
 					loss += regU * puf * puf + regI * qjf * qjf;
 				}
+
 			}
-			errs /= numRates;
-			loss /= numRates;
 
-			userDeltas = userDeltas.scale(momentum).add(userSgds.scale(lRate / numRates));
-			itemDeltas = itemDeltas.scale(momentum).add(itemSgds.scale(lRate / numRates));
-
-			P = P.add(userDeltas);
-			Q = Q.add(itemDeltas);
+			errs *= 0.5;
+			loss *= 0.5;
 
 			if (isConverged(iter))
 				break;
-		}
+
+		}// end of training
+
 	}
 
 }
