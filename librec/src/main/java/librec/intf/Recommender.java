@@ -94,10 +94,8 @@ public abstract class Recommender implements Runnable {
 	public static float validationRatio;
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
-
-	protected static Measure earlyStopMeasure;
-	// is output recommendation results 
-	protected static boolean isResultsOut = true;
+	// early-stop criteria
+	protected static Measure earlyStopMeasure = null;
 	// is save model
 	protected static boolean isSaveModel = false;
 	// is split data by date
@@ -152,6 +150,8 @@ public abstract class Recommender implements Runnable {
 	protected int fold;
 	// fold information
 	protected String foldInfo;
+	// is output recommendation results 
+	protected boolean isResultsOut = true;
 
 	// user-vector cache, item-vector cache
 	protected LoadingCache<Integer, SparseVector> userCache, itemCache;
@@ -236,12 +236,14 @@ public abstract class Recommender implements Runnable {
 			view = evalOptions.getString("--test-view", "all");
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isSplitByDate = evalOptions.contains("--by-date");
-			
-			String earlyStop = evalOptions.getString("--early-stop", "loss");
-			for (Measure m : Measure.values()) {
-				if (m.name().equalsIgnoreCase(earlyStop)) {
-					earlyStopMeasure = m;
-					break;
+
+			String earlyStop = evalOptions.getString("--early-stop");
+			if (earlyStop != null) {
+				for (Measure m : Measure.values()) {
+					if (m.name().equalsIgnoreCase(earlyStop)) {
+						earlyStopMeasure = m;
+						break;
+					}
 				}
 			}
 
@@ -252,7 +254,6 @@ public abstract class Recommender implements Runnable {
 			// output options
 			LineConfiger outputOptions = cf.getParamOptions("output.setup");
 			if (outputOptions != null) {
-				isResultsOut = outputOptions.isMainOn();
 				verbose = outputOptions.isOn("-verbose", true);
 				isSaveModel = outputOptions.contains("--save-model");
 			}
@@ -280,6 +281,12 @@ public abstract class Recommender implements Runnable {
 		// fold info
 		this.fold = fold;
 		foldInfo = fold > 0 ? " fold [" + fold + "]" : "";
+
+		// whether to write out results
+		LineConfiger outputOptions = cf.getParamOptions("output.setup");
+		if (outputOptions != null) {
+			isResultsOut = outputOptions.isMainOn();
+		}
 
 		// global mean
 		numRates = trainMatrix.size();

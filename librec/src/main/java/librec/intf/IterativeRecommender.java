@@ -138,18 +138,20 @@ public abstract class IterativeRecommender extends Recommender {
 
 		float delta_loss = (float) (last_loss - loss);
 
-		switch (earlyStopMeasure) {
-		case Loss:
-			measure = loss;
-			last_measure = last_loss;
-			break;
+		if (earlyStopMeasure != null) {
+			switch (earlyStopMeasure) {
+			case Loss:
+				measure = loss;
+				last_measure = last_loss;
+				break;
 
-		default:
-			boolean flag = isResultsOut;
-			isResultsOut = false; // to stop outputs
-			measure = evalRatings().get(earlyStopMeasure);
-			isResultsOut = flag; // recover the flag
-			break;
+			default:
+				boolean flag = isResultsOut;
+				isResultsOut = false; // to stop outputs
+				measure = evalRatings().get(earlyStopMeasure);
+				isResultsOut = flag; // recover the flag
+				break;
+			}
 		}
 
 		float delta_measure = (float) (last_measure - measure);
@@ -159,9 +161,9 @@ public abstract class IterativeRecommender extends Recommender {
 			String learnRate = lRate > 0 ? ", learn_rate = " + (float) lRate : "";
 
 			String earlyStop = "";
-			if (earlyStopMeasure != Measure.Loss) {
-				earlyStop = String.format(", %s = %.6f, delta_%s = %.6f", new Object[] { earlyStopMeasure, (float) measure,
-						earlyStopMeasure, delta_measure });
+			if (earlyStopMeasure != null && earlyStopMeasure != Measure.Loss) {
+				earlyStop = String.format(", %s = %.6f, delta_%s = %.6f", new Object[] { earlyStopMeasure,
+						(float) measure, earlyStopMeasure, delta_measure });
 			}
 
 			Logs.debug("{}{} iter {}: loss = {}, delta_loss = {}{}{}", new Object[] { algoName, foldInfo, iter,
@@ -175,7 +177,7 @@ public abstract class IterativeRecommender extends Recommender {
 
 		// check if converged
 		boolean cond1 = Math.abs(loss) < 1e-5;
-		boolean cond2 = (iter > 2) && (delta_measure < 1e-5);
+		boolean cond2 = (delta_measure > 0) && (delta_measure < 1e-5);
 		boolean converged = cond1 || cond2;
 
 		// if not converged, update learning rate
