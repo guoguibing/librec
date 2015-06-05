@@ -16,6 +16,7 @@
 * LibRec commands & configuration
   * Configuration entries in `librec.conf` improved and reformatted
   * Item recommendation results can be outputed
+  * For iterative models, early-stop criterion can be specified by `--early-stop RMSE (Prec@5, Loss, etc)`
 * Class improvements
   * Java annotation `Configuration` is added to annotate general configuration of recommender interfaces
   * Java annotation `AddConfiguration` is added to annotate additional configuration of specific algorithms
