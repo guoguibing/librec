@@ -40,7 +40,7 @@
   * The columns of dataset to use can be specified by `-columns`
   * More dataset split approaches are added, including time-based ones
 
-## librec-v1.2 (milestone version)
+## librec-v1.2
 * Cache employed
   * rowCache(), columnCache(), rowColumnsCache(), columnRowsCache() methods added to SparseMatrix
   * employing cache technique can greatly improve the speed of recommendation
