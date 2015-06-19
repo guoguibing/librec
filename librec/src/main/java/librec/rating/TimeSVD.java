@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2005 Guibing Guo
+// Copyright (C) 2014-2015 Guibing Guo
 //
 // This file is part of LibRec.
 //
