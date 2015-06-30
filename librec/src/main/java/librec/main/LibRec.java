@@ -22,6 +22,7 @@ import happy.coding.io.FileConfiger;
 import happy.coding.io.FileIO;
 import happy.coding.io.LineConfiger;
 import happy.coding.io.Logs;
+import happy.coding.io.Strings;
 import happy.coding.io.net.EMailer;
 import happy.coding.system.Dates;
 import happy.coding.system.Systems;
@@ -606,6 +607,17 @@ public class LibRec {
 				(outputOptions.contains("--measures-only") ? "" : "\n"));
 
 		Logs.info(evalInfo);
+
+		// copy to clipboard for convenience
+		if (outputOptions.contains("--to-clipboard")) {
+			try {
+				Strings.toClipboard(evalInfo);
+				Logs.debug("Have been copied to clipboard!");
+			} catch (Exception e) {
+				Logs.error(e.getMessage());
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
