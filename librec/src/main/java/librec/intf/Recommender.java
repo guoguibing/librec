@@ -52,7 +52,6 @@ import librec.data.SymmMatrix;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Table;
 
 /**
  * General recommenders
@@ -66,7 +65,7 @@ public abstract class Recommender implements Runnable {
 	// configer
 	public static FileConfiger cf;
 	// matrix of rating data
-	public static SparseMatrix rateMatrix;
+	public static SparseMatrix rateMatrix, timeMatrix;
 
 	// default temporary file directory
 	public static String tempDirPath;
@@ -104,7 +103,7 @@ public abstract class Recommender implements Runnable {
 	public static String view;
 
 	// rate DAO object
-	public static DataDAO rateDao, testDao;
+	public static DataDAO rateDao;
 
 	// number of users, items, ratings
 	protected static int numUsers, numItems, numRates;
@@ -119,7 +118,7 @@ public abstract class Recommender implements Runnable {
 	protected static double maxRate, minRate;
 
 	// ratings' timestamps
-	protected static Table<Integer, Integer, Long> timestamps, testTimestamps;
+	public static SparseMatrix testTimeMatrix;
 	// minimum, maximum timestamp
 	protected static long minTimestamp, maxTimestamp;
 
@@ -217,9 +216,8 @@ public abstract class Recommender implements Runnable {
 			// ratings' timestamps
 			minTimestamp = rateDao.getMinTimestamp();
 			maxTimestamp = rateDao.getMaxTimestamp();
-			timestamps = rateDao.getTimestamps();
-
-			testTimestamps = testDao == null ? timestamps : testDao.getTimestamps();
+			if (testTimeMatrix == null)
+				testTimeMatrix = timeMatrix;
 
 			initMean = 0.0;
 			initStd = 0.1;
@@ -268,7 +266,7 @@ public abstract class Recommender implements Runnable {
 			DataSplitter ds = new DataSplitter(trainMatrix);
 			double ratio = 1 - validationRatio;
 
-			SparseMatrix[] trainSubsets = isSplitByDate ? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()) : ds
+			SparseMatrix[] trainSubsets = isSplitByDate ? ds.getRatioByRatingDate(ratio, timeMatrix) : ds
 					.getRatioByRating(ratio);
 			this.trainMatrix = trainSubsets[0];
 			this.validationMatrix = trainSubsets[1];

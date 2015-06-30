@@ -104,7 +104,7 @@ import com.google.common.collect.Table;
  */
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
-	protected static String version = "1.3";
+	protected static String version = "1.4";
 	// is only to print measurements
 	public static boolean isMeasuresOnly = false;
 	// output directory path
@@ -124,8 +124,8 @@ public class LibRec {
 	// line configer for rating data, LibRec outputs
 	protected LineConfiger ratingOptions, outputOptions;
 
-	// rating matrix
-	protected SparseMatrix rateMatrix;
+	// rating, timestamp matrix
+	protected SparseMatrix rateMatrix, timeMatrix;
 
 	/**
 	 * run the LibRec library
@@ -179,9 +179,12 @@ public class LibRec {
 		timeUnit = TimeUnit.valueOf(ratingOptions.getString("--time-unit", "seconds").toUpperCase());
 		rateDao.setTimeUnit(timeUnit);
 
-		rateMatrix = rateDao.readData(columns, binThold);
+		SparseMatrix[] data = rateDao.readData(columns, binThold);
+		rateMatrix = data[0];
+		timeMatrix = data[1];
 
 		Recommender.rateMatrix = rateMatrix;
+		Recommender.timeMatrix = timeMatrix;
 		Recommender.rateDao = rateDao;
 		Recommender.binThold = binThold;
 	}
@@ -303,17 +306,17 @@ public class LibRec {
 
 					switch (paramOptions.getString("-target")) {
 					case "u":
-						data = paramOptions.contains("--by-date") ? ds.getRatioByUserDate(trainRatio,
-								rateDao.getTimestamps()) : ds.getRatioByUser(trainRatio);
+						data = paramOptions.contains("--by-date") ? ds.getRatioByUserDate(trainRatio, timeMatrix) : ds
+								.getRatioByUser(trainRatio);
 						break;
 					case "i":
-						data = paramOptions.contains("--by-date") ? ds.getRatioByItemDate(trainRatio,
-								rateDao.getTimestamps()) : ds.getRatioByItem(trainRatio);
+						data = paramOptions.contains("--by-date") ? ds.getRatioByItemDate(trainRatio, timeMatrix) : ds
+								.getRatioByItem(trainRatio);
 						break;
 					case "r":
 					default:
-						data = paramOptions.contains("--by-date") ? ds.getRatioByRatingDate(trainRatio,
-								rateDao.getTimestamps()) : ds.getRatioByRating(trainRatio);
+						data = paramOptions.contains("--by-date") ? ds.getRatioByRatingDate(trainRatio, timeMatrix)
+								: ds.getRatioByRating(trainRatio);
 						break;
 					}
 				}
@@ -342,8 +345,6 @@ public class LibRec {
 		// delete old file first
 		FileIO.deleteFile(filePath);
 
-		Table<Integer, Integer, Long> timestamps = rateDao.getTimestamps();
-
 		List<String> lines = new ArrayList<>(1500);
 		for (MatrixEntry me : data) {
 			int u = me.row();
@@ -355,7 +356,7 @@ public class LibRec {
 
 			String user = rateDao.getUserId(u);
 			String item = rateDao.getItemId(j);
-			String timestamp = timestamps != null ? " " + timestamps.get(u, j) : "";
+			String timestamp = timeMatrix != null ? " " + timeMatrix.get(u, j) : "";
 
 			lines.add(user + " " + item + " " + (float) ruj + timestamp);
 
@@ -403,10 +404,10 @@ public class LibRec {
 			boolean isByDate = evalOptions.contains("--by-date");
 			switch (evalOptions.getString("-target", "r")) {
 			case "u":
-				data = ds.getLOOByUser(isByDate, rateDao.getTimestamps());
+				data = ds.getLOOByUser(isByDate, timeMatrix);
 				break;
 			case "i":
-				data = ds.getLOOByItem(isByDate, rateDao.getTimestamps());
+				data = ds.getLOOByItem(isByDate, timeMatrix);
 				break;
 			case "r":
 			default:
@@ -417,22 +418,22 @@ public class LibRec {
 		case "test-set":
 			DataDAO testDao = new DataDAO(evalOptions.getString("-f"), rateDao.getUserIds(), rateDao.getItemIds());
 			testDao.setTimeUnit(timeUnit);
-			Recommender.testDao = testDao;
 
-			SparseMatrix testMatrix = testDao.readData(columns, binThold);
-			data = new SparseMatrix[] { rateMatrix, testMatrix };
+			SparseMatrix[] testData = testDao.readData(columns, binThold);
+			data = new SparseMatrix[] { rateMatrix, testData[0] };
+			Recommender.testTimeMatrix = testData[1];
 			break;
 		case "given-n":
 			N = evalOptions.getInt("-N", 20);
 
 			switch (evalOptions.getString("-target")) {
 			case "i":
-				data = evalOptions.contains("--by-date") ? ds.getGivenNByItemDate(N, rateDao.getTimestamps()) : ds
+				data = evalOptions.contains("--by-date") ? ds.getGivenNByItemDate(N, timeMatrix) : ds
 						.getGivenNByItem(N);
 				break;
 			case "u":
 			default:
-				data = evalOptions.contains("--by-date") ? ds.getGivenNByUserDate(N, rateDao.getTimestamps()) : ds
+				data = evalOptions.contains("--by-date") ? ds.getGivenNByUserDate(N, timeMatrix) : ds
 						.getGivenNByUser(N);
 				break;
 			}
@@ -442,16 +443,16 @@ public class LibRec {
 
 			switch (evalOptions.getString("-target")) {
 			case "u":
-				data = evalOptions.contains("--by-date") ? ds.getRatioByUserDate(ratio, rateDao.getTimestamps()) : ds
+				data = evalOptions.contains("--by-date") ? ds.getRatioByUserDate(ratio, timeMatrix) : ds
 						.getRatioByUser(ratio);
 				break;
 			case "i":
-				data = evalOptions.contains("--by-date") ? ds.getRatioByItemDate(ratio, rateDao.getTimestamps()) : ds
+				data = evalOptions.contains("--by-date") ? ds.getRatioByItemDate(ratio, timeMatrix) : ds
 						.getRatioByItem(ratio);
 				break;
 			case "r":
 			default:
-				data = evalOptions.contains("--by-date") ? ds.getRatioByRatingDate(ratio, rateDao.getTimestamps()) : ds
+				data = evalOptions.contains("--by-date") ? ds.getRatioByRatingDate(ratio, timeMatrix) : ds
 						.getRatioByRating(ratio);
 				break;
 			}

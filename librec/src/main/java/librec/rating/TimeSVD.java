@@ -135,7 +135,7 @@ public class TimeSVD extends IterativeRecommender {
 			if (rui <= 0)
 				continue;
 
-			sum += days(timestamps.get(u, i), minTimestamp);
+			sum += days((long) timeMatrix.get(u, i), minTimestamp);
 			cnt++;
 		}
 		double globalMeanDate = sum / cnt;
@@ -148,7 +148,7 @@ public class TimeSVD extends IterativeRecommender {
 			sum = 0;
 			Ru = userItemsCache.get(u);
 			for (int i : Ru) {
-				sum += days(timestamps.get(u, i), minTimestamp);
+				sum += days((long) timeMatrix.get(u, i), minTimestamp);
 			}
 
 			double mean = (Ru.size() > 0) ? (sum + 0.0) / Ru.size() : globalMeanDate;
@@ -166,7 +166,7 @@ public class TimeSVD extends IterativeRecommender {
 				int i = me.column();
 				double rui = me.get();
 
-				long timestamp = timestamps.get(u, i);
+				long timestamp = (long) timeMatrix.get(u, i);
 				// day t
 				int t = days(timestamp, minTimestamp);
 				int bin = bin(t);
@@ -309,7 +309,7 @@ public class TimeSVD extends IterativeRecommender {
 	@Override
 	protected double predict(int u, int i) throws Exception {
 		// retrieve the test rating timestamp
-		long timestamp = testTimestamps.get(u, i);
+		long timestamp = (long) testTimeMatrix.get(u, i);
 		int t = days(timestamp, minTimestamp);
 		int bin = bin(t);
 		double dev_ut = dev(u, t);

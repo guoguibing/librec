@@ -64,7 +64,7 @@ public abstract class SocialRecommender extends IterativeRecommender {
 		socialDao = new DataDAO(socialPath, rateDao.getUserIds());
 
 		try {
-			socialMatrix = socialDao.readData();
+			socialMatrix = socialDao.readData()[0];
 			numUsers = socialDao.numUsers();
 
 			//socialCache = socialMatrix.rowCache(cacheSpec);

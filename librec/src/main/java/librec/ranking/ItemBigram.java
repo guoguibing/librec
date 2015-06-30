@@ -73,7 +73,7 @@ public class ItemBigram extends GraphicRecommender {
 
 			List<RatingContext> rcs = new ArrayList<>(size);
 			for (Integer i : unsortedItems) {
-				rcs.add(new RatingContext(u, i, timestamps.get(u, i)));
+				rcs.add(new RatingContext(u, i, (long) timeMatrix.get(u, i)));
 			}
 			Collections.sort(rcs);
 

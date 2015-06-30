@@ -57,8 +57,10 @@ public class DataDAO {
 	private String dataDir;
 	// path to data file
 	private String dataPath;
-	// store data as {user/item rate} matrix
+	// store rate data as {user, item, rate} matrix
 	private SparseMatrix rateMatrix;
+	// store time data as {user, item, timestamp} matrix
+	private SparseMatrix timeMatrix;
 
 	// is item type as user
 	private boolean isItemAsUser;
@@ -76,9 +78,6 @@ public class DataDAO {
 
 	// inverse views of userIds, itemIds
 	private BiMap<Integer, String> idUsers, idItems;
-
-	// Table: {user, item, rating time}
-	private Table<Integer, Integer, Long> timestampTable;
 
 	// time unit may depend on data sets, e.g. in MovieLens, it is unix seconds
 	private TimeUnit timeUnit;
@@ -141,7 +140,7 @@ public class DataDAO {
 	 * 
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMatrix readData() throws Exception {
+	public SparseMatrix[] readData() throws Exception {
 		return readData(new int[] { 0, 1, 2 }, -1);
 	}
 
@@ -149,7 +148,7 @@ public class DataDAO {
 	 * @param isCCSUsed
 	 *            whether to construct CCS structures while reading data
 	 */
-	public SparseMatrix readData(double binThold) throws Exception {
+	public SparseMatrix[] readData(double binThold) throws Exception {
 		return readData(new int[] { 0, 1, 2 }, binThold);
 	}
 
@@ -166,7 +165,7 @@ public class DataDAO {
 	 *            negative value
 	 * @return a sparse matrix storing all the relevant data
 	 */
-	public SparseMatrix readData(int[] cols, double binThold) throws Exception {
+	public SparseMatrix[] readData(int[] cols, double binThold) throws Exception {
 
 		if (LibRec.isMeasuresOnly)
 			Logs.debug(String.format("Dataset: %s", Strings.last(dataPath, 38)));
@@ -175,6 +174,8 @@ public class DataDAO {
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		// Table {row-id, col-id, timestamp}
+		Table<Integer, Integer, Long> timeTable = null;
 		// Map {col-id, multiple row-id}: used to fast build a rating matrix
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
@@ -207,8 +208,8 @@ public class DataDAO {
 
 			// record rating's issuing time
 			if (cols.length >= 4 && data.length >= 4) {
-				if (timestampTable == null)
-					timestampTable = HashBasedTable.create();
+				if (timeTable == null)
+					timeTable = HashBasedTable.create();
 
 				// convert to million-seconds
 				long timestamp = timeUnit.toMillis(Long.parseLong(data[cols[3]]));
@@ -219,7 +220,7 @@ public class DataDAO {
 				if (maxTimestamp < timestamp)
 					maxTimestamp = timestamp;
 
-				timestampTable.put(row, col, timestamp);
+				timeTable.put(row, col, timestamp);
 			}
 
 		}
@@ -240,7 +241,7 @@ public class DataDAO {
 				double val = ratingScale.get(i);
 				ratingScale.set(i, val + epsilon);
 			}
-			// udpate data table
+			// update data table
 			for (int row = 0; row < numRows; row++) {
 				for (int col = 0; col < numCols; col++) {
 					if (dataTable.contains(row, col))
@@ -260,10 +261,14 @@ public class DataDAO {
 		// build rating matrix
 		rateMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
 
+		if (timeTable != null)
+			timeMatrix = new SparseMatrix(numRows, numCols, timeTable, colMap);
+
 		// release memory of data table
 		dataTable = null;
+		timeTable = null;
 
-		return rateMatrix;
+		return new SparseMatrix[] { rateMatrix, timeMatrix };
 	}
 
 	/**
@@ -604,13 +609,6 @@ public class DataDAO {
 		}
 
 		return dataDir;
-	}
-
-	/**
-	 * @return the time table of the data file
-	 */
-	public Table<Integer, Integer, Long> getTimestamps() {
-		return timestampTable;
 	}
 
 	/**

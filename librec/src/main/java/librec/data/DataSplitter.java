@@ -158,7 +158,7 @@ public class DataSplitter {
 	 * @param timestamps
 	 *            the timestamps of all rating data
 	 */
-	public SparseMatrix[] getRatioByRatingDate(double ratio, Table<Integer, Integer, Long> timestamps) {
+	public SparseMatrix[] getRatioByRatingDate(double ratio, SparseMatrix timestamps) {
 
 		assert (ratio > 0 && ratio < 1);
 
@@ -169,7 +169,7 @@ public class DataSplitter {
 		for (MatrixEntry me : rateMatrix) {
 			u = me.row();
 			i = me.column();
-			timestamp = timestamps.get(u, i);
+			timestamp = (long) timestamps.get(u, i);
 			rcs.add(new RatingContext(u, i, timestamp));
 		}
 		Collections.sort(rcs);
@@ -206,10 +206,10 @@ public class DataSplitter {
 	 * 
 	 * @param ratio
 	 *            the ratio of training data
-	 * @param timestamps
+	 * @param timeMatrix
 	 *            the timestamps of all rating data
 	 */
-	public SparseMatrix[] getRatioByUserDate(double ratio, Table<Integer, Integer, Long> timestamps) {
+	public SparseMatrix[] getRatioByUserDate(double ratio, SparseMatrix timeMatrix) {
 
 		assert (ratio > 0 && ratio < 1);
 
@@ -222,7 +222,7 @@ public class DataSplitter {
 			int size = unsortedItems.size();
 			List<RatingContext> rcs = new ArrayList<>(size);
 			for (int item : unsortedItems) {
-				rcs.add(new RatingContext(user, item, timestamps.get(user, item)));
+				rcs.add(new RatingContext(user, item, (long) timeMatrix.get(user, item)));
 			}
 			Collections.sort(rcs);
 
@@ -256,7 +256,7 @@ public class DataSplitter {
 	 * @param timestamps
 	 *            the timestamps of all rating data
 	 */
-	public SparseMatrix[] getRatioByItemDate(double ratio, Table<Integer, Integer, Long> timestamps) {
+	public SparseMatrix[] getRatioByItemDate(double ratio, SparseMatrix timestamps) {
 
 		assert (ratio > 0 && ratio < 1);
 
@@ -269,7 +269,7 @@ public class DataSplitter {
 			int size = unsortedUsers.size();
 			List<RatingContext> rcs = new ArrayList<>(size);
 			for (int user : unsortedUsers) {
-				rcs.add(new RatingContext(user, item, timestamps.get(user, item)));
+				rcs.add(new RatingContext(user, item, (long) timestamps.get(user, item)));
 			}
 			Collections.sort(rcs);
 
@@ -348,7 +348,7 @@ public class DataSplitter {
 	 * training set
 	 * 
 	 */
-	public SparseMatrix[] getLOOByUser(boolean isByDate, Table<Integer, Integer, Long> timestamps) throws Exception {
+	public SparseMatrix[] getLOOByUser(boolean isByDate, SparseMatrix timestamps) throws Exception {
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 
@@ -369,7 +369,7 @@ public class DataSplitter {
 				// by date
 				List<RatingContext> rcs = new ArrayList<>();
 				for (int j : items) {
-					rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
+					rcs.add(new RatingContext(u, j, (long) timestamps.get(u, j)));
 				}
 				Collections.sort(rcs);
 
@@ -398,7 +398,7 @@ public class DataSplitter {
 	 * training set
 	 * 
 	 */
-	public SparseMatrix[] getLOOByItem(boolean isByDate, Table<Integer, Integer, Long> timestamps) throws Exception {
+	public SparseMatrix[] getLOOByItem(boolean isByDate, SparseMatrix timestamps) throws Exception {
 
 		SparseMatrix trainMatrix = new SparseMatrix(rateMatrix);
 
@@ -419,7 +419,7 @@ public class DataSplitter {
 				// by date
 				List<RatingContext> rcs = new ArrayList<>();
 				for (int v : users) {
-					rcs.add(new RatingContext(v, i, timestamps.get(v, i)));
+					rcs.add(new RatingContext(v, i, (long) timestamps.get(v, i)));
 				}
 				Collections.sort(rcs);
 
@@ -497,7 +497,7 @@ public class DataSplitter {
 	 * ratings are preserved for each user, and the rest are used as the testing data
 	 * 
 	 */
-	public SparseMatrix[] getGivenNByUserDate(int numGiven, Table<Integer, Integer, Long> timestamps) throws Exception {
+	public SparseMatrix[] getGivenNByUserDate(int numGiven, SparseMatrix timestamps) throws Exception {
 
 		assert numGiven > 0;
 
@@ -511,7 +511,7 @@ public class DataSplitter {
 
 			List<RatingContext> rcs = new ArrayList<>(capacity);
 			for (int j : items) {
-				rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
+				rcs.add(new RatingContext(u, j, (long) timestamps.get(u, j)));
 			}
 			Collections.sort(rcs);
 
@@ -540,7 +540,7 @@ public class DataSplitter {
 	 * ratings are preserved for each item, and the rest are used as the testing data
 	 * 
 	 */
-	public SparseMatrix[] getGivenNByItemDate(int numGiven, Table<Integer, Integer, Long> timestamps) throws Exception {
+	public SparseMatrix[] getGivenNByItemDate(int numGiven, SparseMatrix timestamps) throws Exception {
 
 		assert numGiven > 0;
 
@@ -554,7 +554,7 @@ public class DataSplitter {
 
 			List<RatingContext> rcs = new ArrayList<>(capacity);
 			for (int u : users) {
-				rcs.add(new RatingContext(u, j, timestamps.get(u, j)));
+				rcs.add(new RatingContext(u, j, (long) timestamps.get(u, j)));
 			}
 			Collections.sort(rcs);
 
