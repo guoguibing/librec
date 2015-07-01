@@ -184,7 +184,7 @@ public class DataDAO {
 		minTimestamp = Long.MAX_VALUE;
 		maxTimestamp = Long.MIN_VALUE;
 		while ((line = br.readLine()) != null) {
-			String[] data = line.split("[ \t,]");
+			String[] data = line.trim().split("[ \t,]+");
 
 			String user = data[cols[0]];
 			String item = data[cols[1]];
@@ -212,7 +212,13 @@ public class DataDAO {
 					timeTable = HashBasedTable.create();
 
 				// convert to million-seconds
-				long timestamp = timeUnit.toMillis(Long.parseLong(data[cols[3]]));
+				long mms=0L;
+				try{
+					mms = Long.parseLong(data[cols[3]]); // cannot format "9.7323480e+008"
+				}catch(NumberFormatException e){
+					mms = (long) Double.parseDouble(data[cols[3]]);
+				}
+				long timestamp = timeUnit.toMillis(mms);
 
 				if (minTimestamp > timestamp)
 					minTimestamp = timestamp;

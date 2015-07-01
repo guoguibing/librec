@@ -596,7 +596,7 @@ public class LibRec {
 	/**
 	 * print out the evaluation information for a specific algorithm
 	 */
-	private void printEvalInfo(Recommender algo, Map<Measure, Double> ms) {
+	private void printEvalInfo(Recommender algo, Map<Measure, Double> ms) throws Exception {
 
 		String result = Recommender.getEvalInfo(ms);
 		// we add quota symbol to indicate the textual format of time 
@@ -608,15 +608,17 @@ public class LibRec {
 
 		Logs.info(evalInfo);
 
-		// copy to clipboard for convenience
+		// copy to clipboard for convenience, useful for a single run
 		if (outputOptions.contains("--to-clipboard")) {
-			try {
-				Strings.toClipboard(evalInfo);
-				Logs.debug("Have been copied to clipboard!");
-			} catch (Exception e) {
-				Logs.error(e.getMessage());
-				e.printStackTrace();
-			}
+			Strings.toClipboard(evalInfo);
+			Logs.debug("Have been copied to clipboard!");
+		}
+
+		// append to a specific file, useful for multiple runs
+		if (outputOptions.contains("--to-file")) {
+			String filePath = outputOptions.getString("--to-file");
+			FileIO.writeString(filePath, evalInfo, true);
+			Logs.debug("Have been collected to file: {}", filePath);
 		}
 	}
 
