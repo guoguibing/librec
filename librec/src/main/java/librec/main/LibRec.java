@@ -616,7 +616,7 @@ public class LibRec {
 
 		// append to a specific file, useful for multiple runs
 		if (outputOptions.contains("--to-file")) {
-			String filePath = outputOptions.getString("--to-file");
+			String filePath = outputOptions.getString("--to-file", tempDirPath + algorithm + ".txt");
 			FileIO.writeString(filePath, evalInfo, true);
 			Logs.debug("Have been collected to file: {}", filePath);
 		}

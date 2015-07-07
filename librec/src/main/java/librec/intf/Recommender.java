@@ -712,10 +712,12 @@ public abstract class Recommender implements Runnable {
 
 		List<String> preds = null;
 		String toFile = null;
+		int numTopNRanks = numRecs < 0 ? 10 : numRecs;
 		if (isResultsOut) {
 			preds = new ArrayList<String>(1500);
 			preds.add("# userId: recommendations in (itemId, ranking score) pairs, where a correct recommendation is denoted by symbol *."); // optional: file header
-			toFile = tempDirPath + algoName + "-top-10-items" + foldInfo + ".txt"; // the output-file name
+			toFile = tempDirPath
+					+ String.format("%s-top-%d-items%s.txt", new Object[] { algoName, numTopNRanks, foldInfo }); // the output-file name
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
@@ -793,7 +795,7 @@ public abstract class Recommender implements Runnable {
 				Integer item = kv.getKey();
 				rankedItems.add(item);
 
-				if (isResultsOut && count < 10) {
+				if (isResultsOut && count < numTopNRanks) {
 					// restore back to the original item id
 					sb.append("(").append(rateDao.getItemId(item));
 
@@ -802,9 +804,9 @@ public abstract class Recommender implements Runnable {
 
 					sb.append(", ").append(kv.getValue().floatValue()).append(")");
 
-					if (++count >= 10)
+					if (++count >= numTopNRanks)
 						break;
-					if (count < 10)
+					if (count < numTopNRanks)
 						sb.append(", ");
 				}
 			}
