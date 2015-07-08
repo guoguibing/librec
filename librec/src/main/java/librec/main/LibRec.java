@@ -267,7 +267,8 @@ public class LibRec {
 				// print out data set specification
 				cf = new FileConfiger(configFile);
 
-				DataDAO rateDao = new DataDAO(cf.getPath("dataset.ratings"));
+				readData();
+				
 				rateDao.printSpecs();
 
 				String socialSet = cf.getPath("dataset.social");
