@@ -82,8 +82,8 @@ public class CLiMF extends IterativeRecommender {
 
 				// compute sgds for items rated by user u
 				Map<Integer, List<Double>> itemSgds = new HashMap<>();
-				// for (int j : items) {
-				for (int j = 0; j < numItems; j++) {
+			    for (int j : uv.getIndex()) {
+				//for (int j = 0; j < numItems; j++) {
 
 					double fuj = predict(u, j);
 					List<Double> jSgds = new ArrayList<>();
