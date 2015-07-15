@@ -28,7 +28,12 @@ import com.google.common.collect.Multimap;
 
 /**
  * 
- * Data Structure: Sparse Tensor
+ * Data Structure: Sparse Tensor <br>
+ * 
+ * <p>
+ * For easy documentation, here we use (i-entry, value) to indicate each entry of a tesnsor, where the term {@value
+ * i-entry} is short for the indices of an entry.
+ * </p>
  * 
  * @author Guo Guibing
  *
@@ -63,12 +68,12 @@ public class SparseTensor {
 	}
 
 	/**
-	 * Add a value to specific indices
+	 * Add a value to a specific i-entry
 	 * 
 	 * @param val
 	 *            value to add
 	 * @param nd
-	 *            specific indices
+	 *            a specific i-entry
 	 */
 	public void add(double val, int... nd) {
 		assert nd.length == this.nd;
@@ -80,7 +85,7 @@ public class SparseTensor {
 	}
 
 	/**
-	 * find the inner index of a given array entry
+	 * find the inner index of a given i-entry
 	 */
 	public int findIndex(int... nd) {
 		// first, retrieve from indexed dimension
@@ -118,7 +123,7 @@ public class SparseTensor {
 	}
 
 	/**
-	 * @return a value given the dimension values nd
+	 * @return a value given a specific i-entry
 	 */
 	public double get(int... nd) {
 		assert nd.length == this.nd;
@@ -210,20 +215,20 @@ public class SparseTensor {
 		st.add(6.0, 3, 1, 4);
 
 		Logs.debug(st);
-		Logs.debug("Entry (1, 0, 0) = {}", st.get(1, 0, 0));
-		Logs.debug("Entry (1, 1, 0) = {}", st.get(1, 1, 0));
-		Logs.debug("Entry (1, 2, 0) = {}", st.get(1, 2, 0));
-		Logs.debug("Entry (2, 0, 0) = {}", st.get(2, 0, 0));
-		Logs.debug("Entry (1, 0, 6) = {}", st.get(1, 0, 6));
-		Logs.debug("Entry (3, 1, 4) = {}", st.get(3, 1, 4));
+		Logs.debug("I-Entry (1, 0, 0) = {}", st.get(1, 0, 0));
+		Logs.debug("I-Entry (1, 1, 0) = {}", st.get(1, 1, 0));
+		Logs.debug("I-Entry (1, 2, 0) = {}", st.get(1, 2, 0));
+		Logs.debug("I-Entry (2, 0, 0) = {}", st.get(2, 0, 0));
+		Logs.debug("I-Entry (1, 0, 6) = {}", st.get(1, 0, 6));
+		Logs.debug("I-Entry (3, 1, 4) = {}", st.get(3, 1, 4));
 
 		Logs.debug("dimension 0 key 1 = {}", st.getIndex(0, 1));
 		Logs.debug("dimension 1 key 3 = {}", st.getIndex(1, 3));
 		Logs.debug("dimension 2 key 1 = {}", st.getIndex(2, 1));
 		Logs.debug("dimension 2 key 6 = {}", st.getIndex(2, 6));
-		
-		Logs.debug("index of entry (1, 2, 0) = {}, value = {}", st.findIndex(1, 2, 0), st.get(1, 2, 0));
-		Logs.debug("index of entry (3, 1, 4) = {}, value = {}", st.findIndex(3, 1, 4), st.get(3, 1, 4));
+
+		Logs.debug("index of i-entry (1, 2, 0) = {}, value = {}", st.findIndex(1, 2, 0), st.get(1, 2, 0));
+		Logs.debug("index of i-entry (3, 1, 4) = {}, value = {}", st.findIndex(3, 1, 4), st.get(3, 1, 4));
 
 		Logs.debug("indices in dimension 2 associated with dimension 0 key 1 = {}", st.getIndex(0, 1, 2));
 	}
