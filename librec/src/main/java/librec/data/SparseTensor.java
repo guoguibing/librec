@@ -19,8 +19,10 @@ package librec.data;
 
 import happy.coding.io.Logs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.HashBasedTable;
@@ -40,7 +42,77 @@ import com.google.common.collect.Table;
  * @author Guo Guibing
  *
  */
-public class SparseTensor {
+public class SparseTensor implements Iterable<TensorEntry>, Serializable {
+
+	private static final long serialVersionUID = 2487513413901432943L;
+
+	private class TensorIterator implements Iterator<TensorEntry> {
+
+		private int index = 0;
+		private SparseTensorEntry entry = new SparseTensorEntry();
+
+		@Override
+		public boolean hasNext() {
+			return index < values.size();
+		}
+
+		@Override
+		public TensorEntry next() {
+			return entry.update(index++);
+		}
+
+		@Override
+		public void remove() {
+			entry.remove();
+		}
+
+	}
+
+	private class SparseTensorEntry implements TensorEntry {
+
+		private int index = -1;
+
+		public SparseTensorEntry update(int index) {
+			this.index = index;
+			return this;
+		}
+
+		@Override
+		public int index(int d) {
+			return ndArray[d].get(index);
+		}
+
+		@Override
+		public double get() {
+			return values.get(index);
+		}
+
+		@Override
+		public void set(double value) {
+			values.set(index, value);
+		}
+
+		/**
+		 * remove the current entry
+		 */
+		public void remove() {
+			for (int d = 0; d < numDimensions; d++) {
+				ndArray[d].remove(index);
+			}
+			values.remove(index);
+		}
+
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			for (int d = 0; d < numDimensions; d++) {
+				sb.append(index(d)).append("\t");
+			}
+			sb.append(get());
+
+			return sb.toString();
+		}
+
+	}
 
 	/**
 	 * number of dimensions except the dimension of values
@@ -392,6 +464,17 @@ public class SparseTensor {
 		// slice matrix
 		SparseMatrix mat = st.sliceMatrix(0, 1, 4, 4);
 		Logs.debug("slice matrix (0, 1) = {}", mat);
+
+		// iterator
+		for (TensorEntry te : st) {
+			te.set(te.get() + 0.588);
+			Logs.debug(te);
+		}
+	}
+
+	@Override
+	public Iterator<TensorEntry> iterator() {
+		return new TensorIterator();
 	}
 
 }
