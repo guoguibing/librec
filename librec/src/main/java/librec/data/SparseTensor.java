@@ -97,6 +97,11 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		 */
 		public void remove() {
 			for (int d = 0; d < numDimensions; d++) {
+
+				// update indices if necessary
+				if (isIndexed(d))
+					ndIndices[d].remove(index(d), index);
+				
 				ndArray[d].remove(index);
 			}
 			values.remove(index);
