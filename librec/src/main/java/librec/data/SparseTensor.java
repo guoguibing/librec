@@ -50,6 +50,7 @@ public class SparseTensor {
 	private List<Double> values; // values
 
 	private Multimap<Integer, Integer>[] ndIndices; // each multimap = {key, {pos1, pos2, ...}}
+	private List<Integer> indexedArray; // indexed dimensions
 
 	/**
 	 * Construct an empty sparse tensor
@@ -70,10 +71,11 @@ public class SparseTensor {
 		}
 
 		values = new ArrayList<>();
+		indexedArray = new ArrayList<>();
 	}
 
 	/**
-	 * If the given i-entry exists, a value is added to original value. If not, a new entry is added to the tensor.
+	 * Add a value to a given i-entry
 	 * 
 	 * @param val
 	 *            value to add
@@ -84,24 +86,13 @@ public class SparseTensor {
 
 		int index = findIndex(nd);
 
-		// if i-entry exists
 		if (index >= 0) {
-			// update value
+			// if i-entry exists: update value
 			values.set(index, values.get(index) + val);
-			return;
+		} else {
+			// if i-entry does not exist: add a new entry
+			set(val, nd);
 		}
-
-		// if i-entry does not exist
-		for (int d = 0; d < numDimensions; d++) {
-			ndArray[d].add(nd[d]);
-
-			// update indices if necessary
-			Multimap<Integer, Integer> indices = ndIndices[d];
-			if (indices != null && indices.size() > 0) {
-				indices.put(nd[d], ndArray[d].size() - 1);
-			}
-		}
-		values.add(val);
 	}
 
 	/**
@@ -115,8 +106,24 @@ public class SparseTensor {
 	public void set(double val, int... nd) {
 		int index = findIndex(nd);
 
-		if (index >= 0)
+		// if i-entry exists, set it a new value
+		if (index >= 0) {
 			values.set(index, val);
+			return;
+		}
+
+		// otherwise insert a new entry
+		for (int d = 0; d < numDimensions; d++) {
+			ndArray[d].add(nd[d]);
+
+			// update indices if necessary
+			Multimap<Integer, Integer> indices = ndIndices[d];
+			if (indices != null && indices.size() > 0) {
+				indices.put(nd[d], ndArray[d].size() - 1);
+			}
+		}
+		values.add(val);
+
 	}
 
 	/**
@@ -151,38 +158,34 @@ public class SparseTensor {
 		if (nd.length != numDimensions)
 			throw new Error("Tensor dimensions do not match with the given input");
 
-		// first, retrieve from indexed dimension
-		for (int d = 0; d < numDimensions; d++) {
-			Multimap<Integer, Integer> indices = ndIndices[d];
-			// if indexed
-			if (indices.size() > 0) {
-				int key = nd[d];
-				// all relevant positions
-				Collection<Integer> pos = indices.get(key);
-				if (pos == null)
-					return -1;
-				// for each possible position
-				for (int p : pos) {
-					boolean found = true;
-					for (int dd = 0; dd < nd.length; dd++) {
-						if (nd[dd] != ndArray[dd].get(p)) {
-							found = false;
-							break;
-						}
-					}
-					if (found)
-						return p;
-				}
+		// if no indexed dimension exists
+		if (indexedArray.size() == 0)
+			buildIndex(0);
 
-				// if not found
-				return -1;
+		// retrieve from the first indexed dimension
+		int d = indexedArray.get(0);
+
+		// all relevant positions
+		Collection<Integer> pos = ndIndices[d].get(nd[d]);
+		if (pos == null)
+			return -1;
+
+		// for each possible position
+		for (int p : pos) {
+			boolean found = true;
+			for (int dd = 0; dd < numDimensions; dd++) {
+				if (nd[dd] != ndArray[dd].get(p)) {
+					found = false;
+					break;
+				}
 			}
+			if (found)
+				return p;
 		}
 
-		// otherwise, let's index the first dimension and invoke this method again
-		buildIndex(0);
+		// if not found
+		return -1;
 
-		return findIndex(nd);
 	}
 
 	/**
@@ -218,6 +221,8 @@ public class SparseTensor {
 				int key = ndArray[d].get(index);
 				ndIndices[d].put(key, index);
 			}
+
+			indexedArray.add(d);
 		}
 	}
 
@@ -272,7 +277,9 @@ public class SparseTensor {
 	}
 
 	/**
-	 * Slice a tensor to form a new matrix (row, column, value)
+	 * Slice a tensor to form a new matrix (row, column, value). Usage warning: unexpected exceptions may happen if
+	 * multiple (row, column) exists in the tensor. For example, a user may issue multiple tags to an item in the form
+	 * of (u, i, tag).
 	 * 
 	 * @param rowDim
 	 *            row dimension
@@ -300,7 +307,9 @@ public class SparseTensor {
 	}
 
 	/**
-	 * Slice a tensor to form a new matrix (row, column, value)
+	 * Slice a tensor to form a new matrix (row, column, value). Usage warning: unexpected exceptions may happen if
+	 * multiple (row, column) exists in the tensor. For example, a user may issue multiple tags to an item in the form
+	 * of (u, i, tag).
 	 * 
 	 * @param rowDim
 	 *            row dimension
@@ -344,12 +353,12 @@ public class SparseTensor {
 	 */
 	public static void main(String[] args) {
 		SparseTensor st = new SparseTensor(3);
-		st.add(1.0, 1, 0, 0);
-		st.add(2.0, 1, 1, 0);
-		st.add(3.0, 2, 0, 0);
-		st.add(4.0, 1, 3, 0);
-		st.add(5.0, 1, 0, 6);
-		st.add(6.0, 3, 1, 4);
+		st.set(1.0, 1, 0, 0);
+		st.set(2.0, 1, 1, 0);
+		st.set(3.0, 2, 0, 0);
+		st.set(4.0, 1, 3, 0);
+		st.set(5.0, 1, 0, 6);
+		st.set(6.0, 3, 1, 4);
 
 		Logs.debug(st);
 		Logs.debug("I-Entry (1, 0, 0) = {}", st.get(1, 0, 0));
@@ -364,7 +373,7 @@ public class SparseTensor {
 		Logs.debug("dimension 2 key 1 = {}", st.getIndex(2, 1));
 		Logs.debug("dimension 2 key 6 = {}", st.getIndex(2, 6));
 
-		st.add(4.5, 2, 1, 1);
+		st.set(4.5, 2, 1, 1);
 		Logs.debug(st);
 		Logs.debug("dimension 2 key 1 = {}", st.getIndex(2, 1));
 		st.remove(2, 1, 1);
@@ -374,6 +383,10 @@ public class SparseTensor {
 		Logs.debug("index of i-entry (3, 1, 4) = {}, value = {}", st.findIndex(3, 1, 4), st.get(3, 1, 4));
 
 		Logs.debug("indices in dimension 2 associated with dimension 0 key 1 = {}", st.getRelevantIndex(0, 1, 2));
+
+		// slice matrix
+		SparseMatrix mat = st.sliceMatrix(0, 1, 4, 4);
+		Logs.debug("slice matrix (0, 1) = {}", mat);
 	}
 
 }
