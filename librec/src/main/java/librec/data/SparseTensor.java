@@ -23,8 +23,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 
 /**
  * 
@@ -71,17 +73,26 @@ public class SparseTensor {
 	}
 
 	/**
-	 * Add a value to a specific i-entry
+	 * If the given i-entry exists, a value is added to original value. If not, a new entry is added to the tensor.
 	 * 
 	 * @param val
 	 *            value to add
 	 * @param nd
-	 *            a specific i-entry
+	 *            i-entry
 	 */
 	public void add(double val, int... nd) {
-		assert nd.length == numDimensions;
 
-		for (int d = 0; d < nd.length; d++) {
+		int index = findIndex(nd);
+
+		// if i-entry exists
+		if (index >= 0) {
+			// update value
+			values.set(index, values.get(index) + val);
+			return;
+		}
+
+		// if i-entry does not exist
+		for (int d = 0; d < numDimensions; d++) {
 			ndArray[d].add(nd[d]);
 
 			// update indices if necessary
@@ -93,8 +104,25 @@ public class SparseTensor {
 		values.add(val);
 	}
 
+	/**
+	 * Set a value to a specific i-entry
+	 * 
+	 * @param val
+	 *            value to set
+	 * @param nd
+	 *            i-entry
+	 */
+	public void set(double val, int... nd) {
+		int index = findIndex(nd);
+
+		if (index >= 0)
+			values.set(index, val);
+	}
+
+	/**
+	 * @return true if a given i-entry is removed and false otherwise.
+	 */
 	public boolean remove(int... nd) {
-		assert nd.length == numDimensions;
 
 		int index = findIndex(nd);
 
@@ -118,7 +146,11 @@ public class SparseTensor {
 	/**
 	 * find the inner index of a given i-entry
 	 */
-	public int findIndex(int... nd) {
+	private int findIndex(int... nd) {
+
+		if (nd.length != numDimensions)
+			throw new Error("Tensor dimensions do not match with the given input");
+
 		// first, retrieve from indexed dimension
 		for (int d = 0; d < numDimensions; d++) {
 			Multimap<Integer, Integer> indices = ndIndices[d];
@@ -151,6 +183,17 @@ public class SparseTensor {
 		buildIndex(0);
 
 		return findIndex(nd);
+	}
+
+	/**
+	 * Check if a given i-entry exists in the tensor
+	 * 
+	 * @param nd
+	 *            i-entry
+	 * @return true if found, and false otherwise
+	 */
+	public boolean contains(int... nd) {
+		return findIndex(nd) >= 0 ? true : false;
 	}
 
 	/**
@@ -226,6 +269,60 @@ public class SparseTensor {
 	 */
 	public int size() {
 		return values.size();
+	}
+
+	/**
+	 * Slice a tensor to form a new matrix (row, column, value)
+	 * 
+	 * @param rowDim
+	 *            row dimension
+	 * @param colDim
+	 *            column dimension
+	 * @param valDim
+	 *            value dimension
+	 * @return a sparse matrix
+	 */
+	public SparseMatrix sliceMatrix(int rowDim, int colDim, int valDim, int numRows, int numCols) {
+
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		for (int index = 0, mindex = size(); index < mindex; index++) {
+			int row = ndArray[rowDim].get(index);
+			int col = ndArray[colDim].get(index);
+			double val = ndArray[valDim].get(index);
+
+			dataTable.put(row, col, val);
+			colMap.put(col, row);
+		}
+
+		return new SparseMatrix(numRows, numCols, dataTable, colMap);
+	}
+
+	/**
+	 * Slice a tensor to form a new matrix (row, column, value)
+	 * 
+	 * @param rowDim
+	 *            row dimension
+	 * @param colDim
+	 *            column dimension
+	 * @return a sparse matrix
+	 */
+	public SparseMatrix sliceMatrix(int rowDim, int colDim, int numRows, int numCols) {
+
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		for (int index = 0, mindex = size(); index < mindex; index++) {
+			int row = ndArray[rowDim].get(index);
+			int col = ndArray[colDim].get(index);
+			double val = values.get(index);
+
+			dataTable.put(row, col, val);
+			colMap.put(col, row);
+		}
+
+		return new SparseMatrix(numRows, numCols, dataTable, colMap);
 	}
 
 	@Override
