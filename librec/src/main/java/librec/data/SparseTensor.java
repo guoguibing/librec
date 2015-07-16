@@ -276,6 +276,13 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
+	 * @return whether a dimension d is indexed
+	 */
+	public boolean isIndexed(int d) {
+		return indexedArray.contains(d);
+	}
+
+	/**
 	 * @return a value given a specific i-entry
 	 */
 	public double get(int... nd) {
@@ -411,6 +418,11 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	@Override
+	public Iterator<TensorEntry> iterator() {
+		return new TensorIterator();
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("N-Dimension: ").append(numDimensions).append(", Size: ").append(size()).append("\n");
@@ -470,11 +482,6 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 			te.set(te.get() + 0.588);
 			Logs.debug(te);
 		}
-	}
-
-	@Override
-	public Iterator<TensorEntry> iterator() {
-		return new TensorIterator();
 	}
 
 }
