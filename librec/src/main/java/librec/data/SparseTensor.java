@@ -18,6 +18,7 @@
 package librec.data;
 
 import happy.coding.io.Logs;
+import happy.coding.math.Randoms;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -101,7 +102,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 				// update indices if necessary
 				if (isIndexed(d))
 					ndIndices[d].remove(index(d), index);
-				
+
 				ndArray[d].remove(index);
 			}
 			values.remove(index);
@@ -294,6 +295,41 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
+	 * Shuffle a sparse tensor
+	 */
+	public void shuffle() {
+		int len = size();
+		for (int i = 0; i < len; i++) {
+			// target index
+			int j = i + Randoms.uniform(len - i);
+
+			// swap values
+			double tempVal = values.get(i);
+			values.set(i, values.get(j));
+			values.set(j, tempVal);
+
+			// swap i-entries
+			for (int d = 0; d < numDimensions; d++) {
+				int ikey = ndArray[d].get(i);
+				int jkey = ndArray[d].get(j);
+				ndArray[d].set(i, jkey);
+				ndArray[d].set(j, ikey);
+
+				// update indices
+				if (isIndexed(d)) {
+					ndIndices[d].remove(jkey, j);
+					ndIndices[d].put(jkey, i);
+
+					ndIndices[d].remove(ikey, i);
+					ndIndices[d].put(ikey, j);
+				}
+
+			}
+
+		}
+	}
+
+	/**
 	 * build index at dimensions nd
 	 * 
 	 * @param nd
@@ -481,8 +517,12 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		// iterator
 		for (TensorEntry te : st) {
 			te.set(te.get() + 0.588);
-			Logs.debug(te);
 		}
+		Logs.debug("Before shuffle: {}", st);
+		
+		// shuffle
+		st.shuffle();
+		Logs.debug("After shuffle: {}", st);
 	}
 
 }
