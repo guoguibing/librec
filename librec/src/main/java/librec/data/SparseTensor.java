@@ -156,7 +156,11 @@ public class SparseTensor {
 	private int findIndex(int... nd) {
 
 		if (nd.length != numDimensions)
-			throw new Error("Tensor dimensions do not match with the given input");
+			throw new Error("The given input does not match with the tensor dimension!");
+
+		// if no data exists
+		if (values.size() == 0)
+			return -1;
 
 		// if no indexed dimension exists
 		if (indexedArray.size() == 0)
@@ -167,7 +171,7 @@ public class SparseTensor {
 
 		// all relevant positions
 		Collection<Integer> pos = ndIndices[d].get(nd[d]);
-		if (pos == null)
+		if (pos == null || pos.size() == 0)
 			return -1;
 
 		// for each possible position
@@ -354,6 +358,7 @@ public class SparseTensor {
 	public static void main(String[] args) {
 		SparseTensor st = new SparseTensor(3);
 		st.set(1.0, 1, 0, 0);
+		st.set(1.5, 1, 0, 0); // overwrite value
 		st.set(2.0, 1, 1, 0);
 		st.set(3.0, 2, 0, 0);
 		st.set(4.0, 1, 3, 0);
