@@ -189,10 +189,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 			ndArray[d].add(nd[d]);
 
 			// update indices if necessary
-			Multimap<Integer, Integer> indices = ndIndices[d];
-			if (indices != null && indices.size() > 0) {
-				indices.put(nd[d], ndArray[d].size() - 1);
-			}
+			if (isIndexed(d))
+				ndIndices[d].put(nd[d], ndArray[d].size() - 1);
 		}
 		values.add(val);
 
@@ -212,10 +210,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 			ndArray[d].remove(index);
 
 			// update indices if necessary
-			Multimap<Integer, Integer> indices = ndIndices[d];
-			if (indices != null && indices.size() > 0) {
-				indices.remove(nd[d], index);
-			}
+			if (isIndexed(d))
+				ndIndices[d].remove(nd[d], index);
 		}
 		values.remove(index);
 
