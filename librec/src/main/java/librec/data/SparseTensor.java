@@ -31,7 +31,7 @@ import com.google.common.collect.Multimap;
  * Data Structure: Sparse Tensor <br>
  * 
  * <p>
- * For easy documentation, here we use (i-entry, value) to indicate each entry of a tesnsor, where the term {@value
+ * For easy documentation, here we use (i-entry, value) to indicate each entry of a tensor, where the term {@value
  * i-entry} is short for the indices of an entry.
  * </p>
  * 
@@ -40,7 +40,10 @@ import com.google.common.collect.Multimap;
  */
 public class SparseTensor {
 
-	private int nd;
+	/**
+	 * number of dimensions except the dimension of values
+	 */
+	private int numDimensions;
 	private List<Integer>[] ndArray; // n-dimensional array
 	private List<Double> values; // values
 
@@ -55,11 +58,11 @@ public class SparseTensor {
 	@SuppressWarnings("unchecked")
 	public SparseTensor(int nd) {
 
-		this.nd = nd;
+		numDimensions = nd;
 		ndArray = (List<Integer>[]) new List<?>[nd];
 		ndIndices = (Multimap<Integer, Integer>[]) new Multimap<?, ?>[nd];
 
-		for (int d = 0; d < nd; d++) {
+		for (int d = 0; d < numDimensions; d++) {
 			ndArray[d] = new ArrayList<Integer>();
 			ndIndices[d] = HashMultimap.create();
 		}
@@ -76,12 +79,40 @@ public class SparseTensor {
 	 *            a specific i-entry
 	 */
 	public void add(double val, int... nd) {
-		assert nd.length == this.nd;
+		assert nd.length == numDimensions;
 
 		for (int d = 0; d < nd.length; d++) {
 			ndArray[d].add(nd[d]);
+
+			// update indices if necessary
+			Multimap<Integer, Integer> indices = ndIndices[d];
+			if (indices != null && indices.size() > 0) {
+				indices.put(nd[d], ndArray[d].size() - 1);
+			}
 		}
 		values.add(val);
+	}
+
+	public boolean remove(int... nd) {
+		assert nd.length == numDimensions;
+
+		int index = findIndex(nd);
+
+		if (index < 0)
+			return false;
+
+		for (int d = 0; d < numDimensions; d++) {
+			ndArray[d].remove(index);
+
+			// update indices if necessary
+			Multimap<Integer, Integer> indices = ndIndices[d];
+			if (indices != null && indices.size() > 0) {
+				indices.remove(nd[d], index);
+			}
+		}
+		values.remove(index);
+
+		return true;
 	}
 
 	/**
@@ -89,7 +120,7 @@ public class SparseTensor {
 	 */
 	public int findIndex(int... nd) {
 		// first, retrieve from indexed dimension
-		for (int d = 0; d < nd.length; d++) {
+		for (int d = 0; d < numDimensions; d++) {
 			Multimap<Integer, Integer> indices = ndIndices[d];
 			// if indexed
 			if (indices.size() > 0) {
@@ -126,7 +157,7 @@ public class SparseTensor {
 	 * @return a value given a specific i-entry
 	 */
 	public double get(int... nd) {
-		assert nd.length == this.nd;
+		assert nd.length == this.numDimensions;
 
 		int index = findIndex(nd);
 		return index < 0 ? 0 : values.get(index);
@@ -149,7 +180,7 @@ public class SparseTensor {
 	 * build index for all dimensions
 	 */
 	public void buildIndices() {
-		for (int d = 0; d < ndArray.length; d++) {
+		for (int d = 0; d < numDimensions; d++) {
 			buildIndex(d);
 		}
 	}
@@ -168,7 +199,7 @@ public class SparseTensor {
 	/**
 	 * @return indices in a target dimension td related with a key in dimension d
 	 */
-	public List<Integer> getIndex(int sd, int key, int td) {
+	public List<Integer> getRelevantIndex(int sd, int key, int td) {
 		Collection<Integer> indices = getIndex(sd, key);
 		List<Integer> res = null;
 		if (indices != null) {
@@ -182,7 +213,7 @@ public class SparseTensor {
 	}
 
 	/**
-	 * @return size of the tensor
+	 * @return number of entries of the tensor
 	 */
 	public int size() {
 		return values.size();
@@ -191,9 +222,9 @@ public class SparseTensor {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("N-Dimension: ").append(nd).append(", Size: ").append(size()).append("\n");
+		sb.append("N-Dimension: ").append(numDimensions).append(", Size: ").append(size()).append("\n");
 		for (int i = 0; i < values.size(); i++) {
-			for (int d = 0; d < nd; d++) {
+			for (int d = 0; d < numDimensions; d++) {
 				sb.append(ndArray[d].get(i)).append("\t");
 			}
 			sb.append(values.get(i)).append("\n");
@@ -227,10 +258,16 @@ public class SparseTensor {
 		Logs.debug("dimension 2 key 1 = {}", st.getIndex(2, 1));
 		Logs.debug("dimension 2 key 6 = {}", st.getIndex(2, 6));
 
+		st.add(4.5, 2, 1, 1);
+		Logs.debug(st);
+		Logs.debug("dimension 2 key 1 = {}", st.getIndex(2, 1));
+		st.remove(2, 1, 1);
+		Logs.debug("dimension 2 key 1 = {}", st.getIndex(2, 1));
+
 		Logs.debug("index of i-entry (1, 2, 0) = {}, value = {}", st.findIndex(1, 2, 0), st.get(1, 2, 0));
 		Logs.debug("index of i-entry (3, 1, 4) = {}, value = {}", st.findIndex(3, 1, 4), st.get(3, 1, 4));
 
-		Logs.debug("indices in dimension 2 associated with dimension 0 key 1 = {}", st.getIndex(0, 1, 2));
+		Logs.debug("indices in dimension 2 associated with dimension 0 key 1 = {}", st.getRelevantIndex(0, 1, 2));
 	}
 
 }
