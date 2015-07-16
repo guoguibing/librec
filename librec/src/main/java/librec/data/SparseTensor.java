@@ -164,15 +164,17 @@ public class SparseTensor {
 	}
 
 	/**
-	 * build index at dimension d
+	 * build index at dimensions nd
 	 * 
-	 * @param d
-	 *            dimension to be indexed
+	 * @param nd
+	 *            dimensions to be indexed
 	 */
-	public void buildIndex(int d) {
-		for (int index = 0; index < ndArray[d].size(); index++) {
-			int key = ndArray[d].get(index);
-			ndIndices[d].put(key, index);
+	public void buildIndex(int... nd) {
+		for (int d : nd) {
+			for (int index = 0; index < ndArray[d].size(); index++) {
+				int key = ndArray[d].get(index);
+				ndIndices[d].put(key, index);
+			}
 		}
 	}
 
