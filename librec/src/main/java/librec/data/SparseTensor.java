@@ -197,7 +197,14 @@ public class SparseTensor {
 	}
 
 	/**
-	 * @return indices in a target dimension td related with a key in dimension d
+	 * @param sd
+	 *            source dimension
+	 * @param key
+	 *            key in the source dimension
+	 * @param td
+	 *            target dimension
+	 * 
+	 * @return indices in a target dimension {@code td} related with a key in dimension {@code sd}
 	 */
 	public List<Integer> getRelevantIndex(int sd, int key, int td) {
 		Collection<Integer> indices = getIndex(sd, key);
