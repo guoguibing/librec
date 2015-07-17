@@ -40,6 +40,11 @@ import com.google.common.collect.Table;
  * i-entry} is short for the indices of an entry.
  * </p>
  * 
+ * <p>
+ * <Strong>Reference:</strong> Kolda and Bader, <strong>Tensor Decompositions and Applications</strong>, SIAM REVIEW,
+ * Vol. 51, No. 3, pp. 455–500
+ * </p>
+ * 
  * @author Guo Guibing
  *
  */
@@ -121,9 +126,10 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
-	 * number of dimensions except the dimension of values
+	 * number of dimensions, i.e., the order (or modes, ways) of a tensor
 	 */
 	private int numDimensions;
+	private int[] dimensions;
 	private List<Integer>[] ndArray; // n-dimensional array
 	private List<Double> values; // values
 
@@ -133,23 +139,31 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	/**
 	 * Construct an empty sparse tensor
 	 * 
-	 * @param nd
+	 * @param numDims
 	 *            number of dimensions of the tensor
+	 * @param dims
+	 *            dimensions of a tensor
 	 */
 	@SuppressWarnings("unchecked")
-	public SparseTensor(int nd) {
+	public SparseTensor(int... dims) {
 
-		numDimensions = nd;
-		ndArray = (List<Integer>[]) new List<?>[nd];
-		ndIndices = (Multimap<Integer, Integer>[]) new Multimap<?, ?>[nd];
+		if (dims.length < 3)
+			throw new Error("The dimension of a tensor cannot be smaller than 3!");
+
+		numDimensions = dims.length;
+		dimensions = new int[numDimensions];
+
+		ndArray = (List<Integer>[]) new List<?>[numDimensions];
+		ndIndices = (Multimap<Integer, Integer>[]) new Multimap<?, ?>[numDimensions];
 
 		for (int d = 0; d < numDimensions; d++) {
+			dimensions[d] = dims[d];
 			ndArray[d] = new ArrayList<Integer>();
 			ndIndices[d] = HashMultimap.create();
 		}
 
 		values = new ArrayList<>();
-		indexedArray = new ArrayList<>();
+		indexedArray = new ArrayList<>(numDimensions);
 	}
 
 	/**
@@ -264,6 +278,63 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		// if not found
 		return -1;
 
+	}
+
+	/**
+	 * A fiber is defined by fixing every index but one. For example, a matrix column is a mode-1 fiber and a matrix row
+	 * is a mode-2 fiber.
+	 * 
+	 * @param dim
+	 *            that dimension where values can vary
+	 * @param nd
+	 *            the other fixed dimension indices
+	 * @return a sparse vector
+	 */
+	public SparseVector fiber(int dim, int... nd) {
+		if ((nd.length != numDimensions - 1) || size() < 1)
+			throw new Error("The input indices do not match the fiber specification!");
+
+		// find an indexed dimension for searching indices
+		int d = -1;
+		if ((indexedArray.size() == 0) || (indexedArray.contains(dim) && indexedArray.size() == 1)) {
+			d = (dim != 0 ? 0 : 1);
+			buildIndex(d);
+		} else {
+			for (int dd : indexedArray) {
+				if (dd != dim) {
+					d = dd;
+					break;
+				}
+			}
+		}
+
+		SparseVector res = new SparseVector(dimensions[dim]);
+
+		// all relevant positions
+		Collection<Integer> pos = ndIndices[d].get(nd[d < dim ? d : d - 1]);
+		if (pos == null || pos.size() == 0)
+			return res;
+
+		// for each possible position
+		for (int p : pos) {
+			boolean found = true;
+			for (int dd = 0, ndi = 0; dd < numDimensions; dd++) {
+
+				if (dd == dim)
+					continue;
+
+				int key = ndArray[dd].get(p);
+				if (nd[ndi++] != key) {
+					found = false;
+					break;
+				}
+			}
+			if (found) {
+				res.set(ndArray[dim].get(p), values.get(p));
+			}
+		}
+
+		return res;
 	}
 
 	/**
@@ -405,53 +476,79 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 *            row dimension
 	 * @param colDim
 	 *            column dimension
-	 * @param valDim
-	 *            value dimension
 	 * @return a sparse matrix
 	 */
-	public SparseMatrix sliceMatrix(int rowDim, int colDim, int valDim, int numRows, int numCols) {
+	public SparseMatrix slice(int rowDim, int colDim, int... nd) {
+
+		if (nd.length != numDimensions - 2)
+			throw new Error("The input dimensions do not match the tensor specification!");
+
+		// find an indexed array to search 
+		int d = -1;
+		boolean cond1 = indexedArray.size() == 0;
+		boolean cond2 = (indexedArray.contains(rowDim) || indexedArray.contains(colDim)) && indexedArray.size() == 1;
+		boolean cond3 = indexedArray.contains(rowDim) && indexedArray.contains(colDim) && indexedArray.size() == 2;
+		if (cond1 || cond2 || cond3) {
+			for (d = 0; d < numDimensions; d++) {
+				if (d != rowDim && d != colDim)
+					break;
+			}
+			buildIndex(d);
+		} else {
+			for (int dd : indexedArray) {
+				if (dd != rowDim && dd != colDim) {
+					d = dd;
+					break;
+				}
+			}
+		}
+
+		// get search key
+		int key = -1;
+		for (int dim = 0, i = 0; dim < numDimensions; dim++) {
+			if (dim == rowDim || dim == colDim)
+				continue;
+
+			if (dim == d) {
+				key = nd[i];
+				break;
+			}
+			i++;
+		}
+
+		// all relevant positions
+		Collection<Integer> pos = ndIndices[d].get(key);
+		if (pos == null || pos.size() == 0)
+			return null;
 
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
-		for (int index = 0, mindex = size(); index < mindex; index++) {
-			int row = ndArray[rowDim].get(index);
-			int col = ndArray[colDim].get(index);
-			double val = ndArray[valDim].get(index);
+		// for each possible position
+		for (int p : pos) {
+			boolean found = true;
+			for (int dd = 0, j = 0; dd < numDimensions; dd++) {
 
-			dataTable.put(row, col, val);
-			colMap.put(col, row);
+				if (dd == rowDim || dd == colDim)
+					continue;
+
+				int key2 = ndArray[dd].get(p);
+				if (nd[j++] != key2) {
+					found = false;
+					break;
+				}
+			}
+			if (found) {
+				int row = ndArray[rowDim].get(p);
+				int col = ndArray[colDim].get(p);
+				double val = values.get(p);
+
+				dataTable.put(row, col, val);
+				colMap.put(col, row);
+			}
 		}
 
-		return new SparseMatrix(numRows, numCols, dataTable, colMap);
-	}
-
-	/**
-	 * Slice a tensor to form a new matrix (row, column, value). Usage warning: unexpected exceptions may happen if
-	 * multiple (row, column) exists in the tensor. For example, a user may issue multiple tags to an item in the form
-	 * of (u, i, tag).
-	 * 
-	 * @param rowDim
-	 *            row dimension
-	 * @param colDim
-	 *            column dimension
-	 * @return a sparse matrix
-	 */
-	public SparseMatrix sliceMatrix(int rowDim, int colDim, int numRows, int numCols) {
-
-		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-		Multimap<Integer, Integer> colMap = HashMultimap.create();
-
-		for (int index = 0, mindex = size(); index < mindex; index++) {
-			int row = ndArray[rowDim].get(index);
-			int col = ndArray[colDim].get(index);
-			double val = values.get(index);
-
-			dataTable.put(row, col, val);
-			colMap.put(col, row);
-		}
-
-		return new SparseMatrix(numRows, numCols, dataTable, colMap);
+		return new SparseMatrix(dimensions[rowDim], dimensions[colDim], dataTable, colMap);
 	}
 
 	@Override
@@ -477,13 +574,13 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * Usage demonstration
 	 */
 	public static void main(String[] args) {
-		SparseTensor st = new SparseTensor(3);
+		SparseTensor st = new SparseTensor(4, 4, 6);
 		st.set(1.0, 1, 0, 0);
 		st.set(1.5, 1, 0, 0); // overwrite value
 		st.set(2.0, 1, 1, 0);
 		st.set(3.0, 2, 0, 0);
 		st.set(4.0, 1, 3, 0);
-		st.set(5.0, 1, 0, 6);
+		st.set(5.0, 1, 0, 5);
 		st.set(6.0, 3, 1, 4);
 
 		Logs.debug(st);
@@ -510,16 +607,22 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		Logs.debug("indices in dimension 2 associated with dimension 0 key 1 = {}", st.getRelevantIndex(0, 1, 2));
 
-		// slice matrix
-		SparseMatrix mat = st.sliceMatrix(0, 1, 4, 4);
-		Logs.debug("slice matrix (0, 1) = {}", mat);
+		// fiber
+		Logs.debug("fiber (0, 0, 0) = {}", st.fiber(0, 0, 0));
+		Logs.debug("fiber (1, 1, 0) = {}", st.fiber(1, 1, 0));
+		Logs.debug("fiber (2, 1, 0) = {}", st.fiber(2, 1, 0));
+
+		// slice
+		Logs.debug("slice (0, 1, 0) = {}", st.slice(0, 1, 0));
+		Logs.debug("slice (0, 2, 1) = {}", st.slice(0, 2, 1));
+		Logs.debug("slice (1, 2, 1) = {}", st.slice(1, 2, 1));
 
 		// iterator
 		for (TensorEntry te : st) {
 			te.set(te.get() + 0.588);
 		}
 		Logs.debug("Before shuffle: {}", st);
-		
+
 		// shuffle
 		st.shuffle();
 		Logs.debug("After shuffle: {}", st);
