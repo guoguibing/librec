@@ -255,11 +255,13 @@ public class LibRec {
 		if (paramOptions.contains("-v")) {
 			// print out short version information
 			System.out.println("LibRec version " + version);
+			System.exit(0);
 		}
 
 		if (paramOptions.contains("--version")) {
 			// print out full version information
 			about();
+			System.exit(0);
 		}
 
 		if (paramOptions.contains("--dataset-spec")) {
@@ -277,6 +279,7 @@ public class LibRec {
 					socDao.printSpecs();
 				}
 			}
+			System.exit(0);
 		}
 
 		if (paramOptions.contains("--dataset-split")) {
@@ -332,10 +335,9 @@ public class LibRec {
 					writeMatrix(data[1], dirPath + "test.txt");
 				}
 			}
-
+			System.exit(0);
 		}
 
-		System.exit(0);
 	}
 
 	/**
