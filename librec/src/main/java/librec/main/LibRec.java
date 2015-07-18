@@ -106,8 +106,6 @@ import com.google.common.collect.Table;
 public class LibRec {
 	// version: MAJOR version (significant changes), followed by MINOR version (small changes, bug fixes)
 	protected static String version = "1.4";
-	// is only to print measurements
-	public static boolean isMeasuresOnly = false;
 	// output directory path
 	protected static String tempDirPath = "./Results/";
 
@@ -209,7 +207,6 @@ public class LibRec {
 		// LibRec outputs
 		outputOptions = cf.getParamOptions("output.setup");
 		if (outputOptions != null) {
-			isMeasuresOnly = outputOptions.contains("--measures-only");
 			tempDirPath = outputOptions.getString("-dir", "./Results/");
 		}
 
@@ -384,11 +381,7 @@ public class LibRec {
 		String setup = cf.getString("evaluation.setup");
 		LineConfiger evalOptions = new LineConfiger(setup);
 
-		// debug information
-		if (isMeasuresOnly)
-			Logs.debug("With Setup: {}", setup);
-		else
-			Logs.info("With Setup: {}", setup);
+		Logs.info("With Setup: {}", setup);
 
 		Recommender algo = null;
 

@@ -32,8 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import librec.main.LibRec;
-
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
@@ -167,10 +165,7 @@ public class DataDAO {
 	 */
 	public SparseMatrix[] readData(int[] cols, double binThold) throws Exception {
 
-		if (LibRec.isMeasuresOnly)
-			Logs.debug(String.format("Dataset: %s", Strings.last(dataPath, 38)));
-		else
-			Logs.info(String.format("Dataset: %s", Strings.last(dataPath, 38)));
+		Logs.info(String.format("Dataset: %s", Strings.last(dataPath, 38)));
 
 		// Table {row-id, col-id, rate}
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
@@ -212,10 +207,10 @@ public class DataDAO {
 					timeTable = HashBasedTable.create();
 
 				// convert to million-seconds
-				long mms=0L;
-				try{
+				long mms = 0L;
+				try {
 					mms = Long.parseLong(data[cols[3]]); // cannot format "9.7323480e+008"
-				}catch(NumberFormatException e){
+				} catch (NumberFormatException e) {
 					mms = (long) Double.parseDouble(data[cols[3]]);
 				}
 				long timestamp = timeUnit.toMillis(mms);
