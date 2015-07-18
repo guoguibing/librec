@@ -268,7 +268,7 @@ public class LibRec {
 				cf = new FileConfiger(configFile);
 
 				readData();
-				
+
 				rateDao.printSpecs();
 
 				String socialSet = cf.getPath("dataset.social");
@@ -277,8 +277,6 @@ public class LibRec {
 					socDao.printSpecs();
 				}
 			}
-
-			System.exit(0);
 		}
 
 		if (paramOptions.contains("--dataset-split")) {
@@ -335,9 +333,9 @@ public class LibRec {
 				}
 			}
 
-			System.exit(0);
 		}
 
+		System.exit(0);
 	}
 
 	/**
