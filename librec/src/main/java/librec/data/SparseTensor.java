@@ -123,6 +123,16 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 			return sb.toString();
 		}
 
+		@Override
+		public int[] indices() {
+			int[] res = new int[numDimensions];
+			for (int d = 0; d < numDimensions; d++) {
+				res[d] = index(d);
+			}
+
+			return res;
+		}
+
 	}
 
 	/**
@@ -164,6 +174,26 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		values = new ArrayList<>();
 		indexedArray = new ArrayList<>(numDimensions);
+	}
+
+	/**
+	 * make a deep clone
+	 */
+	public SparseTensor clone() {
+		SparseTensor res = new SparseTensor(dimensions);
+
+		// copy indices and values
+		for (int d = 0; d < numDimensions; d++) {
+			res.ndArray[d].addAll(this.ndArray[d]);
+			res.ndIndices[d].putAll(this.ndIndices[d]);
+		}
+
+		res.values.addAll(this.values);
+
+		// copy indexed array
+		res.indexedArray.addAll(this.indexedArray);
+
+		return res;
 	}
 
 	/**
@@ -468,14 +498,15 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
-	 * Slice a tensor to form a new matrix (row, column, value). Usage warning: unexpected exceptions may happen if
-	 * multiple (row, column) exists in the tensor. For example, a user may issue multiple tags to an item in the form
-	 * of (u, i, tag).
+	 * Slice is a two-dimensional section of a tensor, defined by fixing all but two indices.
 	 * 
 	 * @param rowDim
 	 *            row dimension
 	 * @param colDim
 	 *            column dimension
+	 * @param nd
+	 *            indices of other dimensions
+	 * 
 	 * @return a sparse matrix
 	 */
 	public SparseMatrix slice(int rowDim, int colDim, int... nd) {
@@ -556,6 +587,55 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return new TensorIterator();
 	}
 
+	/**
+	 * @return norm of a tensor
+	 */
+	public double norm() {
+		double res = 0;
+
+		for (double val : values) {
+			res += val * val;
+		}
+
+		return Math.sqrt(res);
+	}
+
+	/**
+	 * @return inner product with another tensor
+	 */
+	public double inner(SparseTensor st) throws Exception {
+		if (!isDimMatch(st))
+			throw new Exception("The dimensions of two sparse tensors do not match!");
+
+		double res = 0;
+		for (TensorEntry te : this) {
+			double v1 = te.get();
+			double v2 = st.get(te.indices());
+
+			res += v1 * v2;
+		}
+
+		return res;
+	}
+
+	/**
+	 * @return whether two sparse tensors have the same dimensions
+	 */
+	public boolean isDimMatch(SparseTensor st) {
+		if (numDimensions != st.numDimensions)
+			return false;
+
+		boolean match = true;
+		for (int d = 0; d < numDimensions; d++) {
+			if (dimensions[d] != st.dimensions[d]) {
+				match = false;
+				break;
+			}
+		}
+
+		return match;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -573,7 +653,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	/**
 	 * Usage demonstration
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		SparseTensor st = new SparseTensor(4, 4, 6);
 		st.set(1.0, 1, 0, 0);
 		st.set(1.5, 1, 0, 0); // overwrite value
@@ -606,6 +686,16 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		Logs.debug("index of i-entry (3, 1, 4) = {}, value = {}", st.findIndex(3, 1, 4), st.get(3, 1, 4));
 
 		Logs.debug("indices in dimension 2 associated with dimension 0 key 1 = {}", st.getRelevantIndex(0, 1, 2));
+
+		// norm
+		Logs.debug("norm = {}", st.norm());
+
+		// clone
+		SparseTensor st2 = st.clone();
+		Logs.debug("make a clone = {}", st2);
+
+		// inner product
+		Logs.debug("inner with the clone = {}", st.inner(st2));
 
 		// fiber
 		Logs.debug("fiber (0, 0, 0) = {}", st.fiber(0, 0, 0));

@@ -24,12 +24,17 @@ package librec.data;
 public interface TensorEntry {
 
 	/**
-	 * Returns the index of dimension d
+	 * @return the index of dimension d
 	 */
 	int index(int d);
+	
+	/**
+	 * @return indices of all dimensions
+	 */
+	int[] indices();
 
 	/**
-	 * Returns the value at the current index
+	 * @return the value at the current index
 	 */
 	double get();
 
