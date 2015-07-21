@@ -178,7 +178,8 @@ public class LibRec {
 		timeUnit = TimeUnit.valueOf(ratingOptions.getString("--time-unit", "seconds").toUpperCase());
 		rateDao.setTimeUnit(timeUnit);
 
-		SparseMatrix[] data = rateDao.readData(columns, binThold);
+		SparseMatrix[] data = ratingOptions.contains("--other-columns") ? rateDao.readTensor(columns, binThold)
+				: rateDao.readData(columns, binThold);
 		rateMatrix = data[0];
 		timeMatrix = data[1];
 

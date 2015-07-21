@@ -149,14 +149,25 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	/**
 	 * Construct an empty sparse tensor
 	 * 
-	 * @param numDims
-	 *            number of dimensions of the tensor
 	 * @param dims
 	 *            dimensions of a tensor
 	 */
-	@SuppressWarnings("unchecked")
 	public SparseTensor(int... dims) {
+		this(dims, null, null);
+	}
 
+	/**
+	 * Construct a sparse tensor with indices and values
+	 * 
+	 * @param dims
+	 *            dimensions of a tensor
+	 * @param nds
+	 *            n-dimensional indices
+	 * @param vals
+	 *            entry values
+	 */
+	@SuppressWarnings("unchecked")
+	public SparseTensor(int[] dims, List<Integer>[] nds, List<Double> vals) {
 		if (dims.length < 3)
 			throw new Error("The dimension of a tensor cannot be smaller than 3!");
 
@@ -168,11 +179,11 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		for (int d = 0; d < numDimensions; d++) {
 			dimensions[d] = dims[d];
-			ndArray[d] = new ArrayList<Integer>();
+			ndArray[d] = nds == null ? new ArrayList<Integer>() : new ArrayList<Integer>(nds[d]);
 			ndIndices[d] = HashMultimap.create();
 		}
 
-		values = new ArrayList<>();
+		values = vals == null ? new ArrayList<Double>() : new ArrayList<>(vals);
 		indexedArray = new ArrayList<>(numDimensions);
 	}
 
@@ -386,6 +397,38 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
+	 * @return whether a tensor is cubical
+	 */
+	public boolean isCubical() {
+		int dim = dimensions[0];
+		for (int d = 1; d < numDimensions; d++) {
+			if (dim != dimensions[d])
+				return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @return whether a tensor is diagonal
+	 */
+	public boolean isDiagonal() {
+		for (TensorEntry te : this) {
+			double val = te.get();
+			if (val != 0) {
+				int i = te.index(0);
+				for (int d = 0; d < numDimensions; d++) {
+					int j = te.index(d);
+					if (i != j)
+						return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * @return a value given a specific i-entry
 	 */
 	public double get(int... nd) {
@@ -582,6 +625,75 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return new SparseMatrix(dimensions[rowDim], dimensions[colDim], dataTable, colMap);
 	}
 
+	/**
+	 * Transforming a tensor into a matrix
+	 * 
+	 * @param n
+	 *            mode or dimension
+	 * @return an unfolded or flatten matrix
+	 */
+	public SparseMatrix unfoldings(int n) {
+		int numRows = dimensions[n];
+		int numCols = 1;
+		for (int d = 0; d < numDimensions; d++) {
+			if (d != n)
+				numCols *= dimensions[d];
+		}
+
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+		for (TensorEntry te : this) {
+			int[] indices = te.indices();
+
+			int i = indices[n];
+			int j = 0;
+			for (int k = 0; k < numDimensions; k++) {
+				if (k == n)
+					continue;
+
+				int ik = indices[k];
+				int jk = 1;
+				for (int m = 0; m < k; m++) {
+					if (m == n)
+						continue;
+					jk *= dimensions[m];
+				}
+
+				j += ik * jk;
+			}
+
+			dataTable.put(i, j, te.get());
+			colMap.put(j, i);
+		}
+
+		return new SparseMatrix(numRows, numCols, dataTable, colMap);
+	}
+
+	/**
+	 * retrieve a rating matrix from the tensor
+	 * 
+	 * @param userDim
+	 *            dimension of users
+	 * @param itemDim
+	 *            dimension of items
+	 * @return a sparse rating matrix
+	 */
+	public SparseMatrix rateMatrix(int userDim, int itemDim) {
+
+		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
+		Multimap<Integer, Integer> colMap = HashMultimap.create();
+
+		for (TensorEntry te : this) {
+			int u = te.index(userDim);
+			int i = te.index(itemDim);
+
+			dataTable.put(u, i, te.get());
+			colMap.put(i, u);
+		}
+
+		return new SparseMatrix(dimensions[userDim], dimensions[itemDim], dataTable, colMap);
+	}
+
 	@Override
 	public Iterator<TensorEntry> iterator() {
 		return new TensorIterator();
@@ -716,6 +828,40 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		// shuffle
 		st.shuffle();
 		Logs.debug("After shuffle: {}", st);
+
+		// new tensor: example given by the reference paper in (2.1)
+		st = new SparseTensor(3, 4, 2);
+
+		st.set(1, 0, 0, 0);
+		st.set(4, 0, 1, 0);
+		st.set(7, 0, 2, 0);
+		st.set(10, 0, 3, 0);
+		st.set(2, 1, 0, 0);
+		st.set(5, 1, 1, 0);
+		st.set(8, 1, 2, 0);
+		st.set(11, 1, 3, 0);
+		st.set(3, 2, 0, 0);
+		st.set(6, 2, 1, 0);
+		st.set(9, 2, 2, 0);
+		st.set(12, 2, 3, 0);
+
+		st.set(13, 0, 0, 1);
+		st.set(16, 0, 1, 1);
+		st.set(19, 0, 2, 1);
+		st.set(22, 0, 3, 1);
+		st.set(14, 1, 0, 1);
+		st.set(17, 1, 1, 1);
+		st.set(20, 1, 2, 1);
+		st.set(23, 1, 3, 1);
+		st.set(15, 2, 0, 1);
+		st.set(18, 2, 1, 1);
+		st.set(21, 2, 2, 1);
+		st.set(24, 2, 3, 1);
+
+		Logs.debug("A new tensor = {}", st);
+		Logs.debug("Mode X0 unfoldings = {}", st.unfoldings(0));
+		Logs.debug("Mode X1 unfoldings = {}", st.unfoldings(1));
+		Logs.debug("Mode X2 unfoldings = {}", st.unfoldings(2));
 	}
 
 }
