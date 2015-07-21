@@ -36,8 +36,8 @@ import com.google.common.collect.Table;
  * Data Structure: Sparse Tensor <br>
  * 
  * <p>
- * For easy documentation, here we use (i-entry, value) to indicate each entry of a tensor, where the term {@value
- * i-entry} is short for the indices of an entry.
+ * For easy documentation, here we use (keys, value) to indicate each entry of a tensor, where {@value keys} are the
+ * keys of an entry.
  * </p>
  * 
  * <p>
@@ -84,8 +84,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		}
 
 		@Override
-		public int index(int d) {
-			return ndArray[d].get(index);
+		public int key(int d) {
+			return ndKeys[d].get(index);
 		}
 
 		@Override
@@ -106,9 +106,9 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 				// update indices if necessary
 				if (isIndexed(d))
-					ndIndices[d].remove(index(d), index);
+					keyIndices[d].remove(key(d), index);
 
-				ndArray[d].remove(index);
+				ndKeys[d].remove(index);
 			}
 			values.remove(index);
 		}
@@ -116,7 +116,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 			for (int d = 0; d < numDimensions; d++) {
-				sb.append(index(d)).append("\t");
+				sb.append(key(d)).append("\t");
 			}
 			sb.append(get());
 
@@ -124,10 +124,10 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		}
 
 		@Override
-		public int[] indices() {
+		public int[] keys() {
 			int[] res = new int[numDimensions];
 			for (int d = 0; d < numDimensions; d++) {
-				res[d] = index(d);
+				res[d] = key(d);
 			}
 
 			return res;
@@ -135,16 +135,21 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 	}
 
+	// TODO: re-factor variable names to be clear 
+	
 	/**
 	 * number of dimensions, i.e., the order (or modes, ways) of a tensor
 	 */
 	private int numDimensions;
 	private int[] dimensions;
-	private List<Integer>[] ndArray; // n-dimensional array
+	private List<Integer>[] ndKeys; // n-dimensional array
 	private List<Double> values; // values
 
-	private Multimap<Integer, Integer>[] ndIndices; // each multimap = {key, {pos1, pos2, ...}}
-	private List<Integer> indexedArray; // indexed dimensions
+	private Multimap<Integer, Integer>[] keyIndices; // each multimap = {key, {pos1, pos2, ...}}
+	private List<Integer> indexedKeys; // indexed dimensions
+
+	// dimensions of users and items
+	private int userDimension, itemDimension;
 
 	/**
 	 * Construct an empty sparse tensor
@@ -174,17 +179,17 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		numDimensions = dims.length;
 		dimensions = new int[numDimensions];
 
-		ndArray = (List<Integer>[]) new List<?>[numDimensions];
-		ndIndices = (Multimap<Integer, Integer>[]) new Multimap<?, ?>[numDimensions];
+		ndKeys = (List<Integer>[]) new List<?>[numDimensions];
+		keyIndices = (Multimap<Integer, Integer>[]) new Multimap<?, ?>[numDimensions];
 
 		for (int d = 0; d < numDimensions; d++) {
 			dimensions[d] = dims[d];
-			ndArray[d] = nds == null ? new ArrayList<Integer>() : new ArrayList<Integer>(nds[d]);
-			ndIndices[d] = HashMultimap.create();
+			ndKeys[d] = nds == null ? new ArrayList<Integer>() : new ArrayList<Integer>(nds[d]);
+			keyIndices[d] = HashMultimap.create();
 		}
 
 		values = vals == null ? new ArrayList<Double>() : new ArrayList<>(vals);
-		indexedArray = new ArrayList<>(numDimensions);
+		indexedKeys = new ArrayList<>(numDimensions);
 	}
 
 	/**
@@ -195,14 +200,14 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		// copy indices and values
 		for (int d = 0; d < numDimensions; d++) {
-			res.ndArray[d].addAll(this.ndArray[d]);
-			res.ndIndices[d].putAll(this.ndIndices[d]);
+			res.ndKeys[d].addAll(this.ndKeys[d]);
+			res.keyIndices[d].putAll(this.keyIndices[d]);
 		}
 
 		res.values.addAll(this.values);
 
 		// copy indexed array
-		res.indexedArray.addAll(this.indexedArray);
+		res.indexedKeys.addAll(this.indexedKeys);
 
 		return res;
 	}
@@ -212,19 +217,19 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * 
 	 * @param val
 	 *            value to add
-	 * @param nd
-	 *            i-entry
+	 * @param ndKeys
+	 *            n-dimensional keys
 	 */
-	public void add(double val, int... nd) {
+	public void add(double val, int... ndKeys) {
 
-		int index = findIndex(nd);
+		int index = findIndex(ndKeys);
 
 		if (index >= 0) {
 			// if i-entry exists: update value
 			values.set(index, values.get(index) + val);
 		} else {
 			// if i-entry does not exist: add a new entry
-			set(val, nd);
+			set(val, ndKeys);
 		}
 	}
 
@@ -233,11 +238,11 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * 
 	 * @param val
 	 *            value to set
-	 * @param nd
-	 *            i-entry
+	 * @param ndKeys
+	 *            n-dimensional keys
 	 */
-	public void set(double val, int... nd) {
-		int index = findIndex(nd);
+	public void set(double val, int... keys) {
+		int index = findIndex(keys);
 
 		// if i-entry exists, set it a new value
 		if (index >= 0) {
@@ -247,36 +252,60 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		// otherwise insert a new entry
 		for (int d = 0; d < numDimensions; d++) {
-			ndArray[d].add(nd[d]);
+			ndKeys[d].add(keys[d]);
 
 			// update indices if necessary
 			if (isIndexed(d))
-				ndIndices[d].put(nd[d], ndArray[d].size() - 1);
+				keyIndices[d].put(keys[d], ndKeys[d].size() - 1);
 		}
 		values.add(val);
 
 	}
 
 	/**
-	 * @return true if a given i-entry is removed and false otherwise.
+	 * remove an entry with specific ndKeys
 	 */
-	public boolean remove(int... nd) {
+	public boolean remove(int... ndKeys) {
+		return remove(findIndex(ndKeys));
+	}
 
-		int index = findIndex(nd);
+	/**
+	 * remove an entry with a specific index
+	 */
+	private boolean remove(int index) {
 
 		if (index < 0)
 			return false;
 
 		for (int d = 0; d < numDimensions; d++) {
-			ndArray[d].remove(index);
+			int key = ndKeys[d].get(index);
+			ndKeys[d].remove(index);
 
 			// update indices if necessary
 			if (isIndexed(d))
-				ndIndices[d].remove(nd[d], index);
+				keyIndices[d].remove(key, index);
 		}
 		values.remove(index);
 
 		return true;
+
+	}
+
+	/**
+	 * @return all entries for a (user, item) pair
+	 */
+	public List<Integer> getIndices(int user, int item) {
+		List<Integer> res = new ArrayList<>();
+
+		Collection<Integer> userIndices = getIndex(userDimension, user);
+
+		for (int index : userIndices) {
+			if (ndKeys[itemDimension].get(index) == item) {
+				res.add(index);
+			}
+		}
+
+		return res;
 	}
 
 	/**
@@ -292,14 +321,14 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 			return -1;
 
 		// if no indexed dimension exists
-		if (indexedArray.size() == 0)
+		if (indexedKeys.size() == 0)
 			buildIndex(0);
 
 		// retrieve from the first indexed dimension
-		int d = indexedArray.get(0);
+		int d = indexedKeys.get(0);
 
 		// all relevant positions
-		Collection<Integer> pos = ndIndices[d].get(nd[d]);
+		Collection<Integer> pos = keyIndices[d].get(nd[d]);
 		if (pos == null || pos.size() == 0)
 			return -1;
 
@@ -307,7 +336,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		for (int p : pos) {
 			boolean found = true;
 			for (int dd = 0; dd < numDimensions; dd++) {
-				if (nd[dd] != ndArray[dd].get(p)) {
+				if (nd[dd] != ndKeys[dd].get(p)) {
 					found = false;
 					break;
 				}
@@ -337,11 +366,11 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		// find an indexed dimension for searching indices
 		int d = -1;
-		if ((indexedArray.size() == 0) || (indexedArray.contains(dim) && indexedArray.size() == 1)) {
+		if ((indexedKeys.size() == 0) || (indexedKeys.contains(dim) && indexedKeys.size() == 1)) {
 			d = (dim != 0 ? 0 : 1);
 			buildIndex(d);
 		} else {
-			for (int dd : indexedArray) {
+			for (int dd : indexedKeys) {
 				if (dd != dim) {
 					d = dd;
 					break;
@@ -352,7 +381,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		SparseVector res = new SparseVector(dimensions[dim]);
 
 		// all relevant positions
-		Collection<Integer> pos = ndIndices[d].get(nd[d < dim ? d : d - 1]);
+		Collection<Integer> pos = keyIndices[d].get(nd[d < dim ? d : d - 1]);
 		if (pos == null || pos.size() == 0)
 			return res;
 
@@ -364,14 +393,14 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 				if (dd == dim)
 					continue;
 
-				int key = ndArray[dd].get(p);
+				int key = ndKeys[dd].get(p);
 				if (nd[ndi++] != key) {
 					found = false;
 					break;
 				}
 			}
 			if (found) {
-				res.set(ndArray[dim].get(p), values.get(p));
+				res.set(ndKeys[dim].get(p), values.get(p));
 			}
 		}
 
@@ -393,7 +422,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * @return whether a dimension d is indexed
 	 */
 	public boolean isIndexed(int d) {
-		return indexedArray.contains(d);
+		return indexedKeys.contains(d);
 	}
 
 	/**
@@ -416,9 +445,9 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		for (TensorEntry te : this) {
 			double val = te.get();
 			if (val != 0) {
-				int i = te.index(0);
+				int i = te.key(0);
 				for (int d = 0; d < numDimensions; d++) {
-					int j = te.index(d);
+					int j = te.key(d);
 					if (i != j)
 						return false;
 				}
@@ -454,18 +483,18 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 			// swap i-entries
 			for (int d = 0; d < numDimensions; d++) {
-				int ikey = ndArray[d].get(i);
-				int jkey = ndArray[d].get(j);
-				ndArray[d].set(i, jkey);
-				ndArray[d].set(j, ikey);
+				int ikey = ndKeys[d].get(i);
+				int jkey = ndKeys[d].get(j);
+				ndKeys[d].set(i, jkey);
+				ndKeys[d].set(j, ikey);
 
 				// update indices
 				if (isIndexed(d)) {
-					ndIndices[d].remove(jkey, j);
-					ndIndices[d].put(jkey, i);
+					keyIndices[d].remove(jkey, j);
+					keyIndices[d].put(jkey, i);
 
-					ndIndices[d].remove(ikey, i);
-					ndIndices[d].put(ikey, j);
+					keyIndices[d].remove(ikey, i);
+					keyIndices[d].put(ikey, j);
 				}
 
 			}
@@ -481,12 +510,13 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 */
 	public void buildIndex(int... nd) {
 		for (int d : nd) {
-			for (int index = 0; index < ndArray[d].size(); index++) {
-				int key = ndArray[d].get(index);
-				ndIndices[d].put(key, index);
+			keyIndices[d].clear();
+			for (int index = 0; index < ndKeys[d].size(); index++) {
+				int key = ndKeys[d].get(index);
+				keyIndices[d].put(key, index);
 			}
 
-			indexedArray.add(d);
+			indexedKeys.add(d);
 		}
 	}
 
@@ -503,11 +533,30 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * @return indices (positions) of a key in dimension d
 	 */
 	public Collection<Integer> getIndex(int d, int key) {
-		Multimap<Integer, Integer> indices = ndIndices[d];
+		Multimap<Integer, Integer> indices = keyIndices[d];
 		if (indices == null || indices.size() == 0)
 			buildIndex(d);
 
 		return indices.get(key);
+	}
+
+	/**
+	 * @return keys in a given index
+	 */
+	public int[] keys(int index) {
+		int[] res = new int[numDimensions];
+		for (int d = 0; d < numDimensions; d++) {
+			res[d] = ndKeys[d].get(index);
+		}
+
+		return res;
+	}
+	
+	/**
+	 * @return value in a given index
+	 */
+	public double value(int index){
+		return values.get(index);
 	}
 
 	/**
@@ -526,7 +575,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		if (indices != null) {
 			res = new ArrayList<>();
 			for (int index : indices) {
-				res.add(ndArray[td].get(index));
+				res.add(ndKeys[td].get(index));
 			}
 		}
 
@@ -559,9 +608,9 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 
 		// find an indexed array to search 
 		int d = -1;
-		boolean cond1 = indexedArray.size() == 0;
-		boolean cond2 = (indexedArray.contains(rowDim) || indexedArray.contains(colDim)) && indexedArray.size() == 1;
-		boolean cond3 = indexedArray.contains(rowDim) && indexedArray.contains(colDim) && indexedArray.size() == 2;
+		boolean cond1 = indexedKeys.size() == 0;
+		boolean cond2 = (indexedKeys.contains(rowDim) || indexedKeys.contains(colDim)) && indexedKeys.size() == 1;
+		boolean cond3 = indexedKeys.contains(rowDim) && indexedKeys.contains(colDim) && indexedKeys.size() == 2;
 		if (cond1 || cond2 || cond3) {
 			for (d = 0; d < numDimensions; d++) {
 				if (d != rowDim && d != colDim)
@@ -569,7 +618,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 			}
 			buildIndex(d);
 		} else {
-			for (int dd : indexedArray) {
+			for (int dd : indexedKeys) {
 				if (dd != rowDim && dd != colDim) {
 					d = dd;
 					break;
@@ -591,7 +640,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		}
 
 		// all relevant positions
-		Collection<Integer> pos = ndIndices[d].get(key);
+		Collection<Integer> pos = keyIndices[d].get(key);
 		if (pos == null || pos.size() == 0)
 			return null;
 
@@ -606,15 +655,15 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 				if (dd == rowDim || dd == colDim)
 					continue;
 
-				int key2 = ndArray[dd].get(p);
+				int key2 = ndKeys[dd].get(p);
 				if (nd[j++] != key2) {
 					found = false;
 					break;
 				}
 			}
 			if (found) {
-				int row = ndArray[rowDim].get(p);
-				int col = ndArray[colDim].get(p);
+				int row = ndKeys[rowDim].get(p);
+				int col = ndKeys[colDim].get(p);
 				double val = values.get(p);
 
 				dataTable.put(row, col, val);
@@ -643,7 +692,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
 		for (TensorEntry te : this) {
-			int[] indices = te.indices();
+			int[] indices = te.keys();
 
 			int i = indices[n];
 			int j = 0;
@@ -670,7 +719,8 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
-	 * retrieve a rating matrix from the tensor
+	 * retrieve a rating matrix from the tensor. Warning: it assumes there is at most one entry for each (user, item)
+	 * pair.
 	 * 
 	 * @param userDim
 	 *            dimension of users
@@ -678,20 +728,20 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 *            dimension of items
 	 * @return a sparse rating matrix
 	 */
-	public SparseMatrix rateMatrix(int userDim, int itemDim) {
+	public SparseMatrix rateMatrix() {
 
 		Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
 		Multimap<Integer, Integer> colMap = HashMultimap.create();
 
 		for (TensorEntry te : this) {
-			int u = te.index(userDim);
-			int i = te.index(itemDim);
+			int u = te.key(userDimension);
+			int i = te.key(itemDimension);
 
 			dataTable.put(u, i, te.get());
 			colMap.put(i, u);
 		}
 
-		return new SparseMatrix(dimensions[userDim], dimensions[itemDim], dataTable, colMap);
+		return new SparseMatrix(dimensions[userDimension], dimensions[itemDimension], dataTable, colMap);
 	}
 
 	@Override
@@ -722,7 +772,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		double res = 0;
 		for (TensorEntry te : this) {
 			double v1 = te.get();
-			double v2 = st.get(te.indices());
+			double v2 = st.get(te.keys());
 
 			res += v1 * v2;
 		}
@@ -754,7 +804,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		sb.append("N-Dimension: ").append(numDimensions).append(", Size: ").append(size()).append("\n");
 		for (int i = 0; i < values.size(); i++) {
 			for (int d = 0; d < numDimensions; d++) {
-				sb.append(ndArray[d].get(i)).append("\t");
+				sb.append(ndKeys[d].get(i)).append("\t");
 			}
 			sb.append(values.get(i)).append("\n");
 		}
@@ -862,6 +912,30 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		Logs.debug("Mode X0 unfoldings = {}", st.unfoldings(0));
 		Logs.debug("Mode X1 unfoldings = {}", st.unfoldings(1));
 		Logs.debug("Mode X2 unfoldings = {}", st.unfoldings(2));
+	}
+
+	public int getUserDimension() {
+		return userDimension;
+	}
+
+	public void setUserDimension(int userDimension) {
+		this.userDimension = userDimension;
+	}
+
+	public int getItemDimension() {
+		return itemDimension;
+	}
+
+	public void setItemDimension(int itemDimension) {
+		this.itemDimension = itemDimension;
+	}
+
+	public int[] dimensions() {
+		return dimensions;
+	}
+
+	public int numDimensions() {
+		return numDimensions;
 	}
 
 }

@@ -66,6 +66,8 @@ public class DataDAO {
 
 	// is item type as user
 	private boolean isItemAsUser;
+	// is first head line
+	private boolean isHeadline = false;
 
 	// data scales
 	private List<Double> ratingScale;
@@ -181,6 +183,11 @@ public class DataDAO {
 		minTimestamp = Long.MAX_VALUE;
 		maxTimestamp = Long.MIN_VALUE;
 		while ((line = br.readLine()) != null) {
+			if (isHeadline()) {
+				setHeadline(false);
+				continue;
+			}
+
 			String[] data = line.trim().split("[ \t,]+");
 
 			String user = data[cols[0]];
@@ -303,6 +310,11 @@ public class DataDAO {
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
 		while ((line = br.readLine()) != null) {
+			if (isHeadline()) {
+				setHeadline(false);
+				continue;
+			}
+
 			String[] data = line.trim().split("[ \t,]+");
 
 			// initialization
@@ -340,6 +352,7 @@ public class DataDAO {
 					if (binThold >= 0)
 						rate = rate > binThold ? 1.0 : 0.0;
 
+					vals.add(rate);
 					scaleDist.add(rate);
 
 					continue;
@@ -384,8 +397,10 @@ public class DataDAO {
 				numRatings, (numDims - 2), Strings.toString(ratingScale));
 
 		rateTensor = new SparseTensor(dims, ndLists, vals);
+		rateTensor.setUserDimension(cols[0]);
+		rateTensor.setItemDimension(cols[1]);
 
-		return new SparseMatrix[] { rateTensor.rateMatrix(cols[0], cols[1]) };
+		return new SparseMatrix[] { rateTensor.rateMatrix(), null };
 	}
 
 	/**
@@ -751,5 +766,13 @@ public class DataDAO {
 
 	public SparseTensor getRateTensor() {
 		return rateTensor;
+	}
+
+	public boolean isHeadline() {
+		return isHeadline;
+	}
+
+	public void setHeadline(boolean isHeadline) {
+		this.isHeadline = isHeadline;
 	}
 }

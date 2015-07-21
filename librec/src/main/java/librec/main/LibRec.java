@@ -77,6 +77,7 @@ import librec.ranking.WBPR;
 import librec.ranking.WRMF;
 import librec.rating.BPMF;
 import librec.rating.BiasedMF;
+import librec.rating.CPTF;
 import librec.rating.GPLSA;
 import librec.rating.ItemKNN;
 import librec.rating.LDCC;
@@ -171,6 +172,9 @@ public class LibRec {
 		for (int i = 0; i < cols.size(); i++)
 			columns[i] = Integer.parseInt(cols.get(i));
 
+		// is first line: headline
+		rateDao.setHeadline(ratingOptions.contains("-headline"));
+
 		// rating threshold
 		binThold = ratingOptions.getFloat("-threshold");
 
@@ -178,8 +182,8 @@ public class LibRec {
 		timeUnit = TimeUnit.valueOf(ratingOptions.getString("--time-unit", "seconds").toUpperCase());
 		rateDao.setTimeUnit(timeUnit);
 
-		SparseMatrix[] data = ratingOptions.contains("--other-columns") ? rateDao.readTensor(columns, binThold)
-				: rateDao.readData(columns, binThold);
+		SparseMatrix[] data = ratingOptions.contains("--as-tensor") ? rateDao.readTensor(columns, binThold) : rateDao
+				.readData(columns, binThold);
 		rateMatrix = data[0];
 		timeMatrix = data[1];
 
@@ -730,6 +734,8 @@ public class LibRec {
 			return new URP(trainMatrix, testMatrix, fold);
 		case "ldcc":
 			return new LDCC(trainMatrix, testMatrix, fold);
+		case "cptf":
+			return new CPTF(trainMatrix, testMatrix, fold);
 
 			/* item ranking */
 		case "climf":

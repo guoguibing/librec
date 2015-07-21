@@ -26,17 +26,22 @@ public interface TensorEntry {
 	/**
 	 * @return the index of dimension d
 	 */
-	int index(int d);
-	
+	int key(int d);
+
 	/**
 	 * @return indices of all dimensions
 	 */
-	int[] indices();
+	int[] keys();
 
 	/**
 	 * @return the value at the current index
 	 */
 	double get();
+
+	/**
+	 * remove current entry
+	 */
+	void remove();
 
 	/**
 	 * Sets the value at the current index
