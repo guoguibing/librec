@@ -29,7 +29,7 @@ public interface TensorEntry {
 	int key(int d);
 
 	/**
-	 * @return indices of all dimensions
+	 * @return entry keys
 	 */
 	int[] keys();
 

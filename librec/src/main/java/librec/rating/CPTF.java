@@ -15,7 +15,7 @@ public class CPTF extends TensorRecommender {
 
 	private DenseMatrix[] M;
 
-	public CPTF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
+	public CPTF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) throws Exception{
 		super(trainMatrix, testMatrix, fold);
 	}
 

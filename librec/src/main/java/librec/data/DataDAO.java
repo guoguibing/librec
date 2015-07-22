@@ -330,7 +330,7 @@ public class DataDAO {
 			}
 
 			// set data
-			for (int d = 0; d < numDims; d++) {
+			for (int d = 0; d < data.length; d++) {
 				String val = data[d];
 				int feature = -1;
 
@@ -361,8 +361,9 @@ public class DataDAO {
 					feature = Integer.parseInt(val);
 				}
 
-				ndLists[d].add(feature);
-				ndSets[d].add(feature);
+				int dim = d > cols[2] ? d - 1 : d;
+				ndLists[dim].add(feature);
+				ndSets[dim].add(feature);
 			}
 		}
 		br.close();
@@ -393,7 +394,7 @@ public class DataDAO {
 		}
 
 		// debug info
-		Logs.debug("With Specs: {Users, Items, Ratings, Features} = {{}, {}, {}}, Scale = {{}}{}", numRows, numCols,
+		Logs.debug("With Specs: {Users, Items, Ratings, Features} = {{}, {}, {}, {}}, Scale = {{}}", numRows, numCols,
 				numRatings, (numDims - 2), Strings.toString(ratingScale));
 
 		rateTensor = new SparseTensor(dims, ndLists, vals);
