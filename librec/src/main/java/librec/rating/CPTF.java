@@ -6,7 +6,10 @@ import librec.data.TensorEntry;
 import librec.intf.TensorRecommender;
 
 /**
- * CANDECOMP/PARAFAC Tensor Factorization
+ * CANDECOMP/PARAFAC (CP) Tensor Factorization <br>
+ * 
+ * Tamara G. Kolda and Brett W. Bader, <strong>Tensor Decompositions and Applications</strong> (Section 3.4), SIAM
+ * Review, 2009.
  * 
  * @author Guo Guibing
  *
@@ -33,14 +36,17 @@ public class CPTF extends TensorRecommender {
 		for (int iter = 1; iter < numIters; iter++) {
 
 			loss = 0;
-			for (TensorEntry te : trainTensor) {
-				double rate = te.get();
-				double pred = predict(te.keys());
 
-				double e = pred - rate;
-				loss += e * e;
+			// CP-ALS
+			for (int dim = 0; dim < numDimensions; dim++) {
 
-				for (int dim = 0; dim < numDimensions; dim++) {
+				for (TensorEntry te : trainTensor) {
+					double rate = te.get();
+					double pred = predict(te.keys());
+
+					double e = pred - rate;
+					loss += e * e;
+
 					int j = te.key(dim);
 
 					for (int f = 0; f < numFactors; f++) {

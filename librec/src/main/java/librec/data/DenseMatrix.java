@@ -285,6 +285,74 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
+	 * @return Kronecker product of two arbitrary matrices
+	 */
+	public static DenseMatrix kroneckerProduct(DenseMatrix M, DenseMatrix N) {
+		DenseMatrix res = new DenseMatrix(M.numRows * N.numRows, M.numColumns * N.numColumns);
+		for (int i = 0; i < M.numRows; i++) {
+			for (int j = 0; j < M.numColumns; j++) {
+				double Mij = M.get(i, j);
+				// Mij*N
+				for (int ni = 0; ni < N.numRows; ni++) {
+					for (int nj = 0; nj < N.numColumns; nj++) {
+						int row = i * M.numRows + ni;
+						int col = j * M.numColumns + nj;
+
+						res.set(row, col, Mij * N.get(ni, nj));
+					}
+				}
+			}
+		}
+
+		return res;
+	}
+
+	/**
+	 * @return the result of {@code A^T A}
+	 */
+	public static DenseMatrix ATA(DenseMatrix A) {
+		DenseMatrix res = new DenseMatrix(A.numRows, A.numRows);
+
+		for (int i = 0; i < A.numRows; i++) {
+			// inner product of row i and row k
+			for (int k = 0; k < A.numRows; k++) {
+
+				double val = 0;
+				for (int j = 0; j < A.numColumns; j++) {
+					val += A.get(i, j) * A.get(k, j);
+				}
+
+				res.set(i, k, val);
+			}
+		}
+
+		return res;
+	}
+
+	/**
+	 * @return Khatri-Rao product of two matrices
+	 */
+	public static DenseMatrix khatriRaoProduct(DenseMatrix M, DenseMatrix N) throws Exception {
+		if (M.numColumns != N.numColumns)
+			throw new Exception("The number of columns of two matrices is not equal!");
+
+		DenseMatrix res = new DenseMatrix(M.numRows * N.numRows, M.numColumns);
+		for (int j = 0; j < M.numColumns; j++) {
+			for (int i = 0; i < M.numRows; i++) {
+				double Mij = M.get(i, j);
+
+				// Mij* Nj
+				for (int ni = 0; ni < N.numRows; ni++) {
+					int row = ni + i * M.numRows;
+
+					res.set(row, j, Mij * N.get(ni, j));
+				}
+			}
+		}
+		return res;
+	}
+
+	/**
 	 * Matrix multiplication with a dense matrix
 	 * 
 	 * @param mat
