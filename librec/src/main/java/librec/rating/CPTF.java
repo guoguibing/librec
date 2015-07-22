@@ -15,7 +15,7 @@ public class CPTF extends TensorRecommender {
 
 	private DenseMatrix[] M;
 
-	public CPTF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) throws Exception{
+	public CPTF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) throws Exception {
 		super(trainMatrix, testMatrix, fold);
 	}
 
@@ -40,26 +40,25 @@ public class CPTF extends TensorRecommender {
 				double e = pred - rate;
 				loss += e * e;
 
-				double sgd = 0;
 				for (int dim = 0; dim < numDimensions; dim++) {
 					int j = te.key(dim);
 
 					for (int f = 0; f < numFactors; f++) {
 
-						double prod = 1;
+						double grad = 1;
 						for (int d = 0; d < numDimensions; d++) {
 							if (d != dim) {
-								prod *= M[d].get(te.key(d), f);
+								grad *= M[d].get(te.key(d), f);
 							}
 						}
 
 						double Md_jf = M[dim].get(j, f);
-
-						sgd = e * prod + reg * Md_jf;
+						double sgd = e * grad + reg * Md_jf;
 						M[dim].add(j, f, -lRate * sgd);
 
 						loss += reg * Md_jf * Md_jf;
 					}
+
 				}
 			}
 
