@@ -22,11 +22,7 @@ import happy.coding.io.Strings;
 import happy.coding.math.Randoms;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Data Structure: dense matrix <br>
@@ -74,6 +70,16 @@ public class DenseMatrix implements Serializable {
 		for (int i = 0; i < numRows; i++)
 			for (int j = 0; j < numColumns; j++)
 				data[i][j] = array[i][j];
+	}
+
+	/**
+	 * Construct a dense matrix by a shallow copy of a data array
+	 */
+	public DenseMatrix(double[][] array, int numRows, int numColumns) {
+		this.numRows = numRows;
+		this.numColumns = numColumns;
+
+		this.data = array;
 	}
 
 	/**
@@ -308,28 +314,6 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * @return the result of {@code A^T A}
-	 */
-	public static DenseMatrix ATA(DenseMatrix A) {
-		DenseMatrix res = new DenseMatrix(A.numRows, A.numRows);
-
-		for (int i = 0; i < A.numRows; i++) {
-			// inner product of row i and row k
-			for (int k = 0; k < A.numRows; k++) {
-
-				double val = 0;
-				for (int j = 0; j < A.numColumns; j++) {
-					val += A.get(i, j) * A.get(k, j);
-				}
-
-				res.set(i, k, val);
-			}
-		}
-
-		return res;
-	}
-
-	/**
 	 * @return Khatri-Rao product of two matrices
 	 */
 	public static DenseMatrix khatriRaoProduct(DenseMatrix M, DenseMatrix N) throws Exception {
@@ -349,6 +333,46 @@ public class DenseMatrix implements Serializable {
 				}
 			}
 		}
+		return res;
+	}
+
+	/**
+	 * @return Hadamard product of two matrices
+	 */
+	public static DenseMatrix hadamardProduct(DenseMatrix M, DenseMatrix N) throws Exception {
+		if (M.numRows != N.numRows || M.numColumns != N.numColumns)
+			throw new Exception("The dimensions of two matrices are not consistent!");
+
+		DenseMatrix res = new DenseMatrix(M.numRows, M.numColumns);
+
+		for (int i = 0; i < M.numRows; i++) {
+			for (int j = 0; j < M.numColumns; j++) {
+				res.set(i, j, M.get(i, j) * N.get(i, j));
+			}
+		}
+
+		return res;
+	}
+
+	/**
+	 * @return the result of {@code A^T A}
+	 */
+	public DenseMatrix transMult() {
+		DenseMatrix res = new DenseMatrix(numColumns, numColumns);
+
+		for (int i = 0; i < numColumns; i++) {
+			// inner product of row i and row k
+			for (int k = 0; k < numColumns; k++) {
+
+				double val = 0;
+				for (int j = 0; j < numRows; j++) {
+					val += get(j, i) * get(j, k);
+				}
+
+				res.set(i, k, val);
+			}
+		}
+
 		return res;
 	}
 
@@ -432,81 +456,6 @@ public class DenseMatrix implements Serializable {
 		}
 
 		return res;
-	}
-
-	/**
-	 * a trick for WRMF
-	 */
-	public DenseMatrix nonZeroMult(DiagMatrix mat, DenseMatrix rightMatrix) {
-		assert this.numColumns == mat.numRows;
-		assert mat.numColumns == rightMatrix.numRows;
-
-		List<Integer> indexOfNoZero = new ArrayList<>();
-		Map<Integer, Double> valueOfDiagMap = new HashMap<Integer, Double>();
-		for (int i = 0; i < mat.numRows; i++)
-			if (mat.get(i, i) != 0) {
-				indexOfNoZero.add(i);
-				valueOfDiagMap.put(i, mat.get(i, i));
-			}
-
-		DenseMatrix res = new DenseMatrix(this.numRows, indexOfNoZero.size());
-		DenseMatrix res1 = new DenseMatrix(this.numRows, rightMatrix.numColumns);
-
-		for (int j = 0; j < indexOfNoZero.size(); j++) {
-			int index = indexOfNoZero.get(j);
-			for (int i = 0; i < res.numRows; i++) {
-				res.set(i, j, data[i][index] * valueOfDiagMap.get(index));
-			}
-		}
-
-		for (int i = 0; i < this.numRows; i++) {
-			for (int j = 0; j < rightMatrix.numColumns; j++) {
-				double val = 0.0;
-				for (int k = 0; k < indexOfNoZero.size(); k++) {
-					val += res.get(i, k) * rightMatrix.get(indexOfNoZero.get(k), i);
-				}
-				res1.set(i, j, val);
-			}
-		}
-
-		return res1;
-	}
-
-	/**
-	 * a trick for WRMF
-	 */
-	public DenseVector nonZeroMult(DiagMatrix mat, SparseVector pv) {
-		assert this.numColumns == mat.numRows;
-		assert mat.numColumns == pv.size();
-
-		List<Integer> indexOfNoZero = new ArrayList<>();
-		Map<Integer, Double> valueOfDiagMap = new HashMap<Integer, Double>();
-		for (int i = 0; i < mat.numRows; i++)
-			if (mat.get(i, i) != 0) {
-				indexOfNoZero.add(i);
-				valueOfDiagMap.put(i, mat.get(i, i));
-			}
-		// save all non-zero Column
-		DenseMatrix res = new DenseMatrix(this.numRows, indexOfNoZero.size());
-		DenseVector res1 = new DenseVector(this.numRows);
-
-		for (int j = 0; j < indexOfNoZero.size(); j++) {
-			int index = indexOfNoZero.get(j);
-			for (int i = 0; i < res.numRows; i++) {
-				res.set(i, j, data[i][index] * valueOfDiagMap.get(index));
-			}
-		}
-		for (int i = 0; i < res.numRows; i++) {
-			double val = 0.0;
-			for (int k = 0; k < indexOfNoZero.size(); k++) {
-				int index = indexOfNoZero.get(k);
-				if (pv.contains(index)) {
-					val += res.get(i, k) * pv.get(index);
-				}
-			}
-			res1.set(i, val);
-		}
-		return res1;
 	}
 
 	/**
@@ -885,7 +834,7 @@ public class DenseMatrix implements Serializable {
 	}
 
 	/**
-	 * NOTE: this implementation (adopted from PREA package) is slightly faster than {@code inverse}, especailly when
+	 * NOTE: this implementation (adopted from PREA package) is slightly faster than {@code inverse}, especially when
 	 * {@code numRows} is large.
 	 * 
 	 * @return the inverse matrix of current matrix
@@ -960,6 +909,36 @@ public class DenseMatrix implements Serializable {
 		}
 
 		return mat;
+	}
+
+	/**
+	 * @return Moore¨CPenrose pseudoinverse based on singular value decomposition (SVD)
+	 */
+	public DenseMatrix pinv() {
+
+		if (numRows < numColumns) {
+			DenseMatrix res = this.transpose().pinv();
+			if (res != null)
+				res = res.transpose();
+			return res;
+		}
+		
+		SVD svd = this.svd();
+		DenseMatrix U = svd.getU(), S = svd.getS(), V = svd.getV();
+
+		// compute S^+
+		DenseMatrix SPlus = S.clone();
+		for (int i = 0; i < SPlus.numRows; i++) {
+			double val = SPlus.get(i, i);
+			if (val != 0)
+				SPlus.set(i, i, 1.0 / val);
+		}
+
+		return V.mult(SPlus).mult(U.transpose());
+	}
+
+	public SVD svd() {
+		return new SVD(this);
 	}
 
 	/**

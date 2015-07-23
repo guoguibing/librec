@@ -679,13 +679,13 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
-	 * Transforming a tensor into a matrix
+	 * Re-ordering entries of a tensor into a matrix
 	 * 
 	 * @param n
 	 *            mode or dimension
 	 * @return an unfolded or flatten matrix
 	 */
-	public SparseMatrix unfoldings(int n) {
+	public SparseMatrix matricization(int n) {
 		int numRows = dimensions[n];
 		int numCols = 1;
 		for (int d = 0; d < numDimensions; d++) {
@@ -942,9 +942,9 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		st.set(24, 2, 3, 1);
 
 		Logs.debug("A new tensor = {}", st);
-		Logs.debug("Mode X0 unfoldings = {}", st.unfoldings(0));
-		Logs.debug("Mode X1 unfoldings = {}", st.unfoldings(1));
-		Logs.debug("Mode X2 unfoldings = {}", st.unfoldings(2));
+		Logs.debug("Mode X0 unfoldings = {}", st.matricization(0));
+		Logs.debug("Mode X1 unfoldings = {}", st.matricization(1));
+		Logs.debug("Mode X2 unfoldings = {}", st.matricization(2));
 	}
 
 }
