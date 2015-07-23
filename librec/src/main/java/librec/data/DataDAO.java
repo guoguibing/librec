@@ -319,7 +319,7 @@ public class DataDAO {
 
 			// initialization
 			if (dims == null) {
-				numDims = 10;// data.length - 1;
+				numDims = data.length - 1;
 				dims = new int[numDims];
 				ndLists = (List<Integer>[]) new List<?>[numDims];
 				ndSets = (Set<Integer>[]) new Set<?>[numDims];
@@ -362,8 +362,6 @@ public class DataDAO {
 				}
 
 				int dim = d > cols[2] ? d - 1 : d;
-				if (dim >= 10)
-					break;
 				ndLists[dim].add(feature);
 				ndSets[dim].add(feature);
 			}
