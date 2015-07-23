@@ -301,8 +301,8 @@ public class DenseMatrix implements Serializable {
 				// Mij*N
 				for (int ni = 0; ni < N.numRows; ni++) {
 					for (int nj = 0; nj < N.numColumns; nj++) {
-						int row = i * M.numRows + ni;
-						int col = j * M.numColumns + nj;
+						int row = i * N.numRows + ni;
+						int col = j * N.numColumns + nj;
 
 						res.set(row, col, Mij * N.get(ni, nj));
 					}
@@ -327,7 +327,7 @@ public class DenseMatrix implements Serializable {
 
 				// Mij* Nj
 				for (int ni = 0; ni < N.numRows; ni++) {
-					int row = ni + i * M.numRows;
+					int row = ni + i * N.numRows;
 
 					res.set(row, j, Mij * N.get(ni, j));
 				}

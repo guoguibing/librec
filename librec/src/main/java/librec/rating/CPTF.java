@@ -77,7 +77,7 @@ public class CPTF extends TensorRecommender {
 				SparseMatrix X = trainTensor.matricization(d);
 
 				DenseMatrix A = null;
-				for (int dim = 0; dim < numDimensions; dim++) {
+				for (int dim = numDimensions - 1; dim >= 0; dim--) {
 					if (dim != d) {
 						A = A == null ? M[dim] : DenseMatrix.khatriRaoProduct(A, M[dim]);
 					}
