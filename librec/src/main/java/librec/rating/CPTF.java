@@ -50,12 +50,8 @@ public class CPTF extends TensorRecommender {
 		for (int d = 0; d < numDimensions; d++) {
 			M[d] = new DenseMatrix(dimensions[d], numFactors);
 			M[d].init(smallValue); // randomly initialization
-		}
 
-		lambda = new DenseVector(numFactors);
-
-		// normalize M
-		for (int d = 0; d < numDimensions; d++) {
+			// column-wise normalization
 			for (int f = 0; f < numFactors; f++) {
 
 				double norm = 0;
@@ -70,6 +66,10 @@ public class CPTF extends TensorRecommender {
 			}
 		}
 
+		lambda = new DenseVector(numFactors);
+
+		// no need to update learning rate
+		lRate = 0;
 	}
 
 	@Override
