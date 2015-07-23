@@ -358,7 +358,7 @@ public class DataDAO {
 					continue;
 				} else {
 					// other: val as feature value
-					feature = Integer.parseInt(val);
+					feature = val.equalsIgnoreCase("na") ? 0 : Integer.parseInt(val);
 				}
 
 				int dim = d > cols[2] ? d - 1 : d;
