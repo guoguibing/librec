@@ -47,34 +47,44 @@ public class CPTF extends TensorRecommender {
 	@Override
 	protected void initModel() throws Exception {
 		M = new DenseMatrix[numDimensions];
+
+		lambda = new DenseVector(numFactors);
+		lambda.setAll(1.0);
+
 		for (int d = 0; d < numDimensions; d++) {
 			M[d] = new DenseMatrix(dimensions[d], numFactors);
 			M[d].init(smallValue); // randomly initialization
 
-			// column-wise normalization
-			for (int f = 0; f < numFactors; f++) {
-
-				double norm = 0;
-				for (int r = 0; r < M[d].numRows(); r++) {
-					norm += Math.pow(M[d].get(r, f), 2);
-				}
-				norm = Math.sqrt(norm);
-
-				for (int r = 0; r < M[d].numRows(); r++) {
-					M[d].set(r, f, M[d].get(r, f) / norm);
-				}
-			}
+			normalize(d);
 		}
-
-		lambda = new DenseVector(numFactors);
 
 		// no need to update learning rate
 		lRate = 0;
 	}
 
+	private void normalize(int d) {
+
+		// column-wise normalization
+		for (int f = 0; f < numFactors; f++) {
+
+			double norm = 0;
+			for (int r = 0; r < M[d].numRows(); r++) {
+				norm += Math.pow(M[d].get(r, f), 2);
+			}
+			norm = Math.sqrt(norm);
+			lambda.set(f, lambda.get(f) * norm);
+
+			for (int r = 0; r < M[d].numRows(); r++) {
+				M[d].set(r, f, M[d].get(r, f) / norm);
+			}
+		}
+	}
+
 	@Override
 	protected void buildModel() throws Exception {
 		for (int iter = 1; iter < numIters; iter++) {
+
+			lambda.setAll(1.0);
 
 			// ALS Optimization
 			for (int d = 0; d < numDimensions; d++) {
@@ -104,19 +114,7 @@ public class CPTF extends TensorRecommender {
 				M[d] = DenseMatrix.mult(X, A).mult(V);
 
 				// Step 3: normalize columns of M[d]
-				for (int f = 0; f < numFactors; f++) {
-
-					double norm = 0;
-					for (int r = 0; r < M[d].numRows(); r++) {
-						norm += Math.pow(M[d].get(r, f), 2);
-					}
-					norm = Math.sqrt(norm);
-					lambda.set(f, norm);
-
-					for (int r = 0; r < M[d].numRows(); r++) {
-						M[d].set(r, f, M[d].get(r, f) / norm);
-					}
-				}
+				normalize(d);
 			}
 
 			// compute loss value
