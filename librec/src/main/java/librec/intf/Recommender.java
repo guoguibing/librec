@@ -804,8 +804,8 @@ public abstract class Recommender implements Runnable {
 
 					sb.append(", ").append(kv.getValue().floatValue()).append(")");
 
-					if (++count >= numTopNRanks)
-						break;
+					count++;
+					
 					if (count < numTopNRanks)
 						sb.append(", ");
 				}
