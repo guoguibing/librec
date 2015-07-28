@@ -139,6 +139,10 @@ public abstract class IterativeRecommender extends Recommender {
 		float delta_loss = (float) (last_loss - loss);
 
 		if (earlyStopMeasure != null) {
+			if (isRankingPred){
+				earlyStopMeasure = Measure.Loss;
+			}
+
 			switch (earlyStopMeasure) {
 			case Loss:
 				measure = loss;
