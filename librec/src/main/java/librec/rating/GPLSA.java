@@ -41,13 +41,16 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 /**
- * Thomas Hofmann, <stron>Collaborative Filtering via Gaussian Probabilistic Latent Semantic Analysis</strong>, SIGIR
- * 2003.
+ * Thomas Hofmann, <strong>Collaborative Filtering via Gaussian Probabilistic Latent Semantic Analysis</strong>, SIGIR
+ * 2003. <br>
+ * 
+ * <strong>Tempered EM:</strong> Thomas Hofmann, <strong>Unsupervised Learning by Probabilistic Latent Semantic
+ * Analysis</strong>, Machine Learning, 42, 177¨C196, 2001.
  * 
  * @author Guo Guibing
  *
  */
-@AddConfiguration(before = "factors, q")
+@AddConfiguration(before = "factors, q, b")
 public class GPLSA extends GraphicRecommender {
 
 	// {user, item, {factor z, probability}}
@@ -56,6 +59,7 @@ public class GPLSA extends GraphicRecommender {
 
 	private DenseVector mu, sigma;
 	private float q; // smoothing weight 
+	private float b; // tempered EM parameter beta, suggested by Wu Bin
 
 	private double preRMSE;
 
@@ -80,6 +84,8 @@ public class GPLSA extends GraphicRecommender {
 		double sd = Stats.sd(trainMatrix.getData(), mean);
 
 		q = algoOptions.getFloat("-q");
+		b = algoOptions.getFloat("-b", 1.0f);
+		
 		mu = new DenseVector(numUsers);
 		sigma = new DenseVector(numUsers);
 		for (int u = 0; u < numUsers; u++) {
@@ -153,7 +159,7 @@ public class GPLSA extends GraphicRecommender {
 			double[] numerator = new double[numFactors];
 			for (int z = 0; z < numFactors; z++) {
 				double pdf = Gaussian.pdf(r, Mu.get(i, z), Sigma.get(i, z));
-				double val = Puk.get(u, z) * pdf;
+				double val = Math.pow(Puk.get(u, z) * pdf, b); // Tempered EM
 
 				numerator[z] = val;
 				denominator += val;
@@ -285,6 +291,6 @@ public class GPLSA extends GraphicRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, q }) + ", " + super.toString();
+		return Strings.toString(new Object[] { numFactors, q, b }) + ", " + super.toString();
 	}
 }
