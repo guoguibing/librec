@@ -337,39 +337,6 @@ public class FileIO {
 	}
 
 	/**
-	 * copy result file (default: "results.txt") to destination fold (default: "./Results"), and then notify me by email
-	 * 
-	 * 
-	 * @param algo
-	 *            the algorithm or method executed
-	 * 
-	 * @param mailTo
-	 *            the email address of receiver
-	 * @param isNotify
-	 *            whether to notify me by Gmail
-	 * 
-	 * @throws Exception
-	 */
-	public static void notifyMe(String algo, String mailTo, boolean isNotify) throws Exception {
-
-		String destPath = FileIO.makeDirectory("Results");
-		String dest = destPath + algo + "@" + Dates.now() + ".txt";
-		FileIO.copyFile("results.txt", dest);
-
-		if (isNotify) {
-			Gmailer notifier = new Gmailer();
-			notifier.getProps().setProperty("mail.to", mailTo);
-			notifier.getProps().setProperty("mail.subject",
-					FileIO.getCurrentFolder() + "." + algo + "@" + Systems.getIP());
-			notifier.send("Program [" + algo + "] has been finished !", dest);
-		}
-	}
-
-	public static void notifyMe(String algo, boolean isNotify) throws Exception {
-		notifyMe(algo, "gguo1@e.ntu.edu.sg", isNotify);
-	}
-
-	/**
 	 * Read the content of a file, if keywords are specified, then only lines with these keywords will be read
 	 * 
 	 * @param filePath
