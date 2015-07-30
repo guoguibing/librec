@@ -6,7 +6,16 @@
 * LLORMA, CoFiSet, Ensemble models
 
 ## librec-v1.4 (under development)
-* tensor factorization
+* New recommenders added
+  * CPTF 
+* Dependent package `happy.coding.utils.*.jar` merged into package `librec.util` to be self-inclusive
+* LibRec data structure
+  * SparseTensor: sparse tensor structure
+* LibRec configurations
+  * option `--measures-only` removed field `output.setup`
+  * options `--to-clipboard`, `--to-file` added to field `output.setup`
+  * options `--as-tensor`, `-headline` added to field `ratings.setup`
+  * option `-b` added to recommender GPLSA 
 
 ## librec-v1.3
 * New recommenders added
