@@ -30,6 +30,11 @@ import java.net.UnknownHostException;
 
 import javax.imageio.ImageIO;
 
+/**
+ * 
+ * @author Guo Guibing
+ *
+ */
 public class Systems {
 	private static String desktopPath = null;
 

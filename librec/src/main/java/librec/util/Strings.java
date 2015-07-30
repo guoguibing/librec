@@ -38,14 +38,12 @@ import com.google.common.collect.Multiset;
 /**
  * String Utility Class
  * 
- * @author gbguo
+ * @author Guo Guibing
  *
  */
 public class Strings {
-	public static final String HELLO = "Hello World!";
 	public static final String EMPTY = "";
-
-	private static String separator = "\n";
+	private static String SEP = "\n";
 	private static final DecimalFormat intFormatter = new DecimalFormat("#,###");
 
 	/**
@@ -336,7 +334,7 @@ public class Strings {
 
 			sb.append(line);
 			if (i++ < N - 1)
-				sb.append(separator);
+				sb.append(SEP);
 		}
 		return sb.toString();
 	}
@@ -361,7 +359,7 @@ public class Strings {
 
 			sb.append(line);
 			if (count++ < size - 1)
-				sb.append(separator);
+				sb.append(SEP);
 		}
 
 		return sb.toString();

@@ -26,6 +26,11 @@ import java.net.SocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
 
+/**
+ * 
+ * @author Guo Guibing
+ *
+ */
 public class URLReader
 {
 	public static String read(String url) throws Exception

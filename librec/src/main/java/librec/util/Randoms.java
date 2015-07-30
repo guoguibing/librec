@@ -26,6 +26,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+/**
+ * 
+ * @author Guo Guibing
+ *
+ */
 public class Randoms {
 	private static Random r = new Random(System.currentTimeMillis());
 
