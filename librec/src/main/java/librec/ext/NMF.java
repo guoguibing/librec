@@ -18,7 +18,6 @@
 
 package librec.ext;
 
-import happy.coding.io.Strings;
 import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -26,6 +25,7 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
+import librec.util.Strings;
 
 /**
  * Daniel D. Lee and H. Sebastian Seung, <strong>Algorithms for Non-negative Matrix Factorization</strong>, NIPS 2001.

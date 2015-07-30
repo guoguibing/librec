@@ -18,10 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Lists;
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +30,9 @@ import librec.data.SparseVector;
 import librec.data.SymmMatrix;
 import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
+import librec.util.Lists;
+import librec.util.Logs;
+import librec.util.Strings;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;

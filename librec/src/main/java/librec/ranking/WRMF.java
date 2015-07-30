@@ -18,8 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
 import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -28,6 +26,8 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
+import librec.util.Logs;
+import librec.util.Strings;
 
 /**
  * <h3>WRMF: Weighted Regularized Matrix Factorization.</h3>

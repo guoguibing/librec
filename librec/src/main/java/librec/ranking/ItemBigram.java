@@ -18,8 +18,7 @@
 
 package librec.ranking;
 
-import static happy.coding.math.Gamma.digamma;
-import happy.coding.io.Strings;
+import static librec.util.Gamma.digamma;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +33,7 @@ import librec.data.DenseVector;
 import librec.data.RatingContext;
 import librec.data.SparseMatrix;
 import librec.intf.GraphicRecommender;
+import librec.util.Strings;
 
 import com.google.common.collect.HashBasedTable;
 

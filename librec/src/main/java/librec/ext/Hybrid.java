@@ -18,8 +18,6 @@
 
 package librec.ext;
 
-import happy.coding.io.Lists;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +25,7 @@ import java.util.Map;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.intf.Recommender;
+import librec.util.Lists;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;

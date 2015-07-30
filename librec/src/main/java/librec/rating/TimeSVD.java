@@ -17,9 +17,6 @@
 //
 package librec.rating;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +27,8 @@ import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;

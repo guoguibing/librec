@@ -18,11 +18,11 @@
 
 package librec.data;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-
 import java.io.Serializable;
 import java.util.Arrays;
+
+import librec.util.Randoms;
+import librec.util.Strings;
 
 /**
  * Data Structure: dense matrix <br>

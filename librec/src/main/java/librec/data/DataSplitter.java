@@ -18,17 +18,17 @@
 
 package librec.data;
 
-import happy.coding.io.FileIO;
-import happy.coding.io.Lists;
-import happy.coding.io.Logs;
-import happy.coding.math.Randoms;
-import happy.coding.math.Sortor;
-import happy.coding.system.Debug;
-import happy.coding.system.Systems;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import librec.util.Debug;
+import librec.util.FileIO;
+import librec.util.Lists;
+import librec.util.Logs;
+import librec.util.Randoms;
+import librec.util.Sortor;
+import librec.util.Systems;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;

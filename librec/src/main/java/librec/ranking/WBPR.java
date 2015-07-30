@@ -18,10 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Lists;
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +27,9 @@ import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
+import librec.util.Lists;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

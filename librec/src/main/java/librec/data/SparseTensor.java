@@ -17,14 +17,14 @@
 //
 package librec.data;
 
-import happy.coding.io.Logs;
-import happy.coding.math.Randoms;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import librec.util.Logs;
+import librec.util.Randoms;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;

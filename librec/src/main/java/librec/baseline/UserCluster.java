@@ -17,9 +17,6 @@
 //
 package librec.baseline;
 
-import happy.coding.io.Logs;
-import happy.coding.math.Randoms;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -30,6 +27,8 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.GraphicRecommender;
+import librec.util.Logs;
+import librec.util.Randoms;
 
 /**
  * It is a graphical model that clusters users into K groups for recommendation, see reference: Barbieri et al.,

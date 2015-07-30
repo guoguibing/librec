@@ -18,9 +18,9 @@
 
 package librec.baseline;
 
-import happy.coding.math.Randoms;
 import librec.data.SparseMatrix;
 import librec.intf.Recommender;
+import librec.util.Randoms;
 
 /**
  * Baseline: predict by a random value in (minRate, maxRate)

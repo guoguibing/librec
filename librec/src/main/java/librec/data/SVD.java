@@ -18,7 +18,7 @@
 
 package librec.data;
 
-import happy.coding.math.Maths;
+import librec.util.Maths;
 
 /**
  * <strong>Singular Value Decomposition: adapted from the JAMA implementations</strong><br>

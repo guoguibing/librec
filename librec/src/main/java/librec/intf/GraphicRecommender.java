@@ -1,12 +1,12 @@
 package librec.intf;
 
-import happy.coding.io.LineConfiger;
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
 import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
+import librec.util.LineConfiger;
+import librec.util.Logs;
+import librec.util.Strings;
 
 import com.google.common.collect.Table;
 

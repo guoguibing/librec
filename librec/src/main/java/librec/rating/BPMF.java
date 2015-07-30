@@ -18,8 +18,6 @@
 
 package librec.rating;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
 import librec.data.Configuration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
@@ -27,6 +25,8 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 /**
  * Salakhutdinov and Mnih, <strong>Bayesian Probabilistic Matrix Factorization using Markov Chain Monte Carlo</strong>,

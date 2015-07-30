@@ -18,14 +18,14 @@
 
 package librec.main;
 
-import happy.coding.io.FileIO;
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-import happy.coding.system.Systems;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import librec.util.FileIO;
+import librec.util.Logs;
+import librec.util.Strings;
+import librec.util.Systems;
 
 /**
  * A demo created for the UMAP'15 demo session, could be useful for other users.

@@ -18,9 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +29,8 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.SocialRecommender;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 /**
  * Social Bayesian Personalized Ranking (SBPR)

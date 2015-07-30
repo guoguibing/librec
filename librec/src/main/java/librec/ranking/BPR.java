@@ -18,11 +18,11 @@
 
 package librec.ranking;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 /**
  * 

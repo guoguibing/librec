@@ -18,18 +18,6 @@
 
 package librec.intf;
 
-import happy.coding.io.FileConfiger;
-import happy.coding.io.FileIO;
-import happy.coding.io.LineConfiger;
-import happy.coding.io.Lists;
-import happy.coding.io.Logs;
-import happy.coding.math.Measures;
-import happy.coding.math.Randoms;
-import happy.coding.math.Sims;
-import happy.coding.math.Stats;
-import happy.coding.system.Dates;
-import happy.coding.system.Debug;
-
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +36,17 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.SymmMatrix;
+import librec.util.Dates;
+import librec.util.Debug;
+import librec.util.FileConfiger;
+import librec.util.FileIO;
+import librec.util.LineConfiger;
+import librec.util.Lists;
+import librec.util.Logs;
+import librec.util.Measures;
+import librec.util.Randoms;
+import librec.util.Sims;
+import librec.util.Stats;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;

@@ -18,12 +18,12 @@
 
 package librec.rating;
 
-import happy.coding.io.Strings;
 import librec.data.DenseMatrix;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.SocialRecommender;
+import librec.util.Strings;
 
 /**
  * Hao Ma, Irwin King and Michael R. Lyu, <strong>Learning to Recommend with Social Trust Ensemble</strong>, SIGIR 2009.<br>

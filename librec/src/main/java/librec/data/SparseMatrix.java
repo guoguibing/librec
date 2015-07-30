@@ -18,8 +18,6 @@
 
 package librec.data;
 
-import happy.coding.math.Stats;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +25,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import librec.util.Stats;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;

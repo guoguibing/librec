@@ -18,11 +18,11 @@
 
 package librec.data;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-import happy.coding.math.Stats;
-
 import java.io.Serializable;
+
+import librec.util.Randoms;
+import librec.util.Stats;
+import librec.util.Strings;
 
 /**
  * Data Structure: dense vector

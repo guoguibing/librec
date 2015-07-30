@@ -18,8 +18,6 @@
 
 package librec.data;
 
-import happy.coding.math.Stats;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +25,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import librec.util.Stats;
 
 /**
  * Data Structure: Sparse Vector whose implementation is modified from M4J

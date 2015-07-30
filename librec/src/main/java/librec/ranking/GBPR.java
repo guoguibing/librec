@@ -18,9 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +25,8 @@ import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.SparseMatrix;
 import librec.intf.SocialRecommender;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 /**
  * Pan and Chen, <strong>GBPR: Group Preference Based Bayesian Personalized Ranking for One-Class Collaborative

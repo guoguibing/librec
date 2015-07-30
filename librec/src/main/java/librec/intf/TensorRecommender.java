@@ -18,14 +18,13 @@
 
 package librec.intf;
 
-import happy.coding.io.Strings;
-
 import java.util.List;
 
 import librec.data.Configuration;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseTensor;
+import librec.util.Strings;
 
 /**
  * Interface for tensor recommenders

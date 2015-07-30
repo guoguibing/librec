@@ -18,8 +18,6 @@
 
 package librec.ext;
 
-import happy.coding.io.Lists;
-import happy.coding.math.Randoms;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +28,8 @@ import librec.data.SparseVector;
 import librec.data.SymmMatrix;
 import librec.data.VectorEntry;
 import librec.ranking.RankSGD;
+import librec.util.Lists;
+import librec.util.Randoms;
 
 /**
  * Neil Hurley, <strong>Personalised ranking with diversity</strong>, RecSys 2013.

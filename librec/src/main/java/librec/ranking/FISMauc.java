@@ -18,9 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Strings;
-import happy.coding.math.Randoms;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +28,8 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
+import librec.util.Randoms;
+import librec.util.Strings;
 
 /**
  * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N Recommender Systems</strong>, KDD 2013.

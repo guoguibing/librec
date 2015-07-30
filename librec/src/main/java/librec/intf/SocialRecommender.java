@@ -18,15 +18,14 @@
 
 package librec.intf;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-
 import java.util.List;
 
 import librec.data.Configuration;
 import librec.data.DataDAO;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
+import librec.util.Logs;
+import librec.util.Strings;
 
 import com.google.common.cache.LoadingCache;
 

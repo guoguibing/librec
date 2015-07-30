@@ -18,15 +18,6 @@
 
 package librec.main;
 
-import happy.coding.io.FileConfiger;
-import happy.coding.io.FileIO;
-import happy.coding.io.LineConfiger;
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-import happy.coding.io.net.EMailer;
-import happy.coding.system.Dates;
-import happy.coding.system.Systems;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -92,6 +83,14 @@ import librec.rating.TrustMF;
 import librec.rating.TrustSVD;
 import librec.rating.URP;
 import librec.rating.UserKNN;
+import librec.util.Dates;
+import librec.util.EMailer;
+import librec.util.FileConfiger;
+import librec.util.FileIO;
+import librec.util.LineConfiger;
+import librec.util.Logs;
+import librec.util.Strings;
+import librec.util.Systems;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;

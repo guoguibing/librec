@@ -18,8 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Strings;
-
 import java.util.List;
 
 import librec.data.Configuration;
@@ -28,6 +26,7 @@ import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.IterativeRecommender;
+import librec.util.Strings;
 
 /**
  * 

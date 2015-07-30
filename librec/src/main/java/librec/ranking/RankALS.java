@@ -18,9 +18,6 @@
 
 package librec.ranking;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +29,8 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.IterativeRecommender;
+import librec.util.Logs;
+import librec.util.Strings;
 
 /**
  * Takacs and Tikk, <strong>Alternating Least Squares for Personalized Ranking</strong>, RecSys 2012.

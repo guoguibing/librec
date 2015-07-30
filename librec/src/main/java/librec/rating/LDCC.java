@@ -18,14 +18,14 @@
 
 package librec.rating;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
 import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.DenseVector;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.intf.GraphicRecommender;
+import librec.util.Logs;
+import librec.util.Strings;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;

@@ -18,8 +18,6 @@
 
 package librec.ext;
 
-import happy.coding.io.Lists;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +25,7 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.Recommender;
+import librec.util.Lists;
 
 /**
  * Pennock et al., <strong>Collaborative Filtering by Personality Diagnosis: A Hybrid Memory- and Model-based

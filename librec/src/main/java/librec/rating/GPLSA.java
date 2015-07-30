@@ -18,12 +18,6 @@
 
 package librec.rating;
 
-import happy.coding.io.Logs;
-import happy.coding.io.Strings;
-import happy.coding.math.Gaussian;
-import happy.coding.math.Randoms;
-import happy.coding.math.Stats;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +30,11 @@ import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.VectorEntry;
 import librec.intf.GraphicRecommender;
+import librec.util.Gaussian;
+import librec.util.Logs;
+import librec.util.Randoms;
+import librec.util.Stats;
+import librec.util.Strings;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
