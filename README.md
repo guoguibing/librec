@@ -19,6 +19,27 @@ LibRec
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
+* 
+
+### Code Snippet
+
+You can use **LibRec** as a part of your projects, and use the following codes to run a recommender. 
+
+<pre>
+public void main(String[] args) throws Exception {
+
+	// config logger
+	Logs.config("log4j.xml", true);
+
+	// config recommender
+	String configFile = "librec.conf"; 
+
+	// run algorithm
+	LibRec librec = new LibRec();
+	librec.setConfigFiles(configFile);
+	librec.execute(args);
+}
+</pre>
 
 ### Reference
 Please cite the following papers if LibRec is helpful to your research. 
