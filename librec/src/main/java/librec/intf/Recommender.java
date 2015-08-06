@@ -44,7 +44,6 @@ import librec.util.LineConfiger;
 import librec.util.Lists;
 import librec.util.Logs;
 import librec.util.Measures;
-import librec.util.Randoms;
 import librec.util.Sims;
 import librec.util.Stats;
 
@@ -246,7 +245,6 @@ public abstract class Recommender implements Runnable {
 
 			int numProcessors = Runtime.getRuntime().availableProcessors();
 			numCPUs = evalOptions.getInt("-cpu", numProcessors);
-			Randoms.seed(evalOptions.getLong("--rand-seed", System.currentTimeMillis())); // initial random seed
 
 			// output options
 			LineConfiger outputOptions = cf.getParamOptions("output.setup");

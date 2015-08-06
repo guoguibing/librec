@@ -89,6 +89,7 @@ import librec.util.FileConfiger;
 import librec.util.FileIO;
 import librec.util.LineConfiger;
 import librec.util.Logs;
+import librec.util.Randoms;
 import librec.util.Strings;
 import librec.util.Systems;
 
@@ -213,9 +214,13 @@ public class LibRec {
 		if (outputOptions != null) {
 			tempDirPath = outputOptions.getString("-dir", "./Results/");
 		}
-
+		
 		// make output directory
 		Recommender.tempDirPath = FileIO.makeDirectory(tempDirPath);
+		
+		// initialize random seed 
+		LineConfiger evalOptions = cf.getParamOptions("evaluation.setup");
+		Randoms.seed(evalOptions.getLong("--rand-seed", System.currentTimeMillis())); // initial random seed
 	}
 
 	/**

@@ -96,7 +96,7 @@ public class DataSplitter {
 		double indvCount = (numRates + 0.0) / numFold;
 
 		for (int i = 0; i < numRates; i++) {
-			rdm[i] = Math.random();
+			rdm[i] = Randoms.uniform(); // Math.random();
 			fold[i] = (int) (i / indvCount) + 1; // make sure that each fold has each size sample
 		}
 
