@@ -144,7 +144,7 @@ public class LibRec {
 			readData();
 
 			// run a specific algorithm
-			runAlgorithm();
+			run();
 		}
 
 		// collect results
@@ -214,10 +214,10 @@ public class LibRec {
 		if (outputOptions != null) {
 			tempDirPath = outputOptions.getString("-dir", "./Results/");
 		}
-		
+
 		// make output directory
 		Recommender.tempDirPath = FileIO.makeDirectory(tempDirPath);
-		
+
 		// initialize random seed 
 		LineConfiger evalOptions = cf.getParamOptions("evaluation.setup");
 		Randoms.seed(evalOptions.getLong("--rand-seed", System.currentTimeMillis())); // initial random seed
@@ -381,10 +381,10 @@ public class LibRec {
 	}
 
 	/**
-	 * prepare training and test data, and then run a specified recommender
+	 * run a specific algorithm one or multiple times
 	 * 
 	 */
-	protected void runAlgorithm() throws Exception {
+	protected void run() throws Exception {
 
 		// evaluation setup
 		String setup = cf.getString("evaluation.setup");
@@ -392,13 +392,25 @@ public class LibRec {
 
 		Logs.info("With Setup: {}", setup);
 
-		Recommender algo = null;
+		// repeat many times with the same settings
+		int numRepeats = evalOptions.getInt("--repeat", 1);
+		for (int i = 0; i < numRepeats; i++) {
+			runAlgorithm(evalOptions);
+		}
+	}
+
+	/**
+	 * prepare training and test data, and then run a specified recommender
+	 * 
+	 */
+	private void runAlgorithm(LineConfiger evalOptions) throws Exception {
 
 		DataSplitter ds = new DataSplitter(rateMatrix);
 		SparseMatrix[] data = null;
 
 		int N;
 		double ratio;
+		Recommender algo = null;
 
 		switch (evalOptions.getMainParam().toLowerCase()) {
 		case "cv":
@@ -605,23 +617,29 @@ public class LibRec {
 		// we add quota symbol to indicate the textual format of time 
 		String time = String.format("'%s','%s'", Dates.parse(ms.get(Measure.TrainTime).longValue()),
 				Dates.parse(ms.get(Measure.TestTime).longValue()));
-		// double commas as the separation of results and configuration
-		String evalInfo = String.format("%s,%s,,%s,%s%s", algo.algoName, result, algo.toString(), time,
-				(outputOptions.contains("--measures-only") ? "" : "\n"));
 
+		// double commas as the separation of results and configuration
+		StringBuilder sb = new StringBuilder();
+		String config = algo.toString();
+		sb.append(algo.algoName).append(",").append(result).append(",,");
+		if (!config.isEmpty())
+			sb.append(config).append(",");
+		sb.append(time).append("\n");
+
+		String evalInfo = sb.toString();
 		Logs.info(evalInfo);
 
 		// copy to clipboard for convenience, useful for a single run
 		if (outputOptions.contains("--to-clipboard")) {
 			Strings.toClipboard(evalInfo);
-			Logs.debug("Have been copied to clipboard!");
+			Logs.debug("Results have been copied to clipboard!");
 		}
 
 		// append to a specific file, useful for multiple runs
 		if (outputOptions.contains("--to-file")) {
 			String filePath = outputOptions.getString("--to-file", tempDirPath + algorithm + ".txt");
 			FileIO.writeString(filePath, evalInfo, true);
-			Logs.debug("Have been collected to file: {}", filePath);
+			Logs.debug("Results have been collected to file: {}", filePath);
 		}
 	}
 
