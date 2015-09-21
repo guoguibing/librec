@@ -38,7 +38,7 @@ public class SVDPlusPlus extends BiasedMF {
 	public SVDPlusPlus(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "SVD++";
+		setAlgoName("SVD++");
 	}
 
 	@Override

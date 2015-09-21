@@ -33,7 +33,7 @@ public class RandomGuess extends Recommender {
 	public RandomGuess(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "Random";
+		setAlgoName("Random");
 	}
 
 	@Override

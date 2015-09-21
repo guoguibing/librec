@@ -80,9 +80,8 @@ public class TimeSVD extends IterativeRecommender {
 	public TimeSVD(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
 
-		algoName = "timeSVD++";
-
-		algoOptions = cf.getParamOptions("timeSVD++");
+		setAlgoName("timeSVD++");
+		
 		beta = algoOptions.getFloat("-beta");
 		numBins = algoOptions.getInt("-bins");
 	}

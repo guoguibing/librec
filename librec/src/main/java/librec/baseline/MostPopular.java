@@ -39,7 +39,7 @@ public class MostPopular extends Recommender {
 
 		// force to set as the ranking prediction method
 		isRankingPred = true;
-		algoName = "MostPop";
+		setAlgoName("MostPop");
 	}
 
 	@Override

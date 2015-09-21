@@ -288,9 +288,7 @@ public abstract class Recommender implements Runnable {
 		globalMean = trainMatrix.sum() / numRates;
 
 		// class name as the default algorithm name
-		algoName = this.getClass().getSimpleName();
-		// get parameters of an algorithm
-		algoOptions = getModelParams(algoName);
+		setAlgoName(this.getClass().getSimpleName());
 
 		// compute item-item correlations
 		if (isRankingPred && isDiverseUsed)
@@ -802,7 +800,7 @@ public abstract class Recommender implements Runnable {
 					sb.append(", ").append(kv.getValue().floatValue()).append(")");
 
 					count++;
-					
+
 					if (count < numTopNRanks)
 						sb.append(", ");
 				}
@@ -1032,5 +1030,16 @@ public abstract class Recommender implements Runnable {
 	@Override
 	public String toString() {
 		return "";
+	}
+
+	/**
+	 * Set a user-specific name of an algorithm
+	 * 
+	 */
+	protected void setAlgoName(String algoName) {
+		this.algoName = algoName;
+
+		// get parameters of an algorithm
+		algoOptions = getModelParams(algoName);
 	}
 }
