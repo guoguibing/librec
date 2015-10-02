@@ -21,6 +21,7 @@ package librec.rating;
 import java.util.HashMap;
 import java.util.Map;
 
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
@@ -33,6 +34,7 @@ import librec.intf.SocialRecommender;
  * @author guoguibing
  * 
  */
+@AddConfiguration(before = "regC, regZ")
 public class SoRec extends SocialRecommender {
 
 	private DenseMatrix Z;
@@ -52,7 +54,7 @@ public class SoRec extends SocialRecommender {
 
 		Z = new DenseMatrix(numUsers, numFactors);
 		Z.init();
-		
+
 		regC = algoOptions.getFloat("-c");
 		regZ = algoOptions.getFloat("-z");
 
@@ -146,6 +148,11 @@ public class SoRec extends SocialRecommender {
 			return denormalize(g(pred));
 
 		return pred;
+	}
+
+	@Override
+	public String toString() {
+		return regC + ", " + regZ + ", " + super.toString();
 	}
 
 }

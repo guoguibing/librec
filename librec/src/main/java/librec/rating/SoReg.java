@@ -18,6 +18,7 @@
 
 package librec.rating;
 
+import librec.data.AddConfiguration;
 import librec.data.DenseMatrix;
 import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
@@ -40,6 +41,7 @@ import com.google.common.collect.Table;
  * @author guoguibing
  * 
  */
+@AddConfiguration(before = "beta")
 public class SoReg extends SocialRecommender {
 
 	private Table<Integer, Integer, Double> userCorrs;
@@ -158,6 +160,11 @@ public class SoReg extends SocialRecommender {
 			if (isConverged(iter))
 				break;
 		}
+	}
+
+	@Override
+	public String toString() {
+		return beta + ", " + super.toString();
 	}
 
 }
