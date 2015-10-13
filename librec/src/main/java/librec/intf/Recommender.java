@@ -344,6 +344,7 @@ public abstract class Recommender implements Runnable {
 		// evaluation
 		if (verbose)
 			Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
+		// TODO: to predict ratings only, or do item recommendations only
 		measures = isRankingPred ? evalRankings() : evalRatings();
 		String measurements = getEvalInfo(measures);
 		sw.stop();

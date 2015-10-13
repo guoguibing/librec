@@ -353,7 +353,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	 * is a mode-2 fiber.
 	 * 
 	 * @param dim
-	 *            that dimension where values can vary
+	 *            the dimension where values can vary
 	 * @param keys
 	 *            the other fixed dimension keys
 	 * @return a sparse vector
@@ -593,7 +593,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
-	 * Slice is a two-dimensional section of a tensor, defined by fixing all but two indices.
+	 * Slice is a two-dimensional sub-array of a tensor, defined by fixing all but two indices.
 	 * 
 	 * @param rowDim
 	 *            row dimension
@@ -769,7 +769,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	/**
 	 * @return inner product with another tensor
 	 */
-	public double inner(SparseTensor st) throws Exception {
+	public double innerProduct(SparseTensor st) throws Exception {
 		if (!isDimMatch(st))
 			throw new Exception("The dimensions of two sparse tensors do not match!");
 
@@ -822,6 +822,9 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		return dimensions;
 	}
 
+	/**
+	 * @return the number of a tensor's dimensions, a.k.a., the order of a tensor
+	 */
 	public int numDimensions() {
 		return numDimensions;
 	}
@@ -885,7 +888,7 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 		Logs.debug("make a clone = {}", st2);
 
 		// inner product
-		Logs.debug("inner with the clone = {}", st.inner(st2));
+		Logs.debug("inner with the clone = {}", st.innerProduct(st2));
 
 		st.set(2.5, 1, 0, 0);
 		st2.remove(1, 0, 0);
