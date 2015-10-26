@@ -723,6 +723,82 @@ public class SparseTensor implements Iterable<TensorEntry>, Serializable {
 	}
 
 	/**
+	 * n-mode product of a tensor A (I1 x I2 x ... x IN) with a matrix B (J x In), denoted by A Xn B
+	 * 
+	 * @param mat
+	 *            mat to be multiplied
+	 * @param dim
+	 *            mode/dimension of the tensor to be used
+	 * @return a new tensor in (I1 x I2 x ... x In-1 x J x In+1 x ... x IN)
+	 */
+	public SparseTensor modeProduct(DenseMatrix mat, int dim) throws Exception {
+
+		if (dimensions[dim] != mat.numColumns)
+			throw new Exception("Dimensions of a tensor and a matrix do not match for n-mode product!");
+
+		int[] dims = new int[numDimensions];
+		for (int i = 0; i < dims.length; i++) {
+			dims[i] = i == dim ? mat.numRows : dimensions[i];
+		}
+
+		SparseTensor res = new SparseTensor(dims);
+
+		for (TensorEntry te : this) {
+			double val = te.get();
+			int[] keys = te.keys();
+
+			int i = keys[dim];
+			for (int j = 0; j < mat.numRows; j++) {
+
+				int[] ks = new int[numDimensions];
+				for (int k = 0; k < ks.length; k++)
+					ks[k] = k == dim ? j : keys[k];
+
+				res.add(val * mat.get(j, i), ks);
+			}
+		}
+
+		return res;
+	}
+
+	/**
+	 * n-mode product of a tensor A (I1 x I2 x ... x IN) with a vector B (1 x In), denoted by A Xn B
+	 * 
+	 * @param vec
+	 *            vector to be multiplied
+	 * @param dim
+	 *            mode/dimension of the tensor to be used
+	 * @return a new tensor in (I1 x I2 x ... x In-1 x 1 x In+1 x ... x IN)
+	 */
+	public SparseTensor modeProduct(DenseVector vec, int dim) throws Exception {
+
+		if (dimensions[dim] != vec.size)
+			throw new Exception("Dimensions of a tensor and a vector do not match for n-mode product!");
+
+		int[] dims = new int[numDimensions];
+		for (int i = 0; i < dims.length; i++) {
+			dims[i] = i == dim ? 1 : dimensions[i];
+		}
+
+		SparseTensor res = new SparseTensor(dims);
+
+		for (TensorEntry te : this) {
+			double val = te.get();
+			int[] keys = te.keys();
+
+			int i = keys[dim];
+
+			int[] ks = new int[numDimensions];
+			for (int k = 0; k < ks.length; k++)
+				ks[k] = k == dim ? 1 : keys[k];
+
+			res.add(val * vec.get(i), ks);
+		}
+
+		return res;
+	}
+
+	/**
 	 * retrieve a rating matrix from the tensor. Warning: it assumes there is at most one entry for each (user, item)
 	 * pair.
 	 * 

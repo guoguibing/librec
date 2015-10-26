@@ -132,11 +132,11 @@ public class DenseVector implements Serializable {
 	public double mean() {
 		return Stats.mean(data);
 	}
-	
+
 	/**
 	 * @return summation of entries
 	 */
-	public double sum(){
+	public double sum() {
 		return Stats.sum(data);
 	}
 
@@ -277,6 +277,24 @@ public class DenseVector implements Serializable {
 				mat.set(i, j, get(i) * vec.get(j));
 
 		return mat;
+	}
+
+	/**
+	 * 
+	 * @return the Kronecker product of two vectors
+	 */
+	public static DenseVector kroneckerProduct(DenseVector M, DenseVector N) {
+		DenseVector res = new DenseVector(M.size * N.size);
+		
+		int i = 0;
+		for (int m = 0; m < M.size; m++) {
+			double mVal = M.get(m);
+			for (int n = 0; n < N.size; n++) {
+				res.set(i++, mVal * N.get(n));
+			}
+		}
+
+		return res;
 	}
 
 	@Override
