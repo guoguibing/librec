@@ -16,6 +16,7 @@ LibRec
 
 ### Download
 * **librec-v1.4** (under development, see [what's new](CHANGES.md))
+  * LibRec开发团队正在招募中，[马上查阅](团队招募.md)招募详情。
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
