@@ -221,7 +221,7 @@ public class Sims {
 				}
 			}
 		}
-		return 1 - 4 * sum / (common * (common - 1));
+		return 1 - 4 * sum / common / (common - 1);
 
 	}
 
