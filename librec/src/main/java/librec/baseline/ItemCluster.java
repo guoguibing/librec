@@ -123,10 +123,10 @@ public class ItemCluster extends GraphicRecommender {
 
 					double numerator = 0, denorminator = 0;
 					for (int i = 0; i < numItems; i++) {
-						double ruk = Gamma.get(i, k);
+						double rik = Gamma.get(i, k);
 
-						numerator += ruk * Nir.get(i, r);
-						denorminator += ruk * Ni.get(i);
+						numerator += rik * Nir.get(i, r);
+						denorminator += rik * Ni.get(i);
 					}
 
 					Pkr.set(k, r, numerator / denorminator);
@@ -155,10 +155,10 @@ public class ItemCluster extends GraphicRecommender {
 
 					double sum_nl = 0;
 					for (int r = 0; r < numLevels; r++) {
-						double nur = Nir.get(i, r);
+						double nir = Nir.get(i, r);
 						double pkr = Pkr.get(k, r);
 
-						sum_nl += nur * Math.log(pkr);
+						sum_nl += nir * Math.log(pkr);
 					}
 
 					loss += rik * (Math.log(pi_k) + sum_nl);
@@ -196,10 +196,10 @@ public class ItemCluster extends GraphicRecommender {
 			double pred_k = 0;
 
 			for (int r = 0; r < numLevels; r++) {
-				double rui = ratingScale.get(r);
+				double ruj = ratingScale.get(r);
 				double pkr = Pkr.get(k, r);
 
-				pred_k += rui * pkr;
+				pred_k += ruj * pkr;
 			}
 
 			pred += pj_k * pred_k;

@@ -198,10 +198,10 @@ public class UserCluster extends GraphicRecommender {
 			double pred_k = 0;
 
 			for (int r = 0; r < numLevels; r++) {
-				double rui = ratingScale.get(r);
+				double ruj = ratingScale.get(r);
 				double pkr = Pkr.get(k, r);
 
-				pred_k += rui * pkr;
+				pred_k += ruj * pkr;
 			}
 
 			pred += pu_k * pred_k;
