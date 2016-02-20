@@ -79,6 +79,7 @@ public class DataDAO {
 
 	// user/item {raw id, inner id} map
 	private BiMap<String, Integer> userIds, itemIds;
+	private BiMap<String, Integer>[] featureIds;
 
 	// inverse views of userIds, itemIds
 	private BiMap<Integer, String> idUsers, idItems;
@@ -309,6 +310,7 @@ public class DataDAO {
 
 		BufferedReader br = FileIO.getReader(dataPath);
 		String line = null;
+		
 		while ((line = br.readLine()) != null) {
 			if (isHeadline()) {
 				setHeadline(false);
@@ -327,8 +329,14 @@ public class DataDAO {
 					ndLists[d] = new ArrayList<Integer>();
 					ndSets[d] = new HashSet<Integer>();
 				}
+				
+				int featureDims = numDims - 2; // feature dimension should exclude user and item
+				featureIds = new BiMap[featureDims];
+				for (int d = 0; d < featureDims; d++){
+					featureIds[d] = HashBiMap.create();
+				}
 			}
-
+			
 			// set data
 			for (int d = 0; d < data.length; d++) {
 				String val = data[d];
@@ -358,7 +366,9 @@ public class DataDAO {
 					continue;
 				} else {
 					// other: val as feature value
-					feature = val.equalsIgnoreCase("na") ? 0 : Integer.parseInt(val);
+					int featureDim = d - 3;					
+					feature = (int) (featureIds[featureDim].containsKey(val) ? featureIds[featureDim].get(val) : featureIds[featureDim].size());
+					featureIds[featureDim].put(val, feature);
 				}
 
 				int dim = d > cols[2] ? d - 1 : d;
