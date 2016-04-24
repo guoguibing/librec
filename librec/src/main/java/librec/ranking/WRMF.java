@@ -1,51 +1,34 @@
-// Copyright (C) 2014-2015 Guibing Guo
-//
-// This file is part of LibRec.
-//
-// LibRec is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// LibRec is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with LibRec. If not, see <http://www.gnu.org/licenses/>.
-//
-
 package librec.ranking;
 
-import librec.data.Configuration;
-import librec.data.DenseMatrix;
-import librec.data.DenseVector;
-import librec.data.DiagMatrix;
-import librec.data.SparseMatrix;
-import librec.data.SparseVector;
-import librec.data.VectorEntry;
+import librec.data.*;
 import librec.intf.IterativeRecommender;
 import librec.util.Logs;
 import librec.util.Strings;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 /**
  * <h3>WRMF: Weighted Regularized Matrix Factorization.</h3>
- * 
+ * <p>
  * This implementation refers to the method proposed by Hu et al. at ICDM 2008.
- * 
+ * <p>
  * <ul>
- * <li><strong>Binary ratings:</strong> Pan et al., One-class Collaborative Filtering, ICDM 2008.</li>
- * <li><strong>Real ratings:</strong> Hu et al., Collaborative filtering for implicit feedback datasets, ICDM 2008.</li>
+ * <li><strong>Binary ratings:</strong> Pan et al., One-class Collaborative
+ * Filtering, ICDM 2008.</li>
+ * <li><strong>Real ratings:</strong> Hu et al., Collaborative filtering for
+ * implicit feedback datasets, ICDM 2008.</li>
  * </ul>
- * 
- * @author guoguibing
- * 
+ *
+ * @author wkq
  */
 @Configuration("binThold, alpha, factors, regU, regI, numIters")
 public class WRMF extends IterativeRecommender {
-
 	private float alpha;
+	private SparseMatrix CuiI;// C_{ui} = alpha * r_{ui} C_{ui}-1
+	private SparseMatrix Pui;// P_{ui} = 1 if r_{ui}>0 or P_{ui} = 0
+	private List<List<Integer>> userItemList, itemUserList;
 
 	public WRMF(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
 		super(trainMatrix, testMatrix, fold);
@@ -57,46 +40,88 @@ public class WRMF extends IterativeRecommender {
 	}
 
 	@Override
-	protected void buildModel() throws Exception {
+	protected void initModel() {
+		P = new DenseMatrix(numUsers, numFactors);
+		Q = new DenseMatrix(numItems, numFactors);
+		// initialize model
+		if (initByNorm) {
+			System.out.println("initByNorm");
+			P.init(initMean, initStd);
+			Q.init(initMean, initStd);
+		} else {
+			P.init(); // P.init(smallValue);
+			Q.init(); // Q.init(smallValue);
+		}
 
+		// predefined CuiI and Pui
+		CuiI = new SparseMatrix(trainMatrix);
+		Pui = new SparseMatrix(trainMatrix);
+		for (MatrixEntry me : trainMatrix) {
+			int u = me.row();
+			int i = me.column();
+			CuiI.set(u, i, alpha * 1);
+			// CuiI.set(u, i, Math.log(1.0 + Math.pow(10, alpha) * me.get()));
+			Pui.set(u, i, 1.0d);
+		}
+
+		this.userItemList = new ArrayList<>();
+		this.itemUserList = new ArrayList<>();
+
+		for (int u = 0; u < numUsers; u++) {
+			userItemList.add(trainMatrix.getColumns(u));
+		}
+		for (int i = 0; i < numItems; i++) {
+			itemUserList.add(trainMatrix.getRows(i));
+		}
+	}
+
+	@Override
+	protected void buildModel() throws Exception {
 		// To be consistent with the symbols in the paper
 		DenseMatrix X = P, Y = Q;
-
-		// Updating by using alternative least square (ALS)
-		// due to large amount of entries to be processed (SGD will be too slow)
+		SparseMatrix IuMatrix = DiagMatrix.eye(numFactors).scale(regU);
+		SparseMatrix IiMatrix = DiagMatrix.eye(numFactors).scale(regI);
 		for (int iter = 1; iter <= numIters; iter++) {
 
 			// Step 1: update user factors;
 			DenseMatrix Yt = Y.transpose();
 			DenseMatrix YtY = Yt.mult(Y);
 			for (int u = 0; u < numUsers; u++) {
-				if (verbose && (u + 1) % 200 == 0)
-					Logs.debug("{}{} runs at iteration = {}, user = {}/{}", algoName, foldInfo, iter, u + 1, numUsers);
+				if (verbose && (u + 1) % numUsers == 0)
+					Logs.debug("{}{} runs at iteration = {}, user = {}/{} {}", algoName, foldInfo, iter, u + 1,
+							numUsers, new Date());
 
-				// diagonal matrix C^u for each user
-				DiagMatrix Cu = DiagMatrix.eye(numItems); // all entries on the diagonal will be 1
-				SparseVector pu = trainMatrix.row(u);
-
-				for (VectorEntry ve : pu) {
-					int i = ve.index();
-					Cu.add(i, i, alpha * ve.get()); // changes some entries to 1 + alpha * r_{u, i}
+				DenseMatrix YtCuI = new DenseMatrix(numFactors, numItems);
+				for (int i : userItemList.get(u)) {
+					for (int k = 0; k < numFactors; k++) {
+						YtCuI.set(k, i, Y.get(i, k) * CuiI.get(u, i));
+					}
 				}
 
-				// binarize real values
-				for (VectorEntry ve : pu)
-					ve.set(ve.get() > 0 ? 1 : 0);
-
-				// Cu - I
-				DiagMatrix CuI = Cu.minus(1);
 				// YtY + Yt * (Cu - I) * Y
-				DenseMatrix YtCuY = YtY.add(Yt.mult(CuI).mult(Y));
+				DenseMatrix YtCuY = new DenseMatrix(numFactors, numFactors);
+				for (int k = 0; k < numFactors; k++) {
+					for (int f = 0; f < numFactors; f++) {
+						double value = 0.0;
+						for (int i : userItemList.get(u)) {
+							value += YtCuI.get(k, i) * Y.get(i, f);
+						}
+						YtCuY.set(k, f, value);
+					}
+				}
+				YtCuY = YtCuY.add(YtY);
 				// (YtCuY + lambda * I)^-1
-				DenseMatrix Wu = (YtCuY.add(DiagMatrix.eye(numFactors).scale(regU))).inv();
-				// Yt * Cu
-				DenseMatrix YtCu = Yt.mult(Cu);
+				// lambda * I can be pre-difined because every time is the same.
+				DenseMatrix Wu = (YtCuY.add(IuMatrix)).inv();
+				// Yt * (Cu - I) * Pu + Yt * Pu
+				DenseVector YtCuPu = new DenseVector(numFactors);
+				for (int f = 0; f < numFactors; f++) {
+					for (int i : userItemList.get(u)) {
+						YtCuPu.add(f, Pui.get(u, i) * (YtCuI.get(f, i) + Yt.get(f, i)));
+					}
+				}
 
-				DenseVector xu = Wu.mult(YtCu).mult(pu);
-
+				DenseVector xu = Wu.mult(YtCuPu);
 				// udpate user factors
 				X.setRow(u, xu);
 			}
@@ -105,34 +130,43 @@ public class WRMF extends IterativeRecommender {
 			DenseMatrix Xt = X.transpose();
 			DenseMatrix XtX = Xt.mult(X);
 			for (int i = 0; i < numItems; i++) {
-				if (verbose && (i + 1) % 200 == 0)
-					Logs.debug("{}{} runs at iteration = {}, item = {}/{}", algoName, foldInfo, iter, i + 1, numItems);
+				if (verbose && (i + 1) % numItems == 0)
+					Logs.debug("{}{} runs at iteration = {}, item = {}/{} {}", algoName, foldInfo, iter, i + 1,
+							numItems, new Date());
 
-				// diagonal matrix C^i for each item
-				DiagMatrix Ci = DiagMatrix.eye(numUsers);
-				SparseVector pi = trainMatrix.column(i);
+				DenseMatrix XtCiI = new DenseMatrix(numFactors, numUsers);
+				// actually XtCiI is a sparse matrix
+				// Xt * (Ci-I)
+				for (int u : itemUserList.get(i)) {
+					for (int k = 0; k < numFactors; k++) {
+						XtCiI.set(k, u, X.get(u, k) * CuiI.get(u, i));
+					}
+				}
+				// XtX + Xt * (Ci - I) * X
+				DenseMatrix XtCiX = new DenseMatrix(numFactors, numFactors);
+				for (int k = 0; k < numFactors; k++) {
+					for (int f = 0; f < numFactors; f++) {
+						double value = 0.0;
+						for (int u : itemUserList.get(i)) {
+							value += XtCiI.get(k, u) * X.get(u, f);
+						}
+						XtCiX.set(k, f, value);
+					}
+				}
+				XtCiX = XtCiX.add(XtX);
 
-				for (VectorEntry ve : pi) {
-					int u = ve.index();
-					Ci.add(u, u, alpha * ve.get());
+				// (XtCuX + lambda * I)^-1
+				// lambda * I can be pre-difined because every time is the same.
+				DenseMatrix Wi = (XtCiX.add(IiMatrix)).inv();
+				// Xt * (Ci - I) * Pu + Xt * Pu
+				DenseVector XtCiPu = new DenseVector(numFactors);
+				for (int f = 0; f < numFactors; f++) {
+					for (int u : itemUserList.get(i)) {
+						XtCiPu.add(f, Pui.get(u, i) * (XtCiI.get(f, u) + Xt.get(f, u)));
+					}
 				}
 
-				// binarize real values
-				for (VectorEntry ve : pi)
-					ve.set(ve.get() > 0 ? 1 : 0);
-
-				// Ci - I
-				DiagMatrix CiI = Ci.minus(1); // more efficient than
-												// DiagMatrix.eye(numUsers)
-				// XtX + Xt * (Ci - I) * X
-				DenseMatrix XtCiX = XtX.add(Xt.mult(CiI).mult(X));
-				// (XtCiX + lambda * I)^-1
-				DenseMatrix Wi = (XtCiX.add(DiagMatrix.eye(numFactors).scale(regI))).inv();
-				// Xt * Ci
-				DenseMatrix XtCi = Xt.mult(Ci);
-
-				DenseVector yi = Wi.mult(XtCi).mult(pi);
-
+				DenseVector yi = Wi.mult(XtCiPu);
 				// udpate item factors
 				Y.setRow(i, yi);
 			}

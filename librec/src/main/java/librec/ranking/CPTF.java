@@ -16,10 +16,9 @@
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
-package librec.rating;
+package librec.ranking;
 
 import librec.data.DenseMatrix;
-import librec.data.DenseVector;
 import librec.data.SparseMatrix;
 import librec.data.TensorEntry;
 import librec.intf.TensorRecommender;
