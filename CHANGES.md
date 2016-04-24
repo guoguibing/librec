@@ -3,7 +3,7 @@
 **Remarks:** If you'd like to make contributes to LibRec, please contact me without any hesitations.  
 
 ## Todo list
-* LLORMA, CoFiSet, Ensemble models
+* CoFiSet, Ensemble models
 
 ## librec-v1.4 (under development)
 * Recommenders
