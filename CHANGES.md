@@ -6,8 +6,9 @@
 * LLORMA, CoFiSet, Ensemble models
 
 ## librec-v1.4 (under development)
-* New recommenders added
-  * CPTF 
+* Recommenders
+  * CPTF, LLORMA
+  * WRMF updated
 * Dependent package `happy.coding.utils.*.jar` merged into package `librec.util` to be self-inclusive
 * LibRec data structure
   * SparseTensor: sparse tensor structure
