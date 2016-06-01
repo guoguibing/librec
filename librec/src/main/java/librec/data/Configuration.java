@@ -26,10 +26,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation to explain the required configuration of a recommender. 
- * 
- * @author Guo Guibing
+ * An annotation to explain the required configuration of a recommender.
  *
+ * @author Guo Guibing
  */
 
 @Target(ElementType.TYPE)
@@ -38,5 +37,5 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface Configuration {
 
-	public String value() default "";
+    String value() default "";
 }

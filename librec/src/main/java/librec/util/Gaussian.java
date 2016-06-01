@@ -77,35 +77,35 @@ public class Gaussian {
 	/**
 	 * Compute z for standard normal such that cdf(z) = y via bisection search
 	 */
-	public static double PhiInverse(double y) {
-		return PhiInverse(y, .00000001, -8, 8);
+	public static double phiInverse(double y) {
+		return phiInverse(y, .00000001, -8, 8);
 	}
 
-	private static double PhiInverse(double y, double delta, double lo, double hi) {
+	private static double phiInverse(double y, double delta, double lo, double hi) {
 		double mid = lo + (hi - lo) / 2;
 		if (hi - lo < delta)
 			return mid;
 		if (cdf(mid) > y)
-			return PhiInverse(y, delta, lo, mid);
+			return phiInverse(y, delta, lo, mid);
 		else
-			return PhiInverse(y, delta, mid, hi);
+			return phiInverse(y, delta, mid, hi);
 	}
 
 	/**
 	 * Compute z for standard normal such that cdf(z, mu, sigma) = y via bisection search
 	 */
-	public static double PhiInverse(double y, double mu, double sigma) {
-		return PhiInverse2(y, mu, sigma, .00000001, (mu - 8 * sigma), (mu + 8 * sigma));
+	public static double phiInverse(double y, double mu, double sigma) {
+		return phiInverse2(y, mu, sigma, .00000001, (mu - 8 * sigma), (mu + 8 * sigma));
 	}
 
-	private static double PhiInverse2(double y, double mu, double sigma, double delta, double lo, double hi) {
+	private static double phiInverse2(double y, double mu, double sigma, double delta, double lo, double hi) {
 		double mid = lo + (hi - lo) / 2;
 		if (hi - lo < delta)
 			return mid;
 		if (cdf(mid, mu, sigma) > y)
-			return PhiInverse2(y, mu, sigma, delta, lo, mid);
+			return phiInverse2(y, mu, sigma, delta, lo, mid);
 		else
-			return PhiInverse2(y, mu, sigma, delta, mid, hi);
+			return phiInverse2(y, mu, sigma, delta, mid, hi);
 	}
 
 	public static void main(String[] args) {
@@ -129,7 +129,7 @@ public class Gaussian {
 
 		// Calculates the value x for X ~ N(2.0, 0.6) which is the 78.81% cutoff (i.e., 78.81% of the values lie below x and 21.19% above). 
 		System.out.format("\nIf X ~ N(2.0, 1.5), then x such that P(X <= x ) = 0.7881 is %.4f\n",
-				PhiInverse(0.7881, 2.0, 1.5));
+				phiInverse(0.7881, 2.0, 1.5));
 
 	}
 
