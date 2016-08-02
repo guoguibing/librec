@@ -62,7 +62,7 @@ public class BPR extends IterativeRecommender {
 					u = Randoms.uniform(numUsers);
 					SparseVector pu = userCache.get(u);
 
-					if (pu.getCount() == 0)
+					if (pu.getCount() == 0 || pu.getCount() == numItems)
 						continue;
 
 					int[] is = pu.getIndex();
