@@ -1,5 +1,6 @@
 package librec.metric;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Collection;
 
@@ -14,14 +15,13 @@ import librec.util.Logs;
 public class MetricCollection {
 
     public static String ValueFormatString = "%s: %.6f";
-
-    public static String DefaultMetrics =
+    public static String[] DefaultMetrics =
                     /* prediction-based measures */
-                    "MetricMAE MetricRMSE MetricNMAE MetricRMAE MetricRRMSE MetricMPE Perplexity" +
+            {"MetricMAE MetricRMSE MetricNMAE MetricRMAE MetricRRMSE MetricMPE Perplexity" +
                     /* ranking-based measures */
                     " MetricPre5 MetricPre10 MetricRec5 MetricRec10 MetricMAP MetricMRR MetricNDCG MetricAUC" +
                     /* execution time */
-                    " TrainTime TestTime";
+                    " TrainTime TestTime"};
 
     private MetricDict<IRatingMetric> m_ratingMetrics;
     private MetricDict<IRankingMetric<Integer>> m_rankingMetrics;

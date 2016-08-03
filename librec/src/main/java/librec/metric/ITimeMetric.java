@@ -15,11 +15,11 @@ public interface ITimeMetric extends IMetric {
 /**
  * Created by rdburke on 8/2/16.
  */
-class TestTimeMetric implements ITimeMetric {
+class TestTime implements ITimeMetric {
     private Double m_time;
     private String m_dateString;
 
-    public TestTimeMetric () {
+    public TestTime () {
         m_time = -1.0;
         m_dateString = "<unknown>";
     }
@@ -40,11 +40,11 @@ class TestTimeMetric implements ITimeMetric {
     public String getValueAsString() { return m_dateString; }
 }
 
-class TrainTimeMetric implements ITimeMetric {
+class TrainTime implements ITimeMetric {
     private Double m_time;
     private String m_dateString;
 
-    public TrainTimeMetric () {
+    public TrainTime () {
         m_time = -1.0;
         m_dateString = "<unknown>";
     }

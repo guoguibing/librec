@@ -13,6 +13,7 @@ public class AvgMetricCollection {
     MetricDict<AverageMetric> m_avgMetrics;
 
     public AvgMetricCollection (Recommender rec) {
+        m_avgMetrics = new MetricDict<AverageMetric>();
         List<String> names = new ArrayList<String>();
         names.addAll(rec.measures.getRatingMetricNames());
         names.addAll(rec.measures.getRankingMetricNames());

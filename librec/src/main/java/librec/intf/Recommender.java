@@ -259,36 +259,47 @@ public abstract class Recommender implements Runnable {
 			similarityMeasure = cf.getString("similarity", "PCC");
 			similarityShrinkage = cf.getInt("num.shrinkage", 30);
 
-            // 2016/8/2 RB Added metric configuration
-            // These are class names
-
-            LineConfiger metricOptions = cf.getParamOptions("metric.options");
-            String metrics;
-            if ((metricOptions == null) || metricOptions.contains("--all")) {
-                metrics = MetricCollection.DefaultMetrics;
-            } else {
-                metrics = cf.getString("metrics", MetricCollection.DefaultMetrics);
-            }
-
-            String[] metricShortNames = metrics.split("\\s+");
-            List<String> metricNames = new ArrayList<String>();
-            for (String name : metricShortNames) {
-                // If it does not have a . separator for the class name, we assume it is one of the
-                // built-in classes and append the librec class info.
-                if (!name.contains(".")) {
-                    name = "librec.metric." + name;
-                }
-                metricNames.add(name);
-            }
-            try {
-                measures = new MetricCollection(metricNames);
-            } catch (Exception e) {
-                Logs.debug("Failed to initialize metrics: " + e);
-                System.exit(-1);
-            }
 		}
 
-		// training, validation, test data
+        // 2016/8/2 RB Added metric configuration
+        // These are class names
+
+        LineConfiger metricOptions = cf.getParamOptions("metric.options");
+        List<String> metrics;
+        boolean defaultMetrics = false;
+        if ((metricOptions == null) || metricOptions.contains("--all")) {
+            metrics = Arrays.asList(MetricCollection.DefaultMetrics);
+            defaultMetrics = true;
+        } else {
+            metrics = metricOptions.getOptions("-metrics");
+        }
+
+        List<String> metricNames = new ArrayList<String>();
+        for (String name : metrics) {
+            // If it does not have a . separator for the class name, we assume it is one of the
+            // built-in classes and append the librec class info.
+            if (!name.contains(".")) {
+                name = "librec.metric." + name;
+            }
+            metricNames.add(name);
+        }
+
+        // These are always included
+        if (!defaultMetrics) {
+            metricNames.add("librec.metric.TrainTime");
+            metricNames.add("librec.metric.TestTime");
+        }
+
+
+        try {
+            measures = new MetricCollection(metricNames);
+        } catch (Exception e) {
+            Logs.debug("Failed to initialize metrics: " + e);
+            System.exit(-1);
+        }
+
+
+        // training, validation, test data
 		if (validationRatio > 0 && validationRatio < 1) {
 			DataSplitter ds = new DataSplitter(trainMatrix);
 			double ratio = 1 - validationRatio;
@@ -652,7 +663,7 @@ public abstract class Recommender implements Runnable {
 
 		if (isResultsOut && preds.size() > 0) {
 			FileIO.writeList(toFile, preds, true);
-			Logs.debug("{}{} has writeen rating predictions to {}", algoName, foldInfo, toFile);
+			Logs.debug("{}{} has written rating predictions to {}", algoName, foldInfo, toFile);
 		}
 
 		measures.computeRatingMetrics(numCount);
@@ -792,7 +803,7 @@ public abstract class Recommender implements Runnable {
 		// write results out first
 		if (isResultsOut && preds.size() > 0) {
 			FileIO.writeList(toFile, preds, true);
-			Logs.debug("{}{} has writeen item recommendations to {}", algoName, foldInfo, toFile);
+			Logs.debug("{}{} has written item recommendations to {}", algoName, foldInfo, toFile);
 		}
 
 		// measure the performance

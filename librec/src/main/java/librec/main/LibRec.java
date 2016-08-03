@@ -611,10 +611,15 @@ public class LibRec {
 	private void printEvalInfo(Recommender algo, AvgMetricCollection ms) throws Exception {
 
 		String result = ms.getEvalResultString();
+		// These are averaging metrics, so we have to do the time conversion
+		// manually.
+		Double trainTime = ms.getMetric("TrainTime").getValue();
+		Double testTime = ms.getMetric("TestTime").getValue();
 		// we add quota symbol to indicate the textual format of time 
-		String time = String.format("'%s','%s'", ms.getMetric("TrainTime").getValueAsString(),
-				ms.getMetric("TestTime").getValueAsString());
+		String time = String.format("'%s','%s'", Dates.parse(trainTime.longValue()),
+				Dates.parse(testTime.longValue()));
 
+		//Dates.parse(m_time.longValue())
 		// double commas as the separation of results and configuration
 		StringBuilder sb = new StringBuilder();
 		String config = algo.toString();

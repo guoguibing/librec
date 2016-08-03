@@ -125,7 +125,7 @@ public class TensorRecommender extends IterativeRecommender {
 
 		if (isResultsOut && preds.size() > 0) {
 			FileIO.writeList(toFile, preds, true);
-			Logs.debug("{}{} has writeen rating predictions to {}", algoName, foldInfo, toFile);
+			Logs.debug("{}{} has written rating predictions to {}", algoName, foldInfo, toFile);
 		}
 
 		measures.computeRatingMetrics(numCount);
