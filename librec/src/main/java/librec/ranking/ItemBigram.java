@@ -246,7 +246,7 @@ public class ItemBigram extends GraphicRecommender {
 	}
 
 	@Override
-	protected double ranking(int u, int i) throws Exception {
+	public double ranking(int u, int i) throws Exception {
 		List<Integer> items = userItemsMap.get(u);
 		int j = items.size() < 1 ? numItems : items.get(items.size() - 1); // last rated item
 

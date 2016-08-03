@@ -139,7 +139,7 @@ public class RfRec extends IterativeRecommender {
 		return Math.round(avg) == rating ? 1 : 0;
 	}
 
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 
 		double estimate = globalMean;
 		float enumeratorUser = 0;

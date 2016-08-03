@@ -43,7 +43,7 @@ public class ItemAverage extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		if (!itemMeans.containsKey(j)) {
 			SparseVector jv = trainMatrix.column(j);
 			double mean = jv.getCount() > 0 ? jv.mean() : globalMean;

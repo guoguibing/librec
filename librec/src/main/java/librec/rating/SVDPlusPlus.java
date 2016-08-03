@@ -126,7 +126,7 @@ public class SVDPlusPlus extends BiasedMF {
 	}
 
 	@Override
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		double pred = globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
 		List<Integer> items = userItemsCache.get(u);

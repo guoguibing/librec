@@ -28,7 +28,7 @@ public class External extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j, boolean bound) throws Exception {
+	public double predict(int u, int j, boolean bound) throws Exception {
 		return trainMatrix.get(u, j);
 	}
 

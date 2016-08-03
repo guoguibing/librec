@@ -36,7 +36,7 @@ public class GlobalAverage extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		return globalMean;
 	}
 

@@ -156,7 +156,7 @@ public class RSTE extends SocialRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j, boolean bound) {
+	public double predict(int u, int j, boolean bound) {
 		double pred1 = DenseMatrix.rowMult(P, u, Q, j);
 		double sum = 0.0, ws = 0.0;
 		SparseVector tu = socialMatrix.row(u);

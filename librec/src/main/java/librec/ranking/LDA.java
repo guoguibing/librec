@@ -200,7 +200,7 @@ public class LDA extends GraphicRecommender {
 	}
 
 	@Override
-	protected double ranking(int u, int j) throws Exception {
+	public double ranking(int u, int j) throws Exception {
 
 		return DenseMatrix.product(Puk, u, Pki, j);
 	}

@@ -43,7 +43,7 @@ public class UserAverage extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		if (!userMeans.containsKey(u)) {
 			SparseVector uv = trainMatrix.row(u);
 			userMeans.put(u, uv.getCount() > 0 ? uv.mean() : globalMean);

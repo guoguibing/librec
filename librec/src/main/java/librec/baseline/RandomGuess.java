@@ -37,7 +37,7 @@ public class RandomGuess extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		return Randoms.uniform(minRate, maxRate);
 	}
 

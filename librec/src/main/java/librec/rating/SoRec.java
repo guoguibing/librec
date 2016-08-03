@@ -141,7 +141,7 @@ public class SoRec extends SocialRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j, boolean bounded) {
+	public double predict(int u, int j, boolean bounded) {
 		double pred = DenseMatrix.rowMult(P, u, Q, j);
 
 		if (bounded)

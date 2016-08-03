@@ -314,7 +314,7 @@ public class BPMF extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		return globalMean + DenseMatrix.rowMult(P, u, Q, j);
 	}
 

@@ -176,7 +176,7 @@ public class FISMauc extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int i) throws Exception {
+	public double predict(int u, int i) throws Exception {
 
 		double sum = 0;
 		int count = 0;

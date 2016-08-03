@@ -234,7 +234,7 @@ public class TrustSVD extends SocialRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		double pred = globalMean + userBias.get(u) + itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 
 		// Y

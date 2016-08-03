@@ -125,7 +125,7 @@ public class NMF extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		return DenseMatrix.product(W, u, H, j);
 	}
 

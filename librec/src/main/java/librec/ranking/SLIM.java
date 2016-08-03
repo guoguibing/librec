@@ -200,7 +200,7 @@ public class SLIM extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		return predict(u, j, -1);
 	}
 

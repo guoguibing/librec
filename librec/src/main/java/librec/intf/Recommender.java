@@ -36,6 +36,7 @@ import librec.data.MatrixEntry;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.data.SymmMatrix;
+import librec.metric.IRatingMetric;
 import librec.util.Dates;
 import librec.util.Debug;
 import librec.util.FileConfiger;
@@ -46,6 +47,9 @@ import librec.util.Logs;
 import librec.util.Measures;
 import librec.util.Sims;
 import librec.util.Stats;
+
+import librec.metric.MetricCollection;
+import librec.metric.ITimeMetric;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
@@ -92,7 +96,7 @@ public abstract class Recommender implements Runnable {
 	// is diversity-based measures used
 	protected static boolean isDiverseUsed;
 	// early-stop criteria
-	protected static Measure earlyStopMeasure = null;
+	protected static String earlyStopMeasure = null;
 	// is save model
 	protected static boolean isSaveModel = false;
 	// is split data by date
@@ -163,7 +167,11 @@ public abstract class Recommender implements Runnable {
 	protected SymmMatrix corrs;
 
 	// performance measures
-	public Map<Measure, Double> measures;
+	//public Map<Measure, Double> measures;
+
+	// RB Replace old Map with dedicated class for greater flexibility
+	public MetricCollection measures;
+
 	// global average of training rates
 	protected double globalMean;
 
@@ -171,16 +179,18 @@ public abstract class Recommender implements Runnable {
 	 * Recommendation measures
 	 * 
 	 */
-	public enum Measure {
+	//public enum Measure {
 		/* prediction-based measures */
-		MAE, RMSE, NMAE, rMAE, rRMSE, MPE, Perplexity,
+	//	MAE, RMSE, NMAE, rMAE, rRMSE, MPE, Perplexity,
 		/* ranking-based measures */
-		D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC,
+	//	D5, D10, Pre5, Pre10, Rec5, Rec10, MAP, MRR, NDCG, AUC,
 		/* execution time */
-		TrainTime, TestTime,
+	//	TrainTime, TestTime,
 		/* loss value */
-		Loss
-	}
+	//	Loss
+	//}
+
+
 
 	/**
 	 * Constructor for Recommender
@@ -233,15 +243,7 @@ public abstract class Recommender implements Runnable {
 			validationRatio = evalOptions.getFloat("-v", 0.0f);
 			isSplitByDate = evalOptions.contains("--by-date");
 
-			String earlyStop = evalOptions.getString("--early-stop");
-			if (earlyStop != null) {
-				for (Measure m : Measure.values()) {
-					if (m.name().equalsIgnoreCase(earlyStop)) {
-						earlyStopMeasure = m;
-						break;
-					}
-				}
-			}
+			earlyStopMeasure = evalOptions.getString("--early-stop");
 
 			int numProcessors = Runtime.getRuntime().availableProcessors();
 			numCPUs = evalOptions.getInt("-cpu", numProcessors);
@@ -256,6 +258,34 @@ public abstract class Recommender implements Runnable {
 			knn = cf.getInt("num.neighbors", 20);
 			similarityMeasure = cf.getString("similarity", "PCC");
 			similarityShrinkage = cf.getInt("num.shrinkage", 30);
+
+            // 2016/8/2 RB Added metric configuration
+            // These are class names
+
+            LineConfiger metricOptions = cf.getParamOptions("metric.options");
+            String metrics;
+            if ((metricOptions == null) || metricOptions.contains("--all")) {
+                metrics = MetricCollection.DefaultMetrics;
+            } else {
+                metrics = cf.getString("metrics", MetricCollection.DefaultMetrics);
+            }
+
+            String[] metricShortNames = metrics.split("\\s+");
+            List<String> metricNames = new ArrayList<String>();
+            for (String name : metricShortNames) {
+                // If it does not have a . separator for the class name, we assume it is one of the
+                // built-in classes and append the librec class info.
+                if (!name.contains(".")) {
+                    name = "librec.metric." + name;
+                }
+                metricNames.add(name);
+            }
+            try {
+                measures = new MetricCollection(metricNames);
+            } catch (Exception e) {
+                Logs.debug("Failed to initialize metrics: " + e);
+                System.exit(-1);
+            }
 		}
 
 		// training, validation, test data
@@ -291,8 +321,10 @@ public abstract class Recommender implements Runnable {
 		setAlgoName(this.getClass().getSimpleName());
 
 		// compute item-item correlations
-		if (isRankingPred && isDiverseUsed)
-			corrs = new SymmMatrix(numItems);
+
+        if (measures.hasRankingMetrics() && measures.hasDiversityMetrics()) {
+            corrs = new SymmMatrix(numItems);
+        }
 	}
 
 	public void run() {
@@ -341,22 +373,37 @@ public abstract class Recommender implements Runnable {
 			trainTime = sw.elapsed(TimeUnit.MILLISECONDS);
 		}
 
+
+		measures.init(this);
 		// evaluation
 		if (verbose)
 			Logs.debug("{}{} evaluate test data ... ", algoName, foldInfo);
 		// TODO: to predict ratings only, or do item recommendations only
-		measures = isRankingPred ? evalRankings() : evalRatings();
-		String measurements = getEvalInfo(measures);
+        if (measures.hasRankingMetrics() && (measures.hasRatingMetrics())) {
+            evalRankings();
+            evalRatings();
+        } else if (measures.hasRatingMetrics()) {
+            evalRatings();
+        } else if (measures.hasRankingMetrics()) {
+            evalRankings();
+        } else {
+            Logs.debug("No metrics found.");
+        }
+		String measurements = measures.getEvalResultString();
 		sw.stop();
 		long testTime = sw.elapsed(TimeUnit.MILLISECONDS) - trainTime;
 
 		// collecting results
-		measures.put(Measure.TrainTime, (double) trainTime);
-		measures.put(Measure.TestTime, (double) testTime);
+        ITimeMetric trainTimeMetric = measures.getTimeMetric("TrainTime");
+        ITimeMetric testTimeMetric = measures.getTimeMetric("TestTime");
 
-		String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
-				+ Dates.parse(measures.get(Measure.TrainTime).longValue()) + ", "
-				+ Dates.parse(measures.get(Measure.TestTime).longValue());
+        trainTimeMetric.setTime(trainTime);
+        testTimeMetric.setTime(testTime);;
+
+        String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
+                + trainTimeMetric.getValueAsString() + ", "
+                + testTimeMetric.getValueAsString();
+
 		if (!isRankingPred)
 			evalInfo += "\tView: " + view;
 
@@ -399,38 +446,6 @@ public abstract class Recommender implements Runnable {
 	 * validate model with held-out validation data
 	 */
 	protected void validateModel() {
-	}
-
-	/**
-	 * @return the evaluation information of a recommend
-	 */
-	public static String getEvalInfo(Map<Measure, Double> measures) {
-		String evalInfo = null;
-		if (isRankingPred) {
-			if (isDiverseUsed)
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
-						measures.get(Measure.Pre5), measures.get(Measure.Pre10), measures.get(Measure.Rec5),
-						measures.get(Measure.Rec10), measures.get(Measure.AUC), measures.get(Measure.MAP),
-						measures.get(Measure.NDCG), measures.get(Measure.MRR), measures.get(Measure.D5),
-						measures.get(Measure.D10));
-			else
-				evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.Pre5),
-						measures.get(Measure.Pre10), measures.get(Measure.Rec5), measures.get(Measure.Rec10),
-						measures.get(Measure.AUC), measures.get(Measure.MAP), measures.get(Measure.NDCG),
-						measures.get(Measure.MRR));
-
-		} else {
-			evalInfo = String.format("%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", measures.get(Measure.MAE),
-					measures.get(Measure.RMSE), measures.get(Measure.NMAE), measures.get(Measure.rMAE),
-					measures.get(Measure.rRMSE), measures.get(Measure.MPE));
-
-			// for some graphic models
-			if (measures.containsKey(Measure.Perplexity)) {
-				evalInfo += String.format(",%.6f", measures.get(Measure.Perplexity));
-			}
-		}
-
-		return evalInfo;
 	}
 
 	/**
@@ -592,7 +607,7 @@ public abstract class Recommender implements Runnable {
 	/**
 	 * @return the evaluation results of rating predictions
 	 */
-	protected Map<Measure, Double> evalRatings() throws Exception {
+	protected void evalRatings() throws Exception {
 
 		List<String> preds = null;
 		String toFile = null;
@@ -603,8 +618,8 @@ public abstract class Recommender implements Runnable {
 			FileIO.deleteFile(toFile); // delete possibly old files
 		}
 
-		double sum_maes = 0, sum_mses = 0, sum_r_maes = 0, sum_r_rmses = 0, sum_perps = 0;
-		int numCount = 0, numPEs = 0;
+		int numCount = 0;
+
 		for (MatrixEntry me : testMatrix) {
 			double rate = me.get();
 
@@ -615,29 +630,14 @@ public abstract class Recommender implements Runnable {
 				continue;
 
 			double pred = predict(u, j, true);
-			if (Double.isNaN(pred))
-				continue;
 
-			// perplexity: for some graphic model
-			double perp = perplexity(u, j, pred);
-			sum_perps += perp;
+            // 2016/8/2 RB Should the metrics handle this?
+            if (Double.isNaN(pred))
+            	continue;
 
-			// rounding prediction to the closest rating level
-			double rPred = Math.round(pred / minRate) * minRate;
-
-			double err = Math.abs(rate - pred); // absolute predictive error
-			double r_err = Math.abs(rate - rPred);
-
-			sum_maes += err;
-			sum_mses += err * err;
-
-			sum_r_maes += r_err;
-			sum_r_rmses += r_err * r_err;
+            measures.updateRatingMetrics(u, j, pred, rate, this);
 
 			numCount++;
-
-			if (r_err > 1e-5)
-				numPEs++;
 
 			// output predictions
 			if (isResultsOut) {
@@ -655,52 +655,16 @@ public abstract class Recommender implements Runnable {
 			Logs.debug("{}{} has writeen rating predictions to {}", algoName, foldInfo, toFile);
 		}
 
-		double mae = sum_maes / numCount;
-		double rmse = Math.sqrt(sum_mses / numCount);
+		measures.computeRatingMetrics(numCount);
 
-		double r_mae = sum_r_maes / numCount;
-		double r_rmse = Math.sqrt(sum_r_rmses / numCount);
-
-		Map<Measure, Double> measures = new HashMap<>();
-		measures.put(Measure.MAE, mae);
-		// normalized MAE: useful for direct comparison among different data sets with distinct rating scales
-		measures.put(Measure.NMAE, mae / (maxRate - minRate));
-		measures.put(Measure.RMSE, rmse);
-
-		// MAE and RMSE after rounding predictions to the closest rating levels
-		measures.put(Measure.rMAE, r_mae);
-		measures.put(Measure.rRMSE, r_rmse);
-
-		// measure zero-one loss
-		measures.put(Measure.MPE, (numPEs + 0.0) / numCount);
-
-		// perplexity
-		if (sum_perps > 0) {
-			measures.put(Measure.Perplexity, Math.exp(sum_perps / numCount));
-		}
-
-		return measures;
 	}
 
 	/**
 	 * @return the evaluation results of ranking predictions
 	 */
-	protected Map<Measure, Double> evalRankings() throws Exception {
+	protected void evalRankings() throws Exception {
 
 		int capacity = Lists.initSize(testMatrix.numRows());
-
-		// initialization capacity to speed up
-		List<Double> ds5 = new ArrayList<>(isDiverseUsed ? capacity : 0);
-		List<Double> ds10 = new ArrayList<>(isDiverseUsed ? capacity : 0);
-
-		List<Double> precs5 = new ArrayList<>(capacity);
-		List<Double> precs10 = new ArrayList<>(capacity);
-		List<Double> recalls5 = new ArrayList<>(capacity);
-		List<Double> recalls10 = new ArrayList<>(capacity);
-		List<Double> aps = new ArrayList<>(capacity);
-		List<Double> rrs = new ArrayList<>(capacity);
-		List<Double> aucs = new ArrayList<>(capacity);
-		List<Double> ndcgs = new ArrayList<>(capacity);
 
 		// candidate items for all users: here only training items
 		// use HashSet instead of ArrayList to speedup removeAll() and contains() operations: HashSet: O(1); ArrayList: O(log n).
@@ -738,6 +702,7 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// for each test user
+        int numCount = 0;
 		for (int u = 0, um = testMatrix.numRows(); u < um; u++) {
 
 			if (verbose && ((u + 1) % 100 == 0))
@@ -807,34 +772,11 @@ public abstract class Recommender implements Runnable {
 				}
 			}
 
+			numCount++;
+
 			int numDropped = numCands - rankedItems.size();
-			double AUC = Measures.AUC(rankedItems, correctItems, numDropped);
-			double AP = Measures.AP(rankedItems, correctItems);
-			double nDCG = Measures.nDCG(rankedItems, correctItems);
-			double RR = Measures.RR(rankedItems, correctItems);
 
-			List<Integer> cutoffs = Arrays.asList(5, 10);
-			Map<Integer, Double> precs = Measures.PrecAt(rankedItems, correctItems, cutoffs);
-			Map<Integer, Double> recalls = Measures.RecallAt(rankedItems, correctItems, cutoffs);
-
-			precs5.add(precs.get(5));
-			precs10.add(precs.get(10));
-			recalls5.add(recalls.get(5));
-			recalls10.add(recalls.get(10));
-
-			aucs.add(AUC);
-			aps.add(AP);
-			rrs.add(RR);
-			ndcgs.add(nDCG);
-
-			// diversity
-			if (isDiverseUsed) {
-				double d5 = diverseAt(rankedItems, 5);
-				double d10 = diverseAt(rankedItems, 10);
-
-				ds5.add(d5);
-				ds10.add(d10);
-			}
+            measures.updateRankingMetrics(rankedItems, correctItems, numDropped, this);
 
 			// output predictions
 			if (isResultsOut) {
@@ -854,19 +796,7 @@ public abstract class Recommender implements Runnable {
 		}
 
 		// measure the performance
-		Map<Measure, Double> measures = new HashMap<>();
-		measures.put(Measure.D5, isDiverseUsed ? Stats.mean(ds5) : 0.0);
-		measures.put(Measure.D10, isDiverseUsed ? Stats.mean(ds10) : 0.0);
-		measures.put(Measure.Pre5, Stats.mean(precs5));
-		measures.put(Measure.Pre10, Stats.mean(precs10));
-		measures.put(Measure.Rec5, Stats.mean(recalls5));
-		measures.put(Measure.Rec10, Stats.mean(recalls10));
-		measures.put(Measure.AUC, Stats.mean(aucs));
-		measures.put(Measure.NDCG, Stats.mean(ndcgs));
-		measures.put(Measure.MAP, Stats.mean(aps));
-		measures.put(Measure.MRR, Stats.mean(rrs));
-
-		return measures;
+        measures.computeRankingMetrics(numCount);
 	}
 
 	/**
@@ -881,7 +811,7 @@ public abstract class Recommender implements Runnable {
 	 *            whether to bound the prediction
 	 * @return prediction
 	 */
-	protected double predict(int u, int j, boolean bound) throws Exception {
+	public double predict(int u, int j, boolean bound) throws Exception {
 		double pred = predict(u, j);
 
 		if (bound) {
@@ -904,11 +834,11 @@ public abstract class Recommender implements Runnable {
 	 *            item id
 	 * @return raw prediction without bounded
 	 */
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		return globalMean;
 	}
 
-	protected double perplexity(int u, int j, double r) throws Exception {
+	public double perplexity(int u, int j, double r) throws Exception {
 		return 0;
 	}
 
@@ -922,12 +852,12 @@ public abstract class Recommender implements Runnable {
 	 *            item id
 	 * @return a ranking score for user u on item j
 	 */
-	protected double ranking(int u, int j) throws Exception {
+	public double ranking(int u, int j) throws Exception {
 		return predict(u, j, false);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param rankedItems
 	 *            the list of ranked items to be recommended
 	 * @param cutoff
@@ -936,7 +866,7 @@ public abstract class Recommender implements Runnable {
 	 *            correlations between items
 	 * @return diversity at a specific cutoff position
 	 */
-	protected double diverseAt(List<Integer> rankedItems, int cutoff) {
+	public double diverseAt(List<Integer> rankedItems, int cutoff) {
 
 		int num = 0;
 		double sum = 0.0;

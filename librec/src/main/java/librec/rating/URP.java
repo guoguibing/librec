@@ -277,7 +277,7 @@ public class URP extends GraphicRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int i) throws Exception {
+	public double predict(int u, int i) throws Exception {
 		double pred = 0;
 
 		for (int r = 0; r < numLevels; r++) {

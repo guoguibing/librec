@@ -189,8 +189,10 @@ public class LLORMA extends IterativeRecommender {
 					}
 
 					if (completeModelCount % 5 == 0) {
-						Logs.debug("{}{} iter {}:[MAE,RMSE,NMAE,rMAE,rRMSE,MPE] {}", algoName, foldInfo,
-								completeModelCount, "[" + Recommender.getEvalInfo(evalRatings()) + "]");
+						evalRatings();
+
+						Logs.debug("{}{} iter {}:[" + measures.getMetricNamesString() + "] {}", algoName, foldInfo,
+								completeModelCount, "[" + measures.getEvalResultString() + "]");
 					}
 					nextRunningSlot = waitingThreadPointer;
 					waitingThreadPointer = (waitingThreadPointer + 1) % multiThreadCount;
@@ -285,7 +287,7 @@ public class LLORMA extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int i) throws Exception {
+	public double predict(int u, int i) throws Exception {
 		return predictMatrix.get(u, i);
 	}
 }

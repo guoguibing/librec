@@ -182,7 +182,7 @@ public class WBPR extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		return itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 }

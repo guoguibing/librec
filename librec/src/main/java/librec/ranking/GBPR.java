@@ -171,7 +171,7 @@ public class GBPR extends SocialRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		return itemBias.get(j) + DenseMatrix.rowMult(P, u, Q, j);
 	}
 

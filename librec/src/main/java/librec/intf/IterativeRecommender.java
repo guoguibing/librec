@@ -115,7 +115,7 @@ public abstract class IterativeRecommender extends Recommender {
 	 * default prediction method
 	 */
 	@Override
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		return DenseMatrix.rowMult(P, u, Q, j);
 	}
 
@@ -132,6 +132,11 @@ public abstract class IterativeRecommender extends Recommender {
 	 *            current iteration
 	 * 
 	 * @return boolean: true if it is converged; false otherwise
+	 * 2016/8/2 RB I don't know if this is correct or not. The logic of the original is preserved but
+	 * I don't understand it that well.
+	 * If we are using ranking metrics, then use loss as the early stop measure.
+	 * If not, use whatever metric is specified. I am restricting it to rating metrics -- diversity and time
+	 * don't make sense, but I'm not sure what a different ranking metric can't be specific for early stop.
 	 * 
 	 */
 	protected boolean isConverged(int iter) throws Exception {
@@ -139,22 +144,18 @@ public abstract class IterativeRecommender extends Recommender {
 		float delta_loss = (float) (last_loss - loss);
 
 		if (earlyStopMeasure != null) {
-			if (isRankingPred){
-				earlyStopMeasure = Measure.Loss;
+			if (measures.hasRankingMetrics()){
+				earlyStopMeasure = "Loss";
 			}
 
-			switch (earlyStopMeasure) {
-			case Loss:
+			if (earlyStopMeasure.equals("Loss")) {
 				measure = loss;
 				last_measure = last_loss;
-				break;
-
-			default:
+			} else {
 				boolean flag = isResultsOut;
 				isResultsOut = false; // to stop outputs
-				measure = evalRatings().get(earlyStopMeasure);
+				measure = measures.getRatingMetric(earlyStopMeasure).getValue();
 				isResultsOut = flag; // recover the flag
-				break;
 			}
 		}
 
@@ -165,7 +166,7 @@ public abstract class IterativeRecommender extends Recommender {
 			String learnRate = lRate > 0 ? ", learn_rate = " + (float) lRate : "";
 
 			String earlyStop = "";
-			if (earlyStopMeasure != null && earlyStopMeasure != Measure.Loss) {
+			if (earlyStopMeasure != null && !earlyStopMeasure.equals("Loss")) {
 				earlyStop = String.format(", %s = %.6f, delta_%s = %.6f", new Object[] { earlyStopMeasure,
 						(float) measure, earlyStopMeasure, delta_measure });
 			}

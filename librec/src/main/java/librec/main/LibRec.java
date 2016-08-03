@@ -49,7 +49,8 @@ import librec.ext.SlopeOne;
 import librec.intf.GraphicRecommender;
 import librec.intf.IterativeRecommender;
 import librec.intf.Recommender;
-import librec.intf.Recommender.Measure;
+import librec.metric.AvgMetricCollection;
+import librec.metric.MetricCollection;
 import librec.ranking.BHfree;
 import librec.ranking.BPR;
 import librec.ranking.BUCM;
@@ -497,10 +498,17 @@ public class LibRec {
 		Thread[] ts = new Thread[kFold];
 		Recommender[] algos = new Recommender[kFold];
 
-		for (int i = 0; i < kFold; i++) {
+        // average performance of k-fold
+        AvgMetricCollection avgMeasures = null;
+
+        for (int i = 0; i < kFold; i++) {
 			Recommender algo = getRecommender(ds.getKthFold(i + 1), i + 1);
 
-			algos[i] = algo;
+            if (avgMeasures == null) {
+                avgMeasures = new AvgMetricCollection(algo);
+            }
+
+            algos[i] = algo;
 			ts[i] = new Thread(algo);
 			ts[i].start();
 
@@ -512,17 +520,13 @@ public class LibRec {
 			for (Thread t : ts)
 				t.join();
 
-		// average performance of k-fold
-		Map<Measure, Double> avgMeasure = new HashMap<>();
 		for (Recommender algo : algos) {
-			for (Entry<Measure, Double> en : algo.measures.entrySet()) {
-				Measure m = en.getKey();
-				double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
-				avgMeasure.put(m, val + en.getValue() / kFold);
-			}
-		}
+            avgMeasures.updateFromMeasures(algo.measures);
+        }
 
-		printEvalInfo(algos[0], avgMeasure);
+        avgMeasures.compute(kFold);
+
+		printEvalInfo(algos[0], avgMeasures);
 	}
 
 	/**
@@ -534,9 +538,8 @@ public class LibRec {
 
 		Thread[] ts = new Thread[numThreads];
 		Recommender[] algos = new Recommender[numThreads];
-
 		// average performance of k-fold
-		Map<Measure, Double> avgMeasure = new HashMap<>();
+		AvgMetricCollection avgMeasures = null;
 
 		int rows = rateMatrix.numRows();
 		int cols = rateMatrix.numColumns();
@@ -565,6 +568,10 @@ public class LibRec {
 			// get a recommender
 			Recommender algo = getRecommender(new SparseMatrix[] { trainMatrix, testMatrix }, count + 1);
 
+			if (avgMeasures == null) {
+				avgMeasures = new AvgMetricCollection(algo);
+			}
+
 			algos[count] = algo;
 			ts[count] = new Thread(algo);
 			ts[count].start();
@@ -572,11 +579,8 @@ public class LibRec {
 			if (numThreads == 1) {
 				ts[count].join(); // fold by fold
 
-				for (Entry<Measure, Double> en : algo.measures.entrySet()) {
-					Measure m = en.getKey();
-					double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
-					avgMeasure.put(m, val + en.getValue());
-				}
+				avgMeasures.updateFromMeasures(algo.measures);
+
 			} else if (count < numThreads) {
 				count++;
 			}
@@ -589,35 +593,27 @@ public class LibRec {
 
 				// record performance
 				for (Recommender algo2 : algos) {
-					for (Entry<Measure, Double> en : algo2.measures.entrySet()) {
-						Measure m = en.getKey();
-						double val = avgMeasure.containsKey(m) ? avgMeasure.get(m) : 0.0;
-						avgMeasure.put(m, val + en.getValue());
-					}
+					avgMeasures.updateFromMeasures(algo2.measures);
 				}
 			}
 		}
 
 		// normalization
 		int size = rateMatrix.size();
-		for (Entry<Measure, Double> en : avgMeasure.entrySet()) {
-			Measure m = en.getKey();
-			double val = en.getValue();
-			avgMeasure.put(m, val / size);
-		}
+		avgMeasures.compute(size);
 
-		printEvalInfo(algos[0], avgMeasure);
+		printEvalInfo(algos[0], avgMeasures);
 	}
 
 	/**
 	 * print out the evaluation information for a specific algorithm
 	 */
-	private void printEvalInfo(Recommender algo, Map<Measure, Double> ms) throws Exception {
+	private void printEvalInfo(Recommender algo, AvgMetricCollection ms) throws Exception {
 
-		String result = Recommender.getEvalInfo(ms);
+		String result = ms.getEvalResultString();
 		// we add quota symbol to indicate the textual format of time 
-		String time = String.format("'%s','%s'", Dates.parse(ms.get(Measure.TrainTime).longValue()),
-				Dates.parse(ms.get(Measure.TestTime).longValue()));
+		String time = String.format("'%s','%s'", ms.getMetric("TrainTime").getValueAsString(),
+				ms.getMetric("TestTime").getValueAsString());
 
 		// double commas as the separation of results and configuration
 		StringBuilder sb = new StringBuilder();
@@ -643,6 +639,41 @@ public class LibRec {
 			Logs.debug("Results have been collected to file: {}", filePath);
 		}
 	}
+
+    /**
+     * print out the evaluation information for a specific algorithm
+     */
+    private void printEvalInfo(Recommender algo, MetricCollection ms) throws Exception {
+
+        String result = ms.getEvalResultString();
+        // we add quota symbol to indicate the textual format of time
+        String time = String.format("'%s','%s'", ms.getTimeMetric("TrainTime").getValueAsString(),
+                ms.getTimeMetric("TestTime").getValueAsString());
+
+        // double commas as the separation of results and configuration
+        StringBuilder sb = new StringBuilder();
+        String config = algo.toString();
+        sb.append(algo.algoName).append(",").append(result).append(",,");
+        if (!config.isEmpty())
+            sb.append(config).append(",");
+        sb.append(time).append("\n");
+
+        String evalInfo = sb.toString();
+        Logs.info(evalInfo);
+
+        // copy to clipboard for convenience, useful for a single run
+        if (outputOptions.contains("--to-clipboard")) {
+            Strings.toClipboard(evalInfo);
+            Logs.debug("Results have been copied to clipboard!");
+        }
+
+        // append to a specific file, useful for multiple runs
+        if (outputOptions.contains("--to-file")) {
+            String filePath = outputOptions.getString("--to-file", tempDirPath + algorithm + ".txt");
+            FileIO.writeString(filePath, evalInfo, true);
+            Logs.debug("Results have been collected to file: {}", filePath);
+        }
+    }
 
 	/**
 	 * Send a notification of completeness
