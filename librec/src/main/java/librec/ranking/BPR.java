@@ -106,6 +106,6 @@ public class BPR extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, numIters }, ",");
+		return Strings.toString(new Object[] { numFactors, initLRate, maxLRate, regB, regU, regI, numIters, isBoldDriver }, ",");
 	}
 }
