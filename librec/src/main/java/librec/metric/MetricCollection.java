@@ -181,15 +181,23 @@ public class MetricCollection {
     }
 
     public String getMetricNamesString () {
-        if (m_rankingMetrics.isEmpty()) {
-            return m_ratingMetrics.getResultString();
-        } else if (m_ratingMetrics.isEmpty()) {
-            return m_rankingMetrics.getResultString();
-        } else {
-            String ratingResults = m_ratingMetrics.getResultString();
-            String rankingResults = m_rankingMetrics.getResultString();
-            return ratingResults + "," + rankingResults;
+        StringBuilder buf = new StringBuilder();
+        if (!m_ratingMetrics.isEmpty()) {
+            buf.append(m_ratingMetrics.getNamesString());
         }
+        if (!m_rankingMetrics.isEmpty()) {
+            if (buf.length() != 0) {
+                buf.append(",");
+            }
+            buf.append(m_rankingMetrics.getNamesString());
+        }
+        if (!m_diversityMetrics.isEmpty()) {
+            if (buf.length() != 0) {
+                buf.append(",");
+            }
+            buf.append(m_diversityMetrics.getNamesString());
+        }
+        return buf.toString();
     }
 
     /**
@@ -197,7 +205,7 @@ public class MetricCollection {
      * @return
      */
     public String getEvalResultString () {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (!m_ratingMetrics.isEmpty()) {
             buf.append(m_ratingMetrics.getResultString());
         }
@@ -213,7 +221,6 @@ public class MetricCollection {
             }
             buf.append(m_diversityMetrics.getResultString());
         }
-
         return buf.toString();
     }
 }

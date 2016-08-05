@@ -409,9 +409,10 @@ public abstract class Recommender implements Runnable {
         ITimeMetric testTimeMetric = measures.getTimeMetric("TestTime");
 
         trainTimeMetric.setTime(trainTime);
-        testTimeMetric.setTime(testTime);;
-
-        String evalInfo = algoName + foldInfo + ": " + measurements + "\tTime: "
+        testTimeMetric.setTime(testTime);
+        // added metric names
+        String evalInfo = "Metrics: " + measures.getMetricNamesString() + "\n";
+        evalInfo += algoName + foldInfo + ": " + measurements + "\tTime: "
                 + trainTimeMetric.getValueAsString() + ", "
                 + testTimeMetric.getValueAsString();
 
