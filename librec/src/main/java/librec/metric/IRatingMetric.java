@@ -91,9 +91,7 @@ class MetricRMAE implements IRatingMetric {
         m_totalErr += err;
     }
 
-    public void compute(int count) {
-        m_rmae = Math.sqrt(m_totalErr / count);
-    }
+    public void compute(int count) { m_rmae = m_totalErr / count; }
 
     public double getValue() { return m_rmae;}
     public String getValueAsString () {

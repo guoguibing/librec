@@ -15,13 +15,17 @@ import librec.util.Logs;
 public class MetricCollection {
 
     public static String ValueFormatString = "%s: %.6f";
-    public static String[] DefaultMetrics =
-                    /* prediction-based measures */
-            {"MetricMAE MetricRMSE MetricNMAE MetricRMAE MetricRRMSE MetricMPE Perplexity" +
-                    /* ranking-based measures */
-                    " MetricPre5 MetricPre10 MetricRec5 MetricRec10 MetricMAP MetricMRR MetricNDCG MetricAUC" +
+    public static String[] RatingMetrics =
+            {"MetricMAE", "MetricRMSE", "MetricNMAE", "MetricRMAE", "MetricRRMSE", "MetricMPE", "Perplexity",
                     /* execution time */
-                    " TrainTime TestTime"};
+                    "TrainTime", "TestTime"};
+    public static String[] AllMetrics =
+                    /* prediction-based measures */
+            {"MetricMAE", "MetricRMSE", "MetricNMAE", "MetricRMAE", "MetricRRMSE", "MetricMPE", "Perplexity",
+                    /* ranking-based measures */
+                    "MetricPre5", "MetricPre10", "MetricRec5", "MetricRec10", "MetricMAP", "MetricMRR", "MetricNDCG", "MetricAUC",
+                    /* execution time */
+                    "TrainTime", "TestTime"};
 
     private MetricDict<IRatingMetric> m_ratingMetrics;
     private MetricDict<IRankingMetric<Integer>> m_rankingMetrics;

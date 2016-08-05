@@ -267,9 +267,12 @@ public abstract class Recommender implements Runnable {
         LineConfiger metricOptions = cf.getParamOptions("metric.options");
         List<String> metrics;
         boolean defaultMetrics = false;
-        if ((metricOptions == null) || metricOptions.contains("--all")) {
-            metrics = Arrays.asList(MetricCollection.DefaultMetrics);
-            defaultMetrics = true;
+        if ((metricOptions == null) || metricOptions.contains("--rating")) {
+			metrics = Arrays.asList(MetricCollection.RatingMetrics);
+			defaultMetrics = true;
+		} else if (metricOptions.contains("--all")) {
+			metrics = Arrays.asList(MetricCollection.AllMetrics);
+			defaultMetrics = true;
         } else {
             metrics = metricOptions.getOptions("-metrics");
         }
