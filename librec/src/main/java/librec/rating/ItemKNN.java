@@ -75,7 +75,7 @@ public class ItemKNN extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 
 		// find a number of similar items
 		Map<Integer, Double> nns = new HashMap<>();

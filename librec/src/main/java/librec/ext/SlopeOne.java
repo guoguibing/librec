@@ -79,7 +79,7 @@ public class SlopeOne extends Recommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) {
+	public double predict(int u, int j) {
 		SparseVector uv = trainMatrix.row(u, j);
 		double preds = 0, cards = 0;
 		for (int i : uv.getIndex()) {

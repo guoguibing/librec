@@ -44,7 +44,7 @@ import com.google.common.collect.Table;
  * 2003. <br>
  * 
  * <strong>Tempered EM:</strong> Thomas Hofmann, <strong>Unsupervised Learning by Probabilistic Latent Semantic
- * Analysis</strong>, Machine Learning, 42, 177¨C196, 2001.
+ * Analysis</strong>, Machine Learning, 42, 177ï¿½C196, 2001.
  * 
  * @author Guo Guibing
  *
@@ -236,7 +236,7 @@ public class GPLSA extends GraphicRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int i) throws Exception {
+	public double predict(int u, int i) throws Exception {
 
 		double sum = 0;
 		for (int z = 0; z < numFactors; z++) {

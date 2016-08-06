@@ -314,7 +314,7 @@ public class BUCM extends GraphicRecommender {
 	}
 
 	@Override
-	protected double perplexity(int u, int j, double ruj) throws Exception {
+	public double perplexity(int u, int j, double ruj) throws Exception {
 		int r = (int) (ruj / minRate) - 1;
 
 		double prob = 0;
@@ -326,7 +326,7 @@ public class BUCM extends GraphicRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int i) throws Exception {
+	public double predict(int u, int i) throws Exception {
 		double pred = 0, probs = 0;
 
 		for (int r = 0; r < numLevels; r++) {
@@ -345,7 +345,7 @@ public class BUCM extends GraphicRecommender {
 	}
 
 	@Override
-	protected double ranking(int u, int j) throws Exception {
+	public double ranking(int u, int j) throws Exception {
 		double rank = 0;
 
 		for (int k = 0; k < numFactors; k++) {

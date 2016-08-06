@@ -190,7 +190,7 @@ public class UserCluster extends GraphicRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j, boolean bound) throws Exception {
+	public double predict(int u, int j, boolean bound) throws Exception {
 		double pred = 0;
 
 		for (int k = 0; k < numFactors; k++) {

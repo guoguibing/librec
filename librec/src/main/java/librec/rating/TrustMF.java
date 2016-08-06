@@ -254,7 +254,7 @@ public class TrustMF extends SocialRecommender {
 			lRate *= 0.5;
 	}
 
-	protected double predict(int u, int j, boolean bounded) {
+	public double predict(int u, int j, boolean bounded) {
 
 		double pred = 0.0;
 		switch (model) {

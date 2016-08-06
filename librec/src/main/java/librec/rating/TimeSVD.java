@@ -305,7 +305,7 @@ public class TimeSVD extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int i) throws Exception {
+	public double predict(int u, int i) throws Exception {
 		// retrieve the test rating timestamp
 		long timestamp = (long) testTimeMatrix.get(u, i);
 		int t = days(timestamp, minTimestamp);

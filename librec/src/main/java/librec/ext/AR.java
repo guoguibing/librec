@@ -91,7 +91,7 @@ public class AR extends Recommender {
 	}
 
 	@Override
-	protected double ranking(int u, int j) throws Exception {
+	public double ranking(int u, int j) throws Exception {
 		SparseVector pu = userCache.get(u);
 
 		double rank = 0;

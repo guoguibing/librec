@@ -60,7 +60,7 @@ public class PD extends Recommender {
 	}
 
 	@Override
-	protected double predict(int a, int j) {
+	public double predict(int a, int j) {
 		Map<Double, Double> scaleProbs = new HashMap<>();
 		SparseVector pa = trainMatrix.row(a);
 		SparseVector qj = trainMatrix.column(j);

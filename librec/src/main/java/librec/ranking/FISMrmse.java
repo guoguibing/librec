@@ -193,7 +193,7 @@ public class FISMrmse extends IterativeRecommender {
 	}
 
 	@Override
-	protected double predict(int u, int j) throws Exception {
+	public double predict(int u, int j) throws Exception {
 		double pred = userBias.get(u) + itemBias.get(j);
 
 		double sum = 0;

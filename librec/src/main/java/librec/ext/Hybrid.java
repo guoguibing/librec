@@ -132,7 +132,7 @@ public class Hybrid extends Recommender {
 				/ maxProb * lambda : 0.0;
 	}
 
-	protected double ranking(int u, int j) {
+	public double ranking(int u, int j) {
 
 		// Note that in ranking, we first check a user u, and then check the
 		// ranking score of each candidate items
