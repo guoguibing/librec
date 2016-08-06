@@ -31,7 +31,7 @@ import librec.util.Strings;
  * @author guoguibing
  * 
  */
-@Configuration("factors, lRate, maxLRate, regU, regI, numIters, isBoldDriver")
+@Configuration("binThold, factors, lRate, maxLRate, regU, regI, numIters, isBoldDriver")
 public class BPR extends IterativeRecommender {
 
 	public BPR(SparseMatrix trainMatrix, SparseMatrix testMatrix, int fold) {
@@ -107,6 +107,6 @@ public class BPR extends IterativeRecommender {
 
 	@Override
 	public String toString() {
-		return Strings.toString(new Object[] { numFactors, initLRate, maxLRate, regU, regI, numIters, isBoldDriver }, ",");
+		return Strings.toString(new Object[] { binThold, numFactors, initLRate, maxLRate, regU, regI, numIters, isBoldDriver }, ",");
 	}
 }
