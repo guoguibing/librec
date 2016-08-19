@@ -60,6 +60,10 @@ public class AvgMetricCollection {
         }
     }
 
+    public String getMetricNamesString () {
+        return m_avgMetrics.getNamesString();
+    }
+
     public String getEvalResultString () {
         return m_avgMetrics.getResultString();
     }

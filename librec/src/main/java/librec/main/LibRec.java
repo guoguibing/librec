@@ -622,6 +622,7 @@ public class LibRec {
 		//Dates.parse(m_time.longValue())
 		// double commas as the separation of results and configuration
 		StringBuilder sb = new StringBuilder();
+        sb.append("Metrics: ").append(ms.getMetricNamesString()).append("\n");
 		String config = algo.toString();
 		sb.append(algo.algoName).append(",").append(result).append(",,");
 		if (!config.isEmpty())
@@ -657,6 +658,7 @@ public class LibRec {
 
         // double commas as the separation of results and configuration
         StringBuilder sb = new StringBuilder();
+        sb.append("Metrics: ").append(ms.getMetricNamesString()).append("\n");
         String config = algo.toString();
         sb.append(algo.algoName).append(",").append(result).append(",,");
         if (!config.isEmpty())

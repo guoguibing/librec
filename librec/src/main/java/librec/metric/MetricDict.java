@@ -78,7 +78,7 @@ public class MetricDict<T extends IMetric> {
             buf.append(",");
         }
         // Remove final comma
-        buf.deleteCharAt(buf.length());
+        buf.deleteCharAt(buf.length()-1);
         return buf.toString();
     }
  }
