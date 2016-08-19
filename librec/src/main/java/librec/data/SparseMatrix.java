@@ -327,12 +327,6 @@ public class SparseMatrix implements Iterable<MatrixEntry>, Serializable {
 	 */
 	public double get(int row, int column) {
 
-		// RB 2016-08-18 Fixed to handle get calls outside the row size.
-        // Binary search will fail if there is no applicable row pointer.
-		if (rowPtr.length <= (row + 1)) {
-			return 0;
-		}
-
 		int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], column);
 
 		if (index >= 0)

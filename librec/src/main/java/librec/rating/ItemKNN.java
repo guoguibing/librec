@@ -80,25 +80,28 @@ public class ItemKNN extends Recommender {
 		// find a number of similar items
 		Map<Integer, Double> nns = new HashMap<>();
 
-		SparseVector dv = itemCorrs.row(j);
-		for (int i : dv.getIndex()) {
-			double sim = dv.get(i);
-			double rate = trainMatrix.get(u, i);
+        if (u < trainMatrix.numRows()) {
 
-			if (isRankingPred && rate > 0)
-				nns.put(i, sim);
-			else if (sim > 0 && rate > 0)
-				nns.put(i, sim);
-		}
+            SparseVector dv = itemCorrs.row(j);
+            for (int i : dv.getIndex()) {
+                double sim = dv.get(i);
+                double rate = trainMatrix.get(u, i);
 
-		// topN similar items
-		if (knn > 0 && knn < nns.size()) {
-			List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(nns, true);
-			List<Map.Entry<Integer, Double>> subset = sorted.subList(0, knn);
-			nns.clear();
-			for (Map.Entry<Integer, Double> kv : subset)
-				nns.put(kv.getKey(), kv.getValue());
-		}
+                if (isRankingPred && rate > 0)
+                    nns.put(i, sim);
+                else if (sim > 0 && rate > 0)
+                    nns.put(i, sim);
+            }
+
+            // topN similar items
+            if (knn > 0 && knn < nns.size()) {
+                List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(nns, true);
+                List<Map.Entry<Integer, Double>> subset = sorted.subList(0, knn);
+                nns.clear();
+                for (Map.Entry<Integer, Double> kv : subset)
+                    nns.put(kv.getKey(), kv.getValue());
+            }
+        } // end if row outside of matrix
 
 		if (nns.size() == 0)
 			return isRankingPred ? 0 : globalMean;
