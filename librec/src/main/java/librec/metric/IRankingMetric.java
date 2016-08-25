@@ -218,7 +218,7 @@ class MetricNDCG implements IRankingMetric<Integer> {
     }
 
     public void updateWithList(List<Integer> results, List<Integer> test, int numDropped) {
-        double ndcg = Measures.RR(results, test);
+        double ndcg = Measures.nDCG(results, test);
         m_sumNDCG += ndcg;
     }
 
