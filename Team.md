@@ -8,3 +8,8 @@ LibRec核心开发团队
 * **吴宾** (Core Developer)，郑州大学在读博士，研究方向为推荐系统。目前主要研究在多源异构数据的情形下，如何有效地将矩阵分解、概率图模型等用于推荐系统，以解决评分预测和物品推荐任务。
 * **王科强** (Core Developer)，华东师范大学计算机科学与软件工程学院博士，研究方向为多样性学习和推荐系统，个人主页: [http://dase.ecnu.edu.cn/index/shows/catid/30/id/105](http://dase.ecnu.edu.cn/index/shows/catid/30/id/105)。
 * **马辰** (Core Developer)，加拿大McGill University在读博士，研究方向为推荐系统，目前主要从事Point-of-Interest推荐的研究，个人主页：[https://www.linkedin.com/in/ma-chen-93455693/en](https://www.linkedin.com/in/ma-chen-93455693/en)。
+
+----
+
+* **刘啸泽** (Developer)，浙江大学计算机学院在读硕士。研究方向为数据挖掘与深度学习，目前主要研究深度学习在序列数据中的应用。个人主页: http://liuxz.top/about/
+* **孙亚童** (Developer)，东北在学软件学院硕士（2017级）。研究方向为推荐系统、大数据与数据挖掘。
