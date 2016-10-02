@@ -1,4 +1,4 @@
-LibRec核心开发团队
+## LibRec核心开发团队
 
 * **郭贵冰** (Team Leader)，东北大学软件学院副教授，个人主页：[http://www.luckymoon.me/](http://www.luckymoon.me/)。
 * **王宇峰** (Team Manager)，10年左右工作经验，担任过项目经理、架构师等职位；做过大型WEB系统、大型薪资计算系统、软硬件交互系统、ANDROID应用等项目。目前在国内知名互联网广告公司负责HADOOP相关的大数据研发工作，并担任研发经理岗位。熟练掌握JAVA,JAVASCRIPT,PYTHON等语言。
