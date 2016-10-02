@@ -6,3 +6,4 @@ LibRec核心开发团队
 * **汤嘉熹** (Core Developer)，加拿大Simon Fraser University博士，研究方向为推荐系统与用户行为建模，个人主页 [http://www.sfu.ca/~jiaxit](http://www.sfu.ca/~jiaxit)。
 * **张海东** (Core Developer)，北京自动化所在读博士，研究方向为推荐系统和机器学习。目前主要研究基于图模型的协同过滤推荐算法。
 * **吴宾** (Core Developer)，郑州大学在读博士，研究方向为推荐系统。目前主要研究在多源异构数据的情形下，如何有效地将矩阵分解、概率图模型等用于推荐系统，以解决评分预测和物品推荐任务。
+* **王科强** (Core Developer)，华东师范大学计算机科学与软件工程学院博士，研究方向为多样性学习和推荐系统，个人主页: [http://dase.ecnu.edu.cn/index/shows/catid/30/id/105](http://dase.ecnu.edu.cn/index/shows/catid/30/id/105)。
