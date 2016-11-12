@@ -108,7 +108,7 @@ class MetricRec5 implements IRankingMetric<Integer> {
 class MetricRec10 implements IRankingMetric<Integer> {
     private double m_sumRec;
     private double m_rec;
-    public String getName () { return "Rec5";}
+    public String getName () { return "Rec10";}
 
     public void init(Recommender rec) {
         m_sumRec = 0.0;
