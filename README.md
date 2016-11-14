@@ -50,7 +50,7 @@ Please cite the following papers if LibRec is helpful to your research.
 
 ### Acknowledgement
 
-We would like to express our appreciation to the following people for contributing source codes to LibRec, including [Prof. Robin Burke](http://josquin.cti.depaul.edu/~rburke/), [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112), [Ran Locar](https://github.com/ranlocar), [Tao Lian](https://github.com/taolian), [Takuya Kitazawa](https://github.com/takuti), etc. 
+We would like to express our appreciation to the following people for contributing source codes to LibRec, including [Prof. Robin Burke](http://josquin.cti.depaul.edu/~rburke/), [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112), [Ran Locar](https://github.com/ranlocar), [Shawn Rutledge](https://github.com/shawndr), [Tao Lian](https://github.com/taolian), [Takuya Kitazawa](https://github.com/takuti), etc. 
 
 We also appreciate many others for reporting bugs and issues, and for providing valuable suggestions and support. 
 
