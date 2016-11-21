@@ -15,8 +15,10 @@ LibRec
 * **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
 
 ### Download
-* **librec-v1.4** (under development, see [what's new](CHANGES.md))
-  * LibRec开发团队正在招募中，[马上查阅](团队招募.md)招募详情。
+* **librec-v2.0** is coming soon!
+   * Alpha version by the end of November 2016
+   * Beta version by the middle of December 2016
+   * Full version by the end of December 2016
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
