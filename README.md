@@ -40,12 +40,12 @@ You can use **LibRec** as a part of your projects, and use the following codes t
 <pre>
 public void main(String[] args) throws Exception {
 
-        // recommender configuration
+	// recommender configuration
 	Configuration conf = new Configuration();
 	Resource resource = new Resource("rec/cf/userknn-test.properties");
 	conf.addResource(resource);
 
-        // build data model
+	// build data model
 	DataModel dataModel = new TextDataModel(conf);
 	dataModel.buildDataModel();
 	
