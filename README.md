@@ -40,16 +40,34 @@ You can use **LibRec** as a part of your projects, and use the following codes t
 <pre>
 public void main(String[] args) throws Exception {
 
-	// config logger
-	Logs.config("log4j.xml", true);
+        // recommender configuration
+	Configuration conf = new Configuration();
+	Resource resource = new Resource("rec/cf/userknn-test.properties");
+	conf.addResource(resource);
 
-	// config recommender
-	String configFile = "librec.conf"; 
+        // build data model
+	DataModel dataModel = new TextDataModel(conf);
+	dataModel.buildDataModel();
+	
+	// set recommendation contex
+	RecommenderContext context = new RecommenderContext(conf, dataModel);
+	RecommenderSimilarity similarity = new PCCSimilarity();
+	similarity.buildSimilarityMatrix(dataModel, true);
+	context.setSimilarity(similarity);
 
-	// run algorithm
-	LibRec librec = new LibRec();
-	librec.setConfigFiles(configFile);
-	librec.execute(args);
+	// training
+	Recommender recommender = new UserKNNRecommender();
+	recommender.recommend(context);
+
+	// evaluation
+	RecommenderEvaluator evaluator = new MAEEvaluator();
+	recommender.evaluate(evaluator);
+
+	// recommendation results
+	List<RecommendedItem> recommendedItemList = recommender.getRecommendedList();
+	RecommendedFilter filter = new GenericRecommendedFilter();
+	recommendedItemList = filter.filter(recommendedItemList);
+
 }
 </pre>
 
