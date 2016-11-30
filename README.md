@@ -23,7 +23,7 @@ We hope you will enjoy the new version!
 
 ### Download
 * **librec-v2.0** is coming soon!
-   * Source codes of the Alpha version will be updated shortly tonight. 
+   * Alpha version: check out the new branch (2.0.0-alpha) 
       * Note that this update is not a stable release, and bugs and issues may exist here and there for now. This version is suitable for those who seek for the latest update and changes in LibRec 2.0. The stable version will be available by the end of December 2016. 
    * Beta version by the middle of December 2016
    * Full version by the end of December 2016
@@ -39,17 +39,34 @@ You can use **LibRec** as a part of your projects, and use the following codes t
 
 <pre>
 public void main(String[] args) throws Exception {
+	
+	// recommender configuration
+	Configuration conf = new Configuration();
+	Resource resource = new Resource("rec/cf/userknn-test.properties");
+	conf.addResource(resource);
 
-	// config logger
-	Logs.config("log4j.xml", true);
+	// build data model
+	DataModel dataModel = new TextDataModel(conf);
+	dataModel.buildDataModel();
+	
+	// set recommendation context
+	RecommenderContext context = new RecommenderContext(conf, dataModel);
+	RecommenderSimilarity similarity = new PCCSimilarity();
+	similarity.buildSimilarityMatrix(dataModel, true);
+	context.setSimilarity(similarity);
 
-	// config recommender
-	String configFile = "librec.conf"; 
+	// training
+	Recommender recommender = new UserKNNRecommender();
+	recommender.recommend(context);
 
-	// run algorithm
-	LibRec librec = new LibRec();
-	librec.setConfigFiles(configFile);
-	librec.execute(args);
+	// evaluation
+	RecommenderEvaluator evaluator = new MAEEvaluator();
+	recommender.evaluate(evaluator);
+
+	// recommendation results
+	List<RecommendedItem> recommendedItemList = recommender.getRecommendedList();
+	RecommendedFilter filter = new GenericRecommendedFilter();
+	recommendedItemList = filter.filter(recommendedItemList);
 }
 </pre>
 
