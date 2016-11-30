@@ -1,0 +1,28 @@
+
+# parameter of class splitter in configuration file
+
+## RatioDataSplitter
+- data.model.splitter
+  -  ratingratio
+  - userratio
+  - itemratio
+  - validratio
+  - ratingdateratio
+  - userdateratio
+  - itemdateratio
+
+## GivenNDataSplitter
+- data.model.splitter
+  - getgivennbyuser
+  - getgivennbyitem
+  - getgivennbyitemdate
+  - getgivennbyuserdate
+
+## KCVDataSplitter
+- data.splitter.cv.number
+- data.splitter.cv.index
+
+## LOOCVDataSplitter
+- data.model.splitter
+  - loobyuser
+  - loobyitem

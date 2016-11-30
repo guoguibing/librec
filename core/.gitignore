@@ -1,0 +1,7 @@
+*target/*
+*.settings*
+*.project
+*.umlproject
+*.euml*
+*bin/*
+/target/
