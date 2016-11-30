@@ -1,22 +1,32 @@
 LibRec
 ======
 
-**LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms. It consists of three major components: **Generic Interfaces**, **Data Structures** and **Recommendation Algorithms**. 
+**LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms, aiming to resolve two classic recommendation tasks: **rating prediction** and **item ranking**. 
 
-**Links:** [Home](http://www.librec.net) | [Getting Started](http://www.librec.net/tutorial.html) | [Algorithms](http://www.librec.net/tutorial.html#algos) | [Examples](http://librec.net/example.html) | [Demo](https://www.youtube.com/watch?v=B0kfYNfCwwo) | [Datasets](http://www.librec.net/datasets.html)  
+### Authors Words about the NEW Version
+First of all, LibRec 2.0 is COMING, and will be released in the December 2016. It has been a year since the last version was released. In this year, lots of changes have been taken to the LibRec project, and the most significant one is the formulation of the LibRec team. The team pushes forward the development of LibRec with the wisdom of many experts, and the collaboration of experienced and enthusiastic contributors. Without their great efforts and hardworking, it is impossible to reach the state that a single developer may dream for. 
+
+LibRec 2.0 is not the end of our teamwork, but just the begining of greater objectives. We aim to continously provide NEXT versions for better experience and performance. There are many directions and goals in plan, and we will do our best to make them happen. It is always exciting to receive any code contributions, suggestions, comments from all our LibRec users. 
+
+We hope you will enjoy the new version!
 
 ![LibRec Structure](http://www.librec.net/images/librec.png)
 
 ### Features
 
-* **Cross-platform:** as a Java software, LibRec can be easily deployed and executed in any platforms, including MS Windows, Linux and Mac OS.
-* **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://www.librec.net/example.html).
-* **Easy configuration:** LibRec configs recommenders using a configuration file: [librec.conf](http://www.librec.net/tutorial.html#config). 
-* **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
+* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be added in the LibRec.
+* **Module Composition:** LibRec has six main components including data split, conversion, similarity, algorithms, evaluators and filters.
+* **Flexible Configuration:** LibRec is based on low coupling, flexible and either external textual or internal API configuration.. 
+* **High Performance:** LibRec has more efficient implementations than other counterparts while producing comparable accuracy.
+* **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
+* **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
 
 ### Download
-* **librec-v1.4** (under development, see [what's new](CHANGES.md))
-  * LibRec开发团队正在招募中，[马上查阅](团队招募.md)招募详情。
+* **librec-v2.0** is coming soon!
+   * Source codes of the Alpha version will be updated shortly tonight. 
+      * Note that this update is not a stable release, and bugs and issues may exist here and there for now. This version is suitable for those who seek for the latest update and changes in LibRec 2.0. The stable version will be available by the end of December 2016. 
+   * Beta version by the middle of December 2016
+   * Full version by the end of December 2016
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
@@ -50,7 +60,7 @@ Please cite the following papers if LibRec is helpful to your research.
 
 ### Acknowledgement
 
-We would like to express our appreciation to the following people for contributing source codes to LibRec, including [Prof. Robin Burke](http://josquin.cti.depaul.edu/~rburke/), [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112), [Ran Locar](https://github.com/ranlocar), [Tao Lian](https://github.com/taolian), [Takuya Kitazawa](https://github.com/takuti), etc. 
+We would like to express our appreciation to the following people for contributing source codes to LibRec, including [Prof. Robin Burke](http://josquin.cti.depaul.edu/~rburke/), [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112), [Ran Locar](https://github.com/ranlocar), [Shawn Rutledge](https://github.com/shawndr), [Tao Lian](https://github.com/taolian), [Takuya Kitazawa](https://github.com/takuti), etc. 
 
 We also appreciate many others for reporting bugs and issues, and for providing valuable suggestions and support. 
 
