@@ -9,14 +9,16 @@ LibRec
 
 ### Features
 
-* **Cross-platform:** as a Java software, LibRec can be easily deployed and executed in any platforms, including MS Windows, Linux and Mac OS.
-* **Fast execution:** LibRec runs much **faster** than other libraries, and a detailed comparison over different algorithms on various datasets is available via [here](http://www.librec.net/example.html).
-* **Easy configuration:** LibRec configs recommenders using a configuration file: [librec.conf](http://www.librec.net/tutorial.html#config). 
-* **Easy expansion:** LibRec provides a set of well-designed recommendation interfaces by which new algorithms can be easily implemented.
+* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be added in the LibRec.
+* **Module Composition:** LibRec has six main components including data split, conversion, similarity, algorithms, evaluators and filters.
+* **Flexible Configuration:** LibRec is based on low coupling, flexible and either external textual or internal API configuration.. 
+* **High Performance:** LibRec has more efficient implementations than other counterparts while producing comparable accuracy.
+* **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
+* **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
 
 ### Download
 * **librec-v2.0** is coming soon!
-   * Alpha version by the end of November 2016
+   * Source codes of the Alpha version will be updated shortly tonight. 
    * Beta version by the middle of December 2016
    * Full version by the end of December 2016
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
