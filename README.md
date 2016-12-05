@@ -23,7 +23,7 @@ We hope you will enjoy the new version!
 
 ### Download
 * **librec-v2.0** is coming soon!
-   * Alpha version: check out the new branch (2.0.0-alpha) 
+   * Alpha version: check out the new git branch (2.0.0-alpha) 
       * Note that this update is not a stable release, and bugs and issues may exist here and there for now. This version is suitable for those who seek for the latest update and changes in LibRec 2.0. The stable version will be available by the end of December 2016. 
    * Beta version by the middle of December 2016
    * Full version by the end of December 2016
