@@ -134,7 +134,7 @@ public abstract class AbstractRecommender implements Recommender {
      */
     protected void setup() throws LibrecException {
         conf = context.getConf();
-        isRanking = conf.getBoolean("rec.recommender.category");
+        isRanking = conf.getBoolean("rec.recommender.isranking");
         if (isRanking) {
             topN = conf.getInt("rec.recommender.ranking.topn", 5);
         }
