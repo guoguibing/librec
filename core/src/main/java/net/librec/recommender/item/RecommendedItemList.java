@@ -354,6 +354,9 @@ public class RecommendedItemList implements RecommendedList, Serializable {
                 userIdx = userItr.next();
                 itemEntryItr = RecommendedItemList.this.getItemIdxListByUserIdx(userIdx).iterator();
             }
+            if (!itemEntryItr.hasNext()) {
+                return null;
+            }
             ItemEntry<Integer, Double> itemEntry = itemEntryItr.next();
             entry.setUserIdx(userIdx);
             entry.setItemIdx(itemEntry.getKey());
