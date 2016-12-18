@@ -6,34 +6,45 @@ LibRec
 [![Join the chat at https://gitter.im/librec/Lobby](https://badges.gitter.im/librec/Lobby.svg)](https://gitter.im/librec/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### Authors Words about the NEW Version
-First of all, LibRec 2.0 is COMING, and will be released in the December 2016. It has been a year since the last version was released. In this year, lots of changes have been taken to the LibRec project, and the most significant one is the formulation of the LibRec team. The team pushes forward the development of LibRec with the wisdom of many experts, and the collaboration of experienced and enthusiastic contributors. Without their great efforts and hardworking, it is impossible to reach the state that a single developer may dream for. 
+First of all, LibRec 2.0 is COMING, and will be released in the December 2016. It has been a year since the last version was released. In this year, lots of changes have been taken to the LibRec project, and the most significant one is the formulation of the LibRec team. The team pushes forward the development of LibRec with the wisdom of many experts, and the collaboration of experienced and enthusiastic contributors. Without their great efforts and hardworking, it is impossible to reach the state that a single developer may dream of. 
 
 LibRec 2.0 is not the end of our teamwork, but just the begining of greater objectives. We aim to continously provide NEXT versions for better experience and performance. There are many directions and goals in plan, and we will do our best to make them happen. It is always exciting to receive any code contributions, suggestions, comments from all our LibRec users. 
 
 We hope you will enjoy the new version!
 
-![LibRec Structure](http://www.librec.net/images/librec.png)
 
 ### Features
 
-* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be added in the LibRec.
-* **Module Composition:** LibRec has six main components including data split, conversion, similarity, algorithms, evaluators and filters.
-* **Flexible Configuration:** LibRec is based on low coupling, flexible and either external textual or internal API configuration.. 
+* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be added to the LibRec project.
+* **Module Composition:** LibRec has six main components including data split, data conversion, similarity, algorithms, evaluators and filters.
+* **Flexible Configuration:** LibRec is based on low coupling, flexible and either external textual or internal API configuration.
 * **High Performance:** LibRec has more efficient implementations than other counterparts while producing comparable accuracy.
 * **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
 * **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
 
 ### Download
 * **librec-v2.0** is coming soon!
-   * Alpha version: check out the new branch (2.0.0-alpha) 
-      * Note that this update is not a stable release, and bugs and issues may exist here and there for now. This version is suitable for those who seek for the latest update and changes in LibRec 2.0. The stable version will be available by the end of December 2016. 
-   * Beta version by the middle of December 2016
-   * Full version by the end of December 2016
+   * Alpha version: check out the new branch (2.0.0-alpha)
+   * Beta version: check out the new branch (2.0.0-beta)
+   * Full version: will be released by the end of December 2016
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
 * **[librec-v1.0](http://www.librec.net/release/librec-v1.0.zip)**
 
+
+### Execution 
+You can run LibRec with configurations from command arguments:
+
+<pre>
+librec rec -exec -D rec.recommender.class=itemcluster -D rec.pgm.number=10 -D rec.iterator.maximum=20
+</pre>
+
+or from a configuration file:
+
+<pre>
+librec rec -exec -conf itemcluster-test.properties
+</pre>
 
 ### Code Snippet
 
