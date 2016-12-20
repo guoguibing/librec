@@ -114,13 +114,45 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 		}
 	}
 
-	/**
+    /**
+     * Split ratings into two parts: the training set consisting of user-item
+     * ratings where {@code ratio} percentage of ratings are preserved for each
+     * user, and the rest are used as the testing data
+     *
+     */
+    public void getRatioByUser(double ratio) {
+
+        if (ratio > 0 && ratio < 1) {
+
+            trainMatrix = new SparseMatrix(preferenceMatrix);
+            testMatrix = new SparseMatrix(preferenceMatrix);
+
+            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
+
+                List<Integer> items = preferenceMatrix.getColumns(u);
+
+                for (int j : items) {
+                    if (Randoms.uniform() < ratio) {
+                        testMatrix.set(u, j, 0.0);
+                    } else {
+                        trainMatrix.set(u, j, 0.0);
+                    }
+                }
+            }
+
+            SparseMatrix.reshape(testMatrix);
+            SparseMatrix.reshape(trainMatrix);
+        }
+    }
+
+
+    /**
 	 * Split ratings into two parts: the training set consisting of user-item
-	 * ratings where {@code ratio} percentage of ratings are preserved for each
-	 * user, and the rest are used as the testing data
-	 *
+	 * ratings where a fixed number of ratings corresponding to the given
+     * {@code ratio} are preserved for each user as training data with the rest
+     * as test.
 	 */
-	public void getRatioByUser(double ratio) {
+	public void getFixedRatioByUser(double ratio) {
 
 		if (ratio > 0 && ratio < 1) {
 
@@ -130,13 +162,21 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 			for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
 
 				List<Integer> items = preferenceMatrix.getColumns(u);
+				// k is the test set, this will be smaller, so we want these indices in the list
+				int k = (int) Math.floor(items.size() * (1-ratio));
+				try {
+					List<Integer> testIndexes = Randoms.randInts(k, 0, items.size());
 
-				for (int j : items) {
-					if (Randoms.uniform() < ratio) {
-						testMatrix.set(u, j, 0.0);
-					} else {
-						trainMatrix.set(u, j, 0.0);
+					for (int j : items) {
+						if (testIndexes.contains(j)) {
+							trainMatrix.set(u, j, 0.0);
+						} else {
+							testMatrix.set(u, j, 0.0);
+						}
 					}
+				} catch (java.lang.Exception e)
+				{
+					LOG.error("This error should not happen because k cannot be outside of the range if ratio is " + ratio);
 				}
 			}
 
@@ -325,6 +365,11 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 			getRatioByUser(ratio);
 			break;
 		}
+		case "userfixedratio": {
+            double ratio = Double.parseDouble(conf.get("data.splitter.ratio"));
+            getFixedRatioByUser(ratio);
+            break;
+        }
 		case "itemratio": {
 			double ratio = Double.parseDouble(conf.get("data.splitter.ratio"));
 			getRatioByItem(ratio);
