@@ -119,6 +119,10 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 	 * ratings where {@code ratio} percentage of ratings are preserved for each
 	 * user, and the rest are used as the testing data
 	 *
+     * 2016/12/19 RB Changed function to guarantee a fixed number of test items for each user.
+     * Note that there may be some inefficiency due to repeated calls to "contains". I did not
+     * think the overhead of building a hash table was worthwhile, but I did not do any timing
+     * analysis of this.
 	 */
 	public void getRatioByUser(double ratio) {
 
@@ -130,13 +134,21 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 			for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
 
 				List<Integer> items = preferenceMatrix.getColumns(u);
+				// k is the test set, this will be smaller, so we want these indices in the list
+				int k = (int) Math.floor(items.size() * (1-ratio));
+				try {
+					List<Integer> testIndexes = Randoms.randInts(k, 0, items.size());
 
-				for (int j : items) {
-					if (Randoms.uniform() < ratio) {
-						testMatrix.set(u, j, 0.0);
-					} else {
-						trainMatrix.set(u, j, 0.0);
+					for (int j : items) {
+						if (testIndexes.contains(j)) {
+							trainMatrix.set(u, j, 0.0);
+						} else {
+							testMatrix.set(u, j, 0.0);
+						}
 					}
+				} catch (java.lang.Exception e)
+				{
+					LOG.error("This error should not happen because k cannot be outside of the range if ratio is " + ratio);
 				}
 			}
 
