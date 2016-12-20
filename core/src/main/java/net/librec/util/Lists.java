@@ -298,6 +298,11 @@ public class Lists {
      */
     public static <K, V extends Comparable<? super V>> List<Map.Entry<K, V>> sortListTopK(List<Map.Entry<K, V>> data, final boolean inverse, int k) {
         k = data.size() > k ? k : data.size();
+
+        if (k == 0) {
+            return new ArrayList<Entry<K, V>>();
+        }
+
         PriorityQueue<Entry<K, V>> topKDataQueue = new PriorityQueue<>(k, new Comparator<Map.Entry<K, V>>() {
             public int compare(Entry<K, V> a, Entry<K, V> b) {
                 int res = (a.getValue()).compareTo(b.getValue());
@@ -345,6 +350,11 @@ public class Lists {
      */
     public static <K, V extends Comparable<? super V>> List<ItemEntry<K, V>> sortItemEntryListTopK(List<ItemEntry<K, V>> data, final boolean inverse, int k) {
         k = data.size() > k ? k : data.size();
+
+        if (k == 0) {
+            return new ArrayList<ItemEntry<K, V>>();
+        }
+
         PriorityQueue<ItemEntry<K, V>> topKDataQueue = new PriorityQueue<>(k, new Comparator<ItemEntry<K, V>>() {
             public int compare(ItemEntry<K, V> a, ItemEntry<K, V> b) {
                 int res = (a.getValue()).compareTo(b.getValue());
