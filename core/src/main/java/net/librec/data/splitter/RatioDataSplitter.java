@@ -114,17 +114,45 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 		}
 	}
 
-	/**
+    /**
+     * Split ratings into two parts: the training set consisting of user-item
+     * ratings where {@code ratio} percentage of ratings are preserved for each
+     * user, and the rest are used as the testing data
+     *
+     */
+    public void getRatioByUser(double ratio) {
+
+        if (ratio > 0 && ratio < 1) {
+
+            trainMatrix = new SparseMatrix(preferenceMatrix);
+            testMatrix = new SparseMatrix(preferenceMatrix);
+
+            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
+
+                List<Integer> items = preferenceMatrix.getColumns(u);
+
+                for (int j : items) {
+                    if (Randoms.uniform() < ratio) {
+                        testMatrix.set(u, j, 0.0);
+                    } else {
+                        trainMatrix.set(u, j, 0.0);
+                    }
+                }
+            }
+
+            SparseMatrix.reshape(testMatrix);
+            SparseMatrix.reshape(trainMatrix);
+        }
+    }
+
+
+    /**
 	 * Split ratings into two parts: the training set consisting of user-item
-	 * ratings where {@code ratio} percentage of ratings are preserved for each
-	 * user, and the rest are used as the testing data
-	 *
-     * 2016/12/19 RB Changed function to guarantee a fixed number of test items for each user.
-     * Note that there may be some inefficiency due to repeated calls to "contains". I did not
-     * think the overhead of building a hash table was worthwhile, but I did not do any timing
-     * analysis of this.
+	 * ratings where a fixed number of ratings corresponding to the given
+     * {@code ratio} are preserved for each user as training data with the rest
+     * as test.
 	 */
-	public void getRatioByUser(double ratio) {
+	public void getFixedRatioByUser(double ratio) {
 
 		if (ratio > 0 && ratio < 1) {
 
@@ -337,6 +365,11 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 			getRatioByUser(ratio);
 			break;
 		}
+		case "userfixedratio": {
+            double ratio = Double.parseDouble(conf.get("data.splitter.ratio"));
+            getFixedRatioByUser(ratio);
+            break;
+        }
 		case "itemratio": {
 			double ratio = Double.parseDouble(conf.get("data.splitter.ratio"));
 			getRatioByItem(ratio);
