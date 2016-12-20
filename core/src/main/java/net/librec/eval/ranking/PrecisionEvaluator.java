@@ -51,7 +51,9 @@ public class PrecisionEvaluator extends AbstractRecommenderEvaluator {
                     numHits++;
                 }
             }
-            totalPrecision += numHits / (topK + 0.0);
+            if (topK > 0) {
+                totalPrecision += numHits / (topK + 0.0);
+            }
         }
 
         return totalPrecision / numUsers;
