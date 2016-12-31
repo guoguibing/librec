@@ -6,11 +6,11 @@ LibRec
 [![Join the chat at https://gitter.im/librec/Lobby](https://badges.gitter.im/librec/Lobby.svg)](https://gitter.im/librec/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### Authors Words about the NEW Version
-First of all, LibRec 2.0 is COMING, and will be released in the December 2016. It has been a year since the last version was released. In this year, lots of changes have been taken to the LibRec project, and the most significant one is the formulation of the LibRec team. The team pushes forward the development of LibRec with the wisdom of many experts, and the collaboration of experienced and enthusiastic contributors. Without their great efforts and hardworking, it is impossible to reach the state that a single developer may dream of. 
+It has been a year since the last version was released. In this year, lots of changes have been taken to the LibRec project, and the most significant one is the formulation of the LibRec team. The team pushes forward the development of LibRec with the wisdom of many experts, and the collaboration of experienced and enthusiastic contributors. Without their great efforts and hardworking, it is impossible to reach the state that a single developer may dream of. 
 
 LibRec 2.0 is not the end of our teamwork, but just the begining of greater objectives. We aim to continously provide NEXT versions for better experience and performance. There are many directions and goals in plan, and we will do our best to make them happen. It is always exciting to receive any code contributions, suggestions, comments from all our LibRec users. 
 
-We hope you will enjoy the new version!
+We hope you enjoy the new version!
 
 
 ### Features
