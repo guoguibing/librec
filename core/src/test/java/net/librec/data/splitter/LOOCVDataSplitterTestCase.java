@@ -1,0 +1,118 @@
+/**
+ * Copyright (C) 2016 LibRec
+ *
+ * This file is part of LibRec.
+ * LibRec is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LibRec is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LibRec. If not, see <http://www.gnu.org/licenses/>.
+ */
+package net.librec.data.splitter;
+
+import net.librec.BaseTestCase;
+import net.librec.conf.Configured;
+import net.librec.data.convertor.TextDataConvertor;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+ * LOOCVDataSplitter TestCase
+ * {@link net.librec.data.splitter.LOOCVDataSplitter}
+ *
+ * @author Liuxz and Sunyt
+ */
+public class LOOCVDataSplitterTestCase extends BaseTestCase {
+
+	private TextDataConvertor convertor;
+	private TextDataConvertor convertorWithDate;
+
+	@Before
+	public void setUp() throws Exception {
+		super.setUp();
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTest4by4.txt");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
+		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
+
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTestDate.txt");
+		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
+	}
+
+	/**
+	 * Test the methods splitData and getLOOByUser
+	 *
+	 * @throws Exception
+     */
+	@Test
+	public void testLOOByUser() throws Exception{
+		conf.set("data.splitter.loocv", "user");
+		convertor.processData();
+
+		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertor, conf);
+		splitter.splitData();
+
+		assertEquals(splitter.getTrainData().size(), 9);
+		assertEquals(splitter.getTestData().size(), 4);
+	}
+
+	/**
+	 * Test the methods splitData and getLOOByItem
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testLOOByItem() throws Exception{
+		conf.set("data.splitter.loocv", "item");
+		convertor.processData();
+
+		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertor, conf);
+		splitter.splitData();
+
+		assertEquals(splitter.getTrainData().size(), 9);
+		assertEquals(splitter.getTestData().size(), 4);
+	}
+
+	/**
+	 * Test the methods splitData and getLOOByUserDate
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testLOOByUserDate() throws Exception{
+		conf.set("data.splitter.loocv", "userdate");
+		convertorWithDate.processData();
+
+		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertorWithDate, conf);
+		splitter.splitData();
+
+		assertEquals(splitter.getTrainData().size(), 9);
+		assertEquals(splitter.getTestData().size(), 4);
+	}
+
+	/**
+	 * Test the methods splitData and getLOOByItemDate
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testLOOByItemDate() throws Exception{
+		conf.set("data.splitter.loocv", "itemdate");
+		convertorWithDate.processData();
+
+		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertorWithDate, conf);
+		splitter.splitData();
+
+		assertEquals(splitter.getTrainData().size(), 9);
+		assertEquals(splitter.getTestData().size(), 4);
+	}
+}
