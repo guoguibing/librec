@@ -23,10 +23,8 @@ We hope you enjoy the new version!
 * **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
 
 ### Download
-* **librec-v2.0** is coming soon!
-   * Alpha version: check out the new branch (2.0.0-alpha)
-   * Beta version: check out the new branch (2.0.0-beta)
-   * Full version: will be released by the end of December 2016
+* **librec-v2.0**
+    * RC version: check out the new 2.0.0-RC branch. 
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
