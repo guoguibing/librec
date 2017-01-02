@@ -11,6 +11,9 @@ LibRec 2.0 is not the end of our teamwork, but just the begining of greater obje
 
 We hope you enjoy the new version!
 
+PS: Follow us on WeChat to have first-hand and up-to-date information about LibRec. 
+
+<img src="http://librec.net/images/mp.jpg" height="25%" width="25%" />
 
 ### Features
 
@@ -20,6 +23,8 @@ We hope you enjoy the new version!
 * **High Performance:** LibRec has more efficient implementations than other counterparts while producing comparable accuracy.
 * **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
 * **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
+
+<img src="http://librec.net/images/modules.png" height="30%" width="30%" /> 
 
 ### Download
 * **librec-v2.0**
