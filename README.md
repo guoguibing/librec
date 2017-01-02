@@ -1,5 +1,4 @@
-LibRec
-======
+<img src="http://librec.net/images/logo.png" height="25%" width="25%" />
 
 **LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms, aiming to resolve two classic recommendation tasks: **rating prediction** and **item ranking**. 
 
