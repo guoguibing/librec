@@ -73,6 +73,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
         itemBiases.init();
 
         anotherItemFactors = new DenseMatrix(numItems, numFactors);
+        anotherItemFactors.init(initMean, initStd);
 
         isRanking = true;
         rho = conf.getInt("rec.fismauc.rho");
@@ -117,10 +118,10 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                         double sum_i = 0, sum_j = 0;
                         for (int k : ratedItems) {
                             if (i != k) {
-                                sum_i += DenseMatrix.rowMult(userFactors, k, itemFactors, i);
+                                sum_i += DenseMatrix.rowMult(anotherItemFactors, k, itemFactors, i);
                             }
 
-                            sum_j += DenseMatrix.rowMult(userFactors, k, itemFactors, j);
+                            sum_j += DenseMatrix.rowMult(anotherItemFactors, k, itemFactors, j);
                         }
 
                         double bi = itemBiases.get(i), bj = itemBiases.get(j);
@@ -148,7 +149,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                             double sum_k = 0;
                             for (int k : ratedItems) {
                                 if (k != i) {
-                                    sum_k += userFactors.get(k, f);
+                                    sum_k += anotherItemFactors.get(k, f);
                                 }
                             }
 
@@ -168,10 +169,10 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                     for (int j : ratedItems) {
                         if (j != i) {
                             for (int f = 0; f < numFactors; f++) {
-                                double pjf = userFactors.get(j, f);
+                                double pjf = anotherItemFactors.get(j, f);
                                 double delta = wu * x[f] / rho - regItem * pjf;
 
-                                userFactors.add(j, f, learnRate * delta);
+                                anotherItemFactors.add(j, f, learnRate * delta);
 
                                 loss += regItem * pjf * pjf;
                             }
@@ -180,7 +181,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                 }
             }
 
-           loss *= 0.5d;
+            loss *= 0.5d;
             if (isConverged(iter) && earlyStop) {
                 break;
             }
@@ -205,7 +206,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
         for (int ratedItemIdx : ratedItems) {
             // for test, i and j will be always unequal as j is unrated
             if (itemIdx != ratedItemIdx) {
-                sum += DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+                sum += DenseMatrix.rowMult(anotherItemFactors, ratedItemIdx, itemFactors, itemIdx);
                 count++;
             }
         }

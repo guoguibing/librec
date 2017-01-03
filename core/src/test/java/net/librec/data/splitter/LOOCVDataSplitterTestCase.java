@@ -115,4 +115,16 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 		assertEquals(splitter.getTrainData().size(), 9);
 		assertEquals(splitter.getTestData().size(), 4);
 	}
+	
+	public void testLOOByRate() throws Exception {
+		conf.set("data.splitter.loocv", "rate");
+		convertor.processData();
+		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertor, conf);
+		for (int i = 1; i <= conf.getInt("data.splitter.cv.number"); i ++) {
+			conf.setInt("data.splitter.cv.index", i);
+			splitter.splitData();
+			assertEquals(splitter.getTrainData().size(), 12);
+			assertEquals(splitter.getTestData().size(), 1);
+		}
+	}
 }

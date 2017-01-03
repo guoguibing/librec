@@ -42,10 +42,6 @@ public class Randoms {
         return uniform(0, range);
     }
 
-    public static void uniform(boolean uniformFlag) {
-        r = new Random(1l);
-    }
-
     public static void seed(long seed) {
         r = new Random(seed);
     }

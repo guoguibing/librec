@@ -54,5 +54,4 @@ public class URPTestCase extends BaseTestCase {
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
 	}
-
 }

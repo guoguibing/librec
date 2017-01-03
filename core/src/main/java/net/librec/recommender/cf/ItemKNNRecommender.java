@@ -51,7 +51,7 @@ public class ItemKNNRecommender extends AbstractRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        knn = conf.getInt("rec.neighbors.knn.number");
+        knn = conf.getInt("rec.neighbors.knn.number",50);
         similarityMatrix = context.getSimilarity().getSimilarityMatrix();
     }
 

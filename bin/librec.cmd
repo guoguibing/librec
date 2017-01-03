@@ -28,9 +28,19 @@ set CLASSPATH=%LIB_CLASSPATH%%LIBREC_HOME%\conf;%LIBREC_HOME%\bin;
 set JAVA_ARG=
 set LIBREC_MAIN=net.librec.tool.driver.DataDriver
 
+rem SHOW HELP OR VERSION
+if "%~1" equ "help" goto ECHO_HELP
+if "%~1" equ "-h" goto ECHO_HELP
+if "%~1" equ "-help" goto ECHO_HELP
+if "%~1" equ "--help" goto ECHO_HELP
+if "%~1" equ "version" goto ECHO_VERSION
+if "%~1" equ "-v" goto ECHO_VERSION
+if "%~1" equ "-version" goto ECHO_VERSION
+if "%~1" equ "--version" goto ECHO_VERSION
 rem GET LIBREC_MAIN
 if "%~1" equ "data" (set LIBREC_MAIN=net.librec.tool.driver.DataDriver)
 if "%~1" equ "rec" (set LIBREC_MAIN=net.librec.tool.driver.RecDriver)
+
 shift
 
 rem GET JAVA_ARG
@@ -60,8 +70,6 @@ if "%~1" equ "" goto END
 		set "JAVA_ARG=!JAVA_ARG!-save"
 		shift
 		goto LOOP
-
-
 
 	:NOT_SAVE
 	if "%~1" neq "-D" goto NOT_D
@@ -122,3 +130,30 @@ if %jver% LSS 17000 (
 	echo. JAVA_ARG:%JAVA_ARG%
 	java -cp %CLASSPATH% %LIBREC_MAIN% %JAVA_ARG%
 )
+
+goto :skip
+:ECHO_HELP
+	echo.
+	echo Usage: librec [command] [options]...
+	echo.
+	echo commands:
+    echo rec                       run recommender
+    echo data                      load data
+    echo.
+    echo global options:
+    echo --help                    display this help text
+    echo --exec                    run Recommender
+    echo --version                 show Librec version info
+    echo.
+    echo job options:
+    echo -conf [file]              path to config file
+    echo -D, -jobconf [prop]       set configuration items (key=value)
+    echo -libjars                  add entend jar files to classpath
+
+goto :skip
+:ECHO_VERSION
+	echo.
+	echo LibRec 2.0.0
+	echo.
+
+:skip

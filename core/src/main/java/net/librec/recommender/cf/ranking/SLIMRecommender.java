@@ -17,9 +17,7 @@
  */
 package net.librec.recommender.cf.ranking;
 
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.SparseVector;
@@ -28,10 +26,7 @@ import net.librec.math.structure.VectorEntry;
 import net.librec.recommender.AbstractRecommender;
 import net.librec.util.Lists;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import java.util.*;
 
 /**
  * Xia Ning and George Karypis, <strong>SLIM: Sparse Linear Methods for Top-N Recommender Systems</strong>, ICDM 2011. <br>
@@ -46,23 +41,22 @@ import java.util.concurrent.ExecutionException;
  *
  * @author guoguibing and Keqiang Wang
  */
+@ModelData({"isRanking", "slim", "coefficientMatrix", "trainMatrix", "similarityMatrix", "knn"})
 public class SLIMRecommender extends AbstractRecommender {
     /**
      * the number of iterations
      */
     protected int numIterations;
 
+    /**
+     * W in original paper, a sparse matrix of aggregation coefficients
+     */
     private DenseMatrix coefficientMatrix;
 
     /**
      * item's nearest neighbors for kNN > 0
      */
-    private Multimap<Integer, Integer> itemNNs;
-
-    /**
-     * item's nearest neighbors for kNN <=0, i.e., all other items
-     */
-    private List<Integer> allItems;
+    private Set<Integer>[] itemNNs;
 
     /**
      * regularization parameters for the L1 or L2 term
@@ -70,19 +64,19 @@ public class SLIMRecommender extends AbstractRecommender {
     private float regL1Norm, regL2Norm;
 
     /**
-     * user-vector cache, item-vector cache
-     */
-    protected LoadingCache<Integer, SparseVector> userCache;
-
-    /**
      * number of nearest neighbors
      */
-    protected static int numberNearestNeighbors;
+    protected static int knn;
 
     /**
-     * Guava cache configuration
+     * item similarity matrix
      */
-    protected String cacheSpec;
+    private SymmMatrix similarityMatrix;
+
+    /**
+     * item's nearest neighbors for kNN <=0, i.e., all other items
+     */
+    private Set<Integer> allItems;
 
     /**
      * initialization
@@ -92,46 +86,21 @@ public class SLIMRecommender extends AbstractRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        regL1Norm = conf.getFloat("rec.slim.regularization.l1",0.01f);
-        regL2Norm = conf.getFloat("rec.slim.regularization.l2",0.01f);
+        knn = conf.getInt("rec.neighbors.knn.number", 50);
+        numIterations = conf.getInt("rec.iterator.maximum");
+        regL1Norm = conf.getFloat("rec.slim.regularization.l1", 1.0f);
+        regL2Norm = conf.getFloat("rec.slim.regularization.l2", 1.0f);
 
         coefficientMatrix = new DenseMatrix(numItems, numItems);
-        coefficientMatrix.init(); // initial guesses: make smaller guesses (e.g., W.init(0.01)) to speed up training
-        cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
+        // initial guesses: make smaller guesses (e.g., W.init(0.01)) to speed up training
+        coefficientMatrix.init();
+        similarityMatrix = context.getSimilarity().getSimilarityMatrix();
 
-        userCache = trainMatrix.rowCache(cacheSpec);
-
-        if (numberNearestNeighbors > 0) {
-            // find the nearest neighbors for each item based on item similarity
-            SymmMatrix itemCorrs = context.getSimilarity().getSimilarityMatrix();
-
-            itemNNs = HashMultimap.create();
-            for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-                // set diagonal entries to 0
-                coefficientMatrix.set(itemIdx, itemIdx, 0);
-                // find the k-nearest neighbors for each item
-                Map<Integer, Double> nearestNeighborMap = itemCorrs.row(itemIdx).toMap();
-
-                // sort by values to retriev topN similar items
-                if (numberNearestNeighbors > 0 && numberNearestNeighbors < nearestNeighborMap.size()) {
-                    List<Map.Entry<Integer, Double>> sorted = Lists.sortMap(nearestNeighborMap, true);
-                    List<Map.Entry<Integer, Double>> subset = sorted.subList(0, numberNearestNeighbors);
-                    nearestNeighborMap.clear();
-                    for (Map.Entry<Integer, Double> nearestNeighborEntry : subset)
-                        nearestNeighborMap.put(nearestNeighborEntry.getKey(), nearestNeighborEntry.getValue());
-                }
-
-                // put into the nns multimap
-                for (Map.Entry<Integer, Double> multimapEntry : nearestNeighborMap.entrySet())
-                    itemNNs.put(itemIdx, multimapEntry.getKey());
-            }
-        } else {
-            // all items are used
-            allItems = trainMatrix.columns();
-
-            for (int itemIdx = 0; itemIdx < numItems; itemIdx++)
-                coefficientMatrix.set(itemIdx, itemIdx, 0.0);
+        for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+            coefficientMatrix.set(itemIdx, itemIdx, 0.0d);
         }
+
+        createItemNNs();
     }
 
     /**
@@ -145,58 +114,75 @@ public class SLIMRecommender extends AbstractRecommender {
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
-
             // each cycle iterates through one coordinate direction
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
                 // find k-nearest neighbors
-                Collection<Integer> nearestNeighborCollection = numberNearestNeighbors > 0 ? itemNNs.get(itemIdx) : allItems;
+                Set<Integer> nearestNeighborCollection = knn > 0 ? itemNNs[itemIdx] : allItems;
+
+                double[] userRatingEntries = new double[numUsers];
+
+                Iterator<VectorEntry> userItr = trainMatrix.rowIterator(itemIdx);
+                while (userItr.hasNext()) {
+                    VectorEntry userRatingEntry = userItr.next();
+                    userRatingEntries[userRatingEntry.index()] = userRatingEntry.get();
+                }
 
                 // for each nearest neighbor nearestNeighborItemIdx, update coefficienMatrix by the coordinate
                 // descent update rule
-                // it is OK if nearestNeighborItemIdx==itemIdx, since coefficienMatrix  = 0;
                 for (Integer nearestNeighborItemIdx : nearestNeighborCollection) {
                     if (nearestNeighborItemIdx != itemIdx) {
                         double gradSum = 0.0d, rateSum = 0.0d, errors = 0.0d;
 
-                        SparseVector nnUserRatingsVector = trainMatrix.column(nearestNeighborItemIdx);
-                        int nnCount = nnUserRatingsVector.getCount();
-                        for (VectorEntry nnUserVectorEntry : nnUserRatingsVector) {
+                        Iterator<VectorEntry> nnUserRatingItr = trainMatrix.rowIterator(nearestNeighborItemIdx);
+                        if (!nnUserRatingItr.hasNext()) {
+                            continue;
+                        }
+
+                        int nnCount = 0;
+
+                        while (nnUserRatingItr.hasNext()) {
+                            VectorEntry nnUserVectorEntry = nnUserRatingItr.next();
                             int nnUserIdx = nnUserVectorEntry.index();
                             double nnRating = nnUserVectorEntry.get();
-                            double rating = trainMatrix.get(nnUserIdx, itemIdx);
+                            double rating = userRatingEntries[nnUserIdx];
                             double error = rating - predict(nnUserIdx, itemIdx, nearestNeighborItemIdx);
 
                             gradSum += nnRating * error;
                             rateSum += nnRating * nnRating;
 
                             errors += error * error;
+                            nnCount++;
                         }
+
+
                         gradSum /= nnCount;
                         rateSum /= nnCount;
 
                         errors /= nnCount;
+
                         double coefficient = coefficientMatrix.get(nearestNeighborItemIdx, itemIdx);
                         loss += errors + 0.5 * regL2Norm * coefficient * coefficient + regL1Norm * coefficient;
 
 
+                        double update = 0.0d;
                         if (regL1Norm < Math.abs(gradSum)) {
                             if (gradSum > 0) {
-                                double update = (gradSum - regL1Norm) / (regL2Norm + rateSum);
-                                coefficientMatrix.set(nearestNeighborItemIdx, itemIdx, update);
+                                update = (gradSum - regL1Norm) / (regL2Norm + rateSum);
                             } else {
                                 // One doubt: in this case, wij<0, however, the
                                 // paper says wij>=0. How to gaurantee that?
-                                double update = (gradSum + regL1Norm) / (regL2Norm + rateSum);
-                                coefficientMatrix.set(nearestNeighborItemIdx, itemIdx, update);
+                                update = (gradSum + regL1Norm) / (regL2Norm + rateSum);
                             }
-                        } else {
-                            coefficientMatrix.set(nearestNeighborItemIdx, itemIdx, 0.0);
                         }
+
+                        coefficientMatrix.set(nearestNeighborItemIdx, itemIdx, update);
                     }
                 }
             }
-            if (isConverged(iter) && earlyStop)
+
+            if (isConverged(iter) && earlyStop) {
                 break;
+            }
         }
     }
 
@@ -204,24 +190,19 @@ public class SLIMRecommender extends AbstractRecommender {
     /**
      * predict a specific ranking score for user userIdx on item itemIdx.
      *
-     * @param userIdx user index
-     * @param itemIdx item index
+     * @param userIdx         user index
+     * @param itemIdx         item index
      * @param excludedItemIdx excluded item index
      * @return a prediction without the contribution of excluded item
      */
     protected double predict(int userIdx, int itemIdx, int excludedItemIdx) {
-        SparseVector itemRatingsVector = null;
-        try {
-            itemRatingsVector = userCache.get(userIdx);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        Collection<Integer> nearestNeighborCollection = numberNearestNeighbors > 0 ? itemNNs.get(itemIdx) : itemRatingsVector.getIndexList();
-
         double predictRating = 0;
-        for (int nearestNeighborItemIdx : nearestNeighborCollection) {
-            if (itemRatingsVector.contains(nearestNeighborItemIdx) && nearestNeighborItemIdx != excludedItemIdx) {
-                double nearestNeighborPredictRating = itemRatingsVector.get(nearestNeighborItemIdx);
+        Iterator<VectorEntry> itemEntryIterator = trainMatrix.colIterator(userIdx);
+        while (itemEntryIterator.hasNext()) {
+            VectorEntry itemEntry = itemEntryIterator.next();
+            int nearestNeighborItemIdx = itemEntry.index();
+            double nearestNeighborPredictRating = itemEntry.get();
+            if (itemNNs[itemIdx].contains(nearestNeighborItemIdx) && nearestNeighborItemIdx != excludedItemIdx) {
                 predictRating += nearestNeighborPredictRating * coefficientMatrix.get(nearestNeighborItemIdx, itemIdx);
             }
         }
@@ -254,6 +235,43 @@ public class SLIMRecommender extends AbstractRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
+//        create item knn list if not exists,  for local offline model
+        if (!(null != itemNNs && itemNNs.length > 0)) {
+            createItemNNs();
+        }
         return predict(userIdx, itemIdx, -1);
+    }
+
+
+    /**
+     * Create item KNN list.
+     */
+    public void createItemNNs() {
+        itemNNs = new HashSet[numItems];
+
+        // find the nearest neighbors for each item based on item similarity
+        List<Map.Entry<Integer, Double>> tempItemSimList;
+        if (knn > 0) {
+            for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
+                SparseVector similarityVector = similarityMatrix.row(itemIdx);
+                if (knn < similarityVector.size()) {
+                    tempItemSimList = new ArrayList<>(similarityVector.size() + 1);
+                    Iterator<VectorEntry> simItr = similarityVector.iterator();
+                    while (simItr.hasNext()) {
+                        VectorEntry simVectorEntry = simItr.next();
+                        tempItemSimList.add(new AbstractMap.SimpleImmutableEntry<>(simVectorEntry.index(), simVectorEntry.get()));
+                    }
+                    tempItemSimList = Lists.sortListTopK(tempItemSimList, true, knn);
+                    itemNNs[itemIdx] = new HashSet<>((int) (tempItemSimList.size() / 0.5));
+                    for (Map.Entry<Integer, Double> tempItemSimEntry : tempItemSimList) {
+                        itemNNs[itemIdx].add(tempItemSimEntry.getKey());
+                    }
+                } else {
+                    itemNNs[itemIdx] = similarityVector.getIndexSet();
+                }
+            }
+        } else {
+            allItems = new HashSet<>(trainMatrix.columns());
+        }
     }
 }

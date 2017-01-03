@@ -66,6 +66,61 @@ public class RatioDataSplitter extends AbstractDataSplitter {
     }
 
     /**
+     * Split the dataset according to the configuration file.<br>
+     *
+     * @throws LibrecException if error occurs
+     */
+    @Override
+    public void splitData() throws LibrecException {
+        this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
+        this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+        String splitter = conf.get("data.splitter.ratio");
+        switch (splitter.toLowerCase()) {
+            case "rating": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getRatioByRating(ratio);
+                break;
+            }
+            case "user": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getRatioByUser(ratio);
+                break;
+            }
+            case "userfixed": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getFixedRatioByUser(ratio);
+                break;
+            }
+            case "item": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getRatioByItem(ratio);
+                break;
+            }
+            case "valid": {
+                double trainRatio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                double validationRaito = Double.parseDouble(conf.get("data.splitter.validset.ratio"));
+                getRatio(trainRatio, validationRaito);
+                break;
+            }
+            case "ratingdate": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getRatioByRatingDate(ratio);
+                break;
+            }
+            case "userdate": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getRatioByUserDate(ratio);
+                break;
+            }
+            case "itemdate": {
+                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
+                getRatioByItemDate(ratio);
+                break;
+            }
+        }
+    }
+
+    /**
      * Split ratings into two parts: (ratio) training, (1-ratio) test subsets.
      *
      * @param ratio the ratio of training data over all the ratings
@@ -350,61 +405,6 @@ public class RatioDataSplitter extends AbstractDataSplitter {
             SparseMatrix.reshape(trainMatrix);
             SparseMatrix.reshape(validationMatrix);
             SparseMatrix.reshape(testMatrix);
-        }
-    }
-
-    /**
-     * Split the dataset according to the configuration file.<br>
-     *
-     * @throws LibrecException if error occurs
-     */
-    @Override
-    public void splitData() throws LibrecException {
-        this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
-        this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
-        String splitter = conf.get("data.splitter.ratio");
-        switch (splitter.toLowerCase()) {
-            case "rating": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getRatioByRating(ratio);
-                break;
-            }
-            case "user": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getRatioByUser(ratio);
-                break;
-            }
-            case "userfixed": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getFixedRatioByUser(ratio);
-                break;
-            }
-            case "item": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getRatioByItem(ratio);
-                break;
-            }
-            case "valid": {
-                double trainRatio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                double validationRaito = Double.parseDouble(conf.get("data.splitter.validset.ratio"));
-                getRatio(trainRatio, validationRaito);
-                break;
-            }
-            case "ratingdate": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getRatioByRatingDate(ratio);
-                break;
-            }
-            case "userdate": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getRatioByUserDate(ratio);
-                break;
-            }
-            case "itemdate": {
-                double ratio = Double.parseDouble(conf.get("data.splitter.trainset.ratio"));
-                getRatioByItemDate(ratio);
-                break;
-            }
         }
     }
 }

@@ -92,7 +92,9 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     protected void buildSplitter() throws LibrecException {
         String splitter = conf.get("data.model.splitter");
         try {
-            dataSplitter = (DataSplitter) ReflectionUtil.newInstance(DriverClassUtil.getClass(splitter), conf);
+        	if (dataSplitter == null){
+        		dataSplitter = (DataSplitter) ReflectionUtil.newInstance(DriverClassUtil.getClass(splitter), conf);	
+        	}
             if (dataSplitter != null) {
                 dataSplitter.setDataConvertor(dataConvertor);
                 if (dataSplitter instanceof KCVDataSplitter) {

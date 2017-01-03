@@ -17,20 +17,22 @@
  */
 package net.librec.job;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import net.librec.BaseTestCase;
 import net.librec.common.LibrecException;
 import net.librec.recommender.item.GenericRecommendedItem;
 import net.librec.recommender.item.RecommendedItem;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Created by syt on 2016/11/20.
+ * RecommenderJob test case
+ * {@link net.librec.job.RecommenderJob}
+ *
+ * @author SunYatong
  */
 public class RecommenderJobTestCase extends BaseTestCase {
 	/**

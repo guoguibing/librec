@@ -13,6 +13,7 @@ ratio=net.librec.data.splitter.RatioDataSplitter
 givenn=net.librec.data.splitter.GivenNDataSplitter
 loocv=net.librec.data.splitter.LOOCVDataSplitter
 kcv=net.librec.data.splitter.KCVDataSplitter
+testset=net.librec.data.splitter.GivenTestSetDataSplitter
 #Similarity(-similarity)
 cos=net.librec.similarity.CosineSimilarity
 cpc=net.librec.similarity.CPCSimilarity

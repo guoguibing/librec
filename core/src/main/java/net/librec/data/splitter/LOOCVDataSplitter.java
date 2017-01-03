@@ -47,6 +47,8 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
     /** The datetime dataset for splitting */
     private SparseMatrix datetimeMatrix;
 
+    /** wrap kcv into leave-one-out if leave every rate out  */
+    private KCVDataSplitter kcv;
     /**
      * Empty constructor.
      */
@@ -70,6 +72,46 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
     /** Types of the LOOCVDataSplitter */
     enum LOOCVType {
         LOOByUser, LOOByItem
+    }
+
+    /**
+     * Split the data.
+     *
+     * @throws LibrecException if error occurs
+     */
+    @Override
+    public void splitData() throws LibrecException {
+        preferenceMatrix = dataConvertor.getPreferenceMatrix();
+        datetimeMatrix = dataConvertor.getDatetimeMatrix();
+        String splitter = conf.get("data.splitter.loocv");
+        switch (splitter.toLowerCase()) {
+            case "user": {
+                getLOOByUser();
+                break;
+            }
+            case "item": {
+                getLOOByItems();
+                break;
+            }
+            case "userdate": {
+                getLOOByUserDate();
+                break;
+            }
+            case "itemdate": {
+                getLooByItemsDate();
+                break;
+            }
+            case "rate":{
+                if (null == kcv) {
+                    conf.setInt("data.splitter.cv.number", dataConvertor.getPreferenceMatrix().size());
+                    kcv = new KCVDataSplitter(dataConvertor, conf);
+                    kcv.splitFolds();
+                }
+                kcv.splitData();
+                trainMatrix = kcv.getTrainData();
+                testMatrix = kcv.getTestData();
+            }
+        }
     }
 
     /**
@@ -180,33 +222,4 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
         testMatrix = new SparseMatrix(preferenceMatrix.numRows(), preferenceMatrix.numColumns(), dataTable, colMap);
     }
 
-    /**
-     * Split the data.
-     *
-     * @throws LibrecException if error occurs
-     */
-    @Override
-    public void splitData() throws LibrecException {
-        preferenceMatrix = dataConvertor.getPreferenceMatrix();
-        datetimeMatrix = dataConvertor.getDatetimeMatrix();
-        String splitter = conf.get("data.splitter.loocv");
-        switch (splitter.toLowerCase()) {
-            case "user": {
-                getLOOByUser();
-                break;
-            }
-            case "item": {
-                getLOOByItems();
-                break;
-            }
-            case "userdate": {
-                getLOOByUserDate();
-                break;
-            }
-            case "itemdate": {
-                getLooByItemsDate();
-                break;
-            }
-        }
-    }
 }
