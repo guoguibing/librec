@@ -103,7 +103,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     public TextDataConvertor(String dataColumnFormat, String inputDataPath) {
         this(dataColumnFormat, inputDataPath, -1.0);
     }
-
+    
     /**
      * Initializes a newly created {@code TextDataConvertor} object with the
      * path and format of the input data file.
@@ -123,6 +123,25 @@ public class TextDataConvertor extends AbstractDataConvertor {
     }
 
     /**
+     * Initializes a newly created {@code TextDataConvertor} object with the
+     * path and format of the input data file.
+     *
+     * @param dataColumnFormat
+     *            the path of the input data file
+     * @param inputDataPath
+     *            the format of the input data file
+     * @param binThold the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+     *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
+     *            negative value
+     */
+    public TextDataConvertor(String dataColumnFormat, String inputDataPath, double binThold,
+    		BiMap<String, Integer> userIds, BiMap<String, Integer> itemIds) {
+    	this(dataColumnFormat, inputDataPath,binThold);
+    	this.userIds=userIds;
+    	this.itemIds=itemIds;
+    }
+
+	/**
      * Process the input data.
      *
      * @throws IOException
@@ -157,8 +176,12 @@ public class TextDataConvertor extends AbstractDataConvertor {
         // Map {col-id, multiple row-id}: used to fast build a rating matrix
         Multimap<Integer, Integer> colMap = HashMultimap.create();
         // BiMap {raw id, inner id} userIds, itemIds
-        this.userIds = HashBiMap.create();
-        this.itemIds = HashBiMap.create();
+        if (this.userIds == null){
+        	this.userIds = HashBiMap.create();
+        }
+        if (this.itemIds == null){
+        	this.itemIds = HashBiMap.create();	
+        }
         final List<File> files = new ArrayList<File>();
         final ArrayList<Long> fileSizeList = new ArrayList<Long>();
         SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>() {
@@ -211,7 +234,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
 
                     // binarize the rating for item recommendation task
                     if (binThold >= 0) {
-                        rate = rate > binThold ? 1.0 : -1.0;
+                        rate = rate > binThold ? 1.0 : 0.0;
                     }
 
                     // inner id starting from 0
@@ -343,7 +366,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     public BiMap<String, Integer> getUserIds() {
         return userIds;
     }
-
+    
     /**
      * Return item {rawid, inner id} mappings
      *

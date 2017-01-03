@@ -22,7 +22,7 @@ import net.librec.common.LibrecException;
 import net.librec.math.structure.*;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -71,8 +71,6 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
 
     @Override
     protected void trainModel() throws LibrecException {
-        List<List<Integer>> userItemsList = getUserItemsList(trainMatrix);
-        List<List<Integer>> itemUsersList = getItemUsersList(trainMatrix);
 
         SparseMatrix userIdentityMatrix = DiagMatrix.eye(numFactors).scale(regUser);
         SparseMatrix itemIdentityMatrix = DiagMatrix.eye(numFactors).scale(regItem);
@@ -89,7 +87,8 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
 
                 DenseMatrix YtCuI = new DenseMatrix(numFactors, numItems);//actually YtCuI is a sparse matrix
                 //Yt * (Cu-itemIdx)
-                for (int itemIdx : userItemsList.get(userIdx)) {
+                List<Integer> itemList = trainMatrix.getColumns(userIdx);
+                for (int itemIdx : itemList) {
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                         YtCuI.set(factorIdx, itemIdx, Y.get(itemIdx, factorIdx) * confindenceMinusIdentityMatrix.get(userIdx, itemIdx));
                     }
@@ -100,7 +99,7 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                     for (int factorIdxIn = 0; factorIdxIn < numFactors; factorIdxIn++) {
                         double value = 0.0;
-                        for (int itemIdx : userItemsList.get(userIdx)) {
+                        for (int itemIdx : itemList) {
                             value += YtCuI.get(factorIdx, itemIdx) * Y.get(itemIdx, factorIdxIn);
                         }
                         YtCuY.set(factorIdx, factorIdxIn, value);
@@ -113,7 +112,7 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
                 // Yt * (Cu - itemIdx) * Pu + Yt * Pu
                 DenseVector YtCuPu = new DenseVector(numFactors);
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int itemIdx : userItemsList.get(userIdx)) {
+                    for (int itemIdx : itemList) {
                         YtCuPu.add(factorIdx, preferenceMatrix.get(userIdx, itemIdx) * (YtCuI.get(factorIdx, itemIdx) + Yt.get(factorIdx, itemIdx)));
                     }
                 }
@@ -126,12 +125,15 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
             // Step 2: update item factors;
             DenseMatrix Xt = X.transpose();
             DenseMatrix XtX = Xt.mult(X);
+
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+
 
                 DenseMatrix XtCiI = new DenseMatrix(numFactors, numUsers);
                 //actually XtCiI is a sparse matrix
                 //Xt * (Ci-itemIdx)
-                for (int userIdx : itemUsersList.get(itemIdx)) {
+                List<Integer> userList = trainMatrix.getRows(itemIdx);
+                for (int userIdx : userList) {
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                         XtCiI.set(factorIdx, userIdx, X.get(userIdx, factorIdx) * confindenceMinusIdentityMatrix.get(userIdx, itemIdx));
                     }
@@ -142,7 +144,7 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                     for (int factorIdxIn = 0; factorIdxIn < numFactors; factorIdxIn++) {
                         double value = 0.0;
-                        for (int userIdx : itemUsersList.get(itemIdx)) {
+                        for (int userIdx : userList) {
                             value += XtCiI.get(factorIdx, userIdx) * X.get(userIdx, factorIdxIn);
                         }
                         XtCiX.set(factorIdx, factorIdxIn, value);
@@ -156,7 +158,7 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
                 // Xt * (Ci - itemIdx) * Pu + Xt * Pu
                 DenseVector XtCiPu = new DenseVector(numFactors);
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int userIdx : itemUsersList.get(itemIdx)) {
+                    for (int userIdx : userList) {
                         XtCiPu.add(factorIdx, preferenceMatrix.get(userIdx, itemIdx) * (XtCiI.get(factorIdx, userIdx) + Xt.get(factorIdx, userIdx)));
                     }
                 }
@@ -165,22 +167,10 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
                 // udpate item factors
                 Y.setRow(itemIdx, yi);
             }
-        }
-    }
 
-    private List<List<Integer>> getUserItemsList(SparseMatrix sparseMatrix) {
-        List<List<Integer>> userItemsList = new ArrayList<>();
-        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsList.add(sparseMatrix.getColumns(userIdx));
+            if (verbose) {
+                LOG.info(getClass()+" runs at iteration = "+iter+" "+new Date());
+            }
         }
-        return userItemsList;
-    }
-
-    private List<List<Integer>> getItemUsersList(SparseMatrix sparseMatrix) {
-        List<List<Integer>> itemUsersList = new ArrayList<>();
-        for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
-            itemUsersList.add(sparseMatrix.getRows(itemIdx));
-        }
-        return itemUsersList;
     }
 }

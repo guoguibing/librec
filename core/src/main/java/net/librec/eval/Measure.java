@@ -175,5 +175,39 @@ public enum Measure {
             this.topN = topN;
         }
 
+        /* (non-Javadoc)
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((measure == null) ? 0 : measure.hashCode());
+            result = prime * result + ((topN == null) ? 0 : topN.hashCode());
+            return result;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            MeasureValue other = (MeasureValue) obj;
+            if (measure != other.measure)
+                return false;
+            if (topN == null) {
+                if (other.topN != null)
+                    return false;
+            } else if (!topN.equals(other.topN))
+                return false;
+            return true;
+        }
+
     }
 }

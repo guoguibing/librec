@@ -359,6 +359,25 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
     }
 
     /**
+     * Retrieve value at entry [row, column]
+     *
+     * @param row    row id
+     * @param column column id
+     * @return value at entry [row, column]
+     */
+    public boolean contains(int row, int column) {
+
+        int index = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], column);
+
+        if (index >= 0 && rowData[index]!=0.0){
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    /**
      * get a row sparse vector of a matrix
      *
      * @param row row id
@@ -1007,10 +1026,10 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         private RowIterator(int col) {
             this.col = col;
-            rowCursor = rowInd[col];
+            rowCursor = colPtr[col];
             rowEntry = new RowEntry();
             rowEntry.update(rowCursor);
-            while ((rowCursor + 1) < rowInd[col + 1] && rowEntry.get() == 0.0) {
+            while ((rowCursor + 1) < colPtr[col + 1] && rowEntry.get() == 0.0) {
                 rowCursor++;
                 rowEntry.update(rowCursor);
             }
@@ -1018,7 +1037,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         @Override
         public boolean hasNext() {
-            return rowCursor < rowInd[col + 1];
+            return rowCursor < colPtr[col + 1];
         }
 
         @Override
@@ -1073,10 +1092,10 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         private ColIterator(int row) {
             this.row = row;
-            colCursor = colInd[row];
+            colCursor = rowPtr[row];
             colEntry = new ColEntry();
             colEntry.update(colCursor);
-            while ((colCursor + 1) < colInd[row + 1] && colEntry.get() == 0.0) {
+            while ((colCursor + 1) < rowPtr[row + 1] && colEntry.get() == 0.0) {
                 colCursor++;
                 colEntry.update(colCursor);
             }
@@ -1084,7 +1103,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         @Override
         public boolean hasNext() {
-            return colCursor < colInd[row + 1];
+            return colCursor < rowPtr[row + 1];
         }
 
         @Override

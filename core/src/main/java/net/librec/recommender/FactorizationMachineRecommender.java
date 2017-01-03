@@ -96,7 +96,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     /**
      * setup
      *
-     * @throws LibrecException if error occurs during setting up
+     * @throws LibrecException
      */
     protected void setup() throws LibrecException {
         conf = context.getConf();
@@ -142,11 +142,10 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * predict
-     * predict the rating given a sparse feature vector
+     * * predict the rating given a sparse feature vector
      *
-     * @param x  a sparse feature vector
      * @return predicted rating
-     * @throws LibrecException if error occurs during predicting
+     * @throws LibrecException
      */
     protected double predict(SparseVector x) throws LibrecException {
         double res = 0;
@@ -180,12 +179,10 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * bounded predict
-     * predict the rating given a sparse feature vector
+     * * predict the rating given a sparse feature vector
      *
-     * @param x      a sparse feature vector
-     * @param bound  whether there is a bound
      * @return predicted rating
-     * @throws LibrecException  if error occurs during predicting
+     * @throws LibrecException
      */
     protected double predict(SparseVector x, boolean bound) throws LibrecException {
         double pred = predict(x);
@@ -202,10 +199,10 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * recommend
-     * predict the ratings in the test data
+     * * predict the ratings in the test data
      *
      * @return predictive rating matrix
-     * @throws LibrecException  if error occurs during recommending
+     * @throws LibrecException
      */
     protected RecommendedList recommendRating() throws LibrecException {
         testMatrix = testTensor.rateMatrix();
@@ -235,9 +232,8 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * getUserItemIndex
-     * get the user index and item index from a sparse feature vector
+     * * get the user index and item index from a sparse feature vector
      *
-     * @param x  a sparse feature vector
      * @return user index and item index
      */
     private int[] getUserItemIndex(SparseVector x) {
@@ -251,9 +247,8 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * tenserKeysToFeatureVector
-     * transform the keys of a tensor entry into a sparse vector
+     * * transform the keys of a tensor entry into a sparse vector
      *
-     * @param tenserKeys  the keys of a tensor entry
      * @return sparse feature vector
      */
     protected SparseVector tenserKeysToFeatureVector(int[] tenserKeys) {

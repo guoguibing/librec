@@ -34,7 +34,7 @@ import java.util.Map.Entry;
  *
  * @author WangYuFeng and Keqiang Wang
  */
-@ModelData({"isRanking", "knn", "userMappingData", "itemMappingData", "userMeans", "trainMatrix", "similarityMatrix"})
+@ModelData({"isRanking", "knn", "userMeans", "trainMatrix", "similarityMatrix"})
 public class UserKNNRecommender extends AbstractRecommender {
     private int knn;
     private DenseVector userMeans;

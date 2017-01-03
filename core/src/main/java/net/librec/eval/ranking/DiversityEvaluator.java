@@ -19,6 +19,7 @@ package net.librec.eval.ranking;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
 import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SymmMatrix;
 import net.librec.recommender.item.ItemEntry;
 import net.librec.recommender.item.RecommendedList;
 
@@ -47,7 +48,9 @@ public class DiversityEvaluator extends AbstractRecommenderEvaluator {
         double totalDiversity = 0.0;
         int numUsers = testMatrix.numRows();
         int nonZeroNumUsers = 0;
-        if (similarityMatrix != null) {
+
+        if (similarities.containsKey("item")) {
+            SymmMatrix itemSimilarity = similarities.get("item").getSimilarityMatrix();
             for (int userID = 0; userID < numUsers; userID++) {
                 List<ItemEntry<Integer, Double>> recommendArrayListByUser = recommendedList.getItemIdxListByUserIdx(userID);
                 if (recommendArrayListByUser.size() > 0) {
@@ -61,7 +64,7 @@ public class DiversityEvaluator extends AbstractRecommenderEvaluator {
                             }
                             int item1 = recommendArrayListByUser.get(i).getKey();
                             int item2 = recommendArrayListByUser.get(j).getKey();
-                            totalSimilarityPerUser += similarityMatrix.get(item1, item2);
+                            totalSimilarityPerUser += itemSimilarity.get(item1, item2);
                         }
                     }
                     totalDiversity += totalSimilarityPerUser * 2 / (topK * (topK - 1));

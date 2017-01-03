@@ -60,7 +60,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 * @throws IOException
 	 */
-//	@Ignore
+	// @Ignore
 	@Test
 	public void testRecommenderRating() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
@@ -76,7 +76,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 * @throws IOException
 	 */
-//	@Ignore
+	// @Ignore
 	@Test
 	public void testRecommenderRanking() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-testranking.properties");
@@ -102,14 +102,16 @@ public class UserKNNTestCase extends BaseTestCase {
 		dataModel.buildDataModel();
 		RecommenderContext context = new RecommenderContext(conf, dataModel);
 		RecommenderSimilarity similarity = new PCCSimilarity();
-//		similarity.setConf(conf);
-//		similarity.buildSimilarityMatrix(dataModel, true);
+		// similarity.setConf(conf);
+		// similarity.buildSimilarityMatrix(dataModel, true);
 		context.setSimilarity(similarity);
 		Recommender recommender = new UserKNNRecommender();
 		recommender.recommend(context);
-		String filePath = conf.get("dfs.result.dir")+"/model-"+DriverClassUtil.getDriverName(UserKNNRecommender.class);
+		String filePath = conf.get("dfs.result.dir") + "/model-"
+				+ DriverClassUtil.getDriverName(UserKNNRecommender.class);
 		recommender.saveModel(filePath);
 	}
+
 	/**
 	 * test the whole process of UserKNN recommendation
 	 *
@@ -123,16 +125,17 @@ public class UserKNNTestCase extends BaseTestCase {
 		Configuration conf = new Configuration();
 		Configuration.Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
-//		DataModel dataModel = new TextDataModel(conf);
-//		dataModel.buildDataModel();
+		// DataModel dataModel = new TextDataModel(conf);
+		// dataModel.buildDataModel();
 		RecommenderContext context = new RecommenderContext(conf);
-//		RecommenderSimilarity similarity = new PCCSimilarity();
-//		similarity.setConf(conf);
-//		similarity.buildSimilarityMatrix(dataModel, true);
-//		context.setSimilarity(similarity);
+		// RecommenderSimilarity similarity = new PCCSimilarity();
+		// similarity.setConf(conf);
+		// similarity.buildSimilarityMatrix(dataModel, true);
+		// context.setSimilarity(similarity);
 		Recommender recommender = new UserKNNRecommender();
 		recommender.setContext(context);
-		String filePath = conf.get("dfs.result.dir")+"/model-"+DriverClassUtil.getDriverName(UserKNNRecommender.class);
+		String filePath = conf.get("dfs.result.dir") + "/model-"
+				+ DriverClassUtil.getDriverName(UserKNNRecommender.class);
 		recommender.loadModel(filePath);
 		recommender.recommend(context);
 		List<RecommendedItem> recommendedItemList = recommender.getRecommendedList();
@@ -146,7 +149,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws ClassNotFoundException
 	 * @throws LibrecException
 	 * @throws IOException
-     */
+	 */
 	@Test
 	public void test3SplitterRatioRating() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
@@ -193,7 +196,6 @@ public class UserKNNTestCase extends BaseTestCase {
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
 	}
-
 
 	/**
 	 * Test RatioDataSplitter with item ratio, evaluating enabled.
@@ -462,7 +464,42 @@ public class UserKNNTestCase extends BaseTestCase {
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
 	}
+	
+	/**
+	 * Test LOOCVDataSplitter with rate.
+	 *
+	 * @throws ClassNotFoundException
+	 * @throws LibrecException
+	 * @throws IOException
+	 */
+	@Test
+	public void test191SplitterLOOCVRate() throws ClassNotFoundException, LibrecException, IOException{
+		Resource resource = new Resource("rec/cf/userknn-test.properties");
+		conf.addResource(resource);
+		conf.set("data.model.splitter", "loocv");
+		conf.set("data.input.path", "test/sytTest4by4A.txt");
+		conf.set("data.splitter.loocv", "rate");
+		RecommenderJob job = new RecommenderJob(conf);
+		job.runJob();
+	}
 
+	/**
+	 * Test RatioDataSplitter with rate.
+	 *
+	 * @throws ClassNotFoundException
+	 * @throws LibrecException
+	 * @throws IOException
+	 */
+	@Test
+	public void test192SplitterTestSet() throws ClassNotFoundException, LibrecException, IOException{
+		Resource resource = new Resource("rec/cf/userknn-test.properties");
+		conf.addResource(resource);
+		conf.set("data.model.splitter", "testset");
+		conf.set("data.input.path", "test3");
+		conf.set("data.test.path", "test3/u1.test");
+		RecommenderJob job = new RecommenderJob(conf);
+		job.runJob();
+	}
 	/**
 	 * Test RatioDataSplitter with rating ratio, filter enabled.
 	 *

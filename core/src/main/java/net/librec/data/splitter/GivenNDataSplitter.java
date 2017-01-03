@@ -17,10 +17,6 @@
  */
 package net.librec.data.splitter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataConvertor;
@@ -28,6 +24,10 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.SparseMatrix;
 import net.librec.util.Lists;
 import net.librec.util.RatingContext;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * GivenN Data Splitter<br>
@@ -59,6 +59,52 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
     public GivenNDataSplitter(DataConvertor dataConvertor, Configuration conf) {
         this.dataConvertor = dataConvertor;
         this.conf = conf;
+    }
+
+    /**
+     * Split the data.
+     *
+     * @throws LibrecException if error occurs
+     */
+    @Override
+    public void splitData() throws LibrecException {
+        this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
+        this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+        String splitter = conf.get("data.splitter.givenn");
+        switch (splitter.toLowerCase()) {
+            case "user": {
+                try {
+                    getGivenNByUser(Integer.parseInt(conf.get("data.splitter.givenn.n")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "item": {
+                try {
+                    getGivenNByItem(Integer.parseInt(conf.get("data.splitter.givenn.n")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "userdate": {
+                try {
+                    getGivenNByUserDate(Integer.parseInt(conf.get("data.splitter.givenn.n")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+            case "itemdate": {
+                try {
+                    getGivenNByItemDate(Integer.parseInt(conf.get("data.splitter.givenn.n")));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
+        }
     }
 
     /**
@@ -208,49 +254,5 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
         }
     }
 
-    /**
-     * Split the data.
-     *
-     * @throws LibrecException if error occurs
-     */
-    @Override
-    public void splitData() throws LibrecException {
-        this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
-        this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
-        String splitter = conf.get("data.splitter.givenn");
-        switch (splitter.toLowerCase()) {
-            case "user": {
-                try {
-                    getGivenNByUser(Integer.parseInt(conf.get("data.splitter.givenn.n")));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "item": {
-                try {
-                    getGivenNByItem(Integer.parseInt(conf.get("data.splitter.givenn.n")));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "userdate": {
-                try {
-                    getGivenNByUserDate(Integer.parseInt(conf.get("data.splitter.givenn.n")));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            }
-            case "itemdate": {
-                try {
-                    getGivenNByItemDate(Integer.parseInt(conf.get("data.splitter.givenn.n")));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
-            }
-        }
-    }
+
 }

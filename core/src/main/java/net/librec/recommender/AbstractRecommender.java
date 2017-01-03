@@ -165,7 +165,7 @@ public abstract class AbstractRecommender implements Recommender {
         conf = context.getConf();
         isRanking = conf.getBoolean("rec.recommender.isranking");
         if (isRanking) {
-            topN = conf.getInt("rec.recommender.ranking.topn", 5);
+            topN = conf.getInt("rec.recommender.ranking.topn", 10);
             if (this.topN <= 0) {
                 throw new IndexOutOfBoundsException("rec.recommender.ranking.topn should be more than 0!");
             }
