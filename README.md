@@ -85,10 +85,6 @@ public void main(String[] args) throws Exception {
 }
 </pre>
 
-### Reference
-Please cite the following papers if LibRec is helpful to your research. 
-
-1. Guibing Guo, Jie Zhang, Zhu Sun and Neil Yorke-Smith, [LibRec: A Java Library for Recommender Systems](http://ceur-ws.org/Vol-1388/demo_paper1.pdf), in Posters, Demos, Late-breaking Results and Workshop Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
 
 ### Acknowledgement
 
@@ -97,10 +93,11 @@ We would like to express our appreciation to the following people for contributi
 We also appreciate many others for reporting bugs and issues, and for providing valuable suggestions and support. 
 
 ### Publications
-LibRec has been used in the following publications (let me know if your paper is not listed):
+Please cite the following papers if LibRec is helpful to your research. 
 
-1. G. Guo, J. Zhang and N. Yorke-Smith, TrustSVD: Collaborative Filtering with Both the Explicit and Implicit Influence of User Trust and of Item Ratings, in Proceedings of the 29th AAAI Conference on Artificial Intelligence (AAAI), 2015, 123-129.
-2. Z. Sun, G. Guo and J. Zhang, Exploiting Implicit Item Relationships for Recommender Systems, in Proceedings of the 23rd International Conference on User Modeling, Adaptation and Personalization (UMAP), 2015.
+1. G. Guo, J. Zhang, Z. Sun and N. Yorke-Smith, [LibRec: A Java Library for Recommender Systems](http://ceur-ws.org/Vol-1388/demo_paper1.pdf), in Posters, Demos, Late-breaking Results and Workshop Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
+2. G. Guo, J. Zhang and N. Yorke-Smith, TrustSVD: Collaborative Filtering with Both the Explicit and Implicit Influence of User Trust and of Item Ratings, in Proceedings of the 29th AAAI Conference on Artificial Intelligence (AAAI), 2015, 123-129.
+3. Z. Sun, G. Guo and J. Zhang, Exploiting Implicit Item Relationships for Recommender Systems, in Proceedings of the 23rd International Conference on User Modeling, Adaptation and Personalization (UMAP), 2015.
 
 
 ### GPL License
