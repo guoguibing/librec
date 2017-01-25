@@ -19,7 +19,7 @@ package net.librec.similarity;
 
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
-import net.librec.data.convertor.feature.SocialDataFeature;
+import net.librec.data.convertor.appender.SocialDataAppender;
 import net.librec.math.structure.SparseMatrix;
 import net.librec.math.structure.SparseVector;
 import net.librec.math.structure.SymmMatrix;
@@ -102,7 +102,7 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
      */
     public void buildSocialSimilarityMatrix(DataModel dataModel) {
         SparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
-        SparseMatrix socialMatrix = ((SocialDataFeature) dataModel.getDataFeature()).getUserFeature();
+        SparseMatrix socialMatrix = ((SocialDataAppender) dataModel.getDataAppender()).getUserAppender();
         int numUsers = trainMatrix.numRows();
 
         similarityMatrix = new SymmMatrix(numUsers);

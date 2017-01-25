@@ -22,7 +22,9 @@ import net.librec.common.LibrecException;
 import net.librec.conf.Configured;
 import net.librec.data.DataModel;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -32,14 +34,14 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Liuxz and Sunyt
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TextDataModelTestCase extends BaseTestCase {
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		conf.set(Configured.CONF_DFS_DATA_DIR, "../data/test");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "ratings.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
@@ -54,9 +56,9 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testColumnFormatUIR() throws LibrecException {
+	public void test01ColumnFormatUIR() throws LibrecException {
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTest4by4.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -72,9 +74,9 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testColumnFormatUIRT() throws LibrecException {
+	public void test02ColumnFormatUIRT() throws LibrecException {
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -90,8 +92,8 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testSubDir() throws LibrecException {
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "test-sub-dir");
+	public void test03SubDir() throws LibrecException {
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/test-convert-dir");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -107,8 +109,8 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testCSV() throws LibrecException {
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestCSV.txt");
+	public void test04CSV() throws LibrecException {
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/testCSV.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -124,7 +126,7 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testRatingRatio() throws LibrecException {
+	public void test05RatingRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 		conf.set("data.splitter.ratio", "rating");
@@ -144,7 +146,7 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testUserRatio() throws LibrecException {
+	public void test06UserRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 		conf.set("data.splitter.ratio", "user");
@@ -164,7 +166,7 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testItemRatio() throws LibrecException {
+	public void test07ItemRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 		conf.set("data.splitter.ratio", "item");
@@ -184,7 +186,7 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testvalidRatio() throws LibrecException {
+	public void test08ValidRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.ratio", "valid");
 		conf.set("data.splitter.trainset.ratio", "0.5");
@@ -207,12 +209,12 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testRatingDateRatio() throws LibrecException {
+	public void test09RatingDateRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 		conf.set("data.splitter.ratio", "ratingdate");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "ratingsDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -229,12 +231,12 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testUserDateRatio() throws LibrecException {
+	public void test10UserDateRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 		conf.set("data.splitter.ratio", "userdate");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "ratingsDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -251,12 +253,12 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testItemDateRatio() throws LibrecException {
+	public void test11ItemDateRatio() throws LibrecException {
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 		conf.set("data.splitter.ratio", "itemdate");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "ratingsDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -273,10 +275,10 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testKCV() throws LibrecException {
+	public void test12KCV() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.KCVDataSplitter");
 		conf.set("data.splitter.cv.number", "6");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestDateA.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4A-date.txt");
 		TextDataModel dataModel = new TextDataModel(conf);
 		for (int i = 1; i <= 6; i++) {
 			conf.set("data.splitter.cv.index", i + "");
@@ -295,10 +297,10 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testLOOByUser() throws LibrecException {
+	public void test13LOOByUser() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.LOOCVDataSplitter");
 		conf.set("data.splitter.loocv", "user");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTest4by4.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -315,10 +317,10 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testLOOByItem() throws LibrecException {
+	public void test14LOOByItem() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.LOOCVDataSplitter");
 		conf.set("data.splitter.loocv", "item");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTest4by4.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -335,11 +337,11 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testLOOByUserDate() throws LibrecException {
+	public void test15LOOByUserDate() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.LOOCVDataSplitter");
 		conf.set("data.splitter.loocv", "userdate");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -356,11 +358,11 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testLOOByItemDate() throws LibrecException {
+	public void test16LOOByItemDate() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.LOOCVDataSplitter");
 		conf.set("data.splitter.loocv", "itemdate");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -377,11 +379,11 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testGivenNByUser() throws LibrecException {
+	public void test17GivenNByUser() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.GivenNDataSplitter");
 		conf.set("data.splitter.givenn", "user");
 		conf.set("data.splitter.givenn.n", "1");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTest4by4.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -398,11 +400,11 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testGivenNByItem() throws LibrecException {
+	public void test18GivenNByItem() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.GivenNDataSplitter");
 		conf.set("data.splitter.givenn", "item");
 		conf.set("data.splitter.givenn.n", "1");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTest4by4.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -420,12 +422,12 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testGivenNByUserDate() throws LibrecException {
+	public void test19GivenNByUserDate() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.GivenNDataSplitter");
 		conf.set("data.splitter.givenn", "userdate");
 		conf.set("data.splitter.givenn.n", "1");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();
@@ -443,12 +445,12 @@ public class TextDataModelTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testGivenNByItemDate() throws LibrecException {
+	public void test20GivenNByItemDate() throws LibrecException {
 		conf.set("data.model.splitter", "net.librec.data.splitter.GivenNDataSplitter");
 		conf.set("data.splitter.givenn", "itemdate");
 		conf.set("data.splitter.givenn.n", "1");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set(Configured.CONF_DATA_INPUT_PATH, "sytTestDate.txt");
+		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4-date.txt");
 
 		TextDataModel dataModel = new TextDataModel(conf);
 		dataModel.buildDataModel();

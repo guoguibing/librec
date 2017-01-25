@@ -22,12 +22,8 @@ import net.librec.data.convertor.ArffDataConvertorTestCase;
 import net.librec.data.convertor.TextDataConvertorTestCase;
 import net.librec.data.model.ArffDataModelTestCase;
 import net.librec.data.model.TextDataModelTestCase;
-import net.librec.data.splitter.GivenNDataSplitterTestCase;
-import net.librec.data.splitter.KCVDataSplitterTestCase;
-import net.librec.data.splitter.LOOCVDataSplitterTestCase;
-import net.librec.data.splitter.RatioDataSplitterTestCase;
-import net.librec.io.ArrayWritableTestCase;
-import net.librec.io.ModelFileTestCase;
+import net.librec.data.splitter.*;
+import net.librec.filter.GenericRecommendedFilterTestCase;
 import net.librec.job.RecommenderJobTestCase;
 import net.librec.recommender.baseline.*;
 import net.librec.recommender.cf.BHFreeTestCase;
@@ -43,6 +39,7 @@ import net.librec.recommender.context.rating.*;
 import net.librec.recommender.ext.*;
 import net.librec.recommender.hybrid.HybridTestCase;
 import net.librec.recommender.item.RecommendedItemListTestCase;
+import net.librec.similarity.BinaryCosineSimilarityTestCase;
 import net.librec.tool.driver.DataDriverTestCase;
 import net.librec.tool.driver.RecDriverTestCase;
 import org.junit.runner.RunWith;
@@ -65,12 +62,15 @@ import org.junit.runners.Suite.SuiteClasses;
 	TextDataModelTestCase.class,
 	//data.splitter
 	GivenNDataSplitterTestCase.class,
+	GivenTestSetDataSplitterTestCase.class,
 	KCVDataSplitterTestCase.class,
 	LOOCVDataSplitterTestCase.class,
 	RatioDataSplitterTestCase.class,
+	//filter
+	GenericRecommendedFilterTestCase.class,
 	//io
 //	ArrayWritableTestCase.class,
-	ModelFileTestCase.class,
+//	ModelFileTestCase.class,
 	//job
 //	JobStatusTestCase.class,
 	RecommenderJobTestCase.class,
@@ -89,12 +89,11 @@ import org.junit.runners.Suite.SuiteClasses;
 	AspectModelRatingTestCase.class,
 	ASVDPlusPlusTestCase.class,
 	BiasedMFTestCase.class,
-	BNPoissMFTestCase.class,
 	BPMFTestCase.class,
 	BPoissMFTestCase.class,
 	FMALSTestCase.class,
 	FMSGDTestCase.class,
-	GPSLATestCase.class,
+	GPLSATestCase.class,
 	LDCCTestCase.class,
 	LLORMATestCase.class,
 	MFALSTestCase.class,
@@ -131,8 +130,6 @@ import org.junit.runners.Suite.SuiteClasses;
 	//recommender.context.ranking
 	SBPRTestCase.class,
 	//recommender.context.rating
-	BPTFTestCase.class,
-	PITFTestCase.class,
 	RSTETestCase.class,
 	SocialMFTestCase.class,
 	SoRecTestCase.class,
@@ -148,6 +145,8 @@ import org.junit.runners.Suite.SuiteClasses;
 	SlopeOneTestCase.class,
 	//recommender.hybrid
 	HybridTestCase.class,
+	//similarity
+	BinaryCosineSimilarityTestCase.class,
 	//tool.driver
 	DataDriverTestCase.class,
 	RecDriverTestCase.class

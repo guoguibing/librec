@@ -17,15 +17,15 @@
  */
 package net.librec.recommender.cf;
 
-import java.io.IOException;
-
+import net.librec.BaseTestCase;
+import net.librec.common.LibrecException;
+import net.librec.conf.Configuration;
+import net.librec.conf.Configuration.Resource;
+import net.librec.job.RecommenderJob;
 import org.junit.Before;
 import org.junit.Test;
 
-import net.librec.BaseTestCase;
-import net.librec.common.LibrecException;
-import net.librec.conf.Configuration.Resource;
-import net.librec.job.RecommenderJob;
+import java.io.IOException;
 
 /**
  * BUCM Test Case correspond to BUCMRecommender
@@ -49,11 +49,27 @@ public class BUCMTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+	public void testRecommenderRating() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/bucm-test.properties");
 		conf.addResource(resource);
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
 	}
+	
+    /**
+     * test the whole rating process of BUCM Recommender in ranking
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommenderRanking() throws ClassNotFoundException, LibrecException, IOException {
+        Configuration.Resource resource = new Configuration.Resource("rec/cf/bhfree-test.properties");
+        conf.set("rec.recommender.isranking", "true");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
 
 }

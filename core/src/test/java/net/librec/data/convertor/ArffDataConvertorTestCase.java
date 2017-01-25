@@ -52,7 +52,7 @@ public class ArffDataConvertorTestCase extends BaseTestCase {
      */
 	@Test
 	public void testReadFile() throws ClassNotFoundException, LibrecException, IOException {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/arfftest/test.arff");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/arfftest/data.arff");
 		ArffDataConvertor arffLoder = new ArffDataConvertor(conf.get("inputDataPath"));
 		try {
 			arffLoder.readData();
@@ -83,7 +83,7 @@ public class ArffDataConvertorTestCase extends BaseTestCase {
      */
 	@Test
 	public void testReadDir() throws ClassNotFoundException, LibrecException, IOException {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/arfftest");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/arfftest");
 		ArffDataConvertor arffLoder = new ArffDataConvertor(conf.get("inputDataPath"));
 		try {
 			arffLoder.readData();

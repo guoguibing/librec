@@ -92,12 +92,12 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
     protected void setup() throws LibrecException {
         super.setup();
 
-        numUserTopics = conf.getInt("rec.pgm.numberusertopics", 10);
-        numItemTopics = conf.getInt("rec.pgm.numberitemtopics", 10);
-        initAlpha = conf.getFloat("rec.pgm.alpha", 1.0f / numUserTopics);
-        initBeta = conf.getFloat("rec.pgm.beta", 1.0f / numItemTopics);
-        initGamma = conf.getFloat("rec.pgm.gamma", 1.0f / numRatingLevels);
-        initSigma = conf.getFloat("rec.pgm.sigma", 1.0f / numItems);
+        numUserTopics = conf.getInt("rec.bhfree.user.topic.number", 10);
+        numItemTopics = conf.getInt("rec.bhfree.item.topic.number", 10);
+        initAlpha = conf.getFloat("rec.bhfree.alpha", 1.0f / numUserTopics);
+        initBeta = conf.getFloat("rec.bhfree.beta", 1.0f / numItemTopics);
+        initGamma = conf.getFloat("rec.bhfree.gamma", 1.0f / numRatingLevels);
+        initSigma = conf.getFloat("rec.sigma", 1.0f / numItems);
         numRatingLevels = trainMatrix.getValueSet().size();
 
         userTopicNum = new DenseMatrix(numUsers, numUserTopics);
@@ -288,6 +288,14 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
+        if (isRanking) {
+            return predictRanking(userIdx, itemIdx);
+        } else {
+            return predictRating(userIdx, itemIdx);
+        }
+    }
+
+    protected double predictRating(int userIdx, int itemIdx) {
         double sum = 0, probs = 0;
 
         for (int r = 0; r < numRatingLevels; r++) {
@@ -307,7 +315,7 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
         return sum / probs;
     }
 
-    protected double ranking(int userIdx, int itemIdx) throws LibrecException {
+    protected double predictRanking(int userIdx, int itemIdx) {
         double rank = 0;
 
         for (int r = 0; r < numRatingLevels; r++) {
@@ -325,5 +333,4 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
 
         return rank;
     }
-
 }

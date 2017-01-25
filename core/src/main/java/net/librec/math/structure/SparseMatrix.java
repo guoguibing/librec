@@ -968,7 +968,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
         }
 
         public void set(double value) {
-            rowData[cursor] = value;
+            throw new IllegalStateException();
         }
     }
 
@@ -1014,7 +1014,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
         }
 
         public void remove() {
-            entry.set(0);
+            throw new IllegalStateException();
         }
 
     }
@@ -1056,7 +1056,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         @Override
         public void remove() {
-            rowEntry.set(0.0);
+            throw new IllegalStateException();
         }
     }
 
@@ -1080,7 +1080,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
         }
 
         public void set(double value) {
-            colData[rowCursor] = value;
+            throw new IllegalStateException();
         }
 
     }
@@ -1122,7 +1122,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         @Override
         public void remove() {
-            colEntry.set(0.0);
+            throw new IllegalStateException();
         }
     }
 
@@ -1146,7 +1146,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
         }
 
         public void set(double value) {
-            rowData[colCursor] = value;
+            throw new IllegalStateException();
         }
 
     }

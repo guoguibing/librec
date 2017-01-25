@@ -21,7 +21,9 @@ import net.librec.BaseTestCase;
 import net.librec.conf.Configured;
 import net.librec.data.convertor.TextDataConvertor;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
 
@@ -31,6 +33,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Liuxz and Sunyt
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class LOOCVDataSplitterTestCase extends BaseTestCase {
 
 	private TextDataConvertor convertor;
@@ -39,12 +42,12 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTest4by4.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
 
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTestDate.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4-date.txt");
 		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
 	}
 
@@ -54,7 +57,7 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 	 * @throws Exception
      */
 	@Test
-	public void testLOOByUser() throws Exception{
+	public void test01LOOByUser() throws Exception{
 		conf.set("data.splitter.loocv", "user");
 		convertor.processData();
 
@@ -71,7 +74,7 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testLOOByItem() throws Exception{
+	public void test02LOOByItem() throws Exception{
 		conf.set("data.splitter.loocv", "item");
 		convertor.processData();
 
@@ -88,7 +91,7 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testLOOByUserDate() throws Exception{
+	public void test03LOOByUserDate() throws Exception{
 		conf.set("data.splitter.loocv", "userdate");
 		convertorWithDate.processData();
 
@@ -105,7 +108,7 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testLOOByItemDate() throws Exception{
+	public void test04LOOByItemDate() throws Exception{
 		conf.set("data.splitter.loocv", "itemdate");
 		convertorWithDate.processData();
 
@@ -116,15 +119,15 @@ public class LOOCVDataSplitterTestCase extends BaseTestCase {
 		assertEquals(splitter.getTestData().size(), 4);
 	}
 	
-	public void testLOOByRate() throws Exception {
-		conf.set("data.splitter.loocv", "rate");
-		convertor.processData();
-		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertor, conf);
-		for (int i = 1; i <= conf.getInt("data.splitter.cv.number"); i ++) {
-			conf.setInt("data.splitter.cv.index", i);
-			splitter.splitData();
-			assertEquals(splitter.getTrainData().size(), 12);
-			assertEquals(splitter.getTestData().size(), 1);
-		}
-	}
+//	public void testLOOByRate() throws Exception {
+//		conf.set("data.splitter.loocv", "rate");
+//		convertor.processData();
+//		LOOCVDataSplitter splitter = new LOOCVDataSplitter(convertor, conf);
+//		for (int i = 1; i <= conf.getInt("data.splitter.cv.number"); i ++) {
+//			conf.setInt("data.splitter.cv.index", i);
+//			splitter.splitData();
+//			assertEquals(splitter.getTrainData().size(), 12);
+//			assertEquals(splitter.getTestData().size(), 1);
+//		}
+//	}
 }

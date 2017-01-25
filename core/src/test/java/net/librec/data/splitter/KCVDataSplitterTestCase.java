@@ -17,14 +17,13 @@
  */
 package net.librec.data.splitter;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import net.librec.BaseTestCase;
 import net.librec.conf.Configured;
 import net.librec.data.convertor.TextDataConvertor;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * KCVDataSplitter TestCase {@link net.librec.data.splitter.KCVDataSplitter}
@@ -40,14 +39,13 @@ public class KCVDataSplitterTestCase extends BaseTestCase {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		conf.set("dfs.data.dir", "../data");
 
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTest4by4A.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4A.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
 
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTestDateA.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4A-date.txt");
 		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT),
 				conf.get("inputDataPath"));
 		conf.set("data.splitter.cv.number", "6");

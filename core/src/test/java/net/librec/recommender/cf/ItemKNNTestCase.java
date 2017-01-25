@@ -48,7 +48,7 @@ public class ItemKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+	public void testRecommenderRating() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/itemknn-test.properties");
 		conf.addResource(resource);
 		RecommenderJob job = new RecommenderJob(conf);

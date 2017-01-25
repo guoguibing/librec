@@ -17,11 +17,6 @@
  */
 package net.librec.conf;
 
-import net.librec.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,11 +25,21 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import net.librec.util.StringUtil;
 
 /**
  * Provides access to configuration parameters.
@@ -92,10 +97,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         if (cL.getResource("librec.properties") != null) {
             LOG.warn("DEPRECATED: librec.properties found in the classpath. ");
         }
-        // if (cL.getResource("driver.classes.props") != null) {
-        // LOG.warn("DEPRECATED: driver.classes.props found in the classpath.
-        // ");
-        // }
+//         if (cL.getResource("driver.classes.props") != null) {
+//         LOG.warn("DEPRECATED: driver.classes.props found in the classpath.");
+//         }
         addDefaultResource("librec.properties");
         // addDefaultResource("driver.classes.props");
     }

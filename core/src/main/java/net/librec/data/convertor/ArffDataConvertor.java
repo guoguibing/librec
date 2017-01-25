@@ -40,19 +40,19 @@ import java.util.List;
 public class ArffDataConvertor extends AbstractDataConvertor {
 
     /** The path of the input file */
-    public String dataPath;
+    private String dataPath;
 
     /** The relation name of input data */
-    public String relationName;
+    private String relationName;
 
     /** The instances of the input data */
-    protected ArrayList<ArffInstance> instances;
+    private ArrayList<ArffInstance> instances;
 
     /** The attributes the input data */
-    protected ArrayList<ArffAttribute> attributes;
+    private ArrayList<ArffAttribute> attributes;
 
     /** The attribute types of the input data */
-    protected ArrayList<String> attrTypes;
+    private ArrayList<String> attrTypes;
 
     /** The column ids of the input data */
     private ArrayList<BiMap<String, Integer>> columnIds;
@@ -69,7 +69,7 @@ public class ArffDataConvertor extends AbstractDataConvertor {
     public SparseMatrix oneHotFeatureMatrix;
     public DenseVector oneHotRatingVector;
 
-    // user, item, feature {raw id, inner id} map
+    // user, item, appender {raw id, inner id} mapping
     private ArrayList<BiMap<String, Integer>> featuresInnerMapping;
 
     /**
@@ -88,6 +88,11 @@ public class ArffDataConvertor extends AbstractDataConvertor {
         userCol = -1;
         itemCol = -1;
         ratingCol = -1;
+    }
+
+    public ArffDataConvertor(String path, ArrayList<BiMap<String, Integer>> featureMapping) {
+        this(path);
+        this.featuresInnerMapping = featureMapping;
     }
 
     /**
@@ -354,7 +359,7 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                     continue;
                 }
 
-                // feature column
+                // appender column
                 switch (type) {
                     case "NUMERIC":
                     case "REAL":
@@ -390,9 +395,9 @@ public class ArffDataConvertor extends AbstractDataConvertor {
     }
 
     /**
-     * Generate feature tensor.
+     * Generate appender tensor.
      *
-     * @return  feature tensor
+     * @return  appender tensor
      */
     private SparseTensor generateFeatureTensor() {
 
@@ -414,10 +419,12 @@ public class ArffDataConvertor extends AbstractDataConvertor {
             setOfAttrs.add(new HashSet<Integer>());
         }
 
-        featuresInnerMapping = new ArrayList<>();
-        for (int i = 0; i < numAttrs - 1; i++) {
-            BiMap<String, Integer> featureInnerId = HashBiMap.create();
-            featuresInnerMapping.add(featureInnerId);
+        if (featuresInnerMapping == null) {
+            featuresInnerMapping = new ArrayList<>();
+            for (int i = 0; i < numAttrs - 1; i++) {
+                BiMap<String, Integer> featureInnerId = HashBiMap.create();
+                featuresInnerMapping.add(featureInnerId);
+            }
         }
 
         // set keys for each dimension
@@ -442,20 +449,26 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                     double rating = (double) instance.getValueByIndex(ratingCol);
                     ratings.add(rating);
                 } else {
+                    int j;
+                    if (i > ratingCol) {
+                        j = i - 1;
+                    } else {
+                        j = i;
+                    }
                     String attrType = attrTypes.get(i);
                     if (attrType.equals("STRING")) {
                         String strAttr = (String) instance.getValueByIndex(i);
-                        int featureInnerId = featuresInnerMapping.get(i).containsKey(strAttr) ? featuresInnerMapping.get(i).get(strAttr) : featuresInnerMapping.get(i).size();
-                        featuresInnerMapping.get(i).put(strAttr, featureInnerId);
-                        nDKeys[i].add(featureInnerId);
-                        setOfAttrs.get(i).add(featureInnerId);
+                        int featureInnerId = featuresInnerMapping.get(j).containsKey(strAttr) ? featuresInnerMapping.get(j).get(strAttr) : featuresInnerMapping.get(j).size();
+                        featuresInnerMapping.get(j).put(strAttr, featureInnerId);
+                        nDKeys[j].add(featureInnerId);
+                        setOfAttrs.get(j).add(featureInnerId);
                     } else {
                         double val = (double) instance.getValueByIndex(i);
                         String strFeatureId = String.valueOf((int) val);
-                        int featureInnerId = featuresInnerMapping.get(i).containsKey(strFeatureId) ? featuresInnerMapping.get(i).get(strFeatureId) : featuresInnerMapping.get(i).size();
-                        featuresInnerMapping.get(i).put(strFeatureId, featureInnerId);
-                        nDKeys[i].add(featureInnerId);
-                        setOfAttrs.get(i).add(featureInnerId);
+                        int featureInnerId = featuresInnerMapping.get(j).containsKey(strFeatureId) ? featuresInnerMapping.get(j).get(strFeatureId) : featuresInnerMapping.get(j).size();
+                        featuresInnerMapping.get(j).put(strFeatureId, featureInnerId);
+                        nDKeys[j].add(featureInnerId);
+                        setOfAttrs.get(j).add(featureInnerId);
                     }
                 }
             }
@@ -514,4 +527,14 @@ public class ArffDataConvertor extends AbstractDataConvertor {
     public BiMap<String, Integer> getItemIds() {
         return featuresInnerMapping.get(itemCol);
     }
+
+    /**
+     * Return user, item, appender {raw id, inner id} mapping
+     *
+     * @return the mapping between row id and inner id of each columns in data set
+     */
+    public ArrayList<BiMap<String, Integer>> getAllFeatureIds() {
+        return featuresInnerMapping;
+    }
+
 }

@@ -78,7 +78,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
         isRanking = true;
         rho = conf.getInt("rec.fismauc.rho");
         alpha = conf.getFloat("rec.fismauc.alpha");
-        regBias = 0.1f;
+        regBias = conf.getDouble("rec.bias.regularization", 0.01d);
 
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
         userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);

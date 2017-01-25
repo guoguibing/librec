@@ -118,7 +118,7 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
     protected void setup() throws LibrecException {
         super.setup();
 
-        numTopics = conf.getInt("rec.pgm.number", 10);
+        numTopics = conf.getInt("rec.pgm.topic.number", 10);
         numRatingLevels = trainMatrix.getValueSet().size();
 
         // cumulative parameters
@@ -135,15 +135,15 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
 
         topicItemRatingNum = new int[numTopics][numItems][numRatingLevels];
 
-        double initAlpha = conf.getDouble("rec.pgm.bucm.alpha", 1.0 / numTopics);
+        double initAlpha = conf.getDouble("rec.bucm.alpha", 1.0 / numTopics);
         alpha = new DenseVector(numTopics);
         alpha.setAll(initAlpha);
 
-        double initBeta = conf.getDouble("rec.pgm.bucm.beta", 1.0 / numItems);
+        double initBeta = conf.getDouble("re.bucm.beta", 1.0 / numItems);
         beta = new DenseVector(numItems);
         beta.setAll(initBeta);
 
-        double initGamma = conf.getDouble("rec.pgm.bucm.gamma", 1.0 / numTopics);
+        double initGamma = conf.getDouble("rec.bucm.gamma", 1.0 / numTopics);
         gamma = new DenseVector(numRatingLevels);
         gamma.setAll(initGamma);
 
@@ -213,13 +213,13 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
             }
 
             // cumulate multinomial parameters
-            for (int k = 1; k < p.length; k++) {
+            for (int k = 1; k < numTopics; k++) {
                 p[k] += p[k - 1];
             }
 
             // scaled sample because of unnormalized p[], randomly sampled a new topic t
             double rand = Randoms.uniform() * p[numTopics - 1];
-            for (t = 0; t < p.length; t++) {
+            for (t = 0; t < numTopics; t++) {
                 if (rand < p[t])
                     break;
             }
@@ -327,7 +327,7 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
 
 
     protected void readoutParams() {
-        double val = 0;
+        double val;
         double sumAlpha = alpha.sum();
         double sumBeta = beta.sum();
         double sumGamma = gamma.sum();
@@ -386,6 +386,14 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
+        if (isRanking) {
+            return predictRanking(userIdx, itemIdx);
+        } else {
+            return predictRating(userIdx, itemIdx);
+        }
+    }
+
+    protected double predictRating(int userIdx, int itemIdx) {
         double pred = 0, probs = 0;
 
         for (int r = 0; r < numRatingLevels; r++) {
@@ -403,4 +411,22 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
         return pred / probs;
     }
 
+    protected double predictRanking(int userIdx, int itemIdx) {
+        double rankScore = 0;
+
+        for (int topicIdx = 0; topicIdx < numTopics; ++topicIdx) {
+
+            double sum = 0;
+            for (int rateIdx = 0; rateIdx < numRatingLevels; ++rateIdx) {
+                double rate = ratingScale.get(rateIdx);
+                if (rate > globalMean) {
+                    sum += topicItemRatingProbs[topicIdx][itemIdx][rateIdx];
+                }
+            }
+
+            rankScore += userTopicProbs.get(userIdx, topicIdx) * topicItemProbs.get(topicIdx, itemIdx) * sum;
+        }
+
+        return rankScore;
+    }
 }

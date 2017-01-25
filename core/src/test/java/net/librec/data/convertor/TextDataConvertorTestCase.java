@@ -20,7 +20,9 @@ package net.librec.data.convertor;
 import net.librec.BaseTestCase;
 import net.librec.conf.Configured;
 import net.librec.math.structure.SparseMatrix;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -30,6 +32,7 @@ import static org.junit.Assert.assertNull;
  *
  * @author WangYuFeng
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TextDataConvertorTestCase extends BaseTestCase {
 
 	private TextDataConvertor textDataConvertor;
@@ -46,8 +49,8 @@ public class TextDataConvertorTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testColumnFormatUIR() throws Exception {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTest4by4.txt");
+	public void test01ColumnFormatUIR() throws Exception {
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4.txt");
 
 		textDataConvertor = new TextDataConvertor(conf.get("inputDataPath"));
 		textDataConvertor.processData();
@@ -65,8 +68,8 @@ public class TextDataConvertorTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testColumnFormatUIRT() throws Exception {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTestDate.txt");
+	public void test02ColumnFormatUIRT() throws Exception {
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4-date.txt");
 		conf.set("data.column.format", "UIRT");
 
 		textDataConvertor = new TextDataConvertor(conf.get("data.column.format"), conf.get("inputDataPath"), -1.0);
@@ -86,8 +89,8 @@ public class TextDataConvertorTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testSubDir() throws Exception {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/test-sub-dir");
+	public void test03SubDir() throws Exception {
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/test-convert-dir");
 
 		textDataConvertor = new TextDataConvertor(conf.get("inputDataPath"));
 		textDataConvertor.processData();
@@ -105,8 +108,8 @@ public class TextDataConvertorTestCase extends BaseTestCase {
 	 * @throws Exception
 	 */
 	@Test
-	public void testCSV() throws Exception {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTestCSV.txt");
+	public void test04CSV() throws Exception {
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/testCSV.txt");
 
 		textDataConvertor = new TextDataConvertor(conf.get("inputDataPath"));
 		textDataConvertor.processData();

@@ -5,9 +5,9 @@ string=net.librec.util.StringUtil
 text=net.librec.data.model.TextDataModel
 jdbc=net.librec.data.model.JDBCDataModel
 arff=net.librec.data.model.ArffDataModel
-#DataConvertor(-feature)
-social=net.librec.data.convertor.feature.SocialDataFeature
-document=net.librec.data.convertor.feature.DocumentDataFeature
+#DataAppender(-appender)
+social=net.librec.data.convertor.appender.SocialDataAppender
+document=net.librec.data.convertor.appender.DocumentDataAppender
 #DataSplitter(-splitter)
 ratio=net.librec.data.splitter.RatioDataSplitter
 givenn=net.librec.data.splitter.GivenNDataSplitter
@@ -15,6 +15,7 @@ loocv=net.librec.data.splitter.LOOCVDataSplitter
 kcv=net.librec.data.splitter.KCVDataSplitter
 testset=net.librec.data.splitter.GivenTestSetDataSplitter
 #Similarity(-similarity)
+bcos=net.librec.similarity.BinaryCosineSimilarity
 cos=net.librec.similarity.CosineSimilarity
 cpc=net.librec.similarity.CPCSimilarity
 msesim=net.librec.similarity.MSESimilarity
@@ -45,7 +46,7 @@ fismrmse=net.librec.recommender.cf.ranking.FISMrmseRecommender
 gbpr=net.librec.recommender.cf.ranking.GBPRRecommender
 itembigram=net.librec.recommender.cf.ranking.ItemBigramRecommender
 lda=net.librec.recommender.cf.ranking.LDARecommender
-listwisefm=net.librec.recommender.cf.ranking.ListwiseMFRecommender
+listwisemf=net.librec.recommender.cf.ranking.ListwiseMFRecommender
 plsa=net.librec.recommender.cf.ranking.PLSARecommender
 rankals=net.librec.recommender.cf.ranking.RankALSRecommender
 ranksgd=net.librec.recommender.cf.ranking.RankSGDRecommender
@@ -58,6 +59,7 @@ biasedmf=net.librec.recommender.cf.rating.BiasedMFRecommender
 bnpoissmf=net.librec.recommender.cf.rating.BNPoissMFRecommender
 bpmf=net.librec.recommender.cf.rating.BPMFRecommender
 bpoissmf=net.librec.recommender.cf.rating.BPoissMFRecommender
+cptf=net.librec.recommender.cf.rating.CPTFRecommender
 fmals=net.librec.recommender.cf.rating.FMALSRecommender
 fmsgd=net.librec.recommender.cf.rating.FMSGDRecommender
 gplsa=net.librec.recommender.cf.rating.GPLSARecommender
@@ -67,7 +69,7 @@ llorma=net.librec.recommender.cf.rating.LLORMARecommender
 mfals=net.librec.recommender.cf.rating.MFALSRecommender
 nmf=net.librec.recommender.cf.rating.NMFRecommender
 pmf=net.librec.recommender.cf.rating.PMFRecommender
-rbm=net.librec.recommender.cf.rating.RBMReccommender
+rbm=net.librec.recommender.cf.rating.RBMRecommender
 rfrec=net.librec.recommender.cf.rating.RFRecRecommender
 svdpp=net.librec.recommender.cf.rating.SVDPlusPlusRecommender
 urp=net.librec.recommender.cf.rating.URPRecommender

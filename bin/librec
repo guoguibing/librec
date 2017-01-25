@@ -46,6 +46,13 @@ function print_version() {
 	echo "LibRec 2.0.0"
 }
 
+function print_verbose(){
+    echo Classpath" "$CLASSPATH
+    echo JDK_VERSION:" ""$JDK_VERSION"
+    echo LIBREC_MAIN:" ""$LIBREC_MAIN"
+    echo JAVA_ARG:" ""$LIBREC_ARG $CONF_PATH"
+}
+
 if [ $# = 0 ]; then
 	print_usage
 	exit
@@ -73,6 +80,7 @@ done
 
 LIBREC_ARG=""
 
+verbose_flag=0
 while [ $# -gt 0 ]
 do
     case $1 in
@@ -110,17 +118,18 @@ do
     	CLASSPATH=${CLASSPATH}":"${1//,/:}
     	shift
     	;;
+    -verbose)
+	shift
+	verbose_flag=1
     esac
 done
 export CLASSPATH=${CLASSPATH}:${LIB_CLASSPATH}:${LIBREC_HOME}/conf:${LIBREC_HOME}/bin:${LIBREC_HOME}/lib
-echo Classpath" "$CLASSPATH
 
 JDK_VERSION=`$JAVA_HOME/bin/java -version 2>&1 | awk 'NR==1{gsub(/"/,""); print $3}'`
 if [ "$JDK_VERSION" \> 1.7 ] ; then
-	echo JDK_VERSION:" ""$JDK_VERSION"
-	echo LIBREC_MAIN:" ""$LIBREC_MAIN"
-	echo JAVA_ARG:" ""$LIBREC_ARG $CONF_PATH"
+        if [ $verbose_flag = 1 ]; then print_verbose; fi
 	java -cp $CLASSPATH $LIBREC_MAIN ${LIBREC_ARG} ${CONF_PATH}
 else
 	echo "Please update your JDK version to 1.7 or higher"
 fi
+echo 

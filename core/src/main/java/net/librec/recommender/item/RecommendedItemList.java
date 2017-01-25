@@ -161,6 +161,7 @@ public class RecommendedItemList implements RecommendedList, Serializable {
         int index = indexOfUserIdx[userIdx];
         if (index < 0) {
             if (!idleIndexList.isEmpty()) {
+                elementData.set(indexOfUserIdx[userIdx], new ArrayList<ItemEntry<Integer, Double>>());
                 indexOfUserIdx[userIdx] = idleIndexList.poll();
             } else {
                 indexOfUserIdx[userIdx] = elementData.size();
@@ -249,7 +250,7 @@ public class RecommendedItemList implements RecommendedList, Serializable {
      */
     @Override
     public boolean contains(int userIdx) {
-        return userIdx <= maxUserIdx && indexOfUserIdx[userIdx] > 0;
+        return userIdx <= maxUserIdx && indexOfUserIdx[userIdx] >= 0;
     }
 
     /**

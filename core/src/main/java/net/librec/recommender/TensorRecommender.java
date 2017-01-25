@@ -225,6 +225,7 @@ public abstract class TensorRecommender implements Recommender {
 
         userDimension = trainTensor.getUserDimension();
         itemDimension = trainTensor.getItemDimension();
+
     }
 
     /**

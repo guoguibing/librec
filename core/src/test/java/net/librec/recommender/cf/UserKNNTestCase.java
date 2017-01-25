@@ -33,8 +33,10 @@ import net.librec.similarity.PCCSimilarity;
 import net.librec.similarity.RecommenderSimilarity;
 import net.librec.util.DriverClassUtil;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.util.List;
@@ -45,6 +47,7 @@ import java.util.List;
  *
  * @author liuxz
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UserKNNTestCase extends BaseTestCase {
 
 	@Override
@@ -94,7 +97,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 */
 	@Ignore
 	@Test
-	public void test1SaveModel() throws ClassNotFoundException, LibrecException, IOException {
+	public void test01SaveModel() throws ClassNotFoundException, LibrecException, IOException {
 		Configuration conf = new Configuration();
 		Configuration.Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
@@ -121,7 +124,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 */
 	@Ignore
 	@Test
-	public void test2LoadModel() throws ClassNotFoundException, LibrecException, IOException {
+	public void test02LoadModel() throws ClassNotFoundException, LibrecException, IOException {
 		Configuration conf = new Configuration();
 		Configuration.Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
@@ -151,7 +154,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test3SplitterRatioRating() throws ClassNotFoundException, LibrecException, IOException {
+	public void test03SplitterRatioRating() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
@@ -169,7 +172,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test4SplitterRatioUser() throws ClassNotFoundException, LibrecException, IOException {
+	public void test04SplitterRatioUser() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
@@ -187,7 +190,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test5SplitterRatioUserFixed() throws ClassNotFoundException, LibrecException, IOException {
+	public void test05SplitterRatioUserFixed() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
@@ -205,7 +208,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test6SplitterRatioItem() throws ClassNotFoundException, LibrecException, IOException {
+	public void test06SplitterRatioItem() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
@@ -223,7 +226,7 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test7SplitterRatioValid() throws ClassNotFoundException, LibrecException, IOException {
+	public void test07SplitterRatioValid() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
@@ -243,12 +246,12 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test8SplitterRatioRatingDate() throws ClassNotFoundException, LibrecException, IOException {
+	public void test08SplitterRatioRatingDate() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
 		conf.set("data.model.splitter", "ratio");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.ratio", "ratingdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -263,12 +266,12 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test9SplitterRatioUserDate() throws ClassNotFoundException, LibrecException, IOException {
+	public void test09SplitterRatioUserDate() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
 		conf.set("data.model.splitter", "ratio");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.ratio", "userdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -288,7 +291,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "true");
 		conf.set("data.model.splitter", "ratio");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.ratio", "itemdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -347,7 +350,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		conf.set("rec.eval.enable", "true");
 		conf.set("data.model.splitter", "givenn");
 		conf.set("data.splitter.givenn.n", "5");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.givenn", "userdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -368,7 +371,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		conf.set("rec.eval.enable", "true");
 		conf.set("data.model.splitter", "givenn");
 		conf.set("data.splitter.givenn.n", "5");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.givenn", "itemdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -439,7 +442,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("data.model.splitter", "loocv");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.loocv", "userdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -458,7 +461,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("data.model.splitter", "loocv");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.loocv", "itemdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -473,11 +476,11 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test191SplitterLOOCVRate() throws ClassNotFoundException, LibrecException, IOException{
+	public void test191SplitterLOOCVRate() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("data.model.splitter", "loocv");
-		conf.set("data.input.path", "test/sytTest4by4A.txt");
+		conf.set("data.input.path", "test/datamodeltest/matrix4by4A.txt");
 		conf.set("data.splitter.loocv", "rate");
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
@@ -491,12 +494,12 @@ public class UserKNNTestCase extends BaseTestCase {
 	 * @throws IOException
 	 */
 	@Test
-	public void test192SplitterTestSet() throws ClassNotFoundException, LibrecException, IOException{
+	public void test192SplitterTestSet() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("data.model.splitter", "testset");
-		conf.set("data.input.path", "test3");
-		conf.set("data.test.path", "test3/u1.test");
+		conf.set("data.input.path", "test/given-testset");
+		conf.set("data.testset.path", "test/given-testset/test");
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
 	}
@@ -512,7 +515,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.ratio", "rating");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -531,7 +534,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.ratio", "user");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -550,7 +553,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.ratio", "userfixed");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -569,7 +572,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.ratio", "item");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -588,7 +591,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
 		conf.set("data.splitter.ratio", "valid");
 		conf.set("data.splitter.trainset.ratio", "0.5");
@@ -609,9 +612,9 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.ratio", "ratingdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -630,9 +633,9 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.ratio", "userdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -651,9 +654,9 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "ratio");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.ratio", "itemdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -672,7 +675,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "givenn");
 		conf.set("data.splitter.givenn.n", "5");
 		conf.set("data.splitter.givenn", "user");
@@ -692,7 +695,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "givenn");
 		conf.set("data.splitter.givenn.n", "5");
 		conf.set("data.splitter.givenn", "item");
@@ -712,10 +715,10 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "givenn");
 		conf.set("data.splitter.givenn.n", "5");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.givenn", "userdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -734,10 +737,10 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "givenn");
 		conf.set("data.splitter.givenn.n", "5");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.givenn", "itemdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -756,7 +759,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "kcv");
 		conf.set("data.splitter.cv.number", "5");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -775,7 +778,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "loocv");
 		conf.set("data.splitter.loocv", "user");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -794,7 +797,7 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "loocv");
 		conf.set("data.splitter.loocv", "item");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -813,9 +816,9 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "loocv");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.loocv", "userdate");
 		RecommenderJob job = new RecommenderJob(conf);
@@ -834,9 +837,9 @@ public class UserKNNTestCase extends BaseTestCase {
 		Resource resource = new Resource("rec/cf/userknn-test.properties");
 		conf.addResource(resource);
 		conf.set("rec.eval.enable", "false");
-		conf.set("rec.fliter.class", "generic");
+		conf.set("rec.filter.class", "generic");
 		conf.set("data.model.splitter", "loocv");
-		conf.set("data.input.path", "test/ratingsDate.txt");
+		conf.set("data.input.path", "test/datamodeltest/ratings-date.txt");
 		conf.set("data.column.format", "UIRT");
 		conf.set("data.splitter.loocv", "itemdate");
 		RecommenderJob job = new RecommenderJob(conf);

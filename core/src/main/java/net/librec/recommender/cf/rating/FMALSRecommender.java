@@ -30,14 +30,14 @@ import net.librec.recommender.FactorizationMachineRecommender;
  * @author Tang Jiaxi and Ma Chen
  */
 
-@ModelData({"isRanking", "fmals", "W", "V"})
+@ModelData({"isRanking", "fmals", "W", "V", "W0", "k"})
 public class FMALSRecommender extends FactorizationMachineRecommender {
     /**
      * parameter matrix
      */
     private DenseMatrix Q; //  n x k
     /**
-     * train feature matrix
+     * train appender matrix
      */
     private SparseMatrix trainFeatureMatrix;
 
@@ -48,7 +48,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
         // init Q
         Q = new DenseMatrix(n, k);
 
-        // construct training feature matrix
+        // construct training appender matrix
         Table<Integer, Integer, Double> trainTable = HashBasedTable.create();
         for (int i = 0; i < n; i++) {
             int[] ratingKeys = trainTensor.keys(i);

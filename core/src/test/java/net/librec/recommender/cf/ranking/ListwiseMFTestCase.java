@@ -31,7 +31,7 @@ public class ListwiseMFTestCase extends BaseTestCase {
      */
     @Test
     public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
-        Configuration.Resource resource = new Configuration.Resource("rec/cf/ranking/listwisefm-test.properties");
+        Configuration.Resource resource = new Configuration.Resource("rec/cf/ranking/listwisemf-test.properties");
         conf.addResource(resource);
         RecommenderJob job = new RecommenderJob(conf);
         job.runJob();

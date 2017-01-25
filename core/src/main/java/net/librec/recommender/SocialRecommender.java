@@ -18,7 +18,7 @@
 package net.librec.recommender;
 
 import net.librec.common.LibrecException;
-import net.librec.data.convertor.feature.SocialDataFeature;
+import net.librec.data.convertor.appender.SocialDataAppender;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.SparseMatrix;
 
@@ -43,7 +43,7 @@ public abstract class SocialRecommender extends MatrixFactorizationRecommender {
         super.setup();
         regSocial = conf.getFloat("rec.social.regularization", 0.01f);
         // social path for the socialMatrix
-        socialMatrix = ((SocialDataFeature) getDataModel().getDataFeature()).getUserFeature();
+        socialMatrix = ((SocialDataAppender) getDataModel().getDataAppender()).getUserAppender();
     }
 
     @Override
