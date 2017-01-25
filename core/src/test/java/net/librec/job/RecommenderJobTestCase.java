@@ -22,7 +22,9 @@ import net.librec.common.LibrecException;
 import net.librec.recommender.item.GenericRecommendedItem;
 import net.librec.recommender.item.RecommendedItem;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.List;
  *
  * @author SunYatong
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RecommenderJobTestCase extends BaseTestCase {
 	/**
 	 * Recommender Job
@@ -64,7 +67,7 @@ public class RecommenderJobTestCase extends BaseTestCase {
 	@Test
 	public void testSaveResult1() throws LibrecException, IOException, ClassNotFoundException {
 		conf.set("rec.recommender.class", "aobpr");
-		conf.set("dfs.result.dir", "../data/test");
+		conf.set("dfs.result.dir", "../result");
 		recommenderJob.saveResult(recommendedItemList);
 	}
 

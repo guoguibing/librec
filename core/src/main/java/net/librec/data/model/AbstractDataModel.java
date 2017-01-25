@@ -17,23 +17,18 @@
  */
 package net.librec.data.model;
 
-import java.io.IOException;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import net.librec.common.LibrecException;
 import net.librec.conf.Configured;
-import net.librec.data.DataContext;
-import net.librec.data.DataConvertor;
-import net.librec.data.DataFeature;
-import net.librec.data.DataModel;
-import net.librec.data.DataSplitter;
+import net.librec.data.*;
 import net.librec.data.splitter.KCVDataSplitter;
 import net.librec.math.structure.DataSet;
 import net.librec.util.DriverClassUtil;
 import net.librec.util.ReflectionUtil;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.IOException;
 
 /**
  * A <tt>AbstractDataModel</tt> represents a data access class to the input
@@ -71,9 +66,9 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
      */
     public DataSplitter dataSplitter;
     /**
-     * Data Splitter {@link net.librec.data.DataFeature}
+     * Data Splitter {@link DataAppender}
      */
-    public DataFeature dataFeature;
+    public DataAppender dataAppender;
 
     /**
      * Build Convert.
@@ -110,19 +105,19 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     }
 
     /**
-     * Build feature data.
+     * Build appender data.
      * 
      * @throws LibrecException
-     *             if error occurs when building feature.
+     *             if error occurs when building appender.
      */
     protected void buildFeature() throws LibrecException {
-        String feature = conf.get("data.feature.format");
+        String feature = conf.get("data.appender.class");
         if (StringUtils.isNotBlank(feature)) {
             try {
-                dataFeature = (DataFeature) ReflectionUtil.newInstance(DriverClassUtil.getClass(feature), conf);
-                dataFeature.setUserMappingData(getUserMappingData());
-                dataFeature.setItemMappingData(getItemMappingData());
-                dataFeature.processData();
+                dataAppender = (DataAppender) ReflectionUtil.newInstance(DriverClassUtil.getClass(feature), conf);
+                dataAppender.setUserMappingData(getUserMappingData());
+                dataAppender.setItemMappingData(getItemMappingData());
+                dataAppender.processData();
             } catch (ClassNotFoundException e) {
                 throw new LibrecException(e);
             } catch (IOException e) {
@@ -151,10 +146,10 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
             LOG.info("Data size of training is " + trainDataSet.size());
             LOG.info("Data size of testing is " + testDataSet.size());
         }
-        if (StringUtils.isNotBlank(conf.get("data.feature.format")) && !conf.getBoolean("data.feature.read.ready")) {
+        if (StringUtils.isNotBlank(conf.get("data.appender.class")) && !conf.getBoolean("data.appender.read.ready")) {
             buildFeature();
             LOG.info("Transform data to Feature successfully!");
-            conf.setBoolean("data.feature.read.ready", true);
+            conf.setBoolean("data.appender.read.ready", true);
         }
     }
 
@@ -223,13 +218,12 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     }
 
     /**
-     * Get data feature.
+     * Get data appender.
      *
-     * @return the feature of data model.
+     * @return the appender of data model.
      */
-    @Override
-    public DataFeature getDataFeature() {
-        return dataFeature;
+    public DataAppender getDataAppender() {
+        return dataAppender;
     }
 
     /**

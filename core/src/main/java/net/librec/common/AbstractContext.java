@@ -24,7 +24,7 @@ import net.librec.conf.Configuration;
  * 
  * @author WangYuFeng
  */
-public class AbstractContext implements Context {
+public class AbstractContext implements LibrecContext {
 
     protected Configuration conf;
 

@@ -31,7 +31,10 @@ import net.librec.recommender.Recommender;
 import net.librec.recommender.RecommenderContext;
 import net.librec.recommender.item.RecommendedItem;
 import net.librec.similarity.RecommenderSimilarity;
-import net.librec.util.*;
+import net.librec.util.DriverClassUtil;
+import net.librec.util.FileUtil;
+import net.librec.util.JobUtil;
+import net.librec.util.ReflectionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,7 +54,7 @@ public class RecommenderJob {
     /**
      * LOG
      */
-    protected final Log LOG = LogFactory.getLog(this.getClass());
+    protected final Log LOG = LogFactory.getLog(RecommenderJob.class);
 
     private Configuration conf;
 

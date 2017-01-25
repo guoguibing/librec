@@ -21,6 +21,7 @@ import net.librec.conf.Configured;
 import net.librec.data.DataConvertor;
 import net.librec.data.DataSplitter;
 import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SparseTensor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -84,4 +85,5 @@ public abstract class AbstractDataSplitter extends Configured implements DataSpl
     public SparseMatrix getValidData() {
         return validationMatrix;
     }
+
 }

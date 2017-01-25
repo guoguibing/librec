@@ -47,10 +47,28 @@ public class BHFreeTestCase extends BaseTestCase{
      * @throws IOException
      */
     @Test
-    public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+    public void testRecommenderRating() throws ClassNotFoundException, LibrecException, IOException {
         Configuration.Resource resource = new Configuration.Resource("rec/cf/bhfree-test.properties");
         conf.addResource(resource);
         RecommenderJob job = new RecommenderJob(conf);
         job.runJob();
     }
+    
+    /**
+     * test the whole rating process of BHFree Recommender in ranking
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommenderRanking() throws ClassNotFoundException, LibrecException, IOException {
+        Configuration.Resource resource = new Configuration.Resource("rec/cf/bhfree-test.properties");
+        conf.set("rec.recommender.isranking", "true");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
+    
+    
 }

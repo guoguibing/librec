@@ -44,6 +44,8 @@ import com.google.common.collect.Table;
 
 /**
  * HFT Recommender
+ * McAuley J, Leskovec J. Hidden factors and hidden topics: understanding rating dimensions with review text[C]
+ * //Proceedings of the 7th ACM conference on Recommender systems. ACM, 2013: 165-172.
  *
  * @author ChenXu
  */

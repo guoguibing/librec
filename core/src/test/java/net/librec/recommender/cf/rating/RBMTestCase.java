@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * RBM Test Case correspond to RBMRecommender
- * {@link net.librec.recommender.cf.rating.RBMReccommender}
+ * {@link net.librec.recommender.cf.rating.RBMRecommender}
  *
  * @author liuxz
  */

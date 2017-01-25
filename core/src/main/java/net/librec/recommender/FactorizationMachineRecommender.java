@@ -56,7 +56,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      */
     protected double w0;
     /**
-     * feature vector size: number of users + number of items + number of contextual conditions
+     * appender vector size: number of users + number of items + number of contextual conditions
      */
     protected int p;
     /**
@@ -121,7 +121,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
         // initialize the parameters of FM
         for (int dim = 0; dim < trainTensor.numDimensions; dim++) {
-            p += trainTensor.dimensions[dim]; // set the size of feature vectors
+            p += trainTensor.dimensions[dim]; // set the size of appender vectors
         }
         n = trainTensor.size(); // set the number of ratings
         numFactors = k = conf.getInt("rec.factor.number");
@@ -142,7 +142,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * predict
-     * * predict the rating given a sparse feature vector
+     * * predict the rating given a sparse appender vector
      *
      * @return predicted rating
      * @throws LibrecException
@@ -179,7 +179,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * bounded predict
-     * * predict the rating given a sparse feature vector
+     * * predict the rating given a sparse appender vector
      *
      * @return predicted rating
      * @throws LibrecException
@@ -232,7 +232,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * getUserItemIndex
-     * * get the user index and item index from a sparse feature vector
+     * * get the user index and item index from a sparse appender vector
      *
      * @return user index and item index
      */
@@ -249,7 +249,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      * tenserKeysToFeatureVector
      * * transform the keys of a tensor entry into a sparse vector
      *
-     * @return sparse feature vector
+     * @return sparse appender vector
      */
     protected SparseVector tenserKeysToFeatureVector(int[] tenserKeys) {
         int capacity = p;

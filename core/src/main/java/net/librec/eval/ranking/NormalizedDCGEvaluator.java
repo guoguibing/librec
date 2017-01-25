@@ -46,7 +46,7 @@ public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
     public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
 
         double nDCG = 0.0;
-        int maxNumTestItemsByUser = conf.getInt("test.user.items.num.max", testMatrix.numColumns());
+        int maxNumTestItemsByUser = conf.getInt("rec.eval.item.test.maxnum", testMatrix.numColumns());
         List<Double> idcgs = new ArrayList<>(maxNumTestItemsByUser + 1);
         idcgs.add(0.0d);
         for (int index = 0; index < maxNumTestItemsByUser; index++) {

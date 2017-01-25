@@ -117,15 +117,15 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
         // Initialize Q
         Q = HashBasedTable.create();
 
-        for (MatrixEntry me : trainMatrix) {
-            int u = me.row();
-            int i = me.column();
-            double rating = me.get();
+        for (MatrixEntry trainMatrixEntry : trainMatrix) {
+            int userIdx = trainMatrixEntry.row();
+            int itemIdx = trainMatrixEntry.column();
+            double rating = trainMatrixEntry.get();
 
-            double r = (rating - userMu.get(u)) / userSigma.get(u);
-            me.set(r);
+            double r = (rating - userMu.get(userIdx)) / userSigma.get(userIdx);
+            trainMatrix.set(userIdx,itemIdx,r);
 
-            Q.put(u, i, new HashMap<Integer, Double>());
+            Q.put(userIdx, itemIdx, new HashMap<Integer, Double>());
         }
 
         // Initialize Mu, Sigma

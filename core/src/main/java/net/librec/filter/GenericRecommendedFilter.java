@@ -79,7 +79,6 @@ public class GenericRecommendedFilter implements RecommendedFilter {
                     }
                     if (StringUtils.equals(filterId, recommendedId)) {
                         filterRecommendedSet.add(recommendedItem);
-                        break;
                     }
                 }
             }

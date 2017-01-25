@@ -83,12 +83,12 @@ public class TimeSVDRecommender extends BiasedMFRecommender {
     private DenseVector Alpha;
 
     /**
-     * {user, feature} alpha matrix
+     * {user, appender} alpha matrix
      */
     private DenseMatrix Auk;
 
     /**
-     * {user, {feature, day, value} } map
+     * {user, {appender, day, value} } map
      */
     private Map<Integer, Table<Integer, Integer, Double>> Pukt;
 

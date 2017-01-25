@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutionException;
  * @author Jiaxi Tang and Ma Chen
  */
 
-@ModelData({"isRanking", "fmsgd", "W", "V"})
+@ModelData({"isRanking", "fmals", "W", "V", "W0", "k"})
 public class FMSGDRecommender extends FactorizationMachineRecommender {
     /**
      * learning rate of stochastic gradient descent

@@ -21,7 +21,9 @@ import net.librec.BaseTestCase;
 import net.librec.conf.Configured;
 import net.librec.data.convertor.TextDataConvertor;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertTrue;
 
@@ -31,6 +33,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Liuxz and Sunyt
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RatioDataSplitterTestCase extends BaseTestCase{
 
 	private TextDataConvertor convertor;
@@ -41,12 +44,12 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 		super.setUp();
 		conf.set("data.splitter.trainset.ratio", "0.8");
 
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/ratings.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/ratings.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
 
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/ratingsDate.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/ratings-date.txt");
 		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
 	}
 
@@ -56,7 +59,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
      */
 	@Test
-	public void testRatingRatio() throws Exception{
+	public void test01RatingRatio() throws Exception{
 		conf.set("data.splitter.ratio", "rating");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 
@@ -74,7 +77,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testUserRatio() throws Exception{
+	public void test02UserRatio() throws Exception{
 		conf.set("data.splitter.ratio", "user");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 
@@ -92,7 +95,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testItemRatio() throws Exception{
+	public void test03ItemRatio() throws Exception{
 		conf.set("data.splitter.ratio", "item");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 
@@ -110,7 +113,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testValidRatio() throws Exception{
+	public void test04ValidRatio() throws Exception{
 		conf.set("data.splitter.ratio", "valid");
 		conf.set("data.splitter.trainset.ratio", "0.5");
 		conf.set("data.splitter.validset.ratio", "0.3");
@@ -132,7 +135,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testRatingDateRatio() throws Exception{
+	public void test05RatingDateRatio() throws Exception{
 		conf.set("data.splitter.ratio", "ratingdate");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 
@@ -150,7 +153,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testUserDateRatio() throws Exception{
+	public void test06UserDateRatio() throws Exception{
 		conf.set("data.splitter.ratio", "userdate");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 
@@ -168,7 +171,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testItemDateRatio() throws Exception{
+	public void test07ItemDateRatio() throws Exception{
 		conf.set("data.splitter.ratio", "itemdate");
 		conf.set("data.splitter.trainset.ratio", "0.8");
 

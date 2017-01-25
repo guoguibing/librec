@@ -102,17 +102,17 @@ public interface DataModel {
     public BiMap<String, Integer> getItemMappingData();
 
     /**
-     * Get data feature.
+     * Get data appender.
      *
-     * @return  the feature of data model.
+     * @return  the appender of data model.
      */
-    public DataFeature getDataFeature();
+    public DataAppender getDataAppender();
     
 
     /**
      * Get data Context.
      *
-     * @return  the feature of data model.
+     * @return  the appender of data model.
      */
     public DataContext getContext();
     

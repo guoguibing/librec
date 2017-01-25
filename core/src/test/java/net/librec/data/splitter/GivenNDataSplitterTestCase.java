@@ -21,7 +21,9 @@ import net.librec.BaseTestCase;
 import net.librec.conf.Configured;
 import net.librec.data.convertor.TextDataConvertor;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
 
@@ -31,6 +33,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Liuxz and Sunyt
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GivenNDataSplitterTestCase extends BaseTestCase{
 
 	private TextDataConvertor convertor;
@@ -39,14 +42,13 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		conf.set("dfs.data.dir", "../data");
 
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTest4by4.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"), -1.0);
 
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/sytTestDate.txt");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4-date.txt");
 		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"), -1.0);
 	}
 
@@ -57,7 +59,7 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
      */
 	@Test
-	public void testGivenNByUser() throws Exception {
+	public void test01GivenNByUser() throws Exception {
 		conf.set("data.splitter.givenn", "user");
 		conf.set("data.splitter.givenn.n", "1");
 		convertor.processData();
@@ -76,7 +78,7 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testGivenNByItem() throws Exception {
+	public void test02GivenNByItem() throws Exception {
 		conf.set("data.splitter.givenn", "item");
 		conf.set("data.splitter.givenn.n", "1");
 		convertor.processData();
@@ -95,7 +97,7 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testGivenNByUserDate() throws Exception {
+	public void test03GivenNByUserDate() throws Exception {
 		conf.set("data.splitter.givenn", "userdate");
 		conf.set("data.splitter.givenn.n", "1");
 		convertorWithDate.processData();
@@ -114,7 +116,7 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	 * @throws Exception
 	 */
 	@Test
-	public void testGivenNByItemDate() throws Exception{
+	public void test04GivenNByItemDate() throws Exception{
 		conf.set("data.splitter.givenn", "itemdate");
 		conf.set("data.splitter.givenn.n", "1");
 		convertorWithDate.processData();

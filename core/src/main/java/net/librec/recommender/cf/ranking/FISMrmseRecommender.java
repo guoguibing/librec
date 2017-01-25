@@ -40,7 +40,6 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 
     private int rho;
     private float alpha;
-    private double learnRate;
     private int trainMatrixSize;
 
     /**
@@ -74,18 +73,18 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 
         P = new DenseMatrix(numItems, numFactors);
         Q = new DenseMatrix(numItems, numFactors);
-        P.init();
-        Q.init();
+        P.init(0.01);
+        Q.init(0.01);
 
         itemBiases = new DenseVector(numItems);
         userBiases = new DenseVector(numUsers);
-        itemBiases.init();
-        userBiases.init();
+        itemBiases.init(0.01);
+        userBiases.init(0.01);
 
         trainMatrixSize = trainMatrix.size();
         rho = conf.getInt("rec.fismrmse.rho");
         alpha = conf.getFloat("rec.fismrmse.alpha");
-        regBias = 0.1f;
+        regBias = conf.getDouble("rec.bias.regularization", 0.01d);
 
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
         userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
@@ -98,7 +97,7 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 
         for (int iter = 1; iter <= numIterations; iter++) {
 
-            double loss = 0;
+            loss = 0.0d;
 
             // temporal data
             DenseMatrix PS = new DenseMatrix(numItems, numFactors);
@@ -114,7 +113,6 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
             int index = 0, count = 0;
             boolean isDone = false;
             for (int u = 0; u < numUsers; u++) {
@@ -210,10 +208,11 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
             P = P.add(PS);
             Q = Q.add(QS);
 
-            loss *= 0.5;
-
-//            if (isConverged(iter)  && earlyStop)
-//                break;
+            loss *= 0.5d;
+            if (isConverged(iter) && earlyStop) {
+                break;
+            }
+            updateLRate(iter);
         }
     }
 

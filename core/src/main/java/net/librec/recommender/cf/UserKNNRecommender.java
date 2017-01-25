@@ -137,7 +137,7 @@ public class UserKNNRecommender extends AbstractRecommender {
                 VectorEntry simVectorEntry = simItr.next();
                 userSimilarityList[userIndex].add(new AbstractMap.SimpleImmutableEntry<>(simVectorEntry.index(), simVectorEntry.get()));
             }
-            Lists.sortList(userSimilarityList[userIndex], false);
+            Lists.sortList(userSimilarityList[userIndex], true);
         }
     }
 }

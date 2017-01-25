@@ -42,7 +42,7 @@ public class TrustSVDRecommender extends SocialRecommender {
     private DenseMatrix impItemFactors;
 
     /**
-     * the user-specific latent feature vector of users (trustees)trusted by user u
+     * the user-specific latent appender vector of users (trustees)trusted by user u
      */
     private DenseMatrix trusteeFactors;
 

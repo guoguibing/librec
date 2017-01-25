@@ -59,7 +59,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     private String inputDataPath;
 
     /** the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
-     * otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a negative value 
+     * otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a negative value
      */
     private double binThold = -1.0;
     
@@ -113,7 +113,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * @param inputDataPath
      *            the format of the input data file
      * @param binThold the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
-     *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
+     *            otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
      *            negative value
      */
     public TextDataConvertor(String dataColumnFormat, String inputDataPath, double binThold) {
@@ -131,7 +131,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * @param inputDataPath
      *            the format of the input data file
      * @param binThold the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
-     *            otherwise 0. To disable this feature, i.e., keep the original rating value, set the threshold a
+     *            otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
      *            negative value
      */
     public TextDataConvertor(String dataColumnFormat, String inputDataPath, double binThold,
@@ -162,7 +162,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * @param binThold
      *            the threshold to binarize a rating. If a rating is greater
      *            than the threshold, the value will be 1; otherwise 0. To
-     *            disable this feature, i.e., keep the original rating value,
+     *            disable this appender, i.e., keep the original rating value,
      *            set the threshold a negative value
      * @throws IOException
      *            if the <code>inputDataPath</code> is not valid.

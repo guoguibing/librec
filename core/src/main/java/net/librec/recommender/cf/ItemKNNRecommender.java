@@ -62,13 +62,12 @@ public class ItemKNNRecommender extends AbstractRecommender {
      */
     @Override
     protected void trainModel() throws LibrecException {
-        int itemNum = trainMatrix.numColumns();
-        itemMeans = new DenseVector(itemNum);
+        itemMeans = new DenseVector(numItems);
         int numRates = trainMatrix.size();
         double globalMean = trainMatrix.sum() / numRates;
-        for (int u = 0; u < itemNum; u++) {
-            SparseVector uv = trainMatrix.row(u);
-            itemMeans.set(u, uv.getCount() > 0 ? uv.mean() : globalMean);
+        for (int  itemIdx = 0; itemIdx < numItems; itemIdx++) {
+            SparseVector userRatingVector = trainMatrix.column(itemIdx);
+            itemMeans.set(itemIdx, userRatingVector.getCount() > 0 ? userRatingVector.mean() : globalMean);
         }
     }
 
@@ -127,7 +126,7 @@ public class ItemKNNRecommender extends AbstractRecommender {
                 int similarItemIdx = itemRatingEntry.getKey();
                 double sim = itemRatingEntry.getValue();
                 double rate = trainMatrix.get(userIdx, similarItemIdx);
-                sum += sim * (rate - itemMeans.get(itemIdx));
+                sum += sim * (rate - itemMeans.get(similarItemIdx));
                 ws += Math.abs(sim);
             }
             return ws > 0 ? itemMeans.get(itemIdx) + sum / ws : globalMean;
@@ -147,7 +146,7 @@ public class ItemKNNRecommender extends AbstractRecommender {
                 VectorEntry simVectorEntry = simItr.next();
                 itemSimilarityList[itemIdx].add(new AbstractMap.SimpleImmutableEntry<>(simVectorEntry.index(), simVectorEntry.get()));
             }
-            Lists.sortList(itemSimilarityList[itemIdx], false);
+            Lists.sortList(itemSimilarityList[itemIdx], true);
         }
     }
 

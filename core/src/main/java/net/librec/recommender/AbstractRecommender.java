@@ -27,7 +27,7 @@ import net.librec.eval.RecommenderEvaluator;
 import net.librec.math.structure.MatrixEntry;
 import net.librec.math.structure.SparseMatrix;
 import net.librec.recommender.item.*;
-import net.librec.util.ModelDataUtil;
+//import net.librec.util.ModelDataUtil;
 import net.librec.util.ReflectionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -196,7 +196,7 @@ public abstract class AbstractRecommender implements Recommender {
             maxNumTestItemsByUser = maxNumTestItemsByUser < numTestItemsByUser ? numTestItemsByUser : maxNumTestItemsByUser;
         }
         conf.setInts("rec.eval.auc.dropped.num", numDroppedItemsArray);
-        conf.setInt("test.user.items.num.max", maxNumTestItemsByUser);
+        conf.setInt("rec.eval.item.test.maxnum", maxNumTestItemsByUser);
     }
 
     /**
@@ -380,7 +380,7 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void loadModel(String filePath) {
-        ModelDataUtil.loadRecommenderModel(this, filePath);
+//        ModelDataUtil.loadRecommenderModel(this, filePath);
     }
 
     /**
@@ -390,7 +390,7 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void saveModel(String filePath) {
-        ModelDataUtil.saveRecommenderModel(this, filePath);
+//        ModelDataUtil.saveRecommenderModel(this, filePath);
     }
 
     /**

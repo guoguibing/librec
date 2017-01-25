@@ -26,10 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Data Structure: Sparse Tensor <br>
@@ -134,6 +131,8 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
     private Multimap<Integer, Integer>[] keyIndices; // each multimap = {key, {pos1, pos2, ...}}
     private List<Integer> indexedDimensions; // indexed dimensions
+    private Set<Integer> indexedDimensionsSet;// indexed dimensionsSet
+
 
     // dimensions of users and items
     private int userDimension, itemDimension;
@@ -174,6 +173,8 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
         values = vals == null ? new ArrayList<Double>() : new ArrayList<Double>(vals);
         indexedDimensions = new ArrayList<Integer>(numDimensions);
+        indexedDimensionsSet = new HashSet<Integer>((int) (numDimensions/0.7));
+
 
     }
 
@@ -945,7 +946,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
     }
 
     public int getIndexDimension(int index) {
-        assert (index >= numDimensions);
+        assert index < numDimensions;
 
         return dimensions[index];
     }

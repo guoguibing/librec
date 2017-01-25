@@ -20,6 +20,7 @@ package net.librec.data.splitter;
 import net.librec.BaseTestCase;
 import net.librec.conf.Configured;
 import net.librec.data.DataConvertor;
+import net.librec.data.convertor.ArffDataConvertor;
 import net.librec.data.convertor.TextDataConvertor;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,9 +50,9 @@ public class GivenTestSetDataSplitterTestCase extends BaseTestCase {
      */
 	@Test
 	public void testText() throws Exception {
-		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/given-testset");
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/given-testset");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
-		conf.set("data.testset.path", "/given-testset/test/ratings_0.txt");
+		conf.set("data.testset.path", "/test/given-testset/test/ratings_0.txt");
 		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
 		convertor.processData();
 		GivenTestSetDataSplitter splitter = new GivenTestSetDataSplitter(convertor,conf);
@@ -60,21 +61,21 @@ public class GivenTestSetDataSplitterTestCase extends BaseTestCase {
 		assertEquals(splitter.getTestData().size(), 10435);
 	}
 
-//	/**
-//	 * Test for arff data format.
-//	 *
-//	 * @throws Exception if error occurs
-//     */
-//	@Test
-//	public void testArff() throws Exception {
-//		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/arfftest");
-//		conf.set("data.test.path", "/arfftest/test.arff");
-//		conf.set("data.model.format", "arff");
-//		convertor = new ArffDataConvertor(conf.get("inputDataPath"));
-//		convertor.processData();
-//		GivenTestSetDataSplitter splitter = new GivenTestSetDataSplitter(convertor,conf);
-//		splitter.splitData();
-//		assertEquals(splitter.getTrainData().size(), 12);
-//		assertEquals(splitter.getTestData().size(), 12);
-//	}
+	/**
+	 * Test for arff data format.
+	 *
+	 * @throws Exception if error occurs
+     */
+	@Test
+	public void testArff() throws Exception {
+		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/arfftest");
+		conf.set("data.testset.path", "/test/arfftest/testset/test.arff");
+		conf.set("data.model.format", "arff");
+		convertor = new ArffDataConvertor(conf.get("inputDataPath"));
+		convertor.processData();
+		GivenTestSetDataSplitter splitter = new GivenTestSetDataSplitter(convertor,conf);
+		splitter.splitData();
+		// assertEquals(splitter.getTrainData().size(), 12);
+		assertEquals(splitter.getTestData().size(), 6);
+	}
 }

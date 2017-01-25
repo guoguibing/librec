@@ -22,7 +22,9 @@ import net.librec.common.LibrecException;
 import net.librec.conf.Configured;
 import net.librec.data.DataModel;
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -33,6 +35,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author SunYatong
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ArffDataModelTestCase extends BaseTestCase {
 
     @Before
@@ -51,8 +54,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testReadFile() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest/test.arff");
+    public void test01ReadFile() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest/data.arff");
 
         ArffDataModel dataModel = new ArffDataModel(conf);
         dataModel.buildDataModel();
@@ -67,13 +70,13 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testReadDir() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest");
+    public void test02ReadDir() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest");
         ArffDataModel dataModel = new ArffDataModel(conf);
         dataModel.buildDataModel();
 
         assertEquals(6, dataModel.getItemMappingData().size());
-        assertEquals(9, dataModel.getUserMappingData().size());
+        assertEquals(5, dataModel.getUserMappingData().size());
     }
 
     /**
@@ -84,8 +87,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testRatingRatio() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/ratings.arff");
+    public void test03RatingRatio() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings.arff");
         conf.set("data.model.splitter", "ratio");
         conf.set("data.splitter.trainset.ratio", "0.8");
         conf.set("data.splitter.ratio", "rating");
@@ -105,8 +108,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testUserRatio() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/ratings.arff");
+    public void test04UserRatio() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings.arff");
         conf.set("data.model.splitter", "ratio");
         conf.set("data.splitter.trainset.ratio", "0.8");
         conf.set("data.splitter.ratio", "user");
@@ -126,8 +129,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testItemRatio() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/ratings.arff");
+    public void test05ItemRatio() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings.arff");
         conf.set("data.model.splitter", "ratio");
         conf.set("data.splitter.trainset.ratio", "0.8");
         conf.set("data.splitter.ratio", "item");
@@ -147,8 +150,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testValidRatio() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/ratings.arff");
+    public void test06ValidRatio() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/ratings.arff");
         conf.set("data.model.splitter", "ratio");
         conf.set("data.splitter.ratio", "valid");
         conf.set("data.splitter.trainset.ratio", "0.5");
@@ -171,8 +174,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testKCV() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest/test.arff");
+    public void test07KCV() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest/data.arff");
         conf.set("data.model.splitter", "net.librec.data.splitter.KCVDataSplitter");
         conf.set("data.splitter.cv.number", "5");
         ArffDataModel dataModel = new ArffDataModel(conf);
@@ -195,8 +198,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testLOOByUser() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest/test.arff");
+    public void test08LOOByUser() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest/data.arff");
         conf.set("data.model.splitter", "net.librec.data.splitter.LOOCVDataSplitter");
         conf.set("data.splitter.loocv", "user");
 
@@ -215,8 +218,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testLOOByItem() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest/test.arff");
+    public void test09LOOByItem() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest/data.arff");
         conf.set("data.model.splitter", "net.librec.data.splitter.LOOCVDataSplitter");
         conf.set("data.splitter.loocv", "item");
 
@@ -235,8 +238,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testGivenNByUser() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest/test.arff");
+    public void test10GivenNByUser() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest/data.arff");
         conf.set("data.model.splitter", "net.librec.data.splitter.GivenNDataSplitter");
         conf.set("data.splitter.givenn", "user");
         conf.set("data.splitter.givenn.n", "1");
@@ -256,8 +259,8 @@ public class ArffDataModelTestCase extends BaseTestCase {
      * @throws LibrecException
      */
     @Test
-    public void testGivenNByItem() throws LibrecException {
-        conf.set(Configured.CONF_DATA_INPUT_PATH, "arfftest/test.arff");
+    public void test11GivenNByItem() throws LibrecException {
+        conf.set(Configured.CONF_DATA_INPUT_PATH, "test/arfftest/data.arff");
         conf.set("data.model.splitter", "net.librec.data.splitter.GivenNDataSplitter");
         conf.set("data.splitter.givenn", "item");
         conf.set("data.splitter.givenn.n", "1");
