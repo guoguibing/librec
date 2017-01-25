@@ -24,7 +24,11 @@ PS: Follow us on WeChat to have first-hand and up-to-date information about LibR
 * **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
 * **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
 
-<img src="http://librec.net/images/modules.png" height="30%" width="30%" /> 
+<img src="http://librec.net/images/modules.jpg" width="500" /> 
+
+The procedure of LibRec is illustrated as follows. 
+
+<img src="http://librec.net/images/procedure.jpg" width="600" /> 
 
 ### Download
 * **librec-v2.0**
