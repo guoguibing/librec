@@ -32,7 +32,6 @@ The procedure of LibRec is illustrated as follows.
 
 ### Download
 * **librec-v2.0**
-    * RC version: check out the new 2.0.0-RC branch. 
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
