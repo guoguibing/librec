@@ -31,7 +31,7 @@ The procedure of LibRec is illustrated as follows.
 <img src="http://librec.net/images/procedure.jpg" width="600" /> 
 
 ### Download
-* **librec-v2.0**
+* **[librec-v2.0](https://github.com/guoguibing/librec/archive/librec-src-v2.0.zip)**
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
