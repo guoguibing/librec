@@ -17,12 +17,12 @@ PS: Follow us on WeChat to have first-hand and up-to-date information about LibR
 
 ### Features
 
-* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be added to the LibRec project.
-* **Module Composition:** LibRec has six main components including data split, data conversion, similarity, algorithms, evaluators and filters.
-* **Flexible Configuration:** LibRec is based on low coupling, flexible and either external textual or internal API configuration.
-* **High Performance:** LibRec has more efficient implementations than other counterparts while producing comparable accuracy.
-* **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
-* **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
+* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be done.
+* **High Modularity:** Six main components including data split, data conversion, similarity, algorithms, evaluators and filters.
+* **Great Performance:** More efficient implementations than other counterparts while producing comparable accuracy.
+* **Flexible Configuration:** Low coupling, flexible and either external textual or internal API configuration.
+* **Simple Usage:** Can get executed in a few lines of codes, and a number of demos are provided for easy start.
+* **Easy Expansion:** A set of recommendation interfaces for easy expansion to implement new recommenders.
 
 <img src="http://librec.net/images/modules.jpg" width="500" /> 
 
