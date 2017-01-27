@@ -24,11 +24,11 @@ PS: Follow us on WeChat to have first-hand and up-to-date information about LibR
 * **Simple Usage:** Can get executed in a few lines of codes, and a number of demos are provided for easy start.
 * **Easy Expansion:** A set of recommendation interfaces for easy expansion to implement new recommenders.
 
-<img src="http://librec.net/images/modules.jpg" width="500" /> 
+<div style="text-align:center;"><img src="http://librec.net/images/modules.jpg" width="500" /> </div>
 
 The procedure of LibRec is illustrated as follows. 
 
-<img src="http://librec.net/images/procedure.jpg" width="600" /> 
+<div style="text-align:center;"><img src="http://librec.net/images/procedure.jpg" width="600" /> </div>
 
 ### Download
 * **[librec-v2.0](https://github.com/guoguibing/librec/archive/librec-src-v2.0.zip)**
