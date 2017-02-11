@@ -31,6 +31,18 @@ The procedure of LibRec is illustrated as follows.
 <div style="text-align:center;"><img src="http://librec.net/images/procedure.jpg" width="600" /> </div>
 
 ### Download
+
+by maven
+```
+<dependency>
+    <groupId>net.librec</groupId>
+    <artifactId>librec-core</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+
+by packages
+
 * **[librec-v2.0](https://github.com/guoguibing/librec/archive/librec-src-v2.0.zip)**
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
