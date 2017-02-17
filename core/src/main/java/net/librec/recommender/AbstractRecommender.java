@@ -27,7 +27,6 @@ import net.librec.eval.RecommenderEvaluator;
 import net.librec.math.structure.MatrixEntry;
 import net.librec.math.structure.SparseMatrix;
 import net.librec.recommender.item.*;
-//import net.librec.util.ModelDataUtil;
 import net.librec.util.ReflectionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -186,7 +185,7 @@ public abstract class AbstractRecommender implements Recommender {
         Collections.sort(ratingScale);
         maxRate = Collections.max(trainMatrix.getValueSet());
         minRate = Collections.min(trainMatrix.getValueSet());
-        globalMean = trainMatrix.sum() / numRates;
+        globalMean = trainMatrix.mean();
 
         int[] numDroppedItemsArray = new int[numUsers]; // for AUCEvaluator
         int maxNumTestItemsByUser = 0; //for idcg
@@ -380,7 +379,7 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void loadModel(String filePath) {
-//        ModelDataUtil.loadRecommenderModel(this, filePath);
+
     }
 
     /**
@@ -390,7 +389,7 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void saveModel(String filePath) {
-//        ModelDataUtil.saveRecommenderModel(this, filePath);
+
     }
 
     /**
@@ -460,6 +459,24 @@ public abstract class AbstractRecommender implements Recommender {
      * @throws LibrecException if error occurs
      */
     protected boolean isConverged(int iter) throws LibrecException{
-        return false;
+        float delta_loss = (float) (lastLoss - loss);
+
+        // print out debug info
+        if (verbose) {
+            String recName = getClass().getSimpleName().toString();
+            String info = recName + " iter " + iter + ": loss = " + loss + ", delta_loss = " + delta_loss;
+            LOG.info(info);
+        }
+
+        if (Double.isNaN(loss) || Double.isInfinite(loss)) {
+//            LOG.error("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
+            throw new LibrecException("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
+        }
+
+        // check if converged
+        boolean converged = Math.abs(loss) < 1e-5;
+        lastLoss = loss;
+
+        return converged;
     }
 }

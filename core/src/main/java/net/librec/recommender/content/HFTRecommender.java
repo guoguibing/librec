@@ -98,7 +98,6 @@ public class HFTRecommender extends BiasedMFRecommender {
         numberOfItems = 0;
         String user = "";
         String item = "";
-        int r = 0;
         String line = null;
         Table<Integer, Integer, String> res = HashBasedTable.create();
         Table<Integer, Integer, Double> ratings = HashBasedTable.create();
