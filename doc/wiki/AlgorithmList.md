@@ -43,7 +43,7 @@
 | MatrixFactorizationRecommender                       | cf.rating       | mfals                | MFALSRecommender                |
 | MatrixFactorizationRecommender                       | cf.rating       | nmf                  | NMFRecommender                  |
 | MatrixFactorizationRecommender                       | cf.rating       | pmf                  | PMFRecommender                  |
-| MatrixFactorizationRecommender                       | cf.rating       | rbm                  | RBMRecommender                  |
+| AbstractRecommender                                  | cf.rating       | rbm                  | RBMRecommender                  |
 | MatrixFactorizationRecommender                       | cf.rating       | rfrec                | RFRecRecommender                |
 | BiasedMFRecommender → MatrixFactorizationRecommender | cf.rating       | svdpp          | SVDPlusPlusRecommender          |
 | ProbabilisticGraphicalRecommender                    | cf.rating       | urp                  | URPRecommender                  |
@@ -93,6 +93,7 @@ rec.iterator.maximum=20
 ##### MostPopularRecommender
 ```
 rec.recommender.class=mostpopular
+rec.recommender.isranking=true
 ```
 ##### RandomGuessRecommender
 ```
@@ -344,14 +345,10 @@ rec.recommender.ranking.topn=10
 ##### WRMFRecommender
 ```
 rec.recommender.class=wrmf
-rec.iterator.learnrate=0.01
-rec.iterator.learnrate.maximum=0.01
 rec.iterator.maximum=20
 rec.user.regularization=0.01
 rec.item.regularization=0.01
 rec.factor.number=10
-rec.learnrate.bolddriver=false
-rec.learnrate.decay=1.0
 rec.recommender.isranking=true
 rec.recommender.ranking.topn=10
 
@@ -376,7 +373,7 @@ rec.iterator.maximum=20
 rec.recommender.class=biasedmf
 rec.iterator.learnrate=0.01
 rec.iterator.learnrate.maximum=0.01
-rec.iterator.maximum=1
+rec.iterator.maximum=10
 rec.user.regularization=0.01
 rec.item.regularization=0.01
 rec.bias.regularization=0.01
@@ -399,14 +396,10 @@ rec.learnrate.decay=1.0
 ##### BPMFRecommender
 ```
 rec.recommender.class=bpmf
-rec.iterator.learnrate=0.01
-rec.iterator.learnrate.maximum=0.01
 rec.iterator.maximum=100
 rec.user.regularization=0.01
 rec.item.regularization=0.01
 rec.factor.number=10
-rec.learnrate.bolddriver=false
-rec.learnrate.decay=1.0
 ```
 ##### BPoissMFRecommender
 ```
@@ -477,24 +470,16 @@ rec.learnrate.decay=1.0
 ##### MFALSRecommender
 ```
 rec.recommender.class=mfals
-rec.iterator.learnrate=0.01
-rec.iterator.learnrate.maximum=0.01
 rec.iterator.maximum=100
 rec.user.regularization=0.01
 rec.item.regularization=0.01
 rec.factor.number=10
-rec.learnrate.bolddriver=false
-rec.learnrate.decay=1.0
 ```
 ##### NMFRecommender
 ```
 rec.recommender.class=nmf
-rec.iterator.learnrate=0.01
-rec.iterator.learnrate.maximum=0.01
-rec.iterator.maximum=100
-rec.user.regularization=0.01
-rec.item.regularization=0.01
-rec.factor.number=10
+rec.iterator.maximum=10
+rec.factor.number=100
 rec.learnrate.bolddriver=false
 rec.learnrate.decay=1.0
 ```
@@ -513,14 +498,17 @@ rec.learnrate.decay=1.0
 ##### RBMRecommender
 ```
 rec.recommender.class=rbm
-rec.iterator.learnrate=0.01
-rec.iterator.learnrate.maximum=0.01
-rec.iterator.maximum=100
-rec.user.regularization=0.01
-rec.item.regularization=0.01
-rec.factor.number=10
-rec.learnrate.bolddriver=false
-rec.learnrate.decay=1.0
+rec.iterator.maximum=20
+data.input.path=movielens/ml-100k/ratings.txt
+rec.factor.number=500
+rec.epsilonw=0.01
+rec.epsilonvb=0.01
+rec.epsilonhb=0.01
+rec.tstep=1
+rec.momentum=0.1
+rec.lamtaw=0.01
+rec.lamtab=0.0
+rec.predictiontype=mean
 ```
 ##### RFRecRecommender
 ```

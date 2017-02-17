@@ -23,6 +23,7 @@ import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
 import net.librec.math.structure.SparseVector;
+import net.librec.recommender.AbstractRecommender;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 /**
@@ -31,26 +32,42 @@ import net.librec.recommender.MatrixFactorizationRecommender;
  * @author guoguibing and Keqiang Wang
  */
 @ModelData({"isRating", "nmf", "transUserFactors", "transItemFactors"})
-public class NMFRecommender extends MatrixFactorizationRecommender {
+public class NMFRecommender extends AbstractRecommender {
     /**
      * userFactors and itemFactors matrix transpose
      */
     DenseMatrix transUserFactors;
     DenseMatrix transItemFactors;
 
+    /**
+     * the number of latent factors;
+     */
+    protected int numFactors;
+
+    /**
+     * the number of iterations
+     */
+    protected int numIterations;
+
     @Override
     protected void setup() throws LibrecException {
         super.setup();
 
-        transUserFactors = userFactors.transpose();
-        transItemFactors = itemFactors.transpose();
+        numFactors = conf.getInt("rec.factor.number", 10);
+        numIterations = conf.getInt("rec.iterator.maximum",100);
+
+
+        transUserFactors = new DenseMatrix(numFactors, numUsers);
+        transItemFactors = new DenseMatrix(numFactors, numItems);
+        transUserFactors.init(0.01);
+        transItemFactors.init(0.01);
     }
 
     @Override
     protected void trainModel() throws LibrecException {
         for (int iter = 0; iter <= numIterations; ++iter) {
             // update userFactors by fixing itemFactors
-            for (int userIdx = 0; userIdx < numRates; userIdx++) {
+            for (int userIdx = 0; userIdx < numUsers; userIdx++) {
                 SparseVector itemRatingsVector = trainMatrix.row(userIdx);
 
                 if (itemRatingsVector.getCount() > 0) {
@@ -65,7 +82,8 @@ public class NMFRecommender extends MatrixFactorizationRecommender {
                         double realValue = factorItemsVector.inner(itemRatingsVector);
                         double estmValue = factorItemsVector.inner(itemPredictsVector) + 1e-9;
 
-                        transUserFactors.set(factorIdx, userIdx, transUserFactors.get(factorIdx, userIdx) * (realValue / estmValue));
+                        transUserFactors.set(factorIdx, userIdx, transUserFactors.get(factorIdx, userIdx)
+                                * (realValue / estmValue));
                     }
                 }
             }
@@ -78,7 +96,7 @@ public class NMFRecommender extends MatrixFactorizationRecommender {
                     SparseVector userPredictsVector = new SparseVector(numUsers, userRatingsVector.size());
 
                     for (int userIdx : userRatingsVector.getIndex()) {
-                        userPredictsVector.set(userIdx, predict(userIdx, itemIdx));
+                        userPredictsVector.append(userIdx, predict(userIdx, itemIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
@@ -86,7 +104,8 @@ public class NMFRecommender extends MatrixFactorizationRecommender {
                         double realValue = factorUsersVector.inner(userRatingsVector);
                         double estmValue = factorUsersVector.inner(userPredictsVector) + 1e-9;
 
-                        transItemFactors.set(factorIdx, itemIdx, transItemFactors.get(factorIdx, itemIdx) * (realValue / estmValue));
+                        transItemFactors.set(factorIdx, itemIdx, transItemFactors.get(factorIdx, itemIdx)
+                                * (realValue / estmValue));
                     }
                 }
             }
@@ -109,7 +128,6 @@ public class NMFRecommender extends MatrixFactorizationRecommender {
             if (isConverged(iter) && earlyStop) {
                 break;
             }
-            updateLRate(iter);
         }
     }
 

@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * EFM Recommender
  * Zhang Y, Lai G, Zhang M, et al. Explicit factor models for explainable recommendation based on phrase-level sentiment analysis[C]
- * //Proceedings of the 37th international ACM SIGIR conference on Research & development in information retrieval. ACM, 2014: 83-92.
+ * {@code Proceedings of the 37th international ACM SIGIR conference on Research & development in information retrieval.  ACM, 2014: 83-92}.
  *
  * @author ChenXu
  */
@@ -53,7 +53,6 @@ public class EFMRecommender extends BiasedMFRecommender {
     protected DenseMatrix userFeatureAttention;
     protected DenseMatrix itemFeatureQuality;
     protected DenseMatrix rating;
-    protected SparseMatrix trainData,testData;
     protected double lambdaX;
     protected double lambdaY;
     protected double lambdaU;
@@ -90,7 +89,6 @@ public class EFMRecommender extends BiasedMFRecommender {
         numberOfItems = 0;
         String user = "";
         String item = "";
-        int r = 0;
         String line = null;
 
         try {
@@ -134,14 +132,14 @@ public class EFMRecommender extends BiasedMFRecommender {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
-        
+
+
         // Create V,U1,H1,U2,H2
         featureMatrix = new DenseMatrix(numberOfFeatures, featureFactor);
         userFactors = new DenseMatrix(numberOfUsers, numFactors);
         itemFactors = new DenseMatrix(numberOfItems, numFactors);
-        
-        
+
+
         featureMatrix.init(initMean, initStd);
         userFeatureMatrix = userFactors.getSubMatrix(0, userFactors.numRows() - 1, 0, featureFactor - 1);
         userHiddenMatrix = userFactors.getSubMatrix(0, userFactors.numRows() - 1, featureFactor, userFactors.numColumns() - 1);
@@ -152,7 +150,7 @@ public class EFMRecommender extends BiasedMFRecommender {
         userFeatureAttention.init(0);
         itemFeatureQuality = new DenseMatrix(itemFactors.numRows(), numberOfFeatures);
         itemFeatureQuality.init(0);
-        
+
 
         // compute UserFeatureAttention
         double[] featureValues = new double[numberOfFeatures];
@@ -203,7 +201,7 @@ public class EFMRecommender extends BiasedMFRecommender {
                 for (int j = 0; j < featureFactor; j++) {
                     double updateValue = ((userFeatureAttention.transpose().mult(userFeatureMatrix).scale(lambdaX)).add(itemFeatureQuality.transpose().mult(itemFeatureMatrix).scale(lambdaX))).get(i, j);
                     updateValue /= featureMatrix.mult((userFeatureMatrix.transpose().mult(userFeatureMatrix).scale(lambdaX)).add(itemFeatureMatrix.transpose().mult(itemFeatureMatrix).scale(lambdaY))
-                    		.add(DenseMatrix.eye(featureFactor).scale(lambdaV))).get(i, j);
+                            .add(DenseMatrix.eye(featureFactor).scale(lambdaV))).get(i, j);
                     updateValue = Math.sqrt(updateValue);
                     featureMatrix.set(i, j, featureMatrix.get(i, j) * updateValue);
                 }

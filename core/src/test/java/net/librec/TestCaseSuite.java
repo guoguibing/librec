@@ -101,6 +101,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	PMFTestCase.class,
 	RBMTestCase.class,
 	RfRecTestCase.class,
+	SVDPlusPlusTestCase.class,
 	URPTestCase.class,
 	BHFreeTestCase.class,
 	BUCMTestCase.class,

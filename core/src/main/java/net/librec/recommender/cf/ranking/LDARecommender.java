@@ -53,6 +53,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
      * Dirichlet hyper-parameters of topic-item distribution, typical value is 0.01
      */
     protected float initBeta;
+
     /**
      * entry[k, i]: number of tokens assigned to topic k, given item i.
      */
@@ -140,9 +141,9 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
         for (MatrixEntry matrixEntry : trainMatrix) {
             int userIdx = matrixEntry.row();
             int itemIdx = matrixEntry.column();
-            int num = (int) (matrixEntry.get());
+            int num = (int) (matrixEntry.get());    // problem 1 : the for cycle is not necessary
             for(int numIdx = 0; numIdx < num; numIdx++) {
-                int topicIdx = (int) (Math.random() * numTopics); // 0 ~ k-1
+                int topicIdx = (int) (Math.random() * numTopics); // 0 ~ k-1     // problem 2 : the random
 
                 // assign a topic t to pair (u, i)
                 topicAssignments.add(topicIdx);
@@ -171,7 +172,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
             int itemIdx = matrixEntry.column();
 
             int num = (int) (matrixEntry.get());
-            for (int numIdx = 0; numIdx < num; numIdx++) {
+            for (int numIdx = 0; numIdx < num; numIdx++) {      // problem 1 again
                 int topicIdx = topicAssignments.get(topicAssignmentsIdx); // topic
 
                 userTopicNumbers.add(userIdx, topicIdx, -1);
@@ -220,7 +221,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
 
             topicAlpha = alpha.get(topicIdx);
             double numerator = 0, denominator = 0;
-            for (int itemIdx = 0; itemIdx < numUsers; itemIdx++) {
+            for (int itemIdx = 0; itemIdx < numUsers; itemIdx++) {     // problem 2 : numUsers should be numItems ? or item index should be user index?
                 numerator += digamma(userTopicNumbers.get(itemIdx, topicIdx) + topicAlpha) - digamma(topicAlpha);
                 denominator += digamma(userTokenNumbers.get(itemIdx) + sumAlpha) - digamma(sumAlpha);
             }
