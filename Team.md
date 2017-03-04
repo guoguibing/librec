@@ -7,9 +7,9 @@
 * **王科强** (Core Developer)，华东师范大学博士，研究方向为多样性学习和推荐系统，个人主页: [http://dase.ecnu.edu.cn/index/shows/catid/30/id/105](http://dase.ecnu.edu.cn/index/shows/catid/30/id/105)。
 * **靳远远** (Core Developer)，华东师范大学博士，研究方向为推荐系统与数据挖掘。
 * **马辰** (Core Developer)，加拿大McGill University博士，研究方向为推荐系统，目前主要从事Point-of-Interest推荐的研究，个人主页：[https://www.linkedin.com/in/ma-chen-93455693/en](https://www.linkedin.com/in/ma-chen-93455693/en)。
-* **张帅** (Core Developer)，澳大利大UNSW Sydney博士，研究方向为推荐系统和深度学习，个人主页：http://www.cse.unsw.edu.au/~z5122282/。
-* **辛永佳** (Core Developer)，腾讯研发工程师，目前主要负责基于新闻的NLP、推荐系统算法以及用户行为信息收集系统架构的开发与优化工作，个人主页：https://github.com/logicxin。
-* **刘啸泽** (Developer)，浙江大学计算机学院硕士。研究方向为数据挖掘与深度学习，目前主要研究深度学习在序列数据中的应用。个人主页: http://liuxz.top/about/
+* **张帅** (Core Developer)，澳大利亚UNSW Sydney博士，研究方向为推荐系统和深度学习，个人主页：[http://www.cse.unsw.edu.au/~z5122282/](http://www.cse.unsw.edu.au/~z5122282/)。
+* **辛永佳** (Core Developer)，腾讯研发工程师，目前主要负责基于新闻的NLP、推荐系统算法以及用户行为信息收集系统架构的开发与优化工作，个人主页：[https://github.com/logicxin](https://github.com/logicxin)。
+* **刘啸泽** (Developer)，浙江大学计算机学院硕士。研究方向为数据挖掘与深度学习，目前主要研究深度学习在序列数据中的应用，个人主页: [http://liuxz.top/about/](http://liuxz.top/about/)。
 * **孙亚童** (Developer)，东北大学软件学院硕士（2017级）。研究方向为推荐系统、大数据与数据挖掘。
 * **屈石林** (Developer)，东北大学软件学院硕士（2017级）。研究方向为推荐系统、大数据与数据挖掘。
 
