@@ -32,6 +32,7 @@ import net.librec.util.DriverClassUtil;
 import net.librec.util.ReflectionUtil;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -146,5 +147,14 @@ public class ArffDataModel extends AbstractDataModel implements DataModel {
     @Override
     public DataSet getDatetimeDataSet() {
         return null;
+    }
+
+    /**
+     * Get all features mapping data.
+     *
+     * @return  the item {raw id, inner id} map of data model.
+     */
+    public ArrayList<BiMap<String, Integer>> getAllFeaturesMappingData() {
+        return ((ArffDataConvertor)dataConvertor).getAllFeatureIds();
     }
 }
