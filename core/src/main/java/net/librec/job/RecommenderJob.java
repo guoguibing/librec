@@ -113,7 +113,7 @@ public class RecommenderJob {
             case "testset":{
             	executeRecommenderJob();
             }
-            case "given": {
+            case "givenn": {
                 executeRecommenderJob();
                 break;
             }
