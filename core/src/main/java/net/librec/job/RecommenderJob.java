@@ -112,6 +112,7 @@ public class RecommenderJob {
             }
             case "testset":{
             	executeRecommenderJob();
+                break;
             }
             case "givenn": {
                 executeRecommenderJob();
