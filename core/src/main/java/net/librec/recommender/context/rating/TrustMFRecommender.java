@@ -125,7 +125,7 @@ public class TrustMFRecommender extends SocialMFRecommender {
 
                 loss += error * error;
 
-                double deriValue = Maths.logisticGradientValue(rating) * error;
+                double deriValue = Maths.logisticGradientValue(predictRating) * error;
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                     double trusterUserTrusterFactorValue = trusterUserTrusterFactors.get(userIdx, factorIdx);
                     double trusterItemFactorValue = trusterItemFactors.get(itemIdx, factorIdx);
