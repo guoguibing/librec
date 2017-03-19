@@ -203,7 +203,7 @@ public class TrustMFRecommender extends SocialMFRecommender {
                 double rating = matrixEntry.get();
 
                 double predictRating = predict(userIdx, itemIdx, false);
-                double error = Maths.logistic(rating) - normalize(rating);
+                double error = Maths.logistic(predictRating) - normalize(rating);
 
                 double deriValue = Maths.logisticGradientValue(predictRating) * error;
 
