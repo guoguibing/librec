@@ -255,7 +255,7 @@ public class TrustSVDRecommender extends SocialRecommender {
                         double deltaTrustee = error * itemFactorValue / trusteeWeightDenom + regUser * trusteeWeightValue * trusteeFactorValue;
                         trusteeTempFactors.add(trusteeIdx, factorIdx, deltaTrustee);
 
-                        loss += regUser * userWeight * trusteeFactorValue * trusteeFactorValue;
+                        loss += regUser * trusteeWeightValue * trusteeFactorValue * trusteeFactorValue;                        
                     }
                 }
             }
@@ -283,7 +283,7 @@ public class TrustSVDRecommender extends SocialRecommender {
                     tempUserFactors.add(userIdx, factorIdx, deriValue * trusteeFactorValue + regSocial * trusterWeightValue * userFactorValue);
                     trusteeTempFactors.add(trusteeIdx, factorIdx, deriValue * userFactorValue);
 
-                    loss += regSocial * trusterWeightValue * trusterWeightValue;
+                    loss += regSocial * trusterWeightValue * userFactorValue * userFactorValue;
                 }
             }
 
