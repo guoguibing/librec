@@ -96,7 +96,8 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     /**
      * setup
      *
-     * @throws LibrecException
+     * @throws LibrecException if error occurs
+     *
      */
     protected void setup() throws LibrecException {
         conf = context.getConf();
@@ -141,13 +142,15 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     }
 
     /**
-     * predict
-     * * predict the rating given a sparse appender vector
+     * Predict the rating given a sparse appender vector.
+     * @param userId user Id
+     * @param itemId item Id
+     * @param x the given vector to predict.
      *
-     * @return predicted rating
-     * @throws LibrecException
+     * @return  predicted rating
+     * @throws LibrecException  if error occurs
      */
-    protected double predict(SparseVector x) throws LibrecException {
+    protected double predict(int userId, int itemId, SparseVector x) throws LibrecException {
         double res = 0;
         // global bias
         res += w0;
@@ -178,14 +181,20 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     }
 
     /**
-     * bounded predict
-     * * predict the rating given a sparse appender vector
+     * Predict the rating given a sparse appender vector.
+     * if {@code bound} is true,The predicted rating value will be
+     * bounded in {@code [minRate, maxRate]}
+     *
+     * @param x       the given vector
+     * @param userId  the user id
+     * @param itemId  the item id
+     * @param bound   whether to bound the predicted rating
      *
      * @return predicted rating
-     * @throws LibrecException
+     * @throws LibrecException if error occurs
      */
-    protected double predict(SparseVector x, boolean bound) throws LibrecException {
-        double pred = predict(x);
+    protected double predict(int userId, int itemId, SparseVector x, boolean bound) throws LibrecException {
+        double pred = predict(userId, itemId, x);
 
         if (bound) {
             if (pred > maxRate)
@@ -202,7 +211,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      * * predict the ratings in the test data
      *
      * @return predictive rating matrix
-     * @throws LibrecException
+     * @throws LibrecException if error occurs
      */
     protected RecommendedList recommendRating() throws LibrecException {
         testMatrix = testTensor.rateMatrix();
@@ -211,10 +220,12 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
         // each user-item pair appears in the final recommend list only once
         Table<Integer, Integer, Double> ratingMapping = HashBasedTable.create();
 
+        int userDimension = testTensor.getUserDimension();
+        int itemDimension = testTensor.getItemDimension();
         for (TensorEntry tensorEntry : testTensor) {
             int[] entryKeys = tensorEntry.keys();
             SparseVector featureVector = tenserKeysToFeatureVector(entryKeys);
-            double predictRating = predict(featureVector, true);
+            double predictRating = predict(entryKeys[userDimension], entryKeys[itemDimension], featureVector, true);
             if (Double.isNaN(predictRating)) {
                 predictRating = globalMean;
             }
@@ -246,8 +257,8 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     }
 
     /**
-     * tenserKeysToFeatureVector
-     * * transform the keys of a tensor entry into a sparse vector
+     * Transform the keys of a tensor entry into a sparse vector.
+     * @param tenserKeys the given keys of a tensor entry
      *
      * @return sparse appender vector
      */

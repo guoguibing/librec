@@ -120,4 +120,5 @@ public class TextDataConvertorTestCase extends BaseTestCase {
 		assertEquals(preference.size(), 13);
 		assertNull(datetimeMatrix);
 	}
+
 }

@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * AOBPR Test Case corresponds to AOBPRRecommender
- * {@link net.librec.recommender.cf.ranking.AOBPRRecommender}
+ * {@link net.librec.recommender.cf.ranking.AoBPRRecommender}
  *
  * @author SunYatong
  */

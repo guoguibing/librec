@@ -27,6 +27,7 @@ import net.librec.conf.Configured;
 import net.librec.data.DataModel;
 import net.librec.data.convertor.TextDataConvertor;
 import net.librec.math.structure.DataSet;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * A <tt>TextDataModel</tt> represents a data access class to the CSV format
@@ -61,9 +62,13 @@ public class TextDataModel extends AbstractDataModel implements DataModel {
      */
     @Override
     public void buildConvert() throws LibrecException {
-        String inputDataPath = conf.get(Configured.CONF_DFS_DATA_DIR) + "/" + conf.get(Configured.CONF_DATA_INPUT_PATH);
+//        String inputDataPath = conf.get(Configured.CONF_DFS_DATA_DIR) + "/" + conf.get(Configured.CONF_DATA_INPUT_PATH);
+        String[] inputDataPath = conf.get(Configured.CONF_DATA_INPUT_PATH).trim().split(" ");
+        for(int i = 0 ; i < inputDataPath.length; i ++){
+            inputDataPath[i]=conf.get(Configured.CONF_DFS_DATA_DIR)+"/"+inputDataPath[i];
+        }
         String dataColumnFormat = conf.get(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
-        dataConvertor = new TextDataConvertor(dataColumnFormat, inputDataPath, conf.getDouble("data.convert.binarize.threshold", -1.0));
+        dataConvertor = new TextDataConvertor(dataColumnFormat, StringUtils.join(inputDataPath," "), conf.getDouble("data.convert.binarize.threshold", -1.0));
         try {
             dataConvertor.processData();
         } catch (IOException e) {

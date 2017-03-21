@@ -19,6 +19,7 @@
 package net.librec.recommender.cf.rating;
 
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
@@ -31,7 +32,6 @@ import net.librec.recommender.MatrixFactorizationRecommender;
  * <p>
  * <strong>Remark:</strong> This implementation does not support half-star
  * ratings.
- *
  * @author bin wu(Email:wubin@gs.zzu.edu.cn)
  */
 public class RFRecRecommender extends MatrixFactorizationRecommender {
@@ -64,11 +64,6 @@ public class RFRecRecommender extends MatrixFactorizationRecommender {
      * Item weights learned by the gradient solver.
      */
     private DenseVector itemWeights;
-    protected double learnRate;
-
-    public RFRecRecommender() {
-
-    }
 
     protected void setup() throws LibrecException {
         super.setup();
@@ -77,13 +72,14 @@ public class RFRecRecommender extends MatrixFactorizationRecommender {
         itemAverages = new DenseVector(numItems);
         userWeights = new DenseVector(numUsers);
         itemWeights = new DenseVector(numItems);
+
         for (int u = 0; u < numUsers; u++) {
             userAverages.set(u, trainMatrix.row(u).mean());
-            userWeights.set(u, 0.6 + Math.random() * 0.01);
+            userWeights.set(u, 0.6 + Randoms.uniform() * 0.01);
         }
         for (int j = 0; j < numItems; j++) {
             itemAverages.set(j, trainMatrix.column(j).mean());
-            itemWeights.set(j, 0.4 + Math.random() * 0.01);
+            itemWeights.set(j, 0.4 + Randoms.uniform() * 0.01);
         }
         // Calculate the frequencies.
         // Users,items
@@ -154,7 +150,7 @@ public class RFRecRecommender extends MatrixFactorizationRecommender {
 
                 // item component
                 int tmpItem = 0;
-                frequency = 0;
+//                frequency = 0;
                 frequencyInt = itemRatingFrequencies.get(itemIdx, ratingValue);
                 frequency = (int) frequencyInt;
                 tmpItem = frequency + 1 + isAvgRating(itemAverages.get(itemIdx), ratingValue);

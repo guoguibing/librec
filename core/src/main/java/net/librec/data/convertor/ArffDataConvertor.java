@@ -536,5 +536,4 @@ public class ArffDataConvertor extends AbstractDataConvertor {
     public ArrayList<BiMap<String, Integer>> getAllFeatureIds() {
         return featuresInnerMapping;
     }
-
 }

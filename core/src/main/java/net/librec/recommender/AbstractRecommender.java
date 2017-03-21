@@ -379,7 +379,6 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void loadModel(String filePath) {
-
     }
 
     /**
@@ -389,7 +388,6 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void saveModel(String filePath) {
-
     }
 
     /**
@@ -475,7 +473,6 @@ public abstract class AbstractRecommender implements Recommender {
 
         // check if converged
         boolean converged = Math.abs(loss) < 1e-5;
-        lastLoss = loss;
 
         return converged;
     }

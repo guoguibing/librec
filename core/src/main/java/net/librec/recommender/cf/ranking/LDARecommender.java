@@ -19,6 +19,7 @@ package net.librec.recommender.cf.ranking;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
@@ -53,7 +54,6 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
      * Dirichlet hyper-parameters of topic-item distribution, typical value is 0.01
      */
     protected float initBeta;
-
     /**
      * entry[k, i]: number of tokens assigned to topic k, given item i.
      */
@@ -141,9 +141,9 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
         for (MatrixEntry matrixEntry : trainMatrix) {
             int userIdx = matrixEntry.row();
             int itemIdx = matrixEntry.column();
-            int num = (int) (matrixEntry.get());    // problem 1 : the for cycle is not necessary
+            int num = (int) (matrixEntry.get());
             for(int numIdx = 0; numIdx < num; numIdx++) {
-                int topicIdx = (int) (Math.random() * numTopics); // 0 ~ k-1     // problem 2 : the random
+                int topicIdx = Randoms.uniform(numTopics); // 0 ~ k-1
 
                 // assign a topic t to pair (u, i)
                 topicAssignments.add(topicIdx);
@@ -172,7 +172,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
             int itemIdx = matrixEntry.column();
 
             int num = (int) (matrixEntry.get());
-            for (int numIdx = 0; numIdx < num; numIdx++) {      // problem 1 again
+            for (int numIdx = 0; numIdx < num; numIdx++) {
                 int topicIdx = topicAssignments.get(topicAssignmentsIdx); // topic
 
                 userTopicNumbers.add(userIdx, topicIdx, -1);
@@ -192,7 +192,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
                     p[topicIdx] += p[topicIdx - 1];
                 }
                 // scaled sample because of unnormalized p[], randomly sampled a new topic t
-                double rand = Math.random() * p[numTopics - 1];
+                double rand = Randoms.uniform() * p[numTopics - 1];
                 for (topicIdx = 0; topicIdx < p.length; topicIdx++) {
                     if (rand < p[topicIdx])
                         break;
@@ -221,7 +221,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
 
             topicAlpha = alpha.get(topicIdx);
             double numerator = 0, denominator = 0;
-            for (int itemIdx = 0; itemIdx < numUsers; itemIdx++) {     // problem 2 : numUsers should be numItems ? or item index should be user index?
+            for (int itemIdx = 0; itemIdx < numUsers; itemIdx++) {
                 numerator += digamma(userTopicNumbers.get(itemIdx, topicIdx) + topicAlpha) - digamma(topicAlpha);
                 denominator += digamma(userTokenNumbers.get(itemIdx) + sumAlpha) - digamma(sumAlpha);
             }

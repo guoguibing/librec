@@ -47,11 +47,13 @@ public class SoRecRecommender extends SocialRecommender {
     @Override
     public void setup() throws LibrecException {
         super.setup();
+        userFactors.init(1.0);
+        itemFactors.init(1.0);
         regRateSocial = conf.getFloat("rec.rate.social.regularization", 0.01f);
         regUserSocial = conf.getFloat("rec.user.social.regularization", 0.01f);
 
         userSocialFactors = new DenseMatrix(numUsers, numFactors);
-        userSocialFactors.init(initMean, initStd);
+        userSocialFactors.init(1.0);
 
         inDegrees = new ArrayList<>();
         outDegrees = new ArrayList<>();

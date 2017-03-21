@@ -131,17 +131,19 @@ public class RatioDataSplitter extends AbstractDataSplitter {
             testMatrix = new SparseMatrix(preferenceMatrix);
             trainMatrix = new SparseMatrix(preferenceMatrix);
 
-            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-                SparseVector uv = preferenceMatrix.row(u);
-                for (VectorEntry j : uv) {
-                    double rdm = Randoms.uniform();
-                    if (rdm < ratio) {
-                        testMatrix.set(u, j.index(), 0.0);
-                    } else {
-                        trainMatrix.set(u, j.index(), 0.0);
-                    }
+            for(MatrixEntry matrixEntry: preferenceMatrix){
+                int userIdx = matrixEntry.row();
+                int itemIdx = matrixEntry.column();
+
+                double rdm = Randoms.uniform();
+
+                if (rdm < ratio) {
+                    testMatrix.set(userIdx, itemIdx, 0.0);
+                } else {
+                    trainMatrix.set(userIdx, itemIdx, 0.0);
                 }
             }
+
             SparseMatrix.reshape(testMatrix);
             SparseMatrix.reshape(trainMatrix);
         }

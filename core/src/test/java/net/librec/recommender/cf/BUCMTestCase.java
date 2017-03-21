@@ -65,7 +65,7 @@ public class BUCMTestCase extends BaseTestCase {
      */
     @Test
     public void testRecommenderRanking() throws ClassNotFoundException, LibrecException, IOException {
-        Configuration.Resource resource = new Configuration.Resource("rec/cf/bhfree-test.properties");
+        Configuration.Resource resource = new Configuration.Resource("rec/cf/bucm-test.properties");
         conf.set("rec.recommender.isranking", "true");
         conf.addResource(resource);
         RecommenderJob job = new RecommenderJob(conf);

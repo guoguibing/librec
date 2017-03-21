@@ -63,7 +63,7 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
         for (MatrixEntry matrixEntry : trainMatrix) {
             int userIdx = matrixEntry.row();
             int itemIdx = matrixEntry.column();
-//            confindenceMinusIdentityMatrix.set(userIdx, itemIdx, alpha * matrixEntry.get());
+//            confindenceMinusIdentityMatrix.set(userIdx, itemIdx, weightCoefficient * matrixEntry.get());
             confindenceMinusIdentityMatrix.set(userIdx, itemIdx, Math.log(1.0 + Math.pow(10, weightCoefficient) * matrixEntry.get())); //maybe better for poi recommender
             preferenceMatrix.set(userIdx, itemIdx, 1.0d);
         }

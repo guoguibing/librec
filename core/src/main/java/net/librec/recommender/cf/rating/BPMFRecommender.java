@@ -198,7 +198,7 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
         WishartScalePost = WishartScalePost.add(muError.outer(muError).scale(normalBeta0 * numRows / betaPost));
         WishartScalePost = WishartScalePost.inv();
         WishartScalePost = WishartScalePost.add(WishartScalePost.transpose()).scale(0.5);
-        DenseMatrix variance = Randoms.wishart(WishartScalePost, nuPost);
+        DenseMatrix variance = Randoms.wishart(WishartScalePost, numRows + numColumns);
         if (variance != null) {
             hyperParameters.variance = variance;
         }

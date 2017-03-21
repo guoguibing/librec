@@ -39,6 +39,8 @@ public class RSTERecommender extends SocialRecommender {
     @Override
     public void setup() throws LibrecException {
         super.setup();
+        userFactors.init(1.0);
+        itemFactors.init(1.0);
         userSocialRatio = conf.getFloat("rec.user.social.ratio", 0.8f);
     }
 
@@ -50,6 +52,8 @@ public class RSTERecommender extends SocialRecommender {
 
             DenseMatrix tempUserFactors = new DenseMatrix(numUsers, numFactors);
             DenseMatrix tempItemFactors = new DenseMatrix(numItems, numFactors);
+
+
 
             // ratings
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
@@ -68,7 +72,7 @@ public class RSTERecommender extends SocialRecommender {
 
                 for (VectorEntry vectorEntry : trainMatrix.row(userIdx)) {
                     int itemIdx = vectorEntry.index();
-                    double rating = vectorEntry.get();
+                    double rating =  vectorEntry.get();
                     double norRating = Maths.normalize(rating, minRate, maxRate);
 
                     // compute directly to speed up calculation
@@ -92,7 +96,6 @@ public class RSTERecommender extends SocialRecommender {
                         double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
 
                         double userDeriValue = userSocialRatio * deriValue * itemFactorValue + regUser * userFactorValue;
-
                         double userSocialFactorValue = weightSocialSum > 0 ? sumUserSocialFactor[factorIdx] / weightSocialSum : 0;
                         double itemDeriValue = deriValue * (userSocialRatio * userFactorValue + (1 - userSocialRatio) * userSocialFactorValue) + regItem * itemFactorValue;
 
@@ -131,7 +134,7 @@ public class RSTERecommender extends SocialRecommender {
 
                         // double pred = predict(p, j, false);
                         double error = Maths.logistic(finalPredictRating) - Maths.normalize(socialItemValues.get(socialItemIdx), minRate, maxRate);
-                        double deriValue = Maths.logisticGradientValue(finalPredictRating) * error * socialItemValues.get(socialItemIdx);
+                        double deriValue = Maths.logisticGradientValue(finalPredictRating) * error * socialUserValues.get(socialUserIdx);
 
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
                             tempUserFactors.add(userSocialIdx, factorIdx, (1 - userSocialRatio) * deriValue * itemFactors.get(socialItemIdx, factorIdx));
@@ -139,10 +142,17 @@ public class RSTERecommender extends SocialRecommender {
                 }
             }
 
+
+
+
             userFactors = userFactors.add(tempUserFactors.scale(-learnRate));
             itemFactors = itemFactors.add(tempItemFactors.scale(-learnRate));
 
             loss *= 0.5d;
+
+
+
+
 
             if (isConverged(iter) && earlyStop) {
                 break;
