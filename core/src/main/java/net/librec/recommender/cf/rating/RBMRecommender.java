@@ -156,7 +156,7 @@ public class RBMRecommender extends AbstractRecommender {
         Random randn = new Random();
         while (loopcount < maxIter) {
             loopcount++;
-            zero();
+            Zero();
             int[] visitingSeq = new int[numUsers];
             for (int i = 0; i < visitingSeq.length; i++) {
                 visitingSeq[i] = i;
@@ -323,11 +323,11 @@ public class RBMRecommender extends AbstractRecommender {
                     hidbiases[h] += hidbiasinc[h];
                 }
             }
-            zero();
+            Zero();
         }
     }
 
-    private void zero() {
+    private void Zero() {
         cDpos = new double[numItems][softmax][featureNumber];
         cDneg = new double[numItems][softmax][featureNumber];
         poshidact = new double[featureNumber];

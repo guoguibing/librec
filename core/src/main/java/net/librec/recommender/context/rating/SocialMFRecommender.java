@@ -36,6 +36,9 @@ public class SocialMFRecommender extends SocialRecommender {
     @Override
     public void setup() throws LibrecException {
         super.setup();
+        userFactors.init(1.0);
+        itemFactors.init(1.0);
+
     }
 
     @Override
@@ -108,7 +111,7 @@ public class SocialMFRecommender extends SocialRecommender {
                     if (numTrust > 0)
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
                             tempUserFactors.add(userIdx, factorIdx, -regSocial * (trustedValue / numTrusted) *
-                                    (itemFactors.get(trustedUserIdx, factorIdx) - sumDiffs[factorIdx] / numTrust));
+                                    (userFactors.get(trustedUserIdx, factorIdx) - sumDiffs[factorIdx] / numTrust));
                 }
             }
 
@@ -118,20 +121,16 @@ public class SocialMFRecommender extends SocialRecommender {
 
             loss *= 0.5d;
 
+
+
             if (isConverged(iter) && earlyStop) {
                 break;
             }
             updateLRate(iter);
+
+
         }
     }
 
-    /**
-     * normalize a rating to the region (0, 1)
-     *
-     * @param rating a given rating
-     * @return  a normalized rating
-     */
-    protected double normalize(double rating) {
-        return (rating - minRate) / (maxRate - minRate);
-    }
+
 }

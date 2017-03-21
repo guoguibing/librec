@@ -67,12 +67,14 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
         // precomputing Q and errors, for efficiency
         DenseVector errors = new DenseVector(n);
         int ind = 0;
+        int userDimension = trainTensor.getUserDimension();
+        int itemDimension = trainTensor.getItemDimension();
         for (TensorEntry me : trainTensor) {
             int[] entryKeys = me.keys();
             SparseVector x = tenserKeysToFeatureVector(entryKeys);
 
             double rate = me.get();
-            double pred = predict(x);
+            double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], x);
 
             double err = rate - pred;
             errors.set(ind, err);
@@ -97,7 +99,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
          */
 
         for (int iter = 0; iter < numIterations; iter++) {
-            double loss = 0.0;
+            loss = 0.0;
             // global bias
             double numerator = 0;
             double denominator = 0;
@@ -109,7 +111,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
             denominator += regW0;
             double newW0 = numerator / denominator;
 
-            System.out.println("original:" + errors.sum());
+            LOG.info("original:" + errors.sum());
 
             // update errors
             for (int i = 0; i < n; i++) {
@@ -125,7 +127,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
 
             loss += regW0 * w0 * w0;
 
-            System.out.println("after 0-way:" + errors.sum());
+            LOG.info("after 0-way:" + errors.sum());
 
             // 1-way interactions
             for (int l = 0; l < p; l++) {
@@ -153,7 +155,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
                 loss += regW * oldWl * oldWl;
             }
 
-            System.out.println("after 1-way:" + errors.sum());
+            LOG.info("after 1-way:" + errors.sum());
 
             // 2-way interactions
             for (int f = 0; f < k; f++) {
@@ -195,10 +197,10 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
 //                    errors = errorGround;
                     loss += regF * oldVlf * oldVlf;
                 }
-                //System.out.println("temp:" + errors.sum());
+                //LOG.info("temp:" + errors.sum());
             }
 
-            System.out.println("after 2-way:" + errors.sum());
+            LOG.info("after 2-way:" + errors.sum());
             if (isConverged(iter)  && earlyStop)
                 break;
         }

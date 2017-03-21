@@ -256,6 +256,10 @@ public class HFTRecommender extends TensorRecommender {
         return str.toString(topicList, ":");
     }
 
+    /**
+     * The training approach is SGD instead of L-BFGS, so it can be slow if the dataset
+     * is big.
+     */
     @Override
     protected void trainModel() {
         for (int iter = 1; iter <= conf.getDouble("rec.iterator.maximum"); iter++) {

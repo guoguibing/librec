@@ -2,6 +2,7 @@ package net.librec.recommender.cf.rating;
 
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.KernelSmoothing;
+import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
@@ -119,13 +120,13 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
 
         // Parallel training:
         while (completeModelCount < numLocalModels) {
-            int anchorUser = (int) Math.floor(Math.random() * numUsers);
+            int anchorUser = Randoms.uniform(numUsers);
             List<Integer> itemList = trainMatrix.getColumns(anchorUser);
 
             if (itemList != null && itemList.size() > 0) {
                 if (runningThreadCount < numThreads && modelCount < numLocalModels) {
                     // Selecting a new anchor point:
-                    int itemListIdx = (int) Math.floor(Math.random() * itemList.size());
+                    int itemListIdx = Randoms.uniform(itemList.size());
                     int anchorItem = itemList.get(itemListIdx);
 
                     anchorArrayUser[modelCount] = anchorUser;
@@ -149,7 +150,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
                     try {
                         learners[waitingThreadPointer].join();
                     } catch (InterruptedException ie) {
-                        System.out.println("Join failed: " + ie);
+                        LOG.error("Join failed: " + ie);
                     }
 
                     int currentModelThreadIdx = waitingThreadPointer;

@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * NormalizedDCGEvaluator
+ * NormalizedDCGEvaluator @topN
  *
  * @author WangYuFeng
  */
@@ -47,9 +47,10 @@ public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
 
         double nDCG = 0.0;
         int maxNumTestItemsByUser = conf.getInt("rec.eval.item.test.maxnum", testMatrix.numColumns());
-        List<Double> idcgs = new ArrayList<>(maxNumTestItemsByUser + 1);
+        int idcgsSize = Math.min(maxNumTestItemsByUser, topN);
+        List<Double> idcgs = new ArrayList<>(idcgsSize + 1);
         idcgs.add(0.0d);
-        for (int index = 0; index < maxNumTestItemsByUser; index++) {
+        for (int index = 0; index < idcgsSize; index++) {
             idcgs.add(1.0d / Maths.log(index + 2, 2) + idcgs.get(index));
         }
         int numUsers = testMatrix.numRows();
@@ -73,7 +74,7 @@ public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
                     dcg += 1 / Maths.log(rank + 1, 2);
                 }
 
-                nDCG += dcg / idcgs.get(testSetByUser.size());
+                nDCG += dcg / idcgs.get(testSetByUser.size() < topK ? testSetByUser.size(): topK);
                 nonZeroNumUsers++;
             }
         }

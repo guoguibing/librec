@@ -70,7 +70,6 @@ import org.junit.runners.Suite.SuiteClasses;
 	GenericRecommendedFilterTestCase.class,
 	//io
 //	ArrayWritableTestCase.class,
-//	ModelFileTestCase.class,
 	//job
 //	JobStatusTestCase.class,
 	RecommenderJobTestCase.class,
@@ -118,7 +117,7 @@ import org.junit.runners.Suite.SuiteClasses;
 	GBPRTestCase.class,
 	ItemBigramTestCase.class,
 	LDATestCase.class,
-	ListwiseMFTestCase.class,
+	ListRankMFTestCase.class,
 	PLSATestCase.class,
 	RankALSTestCase.class,
 	RankSGDTestCase.class,

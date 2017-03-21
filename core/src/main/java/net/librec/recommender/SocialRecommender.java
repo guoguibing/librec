@@ -65,5 +65,15 @@ public abstract class SocialRecommender extends MatrixFactorizationRecommender {
     protected double denormalize(double predictRating) {
         return minRate + predictRating * (maxRate - minRate);
     }
+
+    /**
+     * normalize a rating to the region (0, 1)
+     *
+     * @param rating a given rating
+     * @return  a normalized rating
+     */
+    protected double normalize(double rating) {
+        return (rating - minRate) / (maxRate - minRate);
+    }
 }
 

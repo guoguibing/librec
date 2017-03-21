@@ -103,7 +103,7 @@ public class SlopeOneRecommender extends AbstractRecommender {
         for (int comparedItemIdx : itemRatingsVector.getIndex()) {
             double cardinaryValue = cardMatrix.get(itemIdx, comparedItemIdx);
             if (cardinaryValue > 0) {
-                predictRatings += (devMatrix.get(itemIdx, comparedItemIdx) + itemRatingsVector.get(comparedItemIdx)) * cardinaryValues;
+                predictRatings += (devMatrix.get(itemIdx, comparedItemIdx) + itemRatingsVector.get(comparedItemIdx)) * cardinaryValue;
                 cardinaryValues += cardinaryValue;
             }
         }

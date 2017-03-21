@@ -24,36 +24,35 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Kabbur et al., <strong>FISM: Factored Item Similarity Models for Top-N Recommender Systems</strong>, KDD 2013.
+ *
+ * @author SunYatong
  */
-@ModelData({"isRanking", "fismauc", "P", "Q", "itemBiases"})
+@ModelData({"isRanking", "fismrmse", "P", "Q", "itemBiases", "userBiases"})
 public class FISMaucRecommender extends MatrixFactorizationRecommender {
-    private int rho;
-    private float alpha;
+
+    private float rho,alpha,beta,gamma;
 
     /**
      * bias regularization
      */
-    private double regBias;
+    private double lRate;
 
     /**
-     * items biases vector
+     * items and users biases vector
      */
     private DenseVector itemBiases;
 
     /**
-     * another item factors
+     * two low-rank item matrices, an item-item similarity was learned as a product of these two matrices
      */
-    private DenseMatrix anotherItemFactors;
-
+    private DenseMatrix P, Q;
 
     /**
      * user-items cache, item-users cache
@@ -67,152 +66,146 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
 
     @Override
     protected void setup() throws LibrecException {
+
         super.setup();
 
+        P = new DenseMatrix(numItems, numFactors);
+        Q = new DenseMatrix(numItems, numFactors);
+        P.init(0,0.01);
+        Q.init(0,0.01);
         itemBiases = new DenseVector(numItems);
-        itemBiases.init();
-
-        anotherItemFactors = new DenseMatrix(numItems, numFactors);
-        anotherItemFactors.init(initMean, initStd);
-
-        isRanking = true;
-        rho = conf.getInt("rec.fismauc.rho");
-        alpha = conf.getFloat("rec.fismauc.alpha");
-        regBias = conf.getDouble("rec.bias.regularization", 0.01d);
-
+        itemBiases.init(0,0.01);
+        rho = conf.getFloat("rec.fismauc.rho");//3-15
+        alpha = conf.getFloat("rec.fismauc.alpha",0.5f);
+        beta  = conf.getFloat("rec.fismauc.beta",0.6f);
+        gamma=conf.getFloat("rec.fismauc.gamma",0.1f);
+        lRate=conf.getDouble("rec.iteration.learnrate",0.0001);
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
+
         userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+        userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+
     }
 
     @Override
-    protected void trainModel() throws LibrecException {
+    protected void trainModel() throws LibrecException{
 
         for (int iter = 1; iter <= numIterations; iter++) {
-
-            loss = 0.0d;
-
-            for (int u : trainMatrix.rows()) {
+            loss = 0;
+            // for all u in C
+            for (int u = 0; u < numUsers; u++) {
                 SparseVector Ru = trainMatrix.row(u);
-                int[] ratedItems = Ru.getIndex();
-
-                for (VectorEntry ve : Ru) {
-                    int i = ve.index();
-                    double rui = ve.get();
-
-                    List<Integer> js = new ArrayList<>();
-                    int len = 0;
-                    while (len < rho) {
-                        int j = Randoms.uniform(numItems);
-                        if (Ru.contains(j) || js.contains(j)) {
-                            continue;
-                        }
-
-                        js.add(j);
-                        len++;
-                    }
-
-                    double wu = Ru.getCount() - 1 > 0 ? Math.pow(Ru.getCount() - 1, -alpha) : 0;
-                    double[] x = new double[numFactors];
-
-                    for (int j : js) {
-                        double sum_i = 0, sum_j = 0;
-                        for (int k : ratedItems) {
-                            if (i != k) {
-                                sum_i += DenseMatrix.rowMult(anotherItemFactors, k, itemFactors, i);
-                            }
-
-                            sum_j += DenseMatrix.rowMult(anotherItemFactors, k, itemFactors, j);
-                        }
-
-                        double bi = itemBiases.get(i), bj = itemBiases.get(j);
-
-                        double pui = bi + wu * sum_i;
-                        double puj = bj + Math.pow(Ru.getCount(), -alpha) * sum_j;
-                        double ruj = 0;
-
-                        double eij = (rui - ruj) - (pui - puj);
-
-                        loss += eij * eij;
-
-                        // update bi
-                        itemBiases.add(i, learnRate * (eij - regBias * bi));
-
-                        // update bj
-                        itemBiases.add(j, -learnRate * (eij - regBias * bj));
-
-                        loss += regBias * bi * bi - regBias * bj * bj;
-
-                        // update qif, qjf
-                        for (int f = 0; f < numFactors; f++) {
-                            double qif = itemFactors.get(i, f), qjf = itemFactors.get(j, f);
-
-                            double sum_k = 0;
-                            for (int k : ratedItems) {
-                                if (k != i) {
-                                    sum_k += anotherItemFactors.get(k, f);
-                                }
-                            }
-
-                            double delta_i = eij * wu * sum_k - regItem * qif;
-                            itemFactors.add(i, f, learnRate * delta_i);
-
-                            double delta_j = eij * wu * sum_k - regItem * qjf;
-                            itemFactors.add(j, f, -learnRate * delta_j);
-
-                            x[f] += eij * (qif - qjf);
-
-                            loss += regItem * qif * qif - regItem * qjf * qjf;
+                int Ru_p_size = Ru.size();
+                if(Ru_p_size == 0 || Ru_p_size == 1) {
+                    Ru_p_size = 2;
+                }
+                // for all i in Ru+
+                for (int i : Ru.getIndex()) {
+                    // x <- 0
+                    DenseVector x = new DenseVector(numFactors);
+                    x.init(0);
+                    // t <- (n - 1)^(-alpha) Σ pj    (j!=i)
+                    DenseVector t = new DenseVector(numFactors);
+                    t.init(0);
+                    for (int j : Ru.getIndex()) {
+                        if(i != j){
+                            t = t.add(P.row(j));
                         }
                     }
+                    t = t.scale(Math.pow(Ru_p_size - 1, -alpha));
+                    for (int tindex = 0; tindex < numFactors; tindex ++) {
+                        if (Double.isNaN(t.get(tindex))) {
+                            LOG.info("user:" + u + ", item:" + i + ", Ru_p_size:" + Ru_p_size);
+                        }
+                    }
+                    // Z <- SampleZeros(rho)
+                    int sampleSize = (int)(rho * Ru_p_size);
+                    // make a random sample of negative feedback for Ru-
+                    List<Integer> negative_indices = null;
+                    try {
+                        negative_indices = Randoms.randInts(sampleSize, 0, numItems);
+                        for (int list_idx = 0; list_idx < negative_indices.size(); list_idx++) {
+                            int index = negative_indices.get(list_idx);
+                            // if negative_indices contains positive index, remove it
+                            if (Ru.get(index) > 0.1) {
+                                negative_indices.remove(list_idx);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    // for all j in Z
+                    for (int j : negative_indices) {
+                        double bi = itemBiases.get(i);
+                        double bj = itemBiases.get(j);
 
-                    // update for each rated item
-                    for (int j : ratedItems) {
+                        // update pui  puj  rui  ruj
+                        double rui = Ru.get(i);
+                        double pui = bi + Q.row(i).inner(t);
+                        double puj = bj + Q.row(j).inner(t);
+                        double ruj = 0.0;
+                        double e = (rui - ruj) - (pui - puj);
+                        loss += e*e;
+
+                        // update bi  bj
+                        itemBiases.add(i, lRate * (e - gamma * bi));
+                        itemBiases.add(j, lRate * (e - gamma * bj));
+
+                        // update qi qj
+                        DenseVector delta_qi=t.scale(e).minus(Q.row(i).scale(beta));
+                        DenseVector qi = Q.row(i).add(delta_qi.scale(lRate));
+                        Q.setRow(i, qi);
+                        DenseVector delta_qj=t.scale(e).minus(Q.row(j).scale(beta));
+                        DenseVector qj = Q.row(j).add(delta_qj.scale(lRate));
+                        Q.setRow(j, qj);
+
+                        // update x
+                        x = x.add(qi.minus(qj).scale(e));
+                    }
+                    // for all j in Ru+\{i}
+                    for (int j : Ru.getIndex()) {
                         if (j != i) {
-                            for (int f = 0; f < numFactors; f++) {
-                                double pjf = anotherItemFactors.get(j, f);
-                                double delta = wu * x[f] / rho - regItem * pjf;
-
-                                anotherItemFactors.add(j, f, learnRate * delta);
-
-                                loss += regItem * pjf * pjf;
-                            }
+                            // update pj
+                            DenseVector delta_pj = x.scale(Math.pow(rho, -1) * Math.pow(Ru_p_size - 1, -alpha)).minus(P.row(j).scale(beta));
+                            P.setRow(j, P.row(j).add(delta_pj.scale(lRate)));
                         }
                     }
                 }
-            }
 
-            loss *= 0.5d;
-            if (isConverged(iter) && earlyStop) {
+            }
+            for (int i = 0; i<numItems; i++) {
+                double bi = itemBiases.get(i);
+                loss += gamma * bi * bi;
+                loss += beta * Q.row(i).inner(Q.row(i));
+                loss += beta * P.row(i).inner(P.row(i));
+            }
+            loss *= 0.5;
+            if (isConverged(iter) && earlyStop){
                 break;
             }
-            updateLRate(iter);
         }
     }
 
     @Override
-    protected double predict(int userIdx, int itemIdx) throws LibrecException {
-
+    protected double predict(int u, int j) throws LibrecException {
+        double pred = itemBiases.get(j);
         double sum = 0;
         int count = 0;
-
         List<Integer> ratedItems = null;
-
         try {
-            ratedItems = userItemsCache.get(userIdx);
+            ratedItems = userItemsCache.get(u);
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
-
-        for (int ratedItemIdx : ratedItems) {
+        for (int i : ratedItems) {
             // for test, i and j will be always unequal as j is unrated
-            if (itemIdx != ratedItemIdx) {
-                sum += DenseMatrix.rowMult(anotherItemFactors, ratedItemIdx, itemFactors, itemIdx);
+            if (i != j) {
+                sum += DenseMatrix.rowMult(P, i, Q, j);
                 count++;
             }
         }
-
         double wu = count > 0 ? Math.pow(count, -alpha) : 0;
-
-        return itemBiases.get(itemIdx) + wu * sum;
+        return pred + wu * sum;
     }
+
 }

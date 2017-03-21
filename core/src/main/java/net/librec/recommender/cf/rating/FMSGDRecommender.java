@@ -61,14 +61,16 @@ public class FMSGDRecommender extends FactorizationMachineRecommender {
 
     private void buildRatingModel() throws LibrecException {
         for (int iter = 0; iter < numIterations; iter++) {
-            double loss = 0.0;
+            loss = 0.0;
 
+            int userDimension = trainTensor.getUserDimension();
+            int itemDimension = trainTensor.getItemDimension();
             for (TensorEntry me : trainTensor) {
                 int[] entryKeys = me.keys();
                 SparseVector x = tenserKeysToFeatureVector(entryKeys);
 
                 double rate = me.get();
-                double pred = predict(x);
+                double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], x);
 
                 double err = pred - rate;
                 loss += err * err;

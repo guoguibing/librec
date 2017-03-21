@@ -10,12 +10,13 @@ import org.junit.Test;
 import java.io.IOException;
 
 /**
- * ListwiseFM Test Case corresponds to ListwiseMFRecommender
- * {@link net.librec.recommender.cf.ranking.ListwiseMFRecommender}
+ * ListRankMF Test Case corresponds to ListRankMFRecommender
+ * {@link net.librec.recommender.cf.ranking.ListRankMFRecommender}
  *
- * @author SunYatong
+ * @author Jinyuanyuan
  */
-public class ListwiseMFTestCase extends BaseTestCase {
+public class ListRankMFTestCase extends BaseTestCase{
+
     @Override
     @Before
     public void setUp() throws Exception {
@@ -23,7 +24,7 @@ public class ListwiseMFTestCase extends BaseTestCase {
     }
 
     /**
-     * test the whole process ofListwiseFM recommendation
+     * test the whole process of ListwiseFM recommendation
      *
      * @throws ClassNotFoundException
      * @throws LibrecException
@@ -31,7 +32,7 @@ public class ListwiseMFTestCase extends BaseTestCase {
      */
     @Test
     public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
-        Configuration.Resource resource = new Configuration.Resource("rec/cf/ranking/listwisemf-test.properties");
+        Configuration.Resource resource = new Configuration.Resource("rec/cf/ranking/listrankmf-test.properties");
         conf.addResource(resource);
         RecommenderJob job = new RecommenderJob(conf);
         job.runJob();

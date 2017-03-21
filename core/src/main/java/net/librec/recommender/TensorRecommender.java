@@ -374,7 +374,6 @@ public abstract class TensorRecommender implements Recommender {
 
         // check if converged
         boolean converged = Math.abs(loss) < 1e-5;
-        lastLoss = loss;
 
         return converged;
     }
@@ -389,7 +388,7 @@ public abstract class TensorRecommender implements Recommender {
      * <li>Leon Bottou, Stochastic Gradient Descent Tricks</li>
      * <li>more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
      * </ol>
-     *
+     * 
      * @param iter the current iteration
      */
     protected void updateLRate(int iter) {
@@ -407,6 +406,8 @@ public abstract class TensorRecommender implements Recommender {
         if (maxLearnRate > 0 && learnRate > maxLearnRate) {
             learnRate = maxLearnRate;
         }
+        lastLoss = loss;
+
     }
 
     /**
