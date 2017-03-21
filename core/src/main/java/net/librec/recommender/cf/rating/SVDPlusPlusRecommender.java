@@ -148,7 +148,7 @@ public class SVDPlusPlusRecommender extends BiasedMFRecommender {
             userImpFactor.scaleEqual(1.0 / impNor);
         }
         // sum with user factors
-        userImpFactor.add(userFactors.row(userIdx, false));
+        userImpFactor.addEqual(userFactors.row(userIdx, false));
 
         return predictRating + userImpFactor.inner(itemFactors.row(itemIdx, false));
     }
