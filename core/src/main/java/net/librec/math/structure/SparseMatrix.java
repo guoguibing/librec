@@ -136,7 +136,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
         rowData = new double[data.length];
         for (int i = 0; i < rowData.length; i++) {
             rowData[i] = data[i];
-            valueSet.add(data[i]);
+            valueSetAdd(data[i]);
         }
 
         rowPtr = new int[ptr.length];
@@ -153,7 +153,7 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
         colData = new double[data.length];
         for (int i = 0; i < colData.length; i++) {
             colData[i] = data[i];
-            valueSet.add(data[i]);
+            valueSetAdd(data[i]);
         }
 
         colPtr = new int[ptr.length];
@@ -322,9 +322,15 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
 
         index = getCCSIndex(row, column);
         colData[index] = val;
-        valueSet.add(val);
+
+        valueSetAdd(val);
     }
 
+    private void valueSetAdd(double value){
+        if(value != 0.0) {
+            valueSet.add(value);
+        }
+    }
 
     /**
      * Add a value to entry [row, column]
