@@ -94,13 +94,15 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         if (cL == null) {
             cL = Configuration.class.getClassLoader();
         }
-        if (cL.getResource("librec.properties") != null) {
-            LOG.warn("DEPRECATED: librec.properties found in the classpath. ");
+        if (cL.getResource("librec-default.properties") != null) {
+            addDefaultResource("librec-default.properties");
         }
 //         if (cL.getResource("driver.classes.props") != null) {
 //         LOG.warn("DEPRECATED: driver.classes.props found in the classpath.");
 //         }
-        addDefaultResource("librec.properties");
+        if (cL.getResource("librec.properties") != null) {
+            addDefaultResource("librec.properties");
+        }
         // addDefaultResource("driver.classes.props");
     }
 
