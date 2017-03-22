@@ -98,7 +98,7 @@
             				<include>net.librec.recommender.cf.rating.*</include>
           				</includes>
           				<excludes>
-            				<exclude>net.librec.recommender.cf.rating.RFRecRecommender.java</exclude>
+            				<exclude>net.librec.recommender.cf.rating.RfRecTestCase.java</exclude>
           				</excludes>
         			</configuration>
       			</plugin>
