@@ -19,6 +19,7 @@ package net.librec.recommender.cf.ranking;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
@@ -142,7 +143,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
             int itemIdx = matrixEntry.column();
             int num = (int) (matrixEntry.get());
             for(int numIdx = 0; numIdx < num; numIdx++) {
-                int topicIdx = (int) (Math.random() * numTopics); // 0 ~ k-1
+                int topicIdx = Randoms.uniform(numTopics); // 0 ~ k-1
 
                 // assign a topic t to pair (u, i)
                 topicAssignments.add(topicIdx);
@@ -191,7 +192,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
                     p[topicIdx] += p[topicIdx - 1];
                 }
                 // scaled sample because of unnormalized p[], randomly sampled a new topic t
-                double rand = Math.random() * p[numTopics - 1];
+                double rand = Randoms.uniform() * p[numTopics - 1];
                 for (topicIdx = 0; topicIdx < p.length; topicIdx++) {
                     if (rand < p[topicIdx])
                         break;

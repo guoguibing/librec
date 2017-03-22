@@ -23,6 +23,7 @@ import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
+import net.librec.recommender.SocialRecommender;
 
 /**
  * Yang et al., <strong>Social Collaborative Filtering by Trust</strong>, IJCAI 2013.
@@ -30,7 +31,7 @@ import net.librec.math.structure.MatrixEntry;
  * @author guoguibing and Keqiang Wang
  */
 @ModelData({"isRating", "trustmf", "trusterUserTrusterFactors", "trusterUserTrusteeFactors", "trusteeUserTrusterFactors", "trusteeUserTrusteeFactors", "model"})
-public class TrustMFRecommender extends SocialMFRecommender {
+public class TrustMFRecommender extends SocialRecommender {
     /**
      * truster model
      */
@@ -108,7 +109,7 @@ public class TrustMFRecommender extends SocialMFRecommender {
      */
     protected void TrusterMF() throws LibrecException {
         for (int iter = 1; iter <= numIterations; iter++) {
-            loss = 0.d;
+            loss = 0.0d;
 
             // gradients of trusterUserTrusterFactors, trusterUserTrusteeFactors, trusterItemFactors
             DenseMatrix userTrusterGradients = new DenseMatrix(numUsers, numFactors);
@@ -125,7 +126,8 @@ public class TrustMFRecommender extends SocialMFRecommender {
 
                 loss += error * error;
 
-                double deriValue = Maths.logisticGradientValue(rating) * error;
+                double deriValue = Maths.logisticGradientValue(predictRating) * error;
+
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                     double trusterUserTrusterFactorValue = trusterUserTrusterFactors.get(userIdx, factorIdx);
                     double trusterItemFactorValue = trusterItemFactors.get(itemIdx, factorIdx);
@@ -135,7 +137,7 @@ public class TrustMFRecommender extends SocialMFRecommender {
                     itemGradients.add(itemIdx, factorIdx, deriValue * trusterUserTrusterFactorValue
                             + regItem * trusterItemFactorValue);
 
-                    loss += regUser * trusterItemFactorValue * trusterItemFactorValue +
+                    loss += regUser * trusterUserTrusterFactorValue * trusterUserTrusterFactorValue +
                             regItem * trusterItemFactorValue * trusterItemFactorValue;
                 }
             }
@@ -175,6 +177,7 @@ public class TrustMFRecommender extends SocialMFRecommender {
 
             loss *= 0.5d;
 
+
             if (isConverged(iter) && earlyStop) {
                 break;
             }
@@ -203,7 +206,9 @@ public class TrustMFRecommender extends SocialMFRecommender {
                 double rating = matrixEntry.get();
 
                 double predictRating = predict(userIdx, itemIdx, false);
-                double error = Maths.logistic(rating) - normalize(rating);
+                double error = Maths.logistic(predictRating) - normalize(rating);
+
+                loss += error * error;
 
                 double deriValue = Maths.logisticGradientValue(predictRating) * error;
 
@@ -273,6 +278,7 @@ public class TrustMFRecommender extends SocialMFRecommender {
             learnRate *= 0.333;
         else if (iter == 100)
             learnRate *= 0.5;
+        lastLoss = loss;
     }
 
 

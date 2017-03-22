@@ -21,6 +21,7 @@ import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
+import net.librec.data.model.ArffDataModel;
 import net.librec.eval.Measure.MeasureValue;
 import net.librec.eval.RecommenderEvaluator;
 import net.librec.math.structure.SparseTensor;
@@ -31,6 +32,7 @@ import net.librec.recommender.item.RecommendedList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +97,7 @@ public abstract class TensorRecommender implements Recommender {
      */
     public BiMap<String, Integer> itemMappingData;
 
+    public ArrayList<BiMap<String, Integer>> allFeaturesMappingData;
     /**
      * early-stop criteria
      */
@@ -222,6 +225,9 @@ public abstract class TensorRecommender implements Recommender {
 
         userMappingData = getDataModel().getUserMappingData();
         itemMappingData = getDataModel().getItemMappingData();
+        numUsers = userMappingData.size();
+        numItems = itemMappingData.size();
+        allFeaturesMappingData = ((ArffDataModel)getDataModel()).getAllFeaturesMappingData();
 
         userDimension = trainTensor.getUserDimension();
         itemDimension = trainTensor.getItemDimension();
@@ -368,7 +374,6 @@ public abstract class TensorRecommender implements Recommender {
 
         // check if converged
         boolean converged = Math.abs(loss) < 1e-5;
-        lastLoss = loss;
 
         return converged;
     }
@@ -401,6 +406,8 @@ public abstract class TensorRecommender implements Recommender {
         if (maxLearnRate > 0 && learnRate > maxLearnRate) {
             learnRate = maxLearnRate;
         }
+        lastLoss = loss;
+
     }
 
     /**

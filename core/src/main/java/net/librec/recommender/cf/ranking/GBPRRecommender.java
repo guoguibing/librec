@@ -198,4 +198,8 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
 
         return rho * groupRating + (1 - rho) * predictRating;
     }
+
+    protected double predict(int userIdx, int itemIdx){
+        return itemBiases.get(itemIdx) + DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+    }
 }

@@ -42,7 +42,20 @@ public class SoRegRecommender extends SocialRecommender {
     @Override
     public void setup() throws LibrecException {
         super.setup();
+        userFactors.init(1.0);
+        itemFactors.init(1.0);
+
         userSocialCorrs = context.getSimilarity().getSimilarityMatrix();
+
+        for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+            for (int simUserIdx = userIdx + 1; simUserIdx < numUsers; simUserIdx++) {
+                if (userSocialCorrs.contains(userIdx, simUserIdx)) {
+                    double sim = userSocialCorrs.get(userIdx, simUserIdx);
+                    sim = (1.0 + sim) / 2;
+                    userSocialCorrs.set(userIdx, simUserIdx, sim);
+                }
+            }
+        }
     }
 
     @Override
@@ -59,10 +72,10 @@ public class SoRegRecommender extends SocialRecommender {
             for (MatrixEntry matrixEntry : trainMatrix) {
                 int userIdx = matrixEntry.row();
                 int itemIdx = matrixEntry.column();
-                double rating = matrixEntry.get();
+                double realRating = matrixEntry.get();
 
                 double predictRating = predict(userIdx, itemIdx);
-                double error = predictRating - rating;
+                double error = predictRating - realRating;
 
                 loss += error * error;
 
@@ -109,8 +122,8 @@ public class SoRegRecommender extends SocialRecommender {
                 }
 
             } // end of for loop
-            userFactors = userFactors.add(tempUserFactors.scale(-learnRate));
-            itemFactors = itemFactors.add(tempItemFactors.scale(-learnRate));
+            userFactors.addEqual(tempUserFactors.scale(-learnRate));
+            itemFactors.addEqual(tempItemFactors.scale(-learnRate));
 
             loss *= 0.5d;
 
@@ -119,5 +132,29 @@ public class SoRegRecommender extends SocialRecommender {
             }
             updateLRate(iter);
         }
+    }
+
+    /**
+     * predict a specific rating for user userIdx on item itemIdx. It is useful for evalution which requires predictions are
+     * bounded.
+     *
+     * @param userIdx user index
+     * @param itemIdx item index
+     * @param bound   whether there is a bound
+     * @return predictive rating for user userIdx on item itemIdx with bound
+     * @throws LibrecException if error occurs during predicting
+     */
+    protected double predict(int userIdx, int itemIdx, boolean bound) throws LibrecException {
+        double predictRating = predict(userIdx, itemIdx);
+
+        if (bound) {
+            if (predictRating > maxRate) {
+                predictRating = maxRate;
+            } else if (predictRating < minRate) {
+                predictRating = minRate;
+            }
+        }
+
+        return predictRating;
     }
 }

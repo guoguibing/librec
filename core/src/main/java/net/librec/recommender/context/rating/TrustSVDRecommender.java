@@ -90,6 +90,8 @@ public class TrustSVDRecommender extends SocialRecommender {
     @Override
     public void setup() throws LibrecException {
         super.setup();
+//        userFactors.init(1.0);
+//        itemFactors.init(1.0);
         regBias = conf.getDouble("rec.bias.regularization", 0.01);
 
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
@@ -99,6 +101,8 @@ public class TrustSVDRecommender extends SocialRecommender {
         itemBiases = new DenseVector(numItems);
         userBiases.init(initMean, initStd);
         itemBiases.init(initMean, initStd);
+
+
 
         //initialize trusteeFactors and impItemFactors
         trusteeFactors = new DenseMatrix(numUsers, numFactors);
@@ -151,6 +155,7 @@ public class TrustSVDRecommender extends SocialRecommender {
 
                 // To speed up, directly access the prediction instead of invoking "predictRating = predict(userIdx,itemIdx)"
                 double userBiasValue = userBiases.get(userIdx);
+
                 double itemBiasValue = itemBiases.get(itemIdx);
                 double predictRating = globalMean + userBiasValue + itemBiasValue + DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
 
@@ -191,6 +196,8 @@ public class TrustSVDRecommender extends SocialRecommender {
                 double userWeightDenom = Math.sqrt(impItemsList.size());
                 double trusteeWeightDenom = Math.sqrt(trusteesList.size());
 
+
+
                 double userWeight = 1.0 / userWeightDenom;
                 double itemWeight = impItemWeights.get(itemIdx);
 
@@ -204,6 +211,7 @@ public class TrustSVDRecommender extends SocialRecommender {
 
                 loss += regBias * userWeight * userBiasValue * userBiasValue +
                         regBias * itemWeight * itemBiasValue * itemBiasValue;
+
 
                 double[] sumImpItemsFactors = new double[numFactors];
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
@@ -244,7 +252,8 @@ public class TrustSVDRecommender extends SocialRecommender {
                         double deltaImpItem = error * itemFactorValue / userWeightDenom + regItem * impItemWeightValue * impItemFactorValue;
                         impItemFactors.add(impItemIdx, factorIdx, -learnRate * deltaImpItem);
 
-                        loss += regItem * itemWeight * impItemFactorValue * impItemFactorValue;
+                        loss += regItem * impItemWeightValue * impItemFactorValue * impItemFactorValue;
+
                     }
 
                     // update trusteeTempFactors
@@ -255,7 +264,7 @@ public class TrustSVDRecommender extends SocialRecommender {
                         double deltaTrustee = error * itemFactorValue / trusteeWeightDenom + regUser * trusteeWeightValue * trusteeFactorValue;
                         trusteeTempFactors.add(trusteeIdx, factorIdx, deltaTrustee);
 
-                        loss += regUser * userWeight * trusteeFactorValue * trusteeFactorValue;
+                        loss += regUser * trusteeWeightValue * trusteeFactorValue * trusteeFactorValue;
                     }
                 }
             }
@@ -283,7 +292,7 @@ public class TrustSVDRecommender extends SocialRecommender {
                     tempUserFactors.add(userIdx, factorIdx, deriValue * trusteeFactorValue + regSocial * trusterWeightValue * userFactorValue);
                     trusteeTempFactors.add(trusteeIdx, factorIdx, deriValue * userFactorValue);
 
-                    loss += regSocial * trusterWeightValue * trusterWeightValue;
+                    loss += regSocial * trusterWeightValue * userFactorValue * userFactorValue;
                 }
             }
 
@@ -291,6 +300,8 @@ public class TrustSVDRecommender extends SocialRecommender {
             trusteeFactors.addEqual(trusteeTempFactors.scale(-learnRate));
 
             loss *= 0.5d;
+
+
 
             if (isConverged(iter) && earlyStop) {
                 break;

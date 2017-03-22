@@ -77,6 +77,7 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
+
         regBias = conf.getFloat("rec.bias.regularization", 0.01f);
 
         itemBiases = new DenseVector(numItems);

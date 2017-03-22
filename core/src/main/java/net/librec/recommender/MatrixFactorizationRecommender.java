@@ -56,11 +56,6 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
     protected float regItem;
 
     /**
-     * global mean
-     */
-    protected double globalMean;
-
-    /**
      * setup
      * init member method
      *
@@ -68,7 +63,7 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
      */
     protected void setup() throws LibrecException {
         super.setup();
-        numIterations = conf.getInt("rec.iterator.maximum");
+        numIterations = conf.getInt("rec.iterator.maximum",100);
         learnRate = conf.getFloat("rec.iterator.learnrate", 0.01f);
         maxLearnRate = conf.getFloat("rec.iterator.learnrate.maximum", 1000.0f);
 
@@ -81,7 +76,6 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
 
         userFactors = new DenseMatrix(numUsers, numFactors);
         itemFactors = new DenseMatrix(numItems, numFactors);
-        globalMean = trainMatrix.mean();
 
         initMean = 0.0f;
         initStd = 0.1f;
@@ -103,38 +97,6 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
         return DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
     }
 
-    /**
-     * Post each iteration, we do things:
-     * <ol>
-     * <li>print debug information</li>
-     * <li>check if converged</li>
-     * <li>if not, adjust learning rate</li>
-     * </ol>
-     *
-     * @param iter current iteration
-     * @return boolean: true if it is converged; false otherwise
-     */
-    protected boolean isConverged(int iter) throws LibrecException{
-        float delta_loss = (float) (lastLoss - loss);
-
-        // print out debug info
-        if (verbose) {
-            String recName = getClass().getSimpleName().toString();
-            String info = recName + " iter " + iter + ": loss = " + loss + ", delta_loss = " + delta_loss;
-            LOG.info(info);
-        }
-
-        if (Double.isNaN(loss) || Double.isInfinite(loss)) {
-//            LOG.error("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
-            throw new LibrecException("Loss = NaN or Infinity: current settings does not fit the recommender! Change the settings and try again!");
-        }
-
-        // check if converged
-        boolean converged = Math.abs(loss) < 1e-5;
-        lastLoss = loss;
-
-        return converged;
-    }
 
     /**
      * Update current learning rate after each epoch <br>
@@ -154,7 +116,7 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
         }
 
         if (isBoldDriver && iter > 1) {
-            learnRate = Math.abs(lastLoss) > Math.abs(loss) ? learnRate * 1.05f : learnRate * 0.5f;
+            learnRate = Math.abs(lastLoss) > Math.abs(loss) ? learnRate * 1.05f : learnRate * 0.95f;
         } else if (decay > 0 && decay < 1) {
             learnRate *= decay;
         }
@@ -163,5 +125,7 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
         if (maxLearnRate > 0 && learnRate > maxLearnRate) {
             learnRate = maxLearnRate;
         }
+        lastLoss = loss;
+
     }
 }

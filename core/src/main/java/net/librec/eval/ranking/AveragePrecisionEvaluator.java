@@ -60,7 +60,7 @@ public class AveragePrecisionEvaluator extends AbstractRecommenderEvaluator {
                         tempPrecision += 1.0 * numHits / (indexOfItem + 1);
                     }
                 }
-                totalPrecision += tempPrecision / testSetByUser.size();
+                totalPrecision += tempPrecision / (testSetByUser.size() < topK ? testSetByUser.size(): topK); //$$ap@n = \sum_{k=1}^n P(k) / min(m, n)$$ advised by WuBin
                 nonZeroNumUsers++;
             }
         }

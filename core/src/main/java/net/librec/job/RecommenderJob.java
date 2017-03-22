@@ -111,9 +111,10 @@ public class RecommenderJob {
                 break;
             }
             case "testset":{
-            	executeRecommenderJob();
+                executeRecommenderJob();
+                break;
             }
-            case "given": {
+            case "givenn": {
                 executeRecommenderJob();
                 break;
             }
@@ -172,7 +173,7 @@ public class RecommenderJob {
         String[] similarityKeys = conf.getStrings("rec.recommender.similarities");
         if (similarityKeys != null && similarityKeys.length > 0) {
             for(int i = 0; i< similarityKeys.length; i++){
-                 if (getSimilarityClass() != null) {
+                if (getSimilarityClass() != null) {
                     RecommenderSimilarity similarity = (RecommenderSimilarity) ReflectionUtil.newInstance(getSimilarityClass(), conf);
                     conf.set("rec.recommender.similarity.key", similarityKeys[i]);
                     similarity.buildSimilarityMatrix(dataModel);
@@ -372,6 +373,8 @@ public class RecommenderJob {
     /**
      * Get evaluator class. {@code RecommenderEvaluator}.
      *
+     * @param evalClassKey
+     *             class key of the evaluator
      * @return evaluator class object
      * @throws ClassNotFoundException
      *             if can't find the class of evaluator

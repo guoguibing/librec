@@ -54,8 +54,8 @@ public class DiversityEvaluator extends AbstractRecommenderEvaluator {
             for (int userID = 0; userID < numUsers; userID++) {
                 List<ItemEntry<Integer, Double>> recommendArrayListByUser = recommendedList.getItemIdxListByUserIdx(userID);
                 if (recommendArrayListByUser.size() > 0) {
-                    // calculate the sum of similarities for each pair of items per user
-                    double totalSimilarityPerUser = 0.0;
+                    // calculate the sum of dissimilarities for each pair of items per user
+                    double totalDisSimilarityPerUser = 0.0;
                     int topK = this.topN <= recommendArrayListByUser.size() ? this.topN : recommendArrayListByUser.size();
                     for (int i = 0; i < topK; i++) {
                         for (int j = 0; j < topK; j++) {
@@ -64,10 +64,10 @@ public class DiversityEvaluator extends AbstractRecommenderEvaluator {
                             }
                             int item1 = recommendArrayListByUser.get(i).getKey();
                             int item2 = recommendArrayListByUser.get(j).getKey();
-                            totalSimilarityPerUser += itemSimilarity.get(item1, item2);
+                            totalDisSimilarityPerUser += 1.0 - itemSimilarity.get(item1, item2);
                         }
                     }
-                    totalDiversity += totalSimilarityPerUser * 2 / (topK * (topK - 1));
+                    totalDiversity += totalDisSimilarityPerUser * 2 / (topK * (topK - 1));
                     nonZeroNumUsers++;
                 }
             }

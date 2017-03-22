@@ -72,7 +72,22 @@ public class SymmMatrix {
         else if (data.contains(col, row))
             return data.get(col, row);
 
-        return 0.0;
+        return 0.0d;
+    }
+
+    /**
+     * Get a value at entry (row, col)
+     *
+     * @param row row index
+     * @param col column index
+     * @return value at entry (row, col)
+     */
+    public boolean contains(int row, int col) {
+
+        if (data.contains(row, col)||data.contains(col, row))
+            return true;
+        else
+            return false;
     }
 
     /**

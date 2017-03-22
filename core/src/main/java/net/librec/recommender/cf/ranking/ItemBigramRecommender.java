@@ -21,6 +21,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.SparseMatrix;
@@ -207,7 +208,7 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
                     tempUserProbs[topicInIdx] += tempUserProbs[topicInIdx - 1];
                 }
 
-                double rand = Math.random() * tempUserProbs[numTopics - 1];
+                double rand = Randoms.uniform() * tempUserProbs[numTopics - 1];
                 for (topicIdx = 0; topicIdx < numTopics; topicIdx++) {
                     if (rand < tempUserProbs[topicIdx])
                         break;

@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * EFM TestCase corresponds to EFM Recommender
- * {@link net.librec.recommender.content.EFMTestCase}
+ * {@link net.librec.recommender.content.EFMRecommender}
  * 
  * @author WangYuFeng
  */
@@ -53,5 +53,4 @@ public class EFMTestCase extends BaseTestCase {
 		RecommenderJob job = new RecommenderJob(conf);
 		job.runJob();
 	}
-
 }

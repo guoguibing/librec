@@ -89,6 +89,10 @@ public abstract class ProbabilisticGraphicalRecommender extends AbstractRecommen
         estimateParams();
     }
 
+    protected boolean isConverged(int iter){
+        return false;
+    }
+
     /**
      * parameters estimation: used in the training phase
      */

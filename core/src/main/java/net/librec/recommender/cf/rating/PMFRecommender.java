@@ -63,6 +63,7 @@ public class PMFRecommender extends MatrixFactorizationRecommender {
                 }
             }
 
+            loss *= 0.5;
             if (isConverged(iter) && earlyStop) {
                 break;
             }

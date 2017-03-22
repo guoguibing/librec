@@ -163,8 +163,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     }
 
     public synchronized void addResource(Resource resource) {
-        resources.add(resource);
         loadProperty(getProps(), resource);
+        resources.add(resource);
     }
 
     private void overlay(Properties to, Properties from) {

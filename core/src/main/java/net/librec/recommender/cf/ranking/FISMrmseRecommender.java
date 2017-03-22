@@ -26,9 +26,7 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
 import net.librec.recommender.MatrixFactorizationRecommender;
-
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -37,15 +35,14 @@ import java.util.concurrent.ExecutionException;
  */
 @ModelData({"isRanking", "fismrmse", "P", "Q", "itemBiases", "userBiases"})
 public class FISMrmseRecommender extends MatrixFactorizationRecommender {
-
-    private int rho;
-    private float alpha;
+	private int nnz;
+	private float rho,alpha,beta,gamma;
+            DenseVector X;
     private int trainMatrixSize;
-
     /**
      * bias regularization
      */
-    private double regBias;
+    private double lRate;
 
     /**
      * items and users biases vector
@@ -69,151 +66,124 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 
     @Override
     protected void setup() throws LibrecException {
+    	
         super.setup();
-
+        
         P = new DenseMatrix(numItems, numFactors);
-        Q = new DenseMatrix(numItems, numFactors);
-        P.init(0.01);
-        Q.init(0.01);
-
-        itemBiases = new DenseVector(numItems);
-        userBiases = new DenseVector(numUsers);
-        itemBiases.init(0.01);
-        userBiases.init(0.01);
-
+		Q = new DenseMatrix(numItems, numFactors);
+		P.init(0,0.01);
+		Q.init(0,0.01);
+		userBiases = new DenseVector(numUsers);
+		itemBiases = new DenseVector(numItems);
+		userBiases.init(0,0.01);
+		itemBiases.init(0,0.01);
+		nnz = trainMatrix.size();
+		rho = conf.getFloat("rec.fismrmse.rho");//3-15
+		alpha = conf.getFloat("rec.fismrmse.alpha",0.5f);
+		beta  = conf.getFloat("rec.fismrmse.beta",0.6f);
+		gamma=conf.getFloat("rec.fismrmse.gamma",0.1f);
+		lRate=conf.getDouble("rec.fismrmse.lrate",0.0001);
+		cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
+		
+		userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
         trainMatrixSize = trainMatrix.size();
-        rho = conf.getInt("rec.fismrmse.rho");
-        alpha = conf.getFloat("rec.fismrmse.alpha");
-        regBias = conf.getDouble("rec.bias.regularization", 0.01d);
-
-        cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
-        userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
+        
     }
 
     @Override
-    protected void trainModel() throws LibrecException {
-        int sampleSize = rho * trainMatrixSize;
-        int totalSize = numUsers * numItems;
+    protected void trainModel() throws LibrecException{
+    	
+    	int sampleSize = (int) (rho * nnz);
+		int totalSize = numUsers * numItems;
+		for (int iter = 1; iter <= numIterations; iter++) {
+			
+			
+			X=new DenseVector(numFactors);
+			loss = 0;
+			// new training data by sampling negative values
+			Table<Integer, Integer, Double> R = trainMatrix.getDataTable();
+			// make a random sample of negative feedback (total - nnz)
+			List<Integer> indices = null;
+			try {
+				indices = Randoms.randInts(sampleSize, 0, totalSize - nnz);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			int index = 0, count = 0;
+			boolean isDone = false;
+			for (int u = 0; u < numUsers; u++) {
+				for (int j = 0; j < numItems; j++) {
+					double ruj = trainMatrix.get(u, j);
+					if (ruj != 0)
+						continue; // rated items
+					if (count++ == indices.get(index)) {
+						R.put(u, j, 0.0);
+						index++;
+						if (index >= indices.size()) {
+							isDone = true;
+							break;
+						}
+					}
+				}
+				if (isDone)
+					break;
+			}
 
-        for (int iter = 1; iter <= numIterations; iter++) {
-
-            loss = 0.0d;
-
-            // temporal data
-            DenseMatrix PS = new DenseMatrix(numItems, numFactors);
-            DenseMatrix QS = new DenseMatrix(numItems, numFactors);
-
-            // new training data by sampling negative values
-            Table<Integer, Integer, Double> R = trainMatrix.getDataTable();
-
-            // make a random sample of negative feedback (total - nnz)
-            List<Integer> indices = null;
-            try {
-                indices = Randoms.randInts(sampleSize, 0, totalSize - trainMatrixSize);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            int index = 0, count = 0;
-            boolean isDone = false;
-            for (int u = 0; u < numUsers; u++) {
-                for (int j = 0; j < numItems; j++) {
-                    double ruj = trainMatrix.get(u, j);
-                    if (ruj != 0)
-                        continue; // rated items
-
-                    if (count++ == indices.get(index)) {
-                        R.put(u, j, 0.0);
-                        index++;
-                        if (index >= indices.size()) {
-                            isDone = true;
-                            break;
-                        }
-                    }
-                }
-                if (isDone)
-                    break;
-            }
-
-            // update throughout each user-item-rating (u, j, ruj) cell
-            for (Cell<Integer, Integer, Double> cell : R.cellSet()) {
-                int u = cell.getRowKey();
-                int j = cell.getColumnKey();
-                double ruj = cell.getValue();
-
-                // for efficiency, use the below code to predict ruj instead of
-                // simply using "predict(u,j)"
-                SparseVector Ru = trainMatrix.row(u);
-                double bu = userBiases.get(u), bj = itemBiases.get(j);
-
-                double sum_ij = 0;
-                int cnt = 0;
-                for (VectorEntry ve : Ru) {
-                    int i = ve.index();
-                    // for training, i and j should be equal as j may be rated
-                    // or unrated
-                    if (i != j) {
-                        sum_ij += DenseMatrix.rowMult(P, i, Q, j);
-                        cnt++;
-                    }
+			// update throughout each user-item-rating (u, i, rui) cell
+			for (Cell<Integer, Integer, Double> cell : R.cellSet()) {
+				int u = cell.getRowKey();
+				int i = cell.getColumnKey();
+				double rui = cell.getValue();
+				
+				SparseVector Ru = trainMatrix.row(u);
+				int Ru_size=Ru.size()-1;
+				if(Ru_size==0||Ru_size==-1){
+					Ru_size=1;
                 }
 
-                double wu = cnt > 0 ? Math.pow(cnt, -alpha) : 0;
-                double puj = bu + bj + wu * sum_ij;
 
-                double euj = puj - ruj;
+                for (int j:Ru.getIndex()) {
+                	if(i!=j){
+					X=X.add(P.row(j));
+					}
+				}
 
-                loss += euj * euj;
-
-                // update bu
-                userBiases.add(u, -learnRate * (euj + regBias * bu));
-
-                // update bj
-                itemBiases.add(j, -learnRate * (euj + regBias * bj));
-
-                loss += regBias * bu * bu + regBias * bj * bj;
-
-                // update qjf
-                for (int f = 0; f < numFactors; f++) {
-                    double qjf = Q.get(j, f);
-
-                    double sum_i = 0;
-                    for (VectorEntry ve : Ru) {
-                        int i = ve.index();
-                        if (i != j) {
-                            sum_i += P.get(i, f);
-                        }
-                    }
-
-                    double delta = euj * wu * sum_i + regItem * qjf;
-                    QS.add(j, f, -learnRate * delta);
-
-                    loss += regItem * qjf * qjf;
-                }
-
-                // update pif
-                for (VectorEntry ve : Ru) {
-                    int i = ve.index();
-                    if (i != j) {
-                        for (int f = 0; f < numFactors; f++) {
-                            double pif = P.get(i, f);
-                            double delta = euj * wu * Q.get(j, f) + regItem * pif;
-                            PS.add(i, f, -learnRate * delta);
-
-                            loss += regItem * pif * pif;
-                        }
-                    }
-                }
-            }
-
-            P = P.add(PS);
-            Q = Q.add(QS);
-
-            loss *= 0.5d;
-            if (isConverged(iter) && earlyStop) {
-                break;
-            }
-            updateLRate(iter);
-        }
+                X=X.scale(Math.pow(Ru_size, -alpha)); 
+         
+				// for efficiency, use the below code to predict rui instead of
+				// simply using "predict(u,j)"
+				double bi = itemBiases.get(i);	
+				double pui =bi + Q.row(i).inner(X);			
+				
+				double eui = rui - pui;
+				loss += eui;
+				
+				// update bi
+				itemBiases.add(i, lRate * (eui - gamma * bi));
+				loss +=   gamma * bi * bi;
+				
+				DenseVector deltaq=X.scale(eui).minus(Q.row(i).scale(beta));
+				loss+=beta*Q.row(i).inner(Q.row(i));
+				Q.setRow(i, Q.row(i).add(deltaq.scale(lRate)));
+				
+				// update pif
+				for (int j : Ru.getIndex()) {
+					if (i != j) {
+						DenseVector deltap=Q.row(i).scale(eui*Math.pow(Ru_size, -alpha)).minus(P.row(j).scale(beta));
+						loss+=beta*P.row(j).inner(P.row(j));
+						
+						P.setRow(j, P.row(j).add(deltap.scale(lRate)));
+					}
+				}
+						
+			}
+						
+			loss *= 0.5;
+			if (isConverged(iter) && earlyStop){
+				break;
+			}						
+		}
+		
     }
 
     @Override
