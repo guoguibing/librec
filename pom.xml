@@ -99,6 +99,8 @@
           				</includes>
           				<excludes>
             				<exclude>net.librec.recommender.cf.rating.RfRecTestCase.java</exclude>
+            				<exclude>net.librec.recommender.cf.rating.FMSGDTestCase.java</exclude>
+            				<exclude>net.librec.recommender.cf.rating.FMALSTestCase.java</exclude>
           				</excludes>
         			</configuration>
       			</plugin>
