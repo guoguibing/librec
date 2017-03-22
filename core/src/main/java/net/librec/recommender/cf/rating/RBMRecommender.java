@@ -80,7 +80,7 @@ public class RBMRecommender extends AbstractRecommender {
 
     protected void setup() throws LibrecException {
         super.setup();
-        softmax = ratingScale.size();
+        softmax = ratingScale.size() + 1;
         this.maxIter = conf.getInt("rec.iterator.maximum", 10);
         featureNumber = conf.getInt("rec.factor.number", 500);
         epsilonw = conf.getDouble("rec.epsilonw", 0.001);
