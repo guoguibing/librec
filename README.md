@@ -106,7 +106,7 @@ public void main(String[] args) throws Exception {
 ### News Report 
 
 * [An Introduction to Open-source Recommendaion Toolkit: LibRec](http://chuansong.me/n/1701947351918) [by ResysChina in Chinese]
-* [LibRec: an Open-source and Cross-platform Software for Recommender Systems](http://chuansong.me/n/1751521251128) [by BigdataTina2016 in Chinese]
+* [LibRec: an Open-source and Cross-platform Software for Recommender Systems](http://chuansong.me/n/1751521251128) [by InfoQ in Chinese]
 
 ### Acknowledgement
 
