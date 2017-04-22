@@ -18,6 +18,7 @@
 
 package librec.ranking;
 
+import librec.data.Configuration;
 import librec.data.SparseMatrix;
 import librec.data.SparseVector;
 import librec.intf.IterativeRecommender;
