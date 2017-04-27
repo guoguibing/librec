@@ -116,7 +116,7 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
         }
 
         if (isBoldDriver && iter > 1) {
-            learnRate = Math.abs(lastLoss) > Math.abs(loss) ? learnRate * 1.05f : learnRate * 0.95f;
+            learnRate = Math.abs(lastLoss) > Math.abs(loss) ? learnRate * 1.05f : learnRate * 0.5f;
         } else if (decay > 0 && decay < 1) {
             learnRate *= decay;
         }

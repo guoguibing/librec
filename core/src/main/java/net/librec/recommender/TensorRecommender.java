@@ -373,7 +373,7 @@ public abstract class TensorRecommender implements Recommender {
         }
 
         // check if converged
-        boolean converged = Math.abs(loss) < 1e-5;
+        boolean converged = Math.abs(delta_loss) < 1e-5;
 
         return converged;
     }
