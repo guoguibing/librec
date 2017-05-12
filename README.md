@@ -5,7 +5,7 @@
 [![Join the chat at https://gitter.im/librec/Lobby](https://badges.gitter.im/librec/Lobby.svg)](https://gitter.im/librec/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)[![Build Status](https://travis-ci.org/guoguibing/librec.svg?branch=2.0.0)](https://travis-ci.org/guoguibing/librec)
 
 ### LibRec Demo
-A movie recommender system is designed and [available here](http://demo.librec.net). You may take a look. 
+A movie recommender system is designed and [available here](http://demo.librec.net).
 
 ### Documentation
 Please refer to [LibRec Documentation](http://wiki.librec.net) and [API Documentation](http://librec.net/doc/librec-v2.0/)
