@@ -109,9 +109,9 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * path and format of the input data file.
      *
      * @param dataColumnFormat
-     *            the path of the input data file
-     * @param inputDataPath
      *            the format of the input data file
+     * @param inputDataPath
+     *            the path of the input data file
      * @param binThold the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
      *            otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
      *            negative value
