@@ -276,6 +276,8 @@ public class TextDataConvertor extends AbstractDataConvertor {
                 }
                 if (!isComplete) {
                     bufferLine = bufferData[bufferData.length - 1];
+                }else{
+                    bufferLine = "";
                 }
                 buffer.clear();
             }
