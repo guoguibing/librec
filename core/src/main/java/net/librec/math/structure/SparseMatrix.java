@@ -712,16 +712,19 @@ public class SparseMatrix implements Iterable<MatrixEntry>, DataMatrix, Serializ
     /**
      * Normalize the matrix entries to (0, 1) by (x-min)/(max-min)
      *
-     * @param min minimum value
-     * @param max maximum value
+     * @param min
+     *            minimum value
+     * @param max
+     *            maximum value
      */
     public void normalize(double min, double max) {
         assert max > min;
+        for (int index = 0; index < rowData.length; index++) {
+            rowData[index] = (rowData[index] - min) / (max - min);
+        }
 
-        for (MatrixEntry me : this) {
-            double entry = me.get();
-            if (entry != 0)
-                me.set((entry - min) / (max - min));
+        for (int index = 0; index < colData.length; index++) {
+            colData[index] = (colData[index] - min) / (max - min);
         }
     }
 
