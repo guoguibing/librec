@@ -31,7 +31,7 @@ import java.util.HashMap;
 
 /**
  * Field-aware Factorization Machines
- * Yuchin Juan, "Factorization Machines with libFM", 10th ACM Conference on Recommender Systems, 2016
+ * Yuchin Juan, "Field Aware Factorization Machines for CTR Prediction", 10th ACM Conference on Recommender Systems, 2016
  *
  * @author Li Wenxi and Tan Jiale
  */
