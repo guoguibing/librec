@@ -124,14 +124,14 @@ public class FFMRecommender extends FactorizationMachineRecommender {
                                 hVlf += xl * V.get(j, map.get(l) + f) * x.get(j);
                         }
                         double gradVlf = gradLoss * hVlf + regF * oldVlf;
-                        V.add(l, f, -learnRate * gradVlf);
+                        V.add(l, map.get(l) + f, -learnRate * gradVlf);
                         loss += regF * oldVlf * oldVlf;
                     }
+
                 }
             }
 
             loss *= 0.5;
-
             if (isConverged(iter)  && earlyStop)
                 break;
         }
