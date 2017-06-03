@@ -27,7 +27,7 @@ import org.junit.Test;
 import java.io.IOException;
 
 /**
- * FFM Test Case correspond to FMRecommender
+ * FFM Test Case correspond to FFMRecommender
  * {@link FFMRecommender}
  *
  * @author Li Wenxi
@@ -47,6 +47,7 @@ public class FFMTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 * @throws IOException
 	 */
+
 	@Test
 	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
 		Resource resource = new Resource("rec/cf/rating/ffm-test.properties");

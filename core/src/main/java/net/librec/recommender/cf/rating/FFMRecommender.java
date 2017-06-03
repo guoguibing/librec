@@ -132,10 +132,12 @@ public class FFMRecommender extends FactorizationMachineRecommender {
             }
 
             loss *= 0.5;
+
             if (isConverged(iter)  && earlyStop)
                 break;
         }
     }
+    
     @Override
     protected double predict(int userId, int itemId, SparseVector x) throws LibrecException {
         double res = 0;
