@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 LibRec
+ * Copyright (C) 2017 LibRec
  *
  * This file is part of LibRec.
  * LibRec is free software: you can redistribute it and/or modify

@@ -137,7 +137,7 @@ public class FFMRecommender extends FactorizationMachineRecommender {
                 break;
         }
     }
-    
+
     @Override
     protected double predict(int userId, int itemId, SparseVector x) throws LibrecException {
         double res = 0;
