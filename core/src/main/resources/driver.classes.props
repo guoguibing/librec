@@ -60,6 +60,7 @@ bnpoissmf=net.librec.recommender.cf.rating.BNPoissMFRecommender
 bpmf=net.librec.recommender.cf.rating.BPMFRecommender
 bpoissmf=net.librec.recommender.cf.rating.BPoissMFRecommender
 cptf=net.librec.recommender.cf.rating.CPTFRecommender
+ffm=net.librec.recommender.cf.rating.FFMRecommender
 fmals=net.librec.recommender.cf.rating.FMALSRecommender
 fmsgd=net.librec.recommender.cf.rating.FMSGDRecommender
 gplsa=net.librec.recommender.cf.rating.GPLSARecommender
