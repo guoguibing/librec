@@ -26,6 +26,7 @@ import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.SparseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -34,35 +35,33 @@ import java.util.concurrent.ExecutionException;
  *
  * @author SunYatong
  */
-@ModelData({"isRanking", "fismrmse", "P", "Q", "itemBiases", "userBiases"})
+@ModelData({"isRanking", "fismauc", "P", "Q", "itemBiases", "userBiases"})
 public class FISMaucRecommender extends MatrixFactorizationRecommender {
-
-    private float rho,alpha,beta,gamma;
-
-    /**
-     * bias regularization
-     */
-    private double lRate;
-
-    /**
-     * items and users biases vector
-     */
-    private DenseVector itemBiases;
-
-    /**
-     * two low-rank item matrices, an item-item similarity was learned as a product of these two matrices
-     */
-    private DenseMatrix P, Q;
-
-    /**
-     * user-items cache, item-users cache
-     */
-    protected LoadingCache<Integer, List<Integer>> userItemsCache;
 
     /**
      * Guava cache configuration
      */
     protected static String cacheSpec;
+    /**
+     * user-items cache, item-users cache
+     */
+    protected LoadingCache<Integer, List<Integer>> userItemsCache;
+    /**
+     * hyper-parameters
+     */
+    private float rho, alpha, beta, gamma;
+    /**
+     * learning rate
+     */
+    private double lRate;
+    /**
+     * items and users biases vector
+     */
+    private DenseVector itemBiases;
+    /**
+     * two low-rank item matrices, an item-item similarity was learned as a product of these two matrices
+     */
+    private DenseMatrix P, Q;
 
     @Override
     protected void setup() throws LibrecException {
@@ -71,24 +70,22 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
 
         P = new DenseMatrix(numItems, numFactors);
         Q = new DenseMatrix(numItems, numFactors);
-        P.init(0,0.01);
-        Q.init(0,0.01);
+        P.init(0, 0.01);
+        Q.init(0, 0.01);
         itemBiases = new DenseVector(numItems);
-        itemBiases.init(0,0.01);
-        rho = conf.getFloat("rec.fismauc.rho");//3-15
-        alpha = conf.getFloat("rec.fismauc.alpha",0.5f);
-        beta  = conf.getFloat("rec.fismauc.beta",0.6f);
-        gamma=conf.getFloat("rec.fismauc.gamma",0.1f);
-        lRate=conf.getDouble("rec.iteration.learnrate",0.0001);
+        itemBiases.init(0, 0.01);
+        rho = conf.getFloat("rec.recommender.rho");//3-15
+        alpha = conf.getFloat("rec.recommender.alpha", 0.5f);
+        beta = conf.getFloat("rec.recommender.beta", 0.6f);
+        gamma = conf.getFloat("rec.recommender.gamma", 0.1f);
+        lRate = conf.getDouble("rec.iteration.learnrate", 0.0001);
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
 
         userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
-        userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
-
     }
 
     @Override
-    protected void trainModel() throws LibrecException{
+    protected void trainModel() throws LibrecException {
 
         for (int iter = 1; iter <= numIterations; iter++) {
             loss = 0;
@@ -96,7 +93,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
             for (int u = 0; u < numUsers; u++) {
                 SparseVector Ru = trainMatrix.row(u);
                 int Ru_p_size = Ru.size();
-                if(Ru_p_size == 0 || Ru_p_size == 1) {
+                if (Ru_p_size == 0 || Ru_p_size == 1) {
                     Ru_p_size = 2;
                 }
                 // for all i in Ru+
@@ -108,27 +105,27 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                     DenseVector t = new DenseVector(numFactors);
                     t.init(0);
                     for (int j : Ru.getIndex()) {
-                        if(i != j){
+                        if (i != j) {
                             t = t.add(P.row(j));
                         }
                     }
                     t = t.scale(Math.pow(Ru_p_size - 1, -alpha));
-                    for (int tindex = 0; tindex < numFactors; tindex ++) {
+                    for (int tindex = 0; tindex < numFactors; tindex++) {
                         if (Double.isNaN(t.get(tindex))) {
-                            LOG.info("user:" + u + ", item:" + i + ", Ru_p_size:" + Ru_p_size);
+                            System.out.println("user:" + u + ", item:" + i + ", Ru_p_size:" + Ru_p_size);
                         }
                     }
                     // Z <- SampleZeros(rho)
-                    int sampleSize = (int)(rho * Ru_p_size);
+                    int sampleSize = (int) (rho * Ru_p_size);
                     // make a random sample of negative feedback for Ru-
                     List<Integer> negative_indices = null;
                     try {
                         negative_indices = Randoms.randInts(sampleSize, 0, numItems);
-                        for (int list_idx = 0; list_idx < negative_indices.size(); list_idx++) {
-                            int index = negative_indices.get(list_idx);
-                            // if negative_indices contains positive index, remove it
-                            if (Ru.get(index) > 0.1) {
-                                negative_indices.remove(list_idx);
+                        Iterator<Integer> iterator = negative_indices.iterator(); // Thanks for Zhaohua hong's fix
+                        while(iterator.hasNext()){
+                            int index = iterator.next();
+                            if(Ru.get(index)>0.1){
+                                iterator.remove();
                             }
                         }
                     } catch (Exception e) {
@@ -145,17 +142,17 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                         double puj = bj + Q.row(j).inner(t);
                         double ruj = 0.0;
                         double e = (rui - ruj) - (pui - puj);
-                        loss += e*e;
+                        loss += e * e;
 
                         // update bi  bj
                         itemBiases.add(i, lRate * (e - gamma * bi));
                         itemBiases.add(j, lRate * (e - gamma * bj));
 
                         // update qi qj
-                        DenseVector delta_qi=t.scale(e).minus(Q.row(i).scale(beta));
+                        DenseVector delta_qi = t.scale(e).minus(Q.row(i).scale(beta));
                         DenseVector qi = Q.row(i).add(delta_qi.scale(lRate));
                         Q.setRow(i, qi);
-                        DenseVector delta_qj=t.scale(e).minus(Q.row(j).scale(beta));
+                        DenseVector delta_qj = t.scale(e).minus(Q.row(j).scale(beta));
                         DenseVector qj = Q.row(j).add(delta_qj.scale(lRate));
                         Q.setRow(j, qj);
 
@@ -171,18 +168,18 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                         }
                     }
                 }
-
             }
-            for (int i = 0; i<numItems; i++) {
+            for (int i = 0; i < numItems; i++) {
                 double bi = itemBiases.get(i);
                 loss += gamma * bi * bi;
                 loss += beta * Q.row(i).inner(Q.row(i));
                 loss += beta * P.row(i).inner(P.row(i));
             }
             loss *= 0.5;
-            if (isConverged(iter) && earlyStop){
+            if (isConverged(iter) && earlyStop) {
                 break;
             }
+            updateLRate(iter);
         }
     }
 
@@ -204,7 +201,7 @@ public class FISMaucRecommender extends MatrixFactorizationRecommender {
                 count++;
             }
         }
-        double wu = count > 0 ? Math.pow(count, -alpha) : 0;
+        double wu = count - 1 > 0 ? Math.pow(count - 1, -alpha) : 0;
         return pred + wu * sum;
     }
 
