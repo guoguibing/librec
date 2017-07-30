@@ -153,26 +153,26 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 				double pui = bu + bi + Q.row(i).inner(X);
 
 				double eui = rui - pui;
-				loss += eui*eui;
+				loss += eui * eui;
 
 				// update bi
 				itemBiases.add(i, lRate * (eui - itemBiasReg * bi));
 				loss += itemBiasReg * bi * bi;
 				// update bu
-				userBiases.add(u, lRate * (eui - userBiasReg * bi));
+				userBiases.add(u, lRate * (eui - userBiasReg * bu));
+				loss += itemBiasReg * bu * bu;
 				// update Qi
 				DenseVector deltaq = X.scale(eui).minus(Q.row(i).scale(beta));
-				loss += beta*Q.row(i).inner(Q.row(i));
+				loss += beta * Q.row(i).inner(Q.row(i));
 				Q.setRow(i, Q.row(i).add(deltaq.scale(lRate)));
 				// update Pj
 				for (int j : Ru.getIndex()) {
 					if (i != j) {
-						DenseVector deltap=Q.row(i).scale(eui*Math.pow(n_u, -alpha)).minus(P.row(j).scale(beta));
-						loss += beta*P.row(j).inner(P.row(j));
+						DenseVector deltap = Q.row(i).scale(eui*Math.pow(n_u, -alpha)).minus(P.row(j).scale(beta));
+						loss += beta * P.row(j).inner(P.row(j));
 						P.setRow(j, P.row(j).add(deltap.scale(lRate)));
 					}
 				}
-
 			}
 			loss *= 0.5;
 			if (isConverged(iter) && earlyStop){
@@ -180,7 +180,6 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 			}
 			updateLRate(iter);
 		}
-
 	}
 
 	@Override
