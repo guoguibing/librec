@@ -53,7 +53,7 @@ public class DiversityEvaluator extends AbstractRecommenderEvaluator {
             SymmMatrix itemSimilarity = similarities.get("item").getSimilarityMatrix();
             for (int userID = 0; userID < numUsers; userID++) {
                 List<ItemEntry<Integer, Double>> recommendArrayListByUser = recommendedList.getItemIdxListByUserIdx(userID);
-                if (recommendArrayListByUser.size() > 0) {
+                if (recommendArrayListByUser.size() > 1) {
                     // calculate the sum of dissimilarities for each pair of items per user
                     double totalDisSimilarityPerUser = 0.0;
                     int topK = this.topN <= recommendArrayListByUser.size() ? this.topN : recommendArrayListByUser.size();
