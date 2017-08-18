@@ -1,0 +1,135 @@
+#!/bin/bash
+
+# Copyright (C) 2016 LibRec
+#
+# This file is part of LibRec.
+# LibRec is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# LibRec is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with LibRec. If not, see <http://www.gnu.org/licenses/>.
+
+temp=`which $0`
+temp=`dirname ${0}`
+temp=`cd "$temp"; pwd`
+LIBREC_HOME=${temp%/*}
+LIB=${LIBREC_HOME}/lib
+
+function print_usage() {
+  cat <<EOF
+Usage: librec <command> [options]...
+commands:
+  rec                       run recommender
+  data                      load data
+
+global options:
+  --help                    display this help text
+  --exec                    run Recommender
+  --version                  show Librec version info
+
+job options:
+  -conf <file>              path to config file
+  -D, -jobconf <prop>       set configuration items (key=value)
+  -libjars                  add entend jar files to classpath
+
+EOF
+}
+
+function print_version() {
+	echo "LibRec 2.0.0"
+}
+
+function print_verbose(){
+    echo Classpath" "$CLASSPATH
+    echo JDK_VERSION:" ""$JDK_VERSION"
+    echo LIBREC_MAIN:" ""$LIBREC_MAIN"
+    echo JAVA_ARG:" ""$LIBREC_ARG $CONF_PATH"
+}
+
+if [ $# = 0 ]; then
+	print_usage
+	exit
+fi
+
+COMMAND=$1
+case $COMMAND in
+	--help|-help|-h|help)
+	print_usage
+	exit
+	;;
+esac
+
+case $COMMAND in
+	--version|-version|-v|version)
+	print_version
+	exit
+	;;
+esac
+
+for f in ${LIB}/*.jar
+do
+	LIB_CLASSPATH=${LIB_CLASSPATH}:$f
+done
+
+LIBREC_ARG=""
+
+verbose_flag=0
+while [ $# -gt 0 ]
+do
+    case $1 in
+    data )
+    	LIBREC_MAIN=net.librec.tool.driver.DataDriver
+    	shift
+    	;;
+    rec )
+    	LIBREC_MAIN=net.librec.tool.driver.RecDriver
+    	shift
+    	;;
+    -exec )
+		LIBREC_ARG=${LIBREC_ARG}" "$1
+		shift
+    	;;
+    -load | -save)
+    	shift
+        LIBREC_ARG=${LIBREC_ARG}" "$1
+        shift
+        ;;
+    -D | -jobconf)
+    	LIBREC_ARG=${LIBREC_ARG}" "$1
+        shift
+        LIBREC_ARG=${LIBREC_ARG}" "$1
+        shift
+        ;;
+    -conf)
+    	CONF_PATH=$1
+    	shift
+    	CONF_PATH=${CONF_PATH}" "$1
+    	shift
+    	;;
+    -libjars)
+    	shift
+    	CLASSPATH=${CLASSPATH}":"${1//,/:}
+    	shift
+    	;;
+    -verbose)
+	shift
+	verbose_flag=1
+    esac
+done
+export CLASSPATH=${CLASSPATH}:${LIB_CLASSPATH}:${LIBREC_HOME}/conf:${LIBREC_HOME}/bin:${LIBREC_HOME}/lib
+
+JDK_VERSION=`$JAVA_HOME/bin/java -version 2>&1 | awk 'NR==1{gsub(/"/,""); print $3}'`
+if [ "$JDK_VERSION" \> 1.7 ] ; then
+        if [ $verbose_flag = 1 ]; then print_verbose; fi
+	java -cp $CLASSPATH $LIBREC_MAIN ${LIBREC_ARG} ${CONF_PATH}
+else
+	echo "Please update your JDK version to 1.7 or higher"
+fi
+echo 
