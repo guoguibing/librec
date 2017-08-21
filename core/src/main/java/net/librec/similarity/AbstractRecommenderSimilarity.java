@@ -83,7 +83,7 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
                         }
                         
                         double sim = getCorrelation(thisVector, thatVector);
-                        if (!Double.isNaN(sim)) {
+                        if (!Double.isNaN(sim) && sim != 0) {
                             similarityMatrix.set(i, j, sim);
                         }
                     }
