@@ -71,7 +71,7 @@ import net.librec.recommender.item.RecommendedList;
  * 
  * Since the Divergence is only calculated on non zero elements this results in an algorithm with acceptable training time on big data.
  * 
- * Some performance optimization is done via parallelism computing.
+ * Some performance optimization is done via parallel computing.
  * 
  * But until now no SGD or adaptive multiplicative update is done.
  * 
@@ -90,7 +90,6 @@ import net.librec.recommender.item.RecommendedList;
  * data.model.splitter=loocv
  * data.splitter.loocv=user
  * data.convert.binarize.threshold=0
- * data.input.path=ratings.csv
  * rec.eval.classes=auc,ap,arhr,hitrate,idcg,ndcg,precision,recall,rr
  * 
  * 
