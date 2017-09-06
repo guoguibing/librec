@@ -56,9 +56,6 @@ public class TextDataConvertor extends AbstractDataConvertor {
     /** Log */
     private static final Log LOG = LogFactory.getLog(TextDataConvertor.class);
 
-    /** The size of the buffer */
-    private static final int BSIZE = 1024 * 1024;
-
     /** The default format of input data file */
     private static final String DATA_COLUMN_DEFAULT_FORMAT = "UIR";
 
