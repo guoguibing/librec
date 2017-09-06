@@ -77,6 +77,9 @@ import net.librec.recommender.item.RecommendedList;
  * 
  * Multiplicative update is done with square root for sure but slow convergence.
  * 
+ * There is also no special treatment of over fitting. 
+ * So be careful with to much latent factors on small training data.
+ * 
  * 
  * You can test the recommender with following properties:
  * ( I have used movielens csv data for testing )
@@ -377,6 +380,8 @@ public class PNMFRecommender extends AbstractRecommender{
 	 * This method is overridden only for performance reasons.
 	 * 
 	 * Calculate all item ratings at once for one user has much better performance than for each item user combination alone.
+	 * 
+	 * Effect is significant on big data
 	 */
 	@Override
 	protected RecommendedList recommendRank() throws LibrecException {
