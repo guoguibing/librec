@@ -155,17 +155,17 @@ public class PNMFRecommender extends AbstractRecommender{
 
 	/**
 	 * 
-	 * This is a class only for storing results of the parallel executed tasks
+	 * Only for storing results of the parallel executed tasks
 	 */
 	private static class AggResult {
 
-		private final double[][] resultFactor;
+		private final double[][] resultNumerator;
 		private final double[] summedLatentFactors;
 		private final int[] countUsersBoughtItem;
 		private final double sumLog;
 
-		public AggResult(double[][] resultFactor, double[] summedLatentFactors, int[] countUsersBoughtItem, double sumLog) {
-			this.resultFactor = resultFactor;
+		public AggResult(double[][] resultNumerator, double[] summedLatentFactors, int[] countUsersBoughtItem, double sumLog) {
+			this.resultNumerator = resultNumerator;
 			this.summedLatentFactors = summedLatentFactors;
 			this.countUsersBoughtItem = countUsersBoughtItem;
 			this.sumLog = sumLog;
@@ -193,11 +193,12 @@ public class PNMFRecommender extends AbstractRecommender{
 		@Override
 		public AggResult call() throws Exception {
 			//LOG.info("ParallelExecTask: Starting fromUser=" + fromUser + " toUser=" + toUser);
-			double[][] resultFactor = new double[numFactors][numItems];
-			double[] summedLatentFactors = new double[numFactors]; 
-			int[] countUsersBoughtItem = new int[numItems];
-			double sumLog = 0;
+			double[][] resultNumerator = new double[numFactors][numItems];
+			double[] summedLatentFactors = new double[numFactors]; // Used in denominator
+			int[] countUsersBoughtItem = new int[numItems]; // Used in denominator
+			double sumLog = 0; // sumLog not really needed, only for calculating divergence for logging/debug
 
+			//  See Formula 16 in "Projective non-negative matrix factorization with applications to facial image processing"
 			for (int userIdx = fromUser; userIdx < toUser; userIdx++) {
                 SparseVector itemRatingsVector = trainMatrix.row(userIdx);
                 if (itemRatingsVector.getCount() > 0) {
@@ -208,7 +209,7 @@ public class PNMFRecommender extends AbstractRecommender{
 					}
 					
 					
-					double[] sum_depends_k = new double[numFactors];
+					double[] second_term_numerator = new double[numFactors];
 	                for (int itemIdx : itemRatingsVector.getIndex()) {
 						double sum = 0;
 						for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
@@ -218,23 +219,28 @@ public class PNMFRecommender extends AbstractRecommender{
 						sumLog += Math.log(estimateFactor);
 						countUsersBoughtItem[itemIdx]++;
 						
-						for (int k = 0; k < thisUserLatentFactors.length; k++) {
-							resultFactor[k][itemIdx] += estimateFactor * thisUserLatentFactors[k];
+						// Adding the terms of first sum numerator immediately
+						for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
+							// This is not a sum loop, we are just setting all values
+							double value = estimateFactor * thisUserLatentFactors[factorIdx];
+							resultNumerator[factorIdx][itemIdx] += value;
 						}
-						for (int k = 0; k < thisUserLatentFactors.length; k++) {
-							sum_depends_k[k] += estimateFactor * w[k][itemIdx];
+						// This for loop is for the second sum numerator, the inner sum, but added later..
+						for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
+							second_term_numerator[factorIdx] += estimateFactor * w[factorIdx][itemIdx];
 						}
 					}
-	                for (int lItemIdx : itemRatingsVector.getIndex()) {
+					// Now we are able to add the second term numerator to each w element.
+	                for (int itemIdx : itemRatingsVector.getIndex()) {
 					
-						for (int k = 0; k < sum_depends_k.length; k++) {
-							resultFactor[k][lItemIdx] += sum_depends_k[k];
+						for (int factorIdx = 0; factorIdx < second_term_numerator.length; factorIdx++) {
+							resultNumerator[factorIdx][itemIdx] += second_term_numerator[factorIdx];
 						}
 					}
                 }
 				
 			}
-			return new AggResult(resultFactor, summedLatentFactors, countUsersBoughtItem, sumLog);
+			return new AggResult(resultNumerator, summedLatentFactors, countUsersBoughtItem, sumLog);
 		}
 	}
 
@@ -251,7 +257,7 @@ public class PNMFRecommender extends AbstractRecommender{
 			// Executing the tasks in parallel
 			List<Future<AggResult>> results = executorService.invokeAll(tasks);
 			
-			double[][] resultFactor = new double[numFactors][numItems];
+			double[][] resultNumerator = new double[numFactors][numItems];
 			double[] summedLatentFactors = new double[numFactors]; 
 			int[] countUsersBoughtItem = new int[numItems];
 			double sumLog = 0;
@@ -261,54 +267,61 @@ public class PNMFRecommender extends AbstractRecommender{
 				AggResult result = future.get();
 				for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
 					for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-						resultFactor[factorIdx][itemIdx] += result.resultFactor[factorIdx][itemIdx];
+						resultNumerator[factorIdx][itemIdx] += result.resultNumerator[factorIdx][itemIdx];
 					}
 				}
-				for (int lItemIdx = 0; lItemIdx < numItems; lItemIdx++) {
-					countUsersBoughtItem[lItemIdx] += result.countUsersBoughtItem[lItemIdx];
+				for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+					countUsersBoughtItem[itemIdx] += result.countUsersBoughtItem[itemIdx];
 				}
-				for (int kFactorIdx = 0; kFactorIdx < numFactors; kFactorIdx++) {
-					summedLatentFactors[kFactorIdx] += result.summedLatentFactors[kFactorIdx];
+				for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
+					summedLatentFactors[factorIdx] += result.summedLatentFactors[factorIdx];
 				}
 				sumLog += result.sumLog;
 			}
-			// Norms of w are not calculated in parallel
-			double[] w_norm = new double[numFactors];
-			for (int kFactorIdx = 0; kFactorIdx < numFactors; kFactorIdx++) {
+			// Norms of w are not calculated in parallel (not dependent on user)
+			double[] wNorm = new double[numFactors];
+			for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
 				double sum = 0;
-				for (int lItemIdx = 0; lItemIdx < numItems; lItemIdx++) {
-					sum += w[kFactorIdx][lItemIdx];
+				for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+					sum += w[factorIdx][itemIdx];
 					
 				}
-				w_norm[kFactorIdx] = sum;
+				wNorm[factorIdx] = sum;
 			}
 			
 			// Calculation of Divergence is not needed. Only for debugging/logging purpose
-			printDivergence(summedLatentFactors, countUsersBoughtItem, sumLog, w_norm, iteration);
+			printDivergence(summedLatentFactors, countUsersBoughtItem, sumLog, wNorm, iteration);
 			
 			
 			
 			/*
 			 * Multiplicative updates are done here
 			 * 
-			 * We use a square root for the factors... 
-			 * This results in stable conversion on 'quadratic' update rules.
-			 * See papers...
+			 * See Formula 16 in "Projective non-negative matrix factorization with applications to facial image processing"
+			 * 
+			 * But we apply a square root to the factors... 
+			 * This results in slow but stable conversion
+			 * 
+			 * Look here for explanation "Adaptive multiplicative updates for projective nonnegative matrix factorization."
+			 * ('quadratic' update rules for the divergence)
 			 */
-			for (int kFactorIdx = 0; kFactorIdx < numFactors; kFactorIdx++) {
-				for (int lItemIdx = 0; lItemIdx < numItems; lItemIdx++) {
-					double old = w[kFactorIdx][lItemIdx];
-					double numerator = resultFactor[kFactorIdx][lItemIdx];
-					double denominator = countUsersBoughtItem[lItemIdx] * w_norm[kFactorIdx] + summedLatentFactors[kFactorIdx];
-					double newVal = old * StrictMath.sqrt(numerator / denominator);
-					if (Double.isNaN(newVal)) {
-						LOG.warn("Double.isNaN  " + numerator + " " + denominator + " " + old + " " + newVal);
+			for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
+				for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+					
+					double oldValue = w[factorIdx][itemIdx];
+					double numerator = resultNumerator[factorIdx][itemIdx];
+					double denominator = countUsersBoughtItem[itemIdx] * wNorm[factorIdx] + summedLatentFactors[factorIdx];
+					
+					double newValue = oldValue * StrictMath.sqrt(numerator / denominator);
+					
+					if (Double.isNaN(newValue)) {
+						LOG.warn("Double.isNaN  " + numerator + " " + denominator + " " + oldValue + " " + newValue);
 					}
 //					if (newVal<1e-24) {
 //						LOG.info("1e-24 " + zaehler + " " + nenner + " " + old + " " + newVal);
 //						newVal = 1e-24;
 //					}
-					w[kFactorIdx][lItemIdx] = newVal;
+					w[factorIdx][itemIdx] = newValue;
 				}
 
 			}
@@ -322,16 +335,16 @@ public class PNMFRecommender extends AbstractRecommender{
 	}
 
 
-
-	private void printDivergence(double[] summedLatentFactors, int[] countUsersBoughtItem, double sumLog, double[] w_norm, int iteration) {
+	// only for logging
+	private void printDivergence(double[] summedLatentFactors, int[] countUsersBoughtItem, double sumLog, double[] wNorm, int iteration) {
 		int countAll = 0;
-		for (int i = 0; i < countUsersBoughtItem.length; i++) {
-			countAll += countUsersBoughtItem[i];
+		for (int itemIdx = 0; itemIdx < countUsersBoughtItem.length; itemIdx++) {
+			countAll += countUsersBoughtItem[itemIdx];
 		}
 		
 		double sumAllEstimate = 0;
-		for (int kFactorIdx = 0; kFactorIdx < numFactors; kFactorIdx++) {
-			sumAllEstimate += w_norm[kFactorIdx] * summedLatentFactors[kFactorIdx];
+		for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
+			sumAllEstimate += wNorm[factorIdx] * summedLatentFactors[factorIdx];
 		}
 		double divergence = sumLog- countAll + sumAllEstimate;
 		LOG.info("Divergence (before iteration " + iteration +")=" + divergence + "  sumLog=" + sumLog + "  countAll=" + countAll + "  sumAllEstimate=" + sumAllEstimate);
@@ -366,7 +379,10 @@ public class PNMFRecommender extends AbstractRecommender{
         return latentFactors;
 	}
 
-
+	/*
+	 * This is not fast if you call for each item from outside
+	 * Calculate factors first and then calculate with factors the prediction of each item
+	 */
 	@Override
 	protected double predict(int userIdx, int itemIdx) throws LibrecException {
         SparseVector itemRatingsVector = trainMatrix.row(userIdx);
@@ -376,7 +392,7 @@ public class PNMFRecommender extends AbstractRecommender{
 
 
 
-	/**
+	/*
 	 * This method is overridden only for performance reasons.
 	 * 
 	 * Calculate all item ratings at once for one user has much better performance than for each item user combination alone.
