@@ -145,10 +145,7 @@ public class PNMFRecommender extends AbstractRecommender{
 			train(executorService, iter);
 		}
 		executorService.shutdown();
-		
-		LOG.info("numFactors: " + numFactors);
-		LOG.info("numIterations: " + numIterations);
-		
+				
 	}
 
 
@@ -347,7 +344,8 @@ public class PNMFRecommender extends AbstractRecommender{
 			sumAllEstimate += wNorm[factorIdx] * summedLatentFactors[factorIdx];
 		}
 		double divergence = sumLog- countAll + sumAllEstimate;
-		LOG.info("Divergence (before iteration " + iteration +")=" + divergence + "  sumLog=" + sumLog + "  countAll=" + countAll + "  sumAllEstimate=" + sumAllEstimate);
+		//LOG.info("Divergence (before iteration " + iteration +")=" + divergence + "  sumLog=" + sumLog + "  countAll=" + countAll + "  sumAllEstimate=" + sumAllEstimate);
+		LOG.info("Divergence (before iteration " + iteration +")=" + divergence);
 	}
 
 	private double predict(SparseVector itemRatingsVector, int itemIdx) {
