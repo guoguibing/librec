@@ -104,6 +104,7 @@ hitrate=net.librec.eval.ranking.HitRateEvaluator
 idcg=net.librec.eval.ranking.IdealDCGEvaluator
 ndcg=net.librec.eval.ranking.NormalizedDCGEvaluator
 precision=net.librec.eval.ranking.PrecisionEvaluator
+novelty=net.librec.eval.ranking.NoveltyEvaluator
 recall=net.librec.eval.ranking.RecallEvaluator
 rr=net.librec.eval.ranking.ReciprocalRankEvaluator
 mae=net.librec.eval.rating.MAEEvaluator
