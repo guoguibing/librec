@@ -208,19 +208,19 @@ public class PNMFRecommender extends AbstractRecommender{
 					
 					double[] second_term_numerator = new double[numFactors];
 	                for (int itemIdx : itemRatingsVector.getIndex()) {
-						double sum = 0;
+						double estimate = 0;
 						for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
-							sum += thisUserLatentFactors[factorIdx] * w[factorIdx][itemIdx];
+							estimate += thisUserLatentFactors[factorIdx] * w[factorIdx][itemIdx];
 						}
-						double estimateFactor = 1d/sum;
+						double estimateFactor = 1d/estimate;
 						sumLog += Math.log(estimateFactor);
 						countUsersBoughtItem[itemIdx]++;
 						
 						// Adding the terms of first sum numerator immediately
 						for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
 							// This is not a sum loop, we are just setting all values
-							double value = estimateFactor * thisUserLatentFactors[factorIdx];
-							resultNumerator[factorIdx][itemIdx] += value;
+							double first_term_numerator = estimateFactor * thisUserLatentFactors[factorIdx];
+							resultNumerator[factorIdx][itemIdx] += first_term_numerator;
 						}
 						// This for loop is for the second sum numerator, the inner sum, but added later..
 						for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
