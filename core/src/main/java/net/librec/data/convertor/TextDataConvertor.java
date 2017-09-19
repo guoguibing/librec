@@ -17,23 +17,33 @@
  */
 package net.librec.data.convertor;
 
-import com.google.common.collect.*;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.util.StringUtil;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
+
+import net.librec.math.structure.SparseMatrix;
+import net.librec.util.StringUtil;
 
 /**
  * A <tt>TextDataConvertor</tt> is a class to convert a data file from CSV
@@ -45,9 +55,6 @@ public class TextDataConvertor extends AbstractDataConvertor {
 
     /** Log */
     private static final Log LOG = LogFactory.getLog(TextDataConvertor.class);
-
-    /** The size of the buffer */
-    private static final int BSIZE = 1024 * 1024;
 
     /** The default format of input data file */
     private static final String DATA_COLUMN_DEFAULT_FORMAT = "UIR";
@@ -152,7 +159,8 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * @throws IOException
      *         if the <code>inputDataPath</code> is not valid.
      */
-    public void processData() throws IOException {
+    @Override
+	public void processData() throws IOException {
         readData(dataColumnFormat, inputDataPath, binThold);
     }
 
@@ -208,7 +216,6 @@ public class TextDataConvertor extends AbstractDataConvertor {
         }
         LOG.info("All dataset files size " + Long.toString(allFileSize));
         int readingFileCount = 0;
-        long loadAllFileByte = 0;
         // loop every dataFile collecting from walkFileTree
 
         for (File dataFile : files) {
@@ -216,75 +223,70 @@ public class TextDataConvertor extends AbstractDataConvertor {
 
             readingFileCount += 1;
             loadFilePathRate = readingFileCount / (float) files.size();
-            long readingOneFileByte = 0;
-            FileInputStream fis = new FileInputStream(dataFile);
-            FileChannel fileRead = fis.getChannel();
-            ByteBuffer buffer = ByteBuffer.allocate(BSIZE);
-            int len;
-            String bufferLine = "";
-            byte[] bytes = new byte[BSIZE];
+            //long readingOneFileByte = 0;
+            
+            Pattern pattern = Pattern.compile("[ \t,]+");
 
-            while ((len = fileRead.read(buffer)) != -1) {
-                readingOneFileByte += len;
-                loadDataFileRate = readingOneFileByte / (float) fileRead.size();
-                loadAllFileByte += len;
-                loadAllFileRate = loadAllFileByte / (float) allFileSize;
-                buffer.flip();
-                buffer.get(bytes, 0, len);
-                bufferLine = bufferLine.concat(new String(bytes, 0, len));
-                bufferLine = bufferLine.replaceAll("\r", "\n");
-                String[] bufferData = bufferLine.split("(\n)+");
-                boolean isComplete = bufferLine.endsWith("\n");
-                int loopLength = isComplete ? bufferData.length : bufferData.length - 1;
-                for (int i = 0; i < loopLength; i++) {
-                    String line = bufferData[i];
-                    String[] data = line.trim().split("[ \t,]+");
-                    String user = data[0];
-                    String item = data[1];
-                    Double rate = ((dataColumnFormat.equals("UIR") || dataColumnFormat.equals("UIRT")) && data.length >= 3) ? Double.valueOf(data[2]) : 1.0;
+			boolean parseDate = "UIRT".equals(dataColumnFormat);
+			boolean parseRate = "UIR".equals(dataColumnFormat) || parseDate;
+            try(BufferedReader reader = new BufferedReader(new FileReader(dataFile))){
+			
+                String line;
+        		int rows = 0;
+	    		while ((line = reader.readLine()) != null) {
+	    			try {
+		                String[] data = pattern.split(line);
+		                String user = data[0];
+		                String item = data[1];
+						double rate = (parseRate && data.length >= 3) ? Double.parseDouble(data[2]) : 1.0;
+		
+		                // binarize the rating for item recommendation task
+		                if (binThold >= 0) {
+		                    rate = rate > binThold ? 1.0 : 0.0;
+		                }
+		
+		                // inner id starting from 0
+		                Integer row = userIds.get(user);
+		                if (row == null){
+		                	row = userIds.size();
+			                userIds.put(user, row);
+		                }
+		
+		                Integer col = itemIds.get(item);
+		                if (col == null){
+		                	col = itemIds.size();
+			                itemIds.put(item, col);
+		                }
+		
+		                dataTable.put(row, col, rate);
+		                colMap.put(col, row);
+		                // record rating's issuing time
+		                if (parseDate && data.length >= 4) {
+		                    if (timeTable == null) {
+		                        timeTable = HashBasedTable.create();
+		                    }
+		                    // convert to million-seconds
+		                    long mms = 0L;
+		                    try {
+		                        mms = Long.parseLong(data[3]); // cannot format
+		                        // 9.7323480e+008
+		                    } catch (NumberFormatException e) {
+		                        mms = (long) Double.parseDouble(data[3]);
+		                    }
+		                    long timestamp = timeUnit.toMillis(mms);
+		                    timeTable.put(row, col, timestamp);
+		                }
+	    			} catch (Exception e) {
+						LOG.error("Error while parsing row=" + rows + ", values=" + line + ", file=" + dataFile, e);
+						throw new IOException("Error while parsing row=" + rows + "  values='" + line + "'  file=" + dataFile, e);
+					}
+	    			rows++;
 
-                    // binarize the rating for item recommendation task
-                    if (binThold >= 0) {
-                        rate = rate > binThold ? 1.0 : 0.0;
-                    }
-
-                    // inner id starting from 0
-                    int row = userIds.containsKey(user) ? userIds.get(user) : userIds.size();
-                    userIds.put(user, row);
-
-                    int col = itemIds.containsKey(item) ? itemIds.get(item) : itemIds.size();
-                    itemIds.put(item, col);
-
-                    dataTable.put(row, col, rate);
-                    colMap.put(col, row);
-                    // record rating's issuing time
-                    if (StringUtils.equals(dataColumnFormat, "UIRT") && data.length >= 4) {
-                        if (timeTable == null) {
-                            timeTable = HashBasedTable.create();
-                        }
-                        // convert to million-seconds
-                        long mms = 0L;
-                        try {
-                            mms = Long.parseLong(data[3]); // cannot format
-                            // 9.7323480e+008
-                        } catch (NumberFormatException e) {
-                            mms = (long) Double.parseDouble(data[3]);
-                        }
-                        long timestamp = timeUnit.toMillis(mms);
-                        timeTable.put(row, col, timestamp);
-                    }
-                }
-                if (!isComplete) {
-                    bufferLine = bufferData[bufferData.length - 1];
-                }else{
-                    bufferLine = "";
-                }
-                buffer.clear();
+	            }
             }
-            fileRead.close();
-            fis.close();
-        }
-        int numRows = numUsers(), numCols = numItems();
+		}
+        int numRows = numUsers();
+        int numCols = numItems();
         // build rating matrix
         preferenceMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
         if (timeTable != null)
