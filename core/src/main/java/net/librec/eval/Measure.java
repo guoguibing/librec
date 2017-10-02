@@ -40,6 +40,7 @@ public enum Measure {
     PRECISION(PrecisionEvaluator.class),
     RECALL(RecallEvaluator.class),
     RR(ReciprocalRankEvaluator.class),
+    Novelty(NoveltyEvaluator.class),
     RMSE(RMSEEvaluator.class),
     MSE(MSEEvaluator.class),
     MAE(MAEEvaluator.class),
@@ -47,7 +48,7 @@ public enum Measure {
 
     private Class<? extends RecommenderEvaluator> evaluatorClass;
 
-    private Measure(Class<? extends RecommenderEvaluator> evaluatorClass) {
+    Measure(Class<? extends RecommenderEvaluator> evaluatorClass) {
         this.evaluatorClass = evaluatorClass;
     }
 
@@ -76,6 +77,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(AP, 10));
             rankingEnumList.add(new MeasureValue(NDCG, 10));
             rankingEnumList.add(new MeasureValue(RR, 10));
+            rankingEnumList.add(new MeasureValue(Novelty, 10));
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -83,6 +85,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(AP, topN));
             rankingEnumList.add(new MeasureValue(NDCG, topN));
             rankingEnumList.add(new MeasureValue(RR, topN));
+            rankingEnumList.add(new MeasureValue(Novelty, topN));
         }
         return rankingEnumList;
     }

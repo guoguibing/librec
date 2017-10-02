@@ -43,27 +43,40 @@ import java.util.concurrent.TimeUnit;
  */
 public class TextDataConvertor extends AbstractDataConvertor {
 
-    /** Log */
+    /**
+     * Log
+     */
     private static final Log LOG = LogFactory.getLog(TextDataConvertor.class);
 
-    /** The size of the buffer */
+    /**
+     * The size of the buffer
+     */
     private static final int BSIZE = 1024 * 1024;
 
-    /** The default format of input data file */
+    /**
+     * The default format of input data file
+     */
     private static final String DATA_COLUMN_DEFAULT_FORMAT = "UIR";
 
-    /** The format of input data file */
+    /**
+     * The format of input data file
+     */
     private String dataColumnFormat;
 
-    /** the path of the input data file */
+    /**
+     * the path of the input data file
+     */
     private String inputDataPath;
 
-    /** the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+    /**
+     * the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
      * otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a negative value
      */
     private double binThold = -1.0;
 
-    /** user/item {raw id, inner id} map */
+    /**
+     * user/item {raw id, inner id} map
+     */
     private BiMap<String, Integer> userIds, itemIds;
 
     /**
@@ -71,21 +84,26 @@ public class TextDataConvertor extends AbstractDataConvertor {
      */
     private TimeUnit timeUnit = TimeUnit.SECONDS;
 
-    /** already loaded files/total files in dataDirectory */
+    /**
+     * already loaded files/total files in dataDirectory
+     */
     private float loadFilePathRate;
 
-    /** loaded data size /total data size in one data file */
+    /**
+     * loaded data size /total data size in one data file
+     */
     private float loadDataFileRate;
 
-    /** loaded data size /total data size in all data file */
+    /**
+     * loaded data size /total data size in all data file
+     */
     private float loadAllFileRate;
 
     /**
      * Initializes a newly created {@code TextDataConvertor} object with the
      * path of the input data file.
      *
-     * @param inputDataPath
-     *            the path of the input data file
+     * @param inputDataPath the path of the input data file
      */
     public TextDataConvertor(String inputDataPath) {
         this(DATA_COLUMN_DEFAULT_FORMAT, inputDataPath, -1.0);
@@ -95,10 +113,8 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * Initializes a newly created {@code TextDataConvertor} object with the
      * path and format of the input data file.
      *
-     * @param dataColumnFormat
-     *            the path of the input data file
-     * @param inputDataPath
-     *            the format of the input data file
+     * @param dataColumnFormat the path of the input data file
+     * @param inputDataPath    the format of the input data file
      */
     public TextDataConvertor(String dataColumnFormat, String inputDataPath) {
         this(dataColumnFormat, inputDataPath, -1.0);
@@ -108,13 +124,11 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * Initializes a newly created {@code TextDataConvertor} object with the
      * path and format of the input data file.
      *
-     * @param dataColumnFormat
-     *            the format of the input data file
-     * @param inputDataPath
-     *            the path of the input data file
-     * @param binThold the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
-     *            otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
-     *            negative value
+     * @param dataColumnFormat the path of the input data file
+     * @param inputDataPath    the format of the input data file
+     * @param binThold         the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+     *                         otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
+     *                         negative value
      */
     public TextDataConvertor(String dataColumnFormat, String inputDataPath, double binThold) {
         this.dataColumnFormat = dataColumnFormat;
@@ -126,31 +140,25 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * Initializes a newly created {@code TextDataConvertor} object with the
      * path and format of the input data file.
      *
-     * @param dataColumnFormat
-     *            the path of the input data file
-     * @param inputDataPath
-     *            the format of the input data file
-     * @param binThold
-     *            the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
-     *            otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
-     *            negative value
-     * @param userIds
-     *            userId to userIndex map
-     * @param itemIds
-     *            itemId to itemIndex map
+     * @param dataColumnFormat the path of the input data file
+     * @param inputDataPath    the format of the input data file
+     * @param binThold         the threshold to binarize a rating. If a rating is greater than the threshold, the value will be 1;
+     *                         otherwise 0. To disable this appender, i.e., keep the original rating value, set the threshold a
+     *                         negative value
+     * @param userIds          userId to userIndex map
+     * @param itemIds          itemId to itemIndex map
      */
     public TextDataConvertor(String dataColumnFormat, String inputDataPath, double binThold,
                              BiMap<String, Integer> userIds, BiMap<String, Integer> itemIds) {
-        this(dataColumnFormat, inputDataPath,binThold);
-        this.userIds=userIds;
-        this.itemIds=itemIds;
+        this(dataColumnFormat, inputDataPath, binThold);
+        this.userIds = userIds;
+        this.itemIds = itemIds;
     }
 
     /**
      * Process the input data.
      *
-     * @throws IOException
-     *         if the <code>inputDataPath</code> is not valid.
+     * @throws IOException if the <code>inputDataPath</code> is not valid.
      */
     public void processData() throws IOException {
         readData(dataColumnFormat, inputDataPath, binThold);
@@ -160,17 +168,13 @@ public class TextDataConvertor extends AbstractDataConvertor {
      * Read data from the data file. Note that we didn't take care of the
      * duplicated lines.
      *
-     * @param dataColumnFormat
-     *            the format of input data file
-     * @param inputDataPath
-     *            the path of input data file
-     * @param binThold
-     *            the threshold to binarize a rating. If a rating is greater
-     *            than the threshold, the value will be 1; otherwise 0. To
-     *            disable this appender, i.e., keep the original rating value,
-     *            set the threshold a negative value
-     * @throws IOException
-     *            if the <code>inputDataPath</code> is not valid.
+     * @param dataColumnFormat the format of input data file
+     * @param inputDataPath    the path of input data file
+     * @param binThold         the threshold to binarize a rating. If a rating is greater
+     *                         than the threshold, the value will be 1; otherwise 0. To
+     *                         disable this appender, i.e., keep the original rating value,
+     *                         set the threshold a negative value
+     * @throws IOException if the <code>inputDataPath</code> is not valid.
      */
     private void readData(String dataColumnFormat, String inputDataPath, double binThold) throws IOException {
         LOG.info(String.format("Dataset: %s", StringUtil.last(inputDataPath, 38)));
@@ -181,10 +185,10 @@ public class TextDataConvertor extends AbstractDataConvertor {
         // Map {col-id, multiple row-id}: used to fast build a rating matrix
         Multimap<Integer, Integer> colMap = HashMultimap.create();
 
-        if (this.userIds == null){
+        if (this.userIds == null) {
             this.userIds = HashBiMap.create();
         }
-        if (this.itemIds == null){
+        if (this.itemIds == null) {
             this.itemIds = HashBiMap.create();
         }
         final List<File> files = new ArrayList<>();
@@ -197,7 +201,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
                 return super.visitFile(file, attrs);
             }
         };
-        for(String path : inputDataPath.trim().split(" ")){
+        for (String path : inputDataPath.trim().split(" ")) {
             Files.walkFileTree(Paths.get(path), finder);
         }
 
@@ -276,8 +280,6 @@ public class TextDataConvertor extends AbstractDataConvertor {
                 }
                 if (!isComplete) {
                     bufferLine = bufferData[bufferData.length - 1];
-                }else{
-                    bufferLine = "";
                 }
                 buffer.clear();
             }
@@ -350,9 +352,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     /**
      * Return a user's inner id by his raw id.
      *
-     * @param rawId
-     *            raw user id as String
-     *
+     * @param rawId raw user id as String
      * @return inner user id as int
      */
     public int getUserId(String rawId) {
@@ -362,9 +362,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     /**
      * Return an item's inner id by its raw id.
      *
-     * @param rawId
-     *            raw item id as String
-     *
+     * @param rawId raw item id as String
      * @return inner item id as int
      */
     public int getItemId(String rawId) {
@@ -392,7 +390,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     /**
      * Set the time unit of the data file.
      *
-     * @param timeUnit  the time unit to be set for the data file
+     * @param timeUnit the time unit to be set for the data file
      */
     public void setTimeUnit(TimeUnit timeUnit) {
         this.timeUnit = timeUnit;
