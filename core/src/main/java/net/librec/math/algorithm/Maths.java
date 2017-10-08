@@ -141,16 +141,21 @@ public class Maths {
     }
 
     /**
-     * logistic function g(x)
+     * softmax function
      *
-     * @param x given parameter x
-     * @return value of logistic function g(x)
-     * @throws Exception  if error occurs
+     * @param x given array
+     * @return output array of softmax function
+     * @throws Exception if error occurs
      */
     public static double[] softmax(double[] x) throws Exception {
         double[] expx = new double[x.length];
+
+        double  max = x[0];
+        for(int i=1;i<x.length;i++)
+            max = Math.max(x[i],max);
+
         for (int i = 0; i < x.length; i++) {
-            expx[i] = Math.exp(x[i]);
+            expx[i] = Math.exp(x[i] - max);
         }
         return norm(expx);
     }
