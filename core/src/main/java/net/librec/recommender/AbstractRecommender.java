@@ -337,7 +337,10 @@ public abstract class AbstractRecommender implements Recommender {
      * @throws LibrecException if error occurs during evaluating
      */
     public double evaluate(RecommenderEvaluator evaluator) throws LibrecException {
-        return evaluator.evaluate(context, recommendedList);
+        if ( isRanking && topN>0)
+        	evaluator.setTopN(topN);	// if isRanking is true and topN>0, set the top-N of evaluator
+        
+    	return evaluator.evaluate(context, recommendedList);
     }
 
     /**
