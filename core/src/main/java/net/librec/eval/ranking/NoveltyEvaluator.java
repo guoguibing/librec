@@ -17,30 +17,27 @@
  */
 package net.librec.eval.ranking;
 
-import java.util.List;
-
 import net.librec.eval.AbstractRecommenderEvaluator;
 import net.librec.math.structure.SparseMatrix;
 import net.librec.recommender.item.ItemEntry;
 import net.librec.recommender.item.RecommendedList;
+import java.util.List;
+
 
 /**
  * NoveltyEvaluator
- * 
+ *
  * 'Mean Self-Information'
- * 
- * 
+ *
+ *
  * Zhou, Tao, et al. "Solving the apparent diversity-accuracy dilemma of recommender systems." Proceedings of the National Academy of Sciences 107.10 (2010): 4511-4515.
- * 
+ *
  * In this research article measure is described in '(D2) Surprisal/noevelty'
- * 
  * This measure is also called 'Mean Self-Information'
- * 
- * Estimated Entropy/Information per recommender result list in Bytes. 
- * 
+ * Estimated Entropy/Information per recommender result list in Bytes.
  * (recommender result list is shortened to topN)  
  *
- * @author Daniel Velten, Karlsruhe, Germany
+ * @author Daniel Velten, Karlsruhe, Germany, SunYatong
  */
 public class NoveltyEvaluator extends AbstractRecommenderEvaluator {
 
@@ -54,7 +51,7 @@ public class NoveltyEvaluator extends AbstractRecommenderEvaluator {
      * @return evaluate result
      */
     @Override
-	public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
 
         int numUsers = testMatrix.numRows();
         int numItems = testMatrix.numColumns();
@@ -67,20 +64,20 @@ public class NoveltyEvaluator extends AbstractRecommenderEvaluator {
             if (recoList.size() > 1) {
                 int topK = this.topN <= recoList.size() ? this.topN : recoList.size();
                 for (int recoIdx = 0; recoIdx < topK; recoIdx++) {
-                	itemCounts[recoList.get(recoIdx).getKey()]++;
+                    itemCounts[recoList.get(recoIdx).getKey()]++;
                 }
                 nonZeroNumUsers++;
             }
         }
         double sumInformation = 0;
-		for (int i = 0; i < itemCounts.length; i++) {
-        	int count = itemCounts[i];
-        	if (count>0){
-				double estmProbability = ((double)count)/numUsers;
-	        	double information = -Math.log(estmProbability);
-				sumInformation += count * information;
-        	}
-		}
+        for (int i = 0; i < itemCounts.length; i++) {
+            int count = itemCounts[i];
+            if (count>0){
+                double estmProbability = ((double)count)/numUsers;
+                double information = -Math.log(estmProbability);
+                sumInformation += count * information;
+            }
+        }
         double informationInBytesPerUser = sumInformation/(nonZeroNumUsers * Math.log(2));
 
 
