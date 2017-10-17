@@ -17,33 +17,23 @@
  */
 package net.librec.data.convertor;
 
-import java.io.BufferedReader;
+import com.google.common.collect.*;
+import net.librec.math.structure.SparseMatrix;
+import net.librec.util.StringUtil;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Table;
-
-import net.librec.math.structure.SparseMatrix;
-import net.librec.util.StringUtil;
 
 /**
  * A <tt>TextDataConvertor</tt> is a class to convert a data file from CSV
@@ -170,8 +160,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
      *
      * @throws IOException if the <code>inputDataPath</code> is not valid.
      */
-    @Override
-	public void processData() throws IOException {
+    public void processData() throws IOException {
         readData(dataColumnFormat, inputDataPath, binThold);
     }
 
@@ -223,6 +212,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
         }
         LOG.info("All dataset files size " + Long.toString(allFileSize));
         int readingFileCount = 0;
+        long loadAllFileByte = 0;
         // loop every dataFile collecting from walkFileTree
 
         for (File dataFile : files) {
@@ -293,9 +283,10 @@ public class TextDataConvertor extends AbstractDataConvertor {
                 }
                 buffer.clear();
             }
-		}
-        int numRows = numUsers();
-        int numCols = numItems();
+            fileRead.close();
+            fis.close();
+        }
+        int numRows = numUsers(), numCols = numItems();
         // build rating matrix
         preferenceMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
         if (timeTable != null)
