@@ -17,31 +17,43 @@
  */
 package net.librec.eval.ranking;
 
-import net.librec.eval.AbstractRecommenderEvaluator;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.recommender.item.ItemEntry;
-import net.librec.recommender.item.RecommendedList;
 import java.util.List;
 
+import net.librec.eval.AbstractRecommenderEvaluator;
+import net.librec.math.structure.SparseMatrix;
+import net.librec.recommender.RecommenderContext;
+import net.librec.recommender.item.ItemEntry;
+import net.librec.recommender.item.RecommendedList;
 
 /**
  * NoveltyEvaluator
- *
- * 'Mean Self-Information'
- *
- *
- * Zhou, Tao, et al. "Solving the apparent diversity-accuracy dilemma of recommender systems." Proceedings of the National Academy of Sciences 107.10 (2010): 4511-4515.
- *
- * In this research article measure is described in '(D2) Surprisal/noevelty'
- * This measure is also called 'Mean Self-Information'
- * Estimated Entropy/Information per recommender result list in Bytes.
- * (recommender result list is shortened to topN)  
+ * 
+ * Often also called 'Mean Self-Information' or Surprisal
+ * 
+ * Look at Section '4.2.5 Novelty' of article:
+ * 
+ * Javari, Amin, and Mahdi Jalili. "A probabilistic model to resolve diversity–accuracy challenge of recommendation systems." Knowledge and Information Systems 44.3 (2015): 609-627.
+ * 
+ * 
+ * Calculates Self-Information of each recommender result list.
+ * And then calculates the average of this of all result lists in test set.
+ * 
+ * But please take also attention to the assumed probability space:
+ * 
+ * The probability of an item is assumed to be the purchase probability.
+ * (Estimated by items purchased divided by all items purchased.)
+ * Surely there is also independence assumed between items.
+ * 
+ * This assumption about the probability space is different from the EntropyEvaluator
+ * 
  *
  * @author Daniel Velten, Karlsruhe, Germany, SunYatong
  */
 public class NoveltyEvaluator extends AbstractRecommenderEvaluator {
 
-    /**
+    private SparseMatrix trainMatrix;
+
+	/**
      * Evaluate on the test set with the the list of recommended items.
      *
      * @param testMatrix
@@ -51,36 +63,57 @@ public class NoveltyEvaluator extends AbstractRecommenderEvaluator {
      * @return evaluate result
      */
     @Override
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+	public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
 
         int numUsers = testMatrix.numRows();
         int numItems = testMatrix.numColumns();
-        int nonZeroNumUsers = 0;
 
-        // First collect item counts needed for estimating probabilities of the items
-        int itemCounts[] = new int[numItems];
+		// First collect item counts needed for estimating probabilities of the items
+        int[] itemCounts = calculatePurchaseCounts(testMatrix, numUsers, numItems);
+        
+        
+        double sumInformation = 0;
         for (int userID = 0; userID < numUsers; userID++) {
             List<ItemEntry<Integer, Double>> recoList = recommendedList.getItemIdxListByUserIdx(userID);
-            if (recoList.size() > 1) {
-                int topK = this.topN <= recoList.size() ? this.topN : recoList.size();
-                for (int recoIdx = 0; recoIdx < topK; recoIdx++) {
-                    itemCounts[recoList.get(recoIdx).getKey()]++;
-                }
-                nonZeroNumUsers++;
+            int topK = this.topN <= recoList.size() ? this.topN : recoList.size();
+            for (int recoIdx = 0; recoIdx < topK; recoIdx++) {
+            	int itemIdx = recoList.get(recoIdx).getKey();
+            	int count = itemCounts[itemIdx];
+            	if (count>0){
+    				double estmProbability = ((double)count)/numUsers;
+    	        	double selfInformation = -Math.log(estmProbability);
+    				sumInformation += selfInformation;
+            	}
             }
         }
-        double sumInformation = 0;
-        for (int i = 0; i < itemCounts.length; i++) {
-            int count = itemCounts[i];
-            if (count>0){
-                double estmProbability = ((double)count)/numUsers;
-                double information = -Math.log(estmProbability);
-                sumInformation += count * information;
-            }
-        }
-        double informationInBytesPerUser = sumInformation/(nonZeroNumUsers * Math.log(2));
+        double avgSelfInformationInBitsPerUser = sumInformation/(numUsers * Math.log(2));
 
 
-        return informationInBytesPerUser;
+        return avgSelfInformationInBitsPerUser;
     }
+
+	private int[] calculatePurchaseCounts(SparseMatrix testMatrix, int numUsers, int numItems) {
+		
+        // Here we use the purchase counts of the train and test-Dataset !!!
+        int itemCounts[] = new int[numItems];
+        for (int userID = 0; userID < numUsers; userID++) {
+            List<Integer> testItemsOfUser = testMatrix.getColumns(userID);
+            for (Integer itemIdx : testItemsOfUser) {
+            	itemCounts[itemIdx]++;
+            }
+            List<Integer> trainItemsOfUser = trainMatrix.getColumns(userID);
+            for (Integer itemIdx : trainItemsOfUser) {
+            	itemCounts[itemIdx]++;
+            }
+        }
+		return itemCounts;
+	}
+
+	@Override
+	public double evaluate(RecommenderContext context, RecommendedList recommendedList) {
+		this.trainMatrix = context.getDataModel().getDataSplitter().getTrainData();
+		return super.evaluate(context, recommendedList);
+	}
+	
+	
 }

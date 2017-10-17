@@ -106,6 +106,7 @@ idcg=net.librec.eval.ranking.IdealDCGEvaluator
 ndcg=net.librec.eval.ranking.NormalizedDCGEvaluator
 precision=net.librec.eval.ranking.PrecisionEvaluator
 novelty=net.librec.eval.ranking.NoveltyEvaluator
+entropy=net.librec.eval.ranking.EntropyEvaluator
 recall=net.librec.eval.ranking.RecallEvaluator
 rr=net.librec.eval.ranking.ReciprocalRankEvaluator
 novelty=net.librec.eval.ranking.NoveltyEvaluator
