@@ -69,42 +69,32 @@ public class NoveltyEvaluator extends AbstractRecommenderEvaluator {
         int numItems = testMatrix.numColumns();
 
 		// First collect item counts needed for estimating probabilities of the items
-        int[] itemCounts = calculatePurchaseCounts(testMatrix, numUsers, numItems);
-        
-        
+        int[] itemCounts = calculatePurchaseCounts(testMatrix, numItems);
+
         double sumInformation = 0;
         for (int userID = 0; userID < numUsers; userID++) {
             List<ItemEntry<Integer, Double>> recoList = recommendedList.getItemIdxListByUserIdx(userID);
             int topK = this.topN <= recoList.size() ? this.topN : recoList.size();
             for (int recoIdx = 0; recoIdx < topK; recoIdx++) {
-            	int itemIdx = recoList.get(recoIdx).getKey();
-            	int count = itemCounts[itemIdx];
-            	if (count>0){
-    				double estmProbability = ((double)count)/numUsers;
-    	        	double selfInformation = -Math.log(estmProbability);
-    				sumInformation += selfInformation;
-            	}
+                int itemIdx = recoList.get(recoIdx).getKey();
+                int count = itemCounts[itemIdx];
+                if (count>0) {
+                    double estmProbability = ((double)count)/numUsers;
+                    double selfInformation = -Math.log(estmProbability);
+                    sumInformation += selfInformation;
+                }
             }
         }
-        double avgSelfInformationInBitsPerUser = sumInformation/(numUsers * Math.log(2));
 
-
-        return avgSelfInformationInBitsPerUser;
+        return sumInformation/(numUsers * Math.log(2));
     }
 
-	private int[] calculatePurchaseCounts(SparseMatrix testMatrix, int numUsers, int numItems) {
+	private int[] calculatePurchaseCounts(SparseMatrix testMatrix, int numItems) {
 		
         // Here we use the purchase counts of the train and test-Dataset !!!
         int itemCounts[] = new int[numItems];
-        for (int userID = 0; userID < numUsers; userID++) {
-            List<Integer> testItemsOfUser = testMatrix.getColumns(userID);
-            for (Integer itemIdx : testItemsOfUser) {
-            	itemCounts[itemIdx]++;
-            }
-            List<Integer> trainItemsOfUser = trainMatrix.getColumns(userID);
-            for (Integer itemIdx : trainItemsOfUser) {
-            	itemCounts[itemIdx]++;
-            }
+        for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+            itemCounts[itemIdx] = trainMatrix.getRows(itemIdx).size() + testMatrix.getRows(itemIdx).size();
         }
 		return itemCounts;
 	}

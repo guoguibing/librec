@@ -75,18 +75,14 @@ public class EntropyEvaluator extends AbstractRecommenderEvaluator {
             }
         }
         double sumEntropy = 0;
-		for (int i = 0; i < itemCounts.length; i++) {
-        	int count = itemCounts[i];
-        	if (count>0){
-				double estmProbability = ((double)count)/numUsers;
-				sumEntropy += estmProbability * (-Math.log(estmProbability));
-        	}
-		}
-		
+        for (int count: itemCounts) {
+            if (count>0){
+                double estmProbability = ((double)count)/numUsers;
+                sumEntropy += estmProbability * (-Math.log(estmProbability));
+            }
+        }
 		// You can scale the unit of entropy to the well known 'Bit'-Unit by dividing by log(2)
 		// (Above we have used the natural logarithm instead of the logarithm with base 2)
-        double entropyInBitsPerUser = sumEntropy/Math.log(2);
-
-        return entropyInBitsPerUser;
+        return sumEntropy/Math.log(2);
     }
 }
