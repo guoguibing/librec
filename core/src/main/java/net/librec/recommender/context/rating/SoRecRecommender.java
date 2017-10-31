@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Jamali and Ester, <strong>A matrix factorization technique with trust propagation for recommendation in social
- * networks</strong>, RecSys 2010.
+ * Hao Ma, Haixuan Yang, Michael R. Lyu and Irwin King, <strong>SoRec: Social recommendation using probabilistic matrix
+ * factorization</strong>, ACM CIKM 2008.
  *
  * @author guoguibing and Keqiang Wang
  */
