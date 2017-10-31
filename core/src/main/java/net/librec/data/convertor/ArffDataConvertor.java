@@ -432,19 +432,21 @@ public class ArffDataConvertor extends AbstractDataConvertor {
             ArffInstance instance = instances.get(row);
             for (int i = 0; i < numAttrs; i++) {
                 if (i == userCol) {
+                    int j = i > ratingCol? i - 1: i;
                     double userId = (double) instance.getValueByIndex(userCol);
                     String strUserId = String.valueOf((int) userId);
-                    int userInnerId = featuresInnerMapping.get(i).containsKey(strUserId) ? featuresInnerMapping.get(i).get(strUserId) : featuresInnerMapping.get(i).size();
-                    featuresInnerMapping.get(i).put(strUserId, userInnerId);
-                    nDKeys[i].add(userInnerId);
-                    setOfAttrs.get(i).add(userInnerId);
+                    int userInnerId = featuresInnerMapping.get(j).containsKey(strUserId) ? featuresInnerMapping.get(j).get(strUserId) : featuresInnerMapping.get(j).size();
+                    featuresInnerMapping.get(j).put(strUserId, userInnerId);
+                    nDKeys[j].add(userInnerId);
+                    setOfAttrs.get(j).add(userInnerId);
                 } else if (i == itemCol) {
+                    int j = i > ratingCol? i - 1: i;
                     double itemId = (double) instance.getValueByIndex(itemCol);
                     String strItemId = String.valueOf((int) itemId);
-                    int itemInnerId = featuresInnerMapping.get(i).containsKey(strItemId) ? featuresInnerMapping.get(i).get(strItemId) : featuresInnerMapping.get(i).size();
-                    featuresInnerMapping.get(i).put(strItemId, itemInnerId);
-                    nDKeys[i].add(itemInnerId);
-                    setOfAttrs.get(i).add(itemInnerId);
+                    int itemInnerId = featuresInnerMapping.get(j).containsKey(strItemId) ? featuresInnerMapping.get(j).get(strItemId) : featuresInnerMapping.get(j).size();
+                    featuresInnerMapping.get(j).put(strItemId, itemInnerId);
+                    nDKeys[j].add(itemInnerId);
+                    setOfAttrs.get(j).add(itemInnerId);
                 } else if (i == ratingCol) {
                     double rating = (double) instance.getValueByIndex(ratingCol);
                     ratings.add(rating);
