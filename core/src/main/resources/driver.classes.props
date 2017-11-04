@@ -94,6 +94,7 @@ hybrid=net.librec.recommender.hybrid.HybridRecommender
 personalitydiagnosis=net.librec.recommender.ext.PersonalityDiagnosisRecommender
 prankd=net.librec.recommender.ext.PRankDRecommender
 slopeone=net.librec.recommender.ext.SlopeOneRecommender
+bipolarslopeone=net.librec.recommender.ext.BipolarSlopeOneRecommender
 #Evaluator(-eval)
 auc=net.librec.eval.ranking.AUCEvaluator
 ap=net.librec.eval.ranking.AveragePrecisionEvaluator

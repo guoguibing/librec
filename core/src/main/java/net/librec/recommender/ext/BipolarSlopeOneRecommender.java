@@ -12,7 +12,7 @@ import net.librec.recommender.AbstractRecommender;
  * </strong>, SDM 2005.
  *
  * @author Qian Shaofeng
- *         created on 2017/11/3.
+ *
  */
 public class BipolarSlopeOneRecommender extends AbstractRecommender{
     /**
