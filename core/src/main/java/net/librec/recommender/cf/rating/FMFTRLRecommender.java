@@ -17,37 +17,30 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
     /**
      *  lambda1 is the truncated threshold
      */
-    private double lambda1W0, lambda1W, lambda1V;
+    private double lambda1;
 
     /**
      *  lambda2 is the L2 regularization
      */
-    private double lambda2W0, lambda2W, lambda2V;
+    private double lambda2;
 
     /**
      *  alpha and beta are used to compute learning rate.
      *  The learning rate n = alpha / ( beta + sqrt(sum(g_i^2)) )
      */
-    private double alphaW0, alphaW, alphaV;
-    private double betaW0, betaW, betaV;
+    private double alpha;
+    private double beta;
 
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        lambda1W0 = conf.getDouble("rec.regularization.lambda1W0");
-        lambda1W = conf.getDouble("rec.regularization.lambda1W");
-        lambda1V = conf.getDouble("rec.regularization.lambda1V");
+        lambda1 = conf.getDouble("rec.regularization.lambda1");
 
-        lambda2W0 = conf.getDouble("rec.regularization.lambda2W0");
-        lambda2W = conf.getDouble("rec.regularization.lambda2W");
-        lambda2V = conf.getDouble("rec.regularization.lambda2V");
+        lambda2 = conf.getDouble("rec.regularization.lambda2");
 
-        alphaW0 = conf.getDouble("rec.alphaW0");
-        alphaW = conf.getDouble("rec.alphaW");
-        alphaV = conf.getDouble("rec.alphaV");
-        betaW0 = conf.getDouble("rec.betaW0");
-        betaW = conf.getDouble("rec.betaW");
-        betaV = conf.getDouble("rec.betaV");
+        alpha = conf.getDouble("rec.learningRate.alpha");
+
+        beta = conf.getDouble("rec.learningRate.beta");
     }
 
     @Override
@@ -99,15 +92,15 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                 // compute w0 gradient
                 double hW0 = 1;
                 gW0 = gradLoss * hW0;
-                thetaW0 = 1 / alphaW0 * (Math.sqrt(nW0 + Math.pow(gW0, 2)) - Math.sqrt(nW0));
+                thetaW0 = 1 / alpha * (Math.sqrt(nW0 + Math.pow(gW0, 2)) - Math.sqrt(nW0));
                 zW0 += gW0 - thetaW0 * w0;
                 nW0 += Math.pow(gW0, 2);
 
                 // update w0
-                if (Math.abs(zW0) <= lambda1W0) {
+                if (Math.abs(zW0) <= lambda1) {
                     w0 = 0;
                 } else {
-                    w0 = -1 / ((betaW0 + Math.sqrt(nW0)) / alphaW0 + lambda2W0) * (zW0 - sgn(zW0) * lambda1W0);
+                    w0 = -1 / ((beta + Math.sqrt(nW0)) / alpha + lambda2) * (zW0 - sgn(zW0) * lambda1);
                 }
 
                 for(VectorEntry ve: x){
@@ -115,15 +108,15 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                     // compute W gradient
                     double hWl = ve.get();
                     gW.set(l, gradLoss * hWl);
-                    thetaW.set(l, 1 / alphaW * (Math.sqrt(nW.get(l) + Math.pow(gW.get(l), 2)) - Math.sqrt(nW.get(l))));
+                    thetaW.set(l, 1 / alpha * (Math.sqrt(nW.get(l) + Math.pow(gW.get(l), 2)) - Math.sqrt(nW.get(l))));
                     zW.add(l, gW.get(l) - thetaW.get(l) * W.get(l));
                     nW.add(l, Math.pow(gW.get(l), 2));
 
                     // update W
-                    if (Math.abs(zW.get(l)) <= lambda1W) {
+                    if (Math.abs(zW.get(l)) <= lambda1) {
                         W.set(l, 0);
                     } else {
-                        double value = -1 / ((betaW + Math.sqrt(nW.get(l))) / alphaW + lambda2W) * (zW.get(l) - sgn(zW.get(l)) * lambda1W);
+                        double value = -1 / ((beta + Math.sqrt(nW.get(l))) / alpha + lambda2) * (zW.get(l) - sgn(zW.get(l)) * lambda1);
                         W.set(l, value);
                     }
 
@@ -141,15 +134,15 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                         double gradVlf = gradLoss * hVlf;
 
                         gV.set(l, f, gradVlf);
-                        thetaV.set(l, f, 1 / alphaV * (Math.sqrt(nV.get(l, f) + Math.pow(gV.get(l, f), 2)) - Math.sqrt(nV.get(l, f))));
+                        thetaV.set(l, f, 1 / alpha * (Math.sqrt(nV.get(l, f) + Math.pow(gV.get(l, f), 2)) - Math.sqrt(nV.get(l, f))));
                         zV.add(l, f, gV.get(l, f) - thetaV.get(l, f) * V.get(l, f));
                         nV.add(l, f, Math.pow(gV.get(l, f), 2));
 
                         // update V
-                        if (Math.abs(zV.get(l, f)) <= lambda1V) {
+                        if (Math.abs(zV.get(l, f)) <= lambda1) {
                             V.set(l, f, 0);
                         } else {
-                            double value = -1 / ((betaV + Math.sqrt(nV.get(l, f))) / alphaV + lambda2V) * (zV.get(l, f) - sgn(zV.get(l, f)) * lambda1V);
+                            double value = -1 / ((beta + Math.sqrt(nV.get(l, f))) / alpha + lambda2) * (zV.get(l, f) - sgn(zV.get(l, f)) * lambda1);
                             V.set(l, f, value);
                         }
                     }
