@@ -1,10 +1,7 @@
 package net.librec.recommender.cf.rating;
 
 import net.librec.common.LibrecException;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.TensorEntry;
+import net.librec.math.structure.*;
 import net.librec.recommender.FactorizationMachineRecommender;
 
 /**
@@ -100,7 +97,8 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                 double gradLoss = err;
 
                 // compute w0 gradient
-                gW0 = gradLoss;
+                double hW0 = 1;
+                gW0 = gradLoss * hW0;
                 thetaW0 = 1 / alphaW0 * (Math.sqrt(nW0 + Math.pow(gW0, 2)) - Math.sqrt(nW0));
                 zW0 += gW0 - thetaW0 * w0;
                 nW0 += Math.pow(gW0, 2);
@@ -112,9 +110,11 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                     w0 = -1 / ((betaW0 + Math.sqrt(nW0)) / alphaW0 + lambda2W0) * (zW0 - sgn(zW0) * lambda1W0);
                 }
 
-                for (int l = 0; l < p; ++l) {
+                for(VectorEntry ve: x){
+                    int l = ve.index();
                     // compute W gradient
-                    gW.set(l, gradLoss * x.get(l));
+                    double hWl = ve.get();
+                    gW.set(l, gradLoss * hWl);
                     thetaW.set(l, 1 / alphaW * (Math.sqrt(nW.get(l) + Math.pow(gW.get(l), 2)) - Math.sqrt(nW.get(l))));
                     zW.add(l, gW.get(l) - thetaW.get(l) * W.get(l));
                     nW.add(l, Math.pow(gW.get(l), 2));
@@ -129,9 +129,12 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
 
                     for (int f = 0; f < k; ++f) {
                         double hVlf = 0;
-                        double xl = x.get(l);
-                        if (xl != 0) {
-                            hVlf = xl * (V.column(f).inner(x) - xl);
+                        double xl =ve.get();
+                        for(VectorEntry ve2: x){
+                            int j = ve2.index();
+                            if(j!=l){
+                                hVlf += xl * V.get(j, f) * ve2.get();
+                            }
                         }
 
                         // compute V gradient
@@ -151,7 +154,11 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                         }
                     }
                 }
+
             }
+
+            loss *= 0.5;
+
             if (isConverged(iter)  && earlyStop)
                 break;
         }
