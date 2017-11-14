@@ -23,7 +23,7 @@ public class FMFTRLTestCase extends BaseTestCase {
     }
 
     /**
-     * test the whole process of FMSGD Recommendation
+     * test the whole process of FMFTRLRecommendation
      *
      * @throws ClassNotFoundException
      * @throws LibrecException

@@ -17,13 +17,20 @@ import net.librec.recommender.FactorizationMachineRecommender;
  */
 public class FMFTRLRecommender extends FactorizationMachineRecommender {
 
-    // L1 regularization
+    /**
+     *  lambda1 is the truncated threshold
+     */
     private double lambda1W0, lambda1W, lambda1V;
 
-    // L2 regularization
+    /**
+     *  lambda2 is the L2 regularization
+     */
     private double lambda2W0, lambda2W, lambda2V;
 
-    // alpha, beta
+    /**
+     *  alpha and beta are used to compute learning rate.
+     *  The learning rate n = alpha / ( beta + sqrt(sum(g_i^2)) )
+     */
     private double alphaW0, alphaW, alphaV;
     private double betaW0, betaW, betaV;
 
@@ -154,7 +161,12 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
         return value > 0? 1: value==0? 0 : -1;
     }
 
-    @Override
+    /**
+     * This kind of prediction function cannot be applied to Factorization Machine.
+     *
+     * Using the predict() in FactorizationMachineRecommender class instead of this method.
+     */
+    @Deprecated
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
         return 0;
     }
