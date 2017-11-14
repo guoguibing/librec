@@ -63,6 +63,7 @@ cptf=net.librec.recommender.cf.rating.CPTFRecommender
 ffm=net.librec.recommender.cf.rating.FFMRecommender
 fmals=net.librec.recommender.cf.rating.FMALSRecommender
 fmsgd=net.librec.recommender.cf.rating.FMSGDRecommender
+fmftrl=net.librec.recommender.cf.rating.FMFTRLRecommender
 gplsa=net.librec.recommender.cf.rating.GPLSARecommender
 itemknn=net.librec.recommender.cf.ItemKNNRecommender
 ldcc=net.librec.recommender.cf.rating.LDCCRecommender
