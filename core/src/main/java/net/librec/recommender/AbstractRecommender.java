@@ -185,6 +185,9 @@ public abstract class AbstractRecommender implements Recommender {
         Collections.sort(ratingScale);
         maxRate = Collections.max(trainMatrix.getValueSet());
         minRate = Collections.min(trainMatrix.getValueSet());
+        if (!isRanking && conf.getDouble("data.convert.binarize.threshold", -1.0) >= 0) {
+            minRate = 0;
+        }
         globalMean = trainMatrix.mean();
 
         int[] numDroppedItemsArray = new int[numUsers]; // for AUCEvaluator
