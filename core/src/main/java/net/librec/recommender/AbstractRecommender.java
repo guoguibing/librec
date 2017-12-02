@@ -41,85 +41,105 @@ import java.util.*;
  */
 public abstract class AbstractRecommender implements Recommender {
     /**
-     * a list of rating scales
-     */
-    protected static List<Double> ratingScale;
-    /**
-     * verbose
-     */
-    protected static boolean verbose = true;
-    /**
      * LOG
      */
     protected final Log LOG = LogFactory.getLog(this.getClass());
-    /**
-     * user Mapping Data
-     */
-    public BiMap<String, Integer> userMappingData;
-    /**
-     * item Mapping Data
-     */
-    public BiMap<String, Integer> itemMappingData;
+
     /**
      * is ranking or rating
      */
     protected boolean isRanking;
+
     /**
      * topN
      */
     protected int topN;
+
     /**
      * conf
      */
     protected Configuration conf;
+
     /**
      * RecommenderContext
      */
     protected RecommenderContext context;
+
     /**
      * trainMatrix
      */
     protected SparseMatrix trainMatrix;
+
     /**
      * testMatrix
      */
     protected SparseMatrix testMatrix;
+
     /**
      * validMatrix
      */
     protected SparseMatrix validMatrix;
+
     /**
      * Recommended Item List
      */
     protected RecommendedList recommendedList;
+
     /**
      * the number of users
      */
     protected int numUsers;
+
     /**
      * the number of items
      */
     protected int numItems;
+
     /**
      * the number of rates
      */
     protected int numRates;
+
     /**
      * Maximum rate of rating scale
      */
     protected double maxRate;
+
     /**
      * Minimum rate of rating scale
      */
     protected double minRate;
+
+    /**
+     * a list of rating scales
+     */
+    protected static List<Double> ratingScale;
+
+    /**
+     * user Mapping Data
+     */
+    public BiMap<String, Integer> userMappingData;
+
+    /**
+     * item Mapping Data
+     */
+    public BiMap<String, Integer> itemMappingData;
+
     /**
      * global mean of ratings
      */
     protected double globalMean;
+
     /**
      * early-stop criteria
      */
     protected boolean earlyStop;
+
+    /**
+     * verbose
+     */
+    protected static boolean verbose = true;
+
     /**
      * objective loss
      */
@@ -165,6 +185,9 @@ public abstract class AbstractRecommender implements Recommender {
         Collections.sort(ratingScale);
         maxRate = Collections.max(trainMatrix.getValueSet());
         minRate = Collections.min(trainMatrix.getValueSet());
+        if (!isRanking && conf.getDouble("data.convert.binarize.threshold", -1.0) >= 0) {
+            minRate = 0;
+        }
         globalMean = trainMatrix.mean();
 
         int[] numDroppedItemsArray = new int[numUsers]; // for AUCEvaluator
