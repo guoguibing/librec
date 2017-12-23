@@ -80,7 +80,7 @@ public class Gamma {
         }
 
         if (x < 0.0) {
-            y = gamma(-x + 1) + Math.PI * (1.0 / Math.tan(-Math.PI * x));
+            y = digamma(-x + 1) + Math.PI * (1.0 / Math.tan(-Math.PI * x));
             return y;
         }
 
@@ -112,16 +112,16 @@ public class Gamma {
         return y;
     }
 
-    /**
-     * Newton iteration to solve digamma(x)-y = 0.
-     *
-     * @param y  parameter y in the function above
-     * @return the inverse function of digamma, i.e., returns x such that digamma(x) = y adapted from Tony Minka fastfit
-     * Matlab code
-     */
-    public static double invDigamma(double y) {
-        // Newton iteration to solve digamma(x)-y = 0
-        return y < -2.22 ? (-1.0 / (y - digamma(1))) : (Math.exp(y) + 0.5);
-    }
+//    /**
+//     * Newton iteration to solve digamma(x)-y = 0.
+//     *
+//     * @param y  parameter y in the function above
+//     * @return the inverse function of digamma, i.e., returns x such that digamma(x) = y adapted from Tony Minka fastfit
+//     * Matlab code
+//     */
+//    public static double invDigamma(double y) {
+//        // Newton iteration to solve digamma(x)-y = 0
+//        return y < -2.22 ? (-1.0 / (y - digamma(1))) : (Math.exp(y) + 0.5);
+//    }
 
 }
