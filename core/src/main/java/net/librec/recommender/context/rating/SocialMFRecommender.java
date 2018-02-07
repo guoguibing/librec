@@ -76,8 +76,8 @@ public class SocialMFRecommender extends SocialRecommender {
             // social regularization
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
                 SparseVector userTrustVector = socialMatrix.row(userIdx);
-                int numTrust = userTrustVector.getCount();
-                if (numTrust == 0)
+                double trustSum = userTrustVector.sum();
+                if (trustSum <= 0)
                     continue;
 
                 double[] sumNNs = new double[numFactors];
@@ -87,7 +87,7 @@ public class SocialMFRecommender extends SocialRecommender {
                 }
 
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    double diffValue = userFactors.get(userIdx, factorIdx) - sumNNs[factorIdx] / numTrust;
+                    double diffValue = userFactors.get(userIdx, factorIdx) - sumNNs[factorIdx] / trustSum;
                     tempUserFactors.add(userIdx, factorIdx, regSocial * diffValue);
 
                     loss += regSocial * diffValue * diffValue;
@@ -95,7 +95,7 @@ public class SocialMFRecommender extends SocialRecommender {
 
                 // those who trusted user u
                 SparseVector userTrustedVector = socialMatrix.column(userIdx);
-                int numTrusted = userTrustedVector.getCount();
+                double trustedSum = userTrustedVector.sum();
                 for (int trustedUserIdx : userTrustedVector.getIndex()) {
                     double trustedValue = socialMatrix.get(trustedUserIdx, userIdx);
 
@@ -107,11 +107,11 @@ public class SocialMFRecommender extends SocialRecommender {
                                     * userFactors.get(trustedTrustUserIdx, factorIdx);
                     }
 
-                    numTrust = trustedTrustVector.getCount();
-                    if (numTrust > 0)
+                    trustSum = trustedTrustVector.getCount();
+                    if (trustSum > 0)
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
-                            tempUserFactors.add(userIdx, factorIdx, -regSocial * (trustedValue / numTrusted) *
-                                    (userFactors.get(trustedUserIdx, factorIdx) - sumDiffs[factorIdx] / numTrust));
+                            tempUserFactors.add(userIdx, factorIdx, -regSocial * (trustedValue / trustedSum) *
+                                    (userFactors.get(trustedUserIdx, factorIdx) - sumDiffs[factorIdx] / trustSum));
                 }
             }
 
@@ -120,8 +120,6 @@ public class SocialMFRecommender extends SocialRecommender {
             itemFactors = itemFactors.add(tempItemFactors.scale(-learnRate));
 
             loss *= 0.5d;
-
-
 
             if (isConverged(iter) && earlyStop) {
                 break;
