@@ -107,7 +107,7 @@ public class SocialMFRecommender extends SocialRecommender {
                                     * userFactors.get(trustedTrustUserIdx, factorIdx);
                     }
 
-                    trustSum = trustedTrustVector.getCount();
+                    trustSum = trustedTrustVector.sum();
                     if (trustSum > 0)
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
                             tempUserFactors.add(userIdx, factorIdx, -regSocial * (trustedValue / trustedSum) *
