@@ -648,7 +648,6 @@ rec.iterator.learnrate.maximum=0.01
 rec.iterator.maximum=200
 rec.user.regularization=0.01
 rec.item.regularization=0.01
-rec.social.regularization=0.01
 rec.bias.regularization=0.01
 rec.factor.number=128
 rec.learnrate.bolddriver=false
