@@ -65,8 +65,9 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        regBias = conf.getDouble("rec.bias.regularization", 0.01);
 
+        regBias = conf.getDouble("rec.bias.regularization", 0.01);
+        
         itemBiases = new DenseVector(numItems);
         itemBiases.init();
 
@@ -79,7 +80,7 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
     }
 
     @Override
-    protected void trainModel() throws LibrecException {
+    protected void trainModel() throws LibrecException {    	
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
@@ -142,9 +143,11 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
                 // update bi, bj
                 double posBiasValue = itemBiases.get(posItemIdx);
                 itemBiases.add(posItemIdx, learnRate * (deriValue - regBias * posBiasValue));
+                loss += regBias * posBiasValue * posBiasValue;
 
                 double negBiasValue = itemBiases.get(negItemIdx);
                 itemBiases.add(negItemIdx, learnRate * (-deriValue - regBias * negBiasValue));
+                loss += regBias * negBiasValue * negBiasValue;
 
                 // update Pw
                 double averageWeight = 1.0 / groupSet.size();
@@ -159,6 +162,8 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
                         double deltaGroup = rho * averageWeight * posItemFactorValue + (1 - rho) * delta * posItemFactorValue - delta * negItemFactorValue;
                         tempUserFactors.add(groupUserIdx, factorIdx, learnRate * (deriValue * deltaGroup - regUser * groupUserFactorValue));
 
+                        loss += regUser * groupUserFactorValue * groupUserFactorValue;
+                        
                         sumGroup[factorIdx] += groupUserFactorValue;
                     }
                 }
@@ -171,9 +176,11 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
 
                     double posDelta = rho * averageWeight * sumGroup[factorIdx] + (1 - rho) * userFactorValue;
                     tempItemFactors.add(posItemIdx, factorIdx, learnRate * (deriValue * posDelta - regItem * posItemFactorValue));
-
+                    loss += regItem * posItemFactorValue * posItemFactorValue;
+                    
                     double negDelta = -userFactorValue;
                     tempItemFactors.add(negItemIdx, factorIdx, learnRate * (deriValue * negDelta - regItem * negItemFactorValue));
+                    loss += regItem * negItemFactorValue * negItemFactorValue;
                 }
             }
 
