@@ -65,6 +65,7 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
+        regBias = conf.getDouble("rec.bias.regularization", 0.01);
 
         itemBiases = new DenseVector(numItems);
         itemBiases.init();
