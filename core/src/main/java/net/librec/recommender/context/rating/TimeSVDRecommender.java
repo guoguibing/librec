@@ -373,6 +373,7 @@ public class TimeSVDRecommender extends BiasedMFRecommender {
 
             if (isConverged(iter))
                 break;
+            updateLRate(iter);
         }
     }
 
