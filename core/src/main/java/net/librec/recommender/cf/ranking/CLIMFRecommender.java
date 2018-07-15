@@ -20,8 +20,9 @@ package net.librec.recommender.cf.ranking;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.recommender.MatrixFactorizationRecommender;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
 
@@ -111,13 +112,13 @@ public class CLIMFRecommender extends MatrixFactorizationRecommender {
                 }
 
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    userFactors.add(userIdx, factorIdx, learnRate * sgds[factorIdx]);
+                    userFactors.plus(userIdx, factorIdx, learnRate * sgds[factorIdx]);
                 }
 
                 for (int itemIdx : itemSet) {
                     List<Double> itemSgds = itemsSgds.get(itemIdx);
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                        itemFactors.add(itemIdx, factorIdx, learnRate * itemSgds.get(factorIdx));
+                        itemFactors.plus(itemIdx, factorIdx, learnRate * itemSgds.get(factorIdx));
                     }
                 }
 
@@ -149,10 +150,13 @@ public class CLIMFRecommender extends MatrixFactorizationRecommender {
         }
     }
 
-    private List<Set<Integer>> getUserItemsSet(SparseMatrix sparseMatrix) {
+    private List<Set<Integer>> getUserItemsSet(SequentialAccessSparseMatrix sparseMatrix) {
         List<Set<Integer>> userItemsSet = new ArrayList<>();
         for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsSet.add(new HashSet(sparseMatrix.getColumns(userIdx)));
+            int[] itemIndexes = sparseMatrix.row(userIdx).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> itemList = Arrays.asList(inputBoxed);
+            userItemsSet.add(new HashSet(itemList));
         }
         return userItemsSet;
     }

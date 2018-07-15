@@ -18,43 +18,43 @@
 package net.librec.eval.rating;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
-import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.recommender.item.ContextKeyValueEntry;
 import net.librec.recommender.item.RecommendedList;
-import net.librec.recommender.item.UserItemRatingEntry;
 
 import java.util.Iterator;
 
 /**
  * MAE: mean absolute error
  *
- * @author zhanghaidong and Keqiang Wang
+ * @author Keqiang Wang
  */
 
 public class MAEEvaluator extends AbstractRecommenderEvaluator {
 
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
-        if (testMatrix == null) {
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
+        if(groundTruthList.size()==0){
             return 0.0;
         }
         double mae = 0.0;
-
-        Iterator<MatrixEntry> testMatrixIter = testMatrix.iterator();
-        Iterator<UserItemRatingEntry> recommendedEntryIter = recommendedList.entryIterator();
         int testSize = 0;
 
-        while (testMatrixIter.hasNext()) {
+        Iterator<ContextKeyValueEntry> groundTruthIter = groundTruthList.iterator();
+        Iterator<ContextKeyValueEntry> recommendedEntryIter = recommendedList.iterator();
+
+        while (groundTruthIter.hasNext()) {
 
             if (recommendedEntryIter.hasNext()) {
-                MatrixEntry testMatrixEntry = testMatrixIter.next();
-                UserItemRatingEntry userItemRatingEntry = recommendedEntryIter.next();
 
-                if (testMatrixEntry.row() == userItemRatingEntry.getUserIdx()
-                        && testMatrixEntry.column() == userItemRatingEntry.getItemIdx()) {
+                ContextKeyValueEntry groundEntry = groundTruthIter.next();
+                ContextKeyValueEntry recommendedEntry = recommendedEntryIter.next();
 
-                    double realRating = testMatrixEntry.get();
-                    double predictRating = userItemRatingEntry.getValue();
+                if (groundEntry.getContextIdx() == recommendedEntry.getContextIdx()
+                        && groundEntry.getKey() == recommendedEntry.getKey()) {
+
+                    double realRating = groundEntry.getValue();
+                    double predictRating = recommendedEntry.getValue();
                     mae += Math.abs(realRating - predictRating);
+
                     testSize++;
 
                 } else {
@@ -62,7 +62,7 @@ public class MAEEvaluator extends AbstractRecommenderEvaluator {
                 }
 
             } else {
-                throw new IndexOutOfBoundsException("index size of recommendedList does not equal testMatrix index size");
+                throw new IndexOutOfBoundsException("index cardinality of recommendedList does not equal testMatrix index cardinality");
             }
         }
 

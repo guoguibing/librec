@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="459.0" prefWidth="800.0" style="-fx-background-color: #07042b;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.EvaluatorController">
+    <children>
+        <ImageView fitHeight="80.0" fitWidth="400.0" layoutX="618.0" opacity="0.86" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@librec_2.png" />
+            </image>
+        </ImageView>
+        <Label layoutX="52.0" layoutY="40.0" prefHeight="32.0" prefWidth="284.0" text="%eval.conf.label" textFill="#ddd9d9">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+        <JFXButton layoutX="468.0" layoutY="340.0" onAction="#goBack" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #FF4500;" text="%data.finish.button" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+        <GridPane layoutX="99.0" layoutY="178.0" prefHeight="224.0" prefWidth="300.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="168.0" minWidth="10.0" prefWidth="114.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+         <children>
+            <JFXCheckBox fx:id="aucBox" text="AUC" textFill="#d7d4d4" />
+            <JFXCheckBox fx:id="precisionBox" text="Precision" textFill="#d7d4d4" GridPane.rowIndex="1" />
+            <JFXCheckBox fx:id="ndcgBox" text="NDCG" textFill="#d7d4d4" GridPane.rowIndex="3" />
+            <JFXCheckBox fx:id="recallBox" text="Recall" textFill="#d7d4d4" GridPane.rowIndex="2" />
+            <JFXCheckBox fx:id="hrBox" text="HitRate" textFill="#d7d4d4" GridPane.rowIndex="4" />
+            <JFXCheckBox fx:id="rrBox" text="ReciprocalRank" textFill="#d7d4d4" GridPane.rowIndex="5" />
+         </children>
+        </GridPane>
+      <JFXToggleButton fx:id="enableEvalButton" layoutX="44.0" layoutY="80.0" text="%eval.enable" textFill="#d0caca" toggleColor="#f2edeb" toggleLineColor="ORANGERED" />
+      <JFXRadioButton fx:id="ratingEvalButton" layoutX="468.0" layoutY="150.0" prefHeight="15.0" prefWidth="151.0" text="%eval.rating" textFill="#e4e1e1">
+         <toggleGroup>
+            <ToggleGroup fx:id="evalType" />
+         </toggleGroup></JFXRadioButton>
+      <GridPane layoutX="509.0" layoutY="184.0" prefHeight="126.0" prefWidth="300.0">
+         <children>
+            <JFXCheckBox fx:id="maeBox" text="MAE" textFill="#d7d4d4" />
+            <JFXCheckBox fx:id="rmseBox" text="RMSE" textFill="#d7d4d4" GridPane.rowIndex="1" />
+            <JFXCheckBox fx:id="mpeBox" text="MPE" textFill="#d7d4d4" GridPane.rowIndex="3" />
+            <JFXCheckBox fx:id="mseBox" text="MSE" textFill="#d7d4d4" GridPane.rowIndex="2" />
+         </children>
+         <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" maxWidth="168.0" minWidth="10.0" prefWidth="114.0" />
+         </columnConstraints>
+         <rowConstraints>
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+         </rowConstraints>
+      </GridPane>
+      <JFXRadioButton fx:id="rankingEvalButton" layoutX="44.0" layoutY="150.0" prefHeight="15.0" prefWidth="151.0" text="%eval.ranking" textFill="#e4e1e1" toggleGroup="$evalType" />
+      <TextField fx:id="topNText" layoutX="203.0" layoutY="146.0" prefHeight="23.0" prefWidth="46.0" text="topN" />
+        <JFXButton layoutX="652.0" layoutY="402.0" onAction="#returnToMain" prefHeight="50.0" prefWidth="141.0" style="-fx-background-color: #07042b;" text="%main.label.exit" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+    </children>
+</AnchorPane>

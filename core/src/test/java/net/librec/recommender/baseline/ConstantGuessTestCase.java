@@ -50,7 +50,7 @@ public class ConstantGuessTestCase extends BaseTestCase {
 	 * @throws LibrecException
 	 */
 	@Test
-	public void testRecommender() throws FileNotFoundException, IOException, ClassNotFoundException, LibrecException {
+	public void testRecommender() throws IOException, ClassNotFoundException, LibrecException {
 		Resource recourse = new Resource("rec/baseline/constantguess-test.properties");
 		conf.addResource(recourse);
 		RecommenderJob job = new RecommenderJob(conf);

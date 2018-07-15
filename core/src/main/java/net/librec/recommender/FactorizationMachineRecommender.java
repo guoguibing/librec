@@ -17,14 +17,13 @@
  */
 package net.librec.recommender;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.*;
-import net.librec.recommender.item.RecommendedItemList;
-import net.librec.recommender.item.RecommendedList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Factorization Machine Recommender
@@ -34,23 +33,12 @@ import org.apache.commons.logging.LogFactory;
  * @author Tang Jiaxi and Ma Chen
  */
 
-public abstract class FactorizationMachineRecommender extends AbstractRecommender {
+public abstract class FactorizationMachineRecommender extends TensorRecommender {
     /**
      * LOG
      */
     protected final Log LOG = LogFactory.getLog(this.getClass());
-    /**
-     * train Tensor
-     */
-    protected SparseTensor trainTensor;
-    /**
-     * testTensor
-     */
-    protected SparseTensor testTensor;
-    /**
-     * validTensor
-     */
-    protected SparseTensor validTensor;
+
     /**
      * global bias
      */
@@ -70,7 +58,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     /**
      * weight vector
      */
-    protected DenseVector W; //  p
+    protected VectorBasedDenseVector W; //  p
     /**
      * parameter matrix
      */
@@ -88,10 +76,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      * the number of latent factors
      */
     protected int numFactors;
-    /**
-     * the number of iterations
-     */
-    protected int numIterations;
+
 
     /**
      * setup
@@ -100,25 +85,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      *
      */
     protected void setup() throws LibrecException {
-        conf = context.getConf();
-        isRanking = conf.getBoolean("rec.recommender.isranking");
-        if (isRanking) {
-            topN = conf.getInt("rec.recommender.ranking.topn", 5);
-        }
-
-        earlyStop = conf.getBoolean("rec.recommender.earlyStop");
-        numIterations = conf.getInt("rec.iterator.maximum");
-
-        trainTensor = (SparseTensor) getDataModel().getTrainDataSet();
-        testTensor = (SparseTensor) getDataModel().getTestDataSet();
-        validTensor = (SparseTensor) getDataModel().getValidDataSet();
-        userMappingData = getDataModel().getUserMappingData();
-        itemMappingData = getDataModel().getItemMappingData();
-        numUsers = userMappingData.size();
-        numItems = itemMappingData.size();
-        globalMean = trainTensor.mean();
-        maxRate = conf.getDouble("rec.recommender.maxrate", 12.0);
-        minRate = conf.getDouble("rec.recommender.minrate", 0.0);
+        super.setup();
 
         // initialize the parameters of FM
         for (int dim = 0; dim < trainTensor.numDimensions; dim++) {
@@ -129,7 +96,7 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
         // init all weight with zero
         w0 = 0;
-        W = new DenseVector(p);
+        W = new VectorBasedDenseVector(p);
         W.init(0);
 
         // init factors with small value
@@ -143,30 +110,28 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
 
     /**
      * Predict the rating given a sparse appender vector.
-     * @param userId user Id
-     * @param itemId item Id
      * @param x the given vector to predict.
      *
      * @return  predicted rating
      * @throws LibrecException  if error occurs
      */
-    protected double predict(int userId, int itemId, SparseVector x) throws LibrecException {
+    protected double predict(SequentialSparseVector x) throws LibrecException {
         double res = 0;
         // global bias
         res += w0;
 
         // 1-way interaction
-        for (VectorEntry ve : x) {
+        for (Vector.VectorEntry ve : x) {
             double val = ve.get();
             int ind = ve.index();
             res += val * W.get(ind);
         }
 
         // 2-way interaction
-        for (int f = 1; f < k; f++) {
+        for (int f = 0; f < k; f++) {
             double sum1 = 0;
             double sum2 = 0;
-            for (VectorEntry ve : x) {
+            for (Vector.VectorEntry ve : x) {
                 double xi = ve.get();
                 int i = ve.index();
                 double vif = V.get(i, f);
@@ -186,15 +151,13 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      * bounded in {@code [minRate, maxRate]}
      *
      * @param x       the given vector
-     * @param userId  the user id
-     * @param itemId  the item id
      * @param bound   whether to bound the predicted rating
      *
      * @return predicted rating
      * @throws LibrecException if error occurs
      */
-    protected double predict(int userId, int itemId, SparseVector x, boolean bound) throws LibrecException {
-        double pred = predict(userId, itemId, x);
+    protected double predict(VectorBasedSequentialSparseVector x, boolean bound) throws LibrecException {
+        double pred = predict(x);
 
         if (bound) {
             if (pred > maxRate)
@@ -207,48 +170,13 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
     }
 
     /**
-     * recommend
-     * * predict the ratings in the test data
-     *
-     * @return predictive rating matrix
-     * @throws LibrecException if error occurs
-     */
-    protected RecommendedList recommendRating() throws LibrecException {
-        testMatrix = testTensor.rateMatrix();
-        recommendedList = new RecommendedItemList(numUsers - 1, numUsers);
-
-        // each user-item pair appears in the final recommend list only once
-        Table<Integer, Integer, Double> ratingMapping = HashBasedTable.create();
-
-        int userDimension = testTensor.getUserDimension();
-        int itemDimension = testTensor.getItemDimension();
-        for (TensorEntry tensorEntry : testTensor) {
-            int[] entryKeys = tensorEntry.keys();
-            SparseVector featureVector = tenserKeysToFeatureVector(entryKeys);
-            double predictRating = predict(entryKeys[userDimension], entryKeys[itemDimension], featureVector, true);
-            if (Double.isNaN(predictRating)) {
-                predictRating = globalMean;
-            }
-            int[] userItemInd = getUserItemIndex(featureVector);
-            int userIdx = userItemInd[0];
-            int itemIdx = userItemInd[1];
-            if (!ratingMapping.contains(userIdx, itemIdx)) {
-                ratingMapping.put(userIdx, itemIdx, predictRating);
-                recommendedList.addUserItemIdx(userIdx, itemIdx, predictRating);
-            }
-        }
-
-        return recommendedList;
-    }
-
-    /**
      * getUserItemIndex
      * * get the user index and item index from a sparse appender vector
      *
      * @return user index and item index
      */
-    private int[] getUserItemIndex(SparseVector x) {
-        int[] inds = x.getIndex();
+    private int[] getUserItemIndex(VectorBasedSequentialSparseVector x) {
+        int[] inds = x.getIndices();
 
         int userInd = inds[0];
         int itemInd = inds[1] - numUsers;
@@ -262,17 +190,21 @@ public abstract class FactorizationMachineRecommender extends AbstractRecommende
      *
      * @return sparse appender vector
      */
-    protected SparseVector tenserKeysToFeatureVector(int[] tenserKeys) {
+    protected VectorBasedSequentialSparseVector tenserKeysToFeatureVector(int[] tenserKeys) {
         int capacity = p;
-        int[] index = new int[tenserKeys.length];
-        double[] data = new double[tenserKeys.length];
+        Map<Integer, Integer> mapVector = new HashMap<>();
         int colPrefix = 0;
         for (int i = 0; i < tenserKeys.length; i++) {
-            data[i] = 1;
-            index[i] += colPrefix + tenserKeys[i];
+            mapVector.put(colPrefix + tenserKeys[i], 1);
             colPrefix += trainTensor.dimensions[i];
         }
 
-        return new SparseVector(capacity, index, data);
+        return new VectorBasedSequentialSparseVector(capacity, mapVector);
+    }
+
+    @Override
+    protected double predict(int[] keys) throws LibrecException {
+        VectorBasedSequentialSparseVector featureVec = tenserKeysToFeatureVector(keys);
+        return predict(featureVec);
     }
 }

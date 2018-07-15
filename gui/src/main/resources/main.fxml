@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="459.0" prefWidth="800.0" style="-fx-background-color: #07042b;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.MainController">
+   <children>
+      <FlowPane layoutX="468.0" layoutY="100.0" prefHeight="200.0" prefWidth="200.0">
+         <children>
+            <JFXButton onAction="#goDataModel" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #00008B;" text="%main.button.data" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </JFXButton>
+            <JFXButton onAction="#goSimilarity" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #00008B;" text="%main.button.similarity" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </JFXButton>
+            <JFXButton onAction="#goRecommeder" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #00008B;" text="%main.button.recommender" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </JFXButton>
+            <JFXButton onAction="#goEval" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #00008B;" text="%main.button.eval" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </JFXButton>
+            <JFXButton onAction="#goFilter" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #00008B;" text="%main.button.filter" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </JFXButton>
+            <JFXButton onAction="#goOutput" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #FF4500;" text="%main.button.exec" textFill="WHITE">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </JFXButton>
+         </children>
+      </FlowPane>
+      <ImageView fitHeight="80.0" fitWidth="400.0" layoutX="618.0" opacity="0.86" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@librec_2.png" />
+         </image>
+      </ImageView>
+      <ImageView fitHeight="500.0" fitWidth="459.0" layoutX="-1.0" opacity="0.3" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@librec_1.png" />
+         </image>
+      </ImageView>
+      <Label layoutX="24.0" layoutY="81.0" prefHeight="121.0" prefWidth="433.0" text="%main.title" textFill="#dbd9d9">
+         <font>
+            <Font size="30.0" />
+         </font>
+      </Label>
+      <Label graphicTextGap="40.0" layoutX="31.0" layoutY="148.0" lineSpacing="10.0" prefHeight="134.0" prefWidth="433.0" text="%main.sentence" textFill="#ddd9d9">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+      <Label layoutX="24.0" layoutY="204.0" textFill="#ddd9d9">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </Label>
+      <JFXButton layoutX="31.0" layoutY="259.0" onAction="#switchToChinese" prefHeight="20.0" prefWidth="44.0" style="-fx-background-color: #FF4500;" text="中文" textFill="WHITE" />
+      <JFXButton layoutX="86.0" layoutY="259.0" onAction="#switchToEnglish" prefHeight="20.0" prefWidth="44.0" style="-fx-background-color: #FF4500;" text="En" textFill="WHITE" />
+   </children>
+</AnchorPane>

@@ -21,31 +21,26 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import net.librec.common.LibrecException;
-import net.librec.eval.Measure;
-import net.librec.eval.RecommenderEvaluator;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.*;
 import net.librec.recommender.TensorRecommender;
-import net.librec.recommender.item.GenericRecommendedItem;
-import net.librec.recommender.item.RecommendedItem;
-import net.librec.recommender.item.UserItemRatingEntry;
-import net.librec.util.ReflectionUtil;
 import net.librec.util.StringUtil;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * HFT Recommender
  * McAuley J, Leskovec J. Hidden factors and hidden topics: understanding rating dimensions with review text[C]
  * Proceedings of the 7th ACM conference on Recommender systems. ACM, 2013: 165-172.
  *
- * @author ChenXu
+ * @author ChenXu and Yatong Sun
  */
 public class HFTRecommender extends TensorRecommender {
 
-    protected SparseMatrix trainMatrix;
+    protected SequentialAccessSparseMatrix trainMatrix;
     protected SparseStringMatrix reviewMatrix;
     protected DenseMatrix topicToWord;
     protected SparseStringMatrix topicAssignment;
@@ -54,12 +49,12 @@ public class HFTRecommender extends TensorRecommender {
     /**
      * user biases
      */
-    protected DenseVector userBiases;
+    protected VectorBasedDenseVector userBiases;
 
     /**
      * user biases
      */
-    protected DenseVector itemBiases;
+    protected VectorBasedDenseVector itemBiases;
     /**
      * user latent factors
      */
@@ -92,7 +87,7 @@ public class HFTRecommender extends TensorRecommender {
      */
     protected float regItem;
 
-    public BiMap<String, Integer> reviewMappingData;
+    public BiMap<Integer, String> reviewMappingData;
 
     protected StringUtil str = new StringUtil();
     protected Randoms rn = new Randoms();
@@ -102,16 +97,16 @@ public class HFTRecommender extends TensorRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        reviewMappingData = allFeaturesMappingData.get(2);
+        reviewMappingData = DataFrame.getInnerMapping("review").inverse();
         regBias = conf.getDouble("rec.bias.regularization", 0.01);
         regUser = conf.getFloat("rec.user.regularization", 0.01f);
         regItem = conf.getFloat("rec.item.regularization", 0.01f);
         trainTensor = (SparseTensor) getDataModel().getTrainDataSet();
-        userBiases = new DenseVector(numUsers);
-        itemBiases = new DenseVector(numItems);
+        userBiases = new VectorBasedDenseVector(numUsers);
+        itemBiases = new VectorBasedDenseVector(numItems);
         userFactors = new DenseMatrix(numUsers, numFactors);
         itemFactors = new DenseMatrix(numItems, numFactors);
-        K=numFactors;
+        K = numFactors;
         initMean = 0.0f;
         initStd = 0.1f;
         userBiases.init(initMean, initStd);
@@ -130,7 +125,7 @@ public class HFTRecommender extends TensorRecommender {
             int userIndex = entryKeys[0];
             int itemIndex = entryKeys[1];
             int reviewIndex = entryKeys[2];
-            String reviewContent = reviewMappingData.inverse().get(reviewIndex);
+            String reviewContent = reviewMappingData.get(reviewIndex);
             String[] fReviewContent = reviewContent.split(":");
             for (String word : fReviewContent) {
                 if (!iwDict.containsKey(word) && StringUtils.isNotEmpty(word)) {
@@ -144,7 +139,7 @@ public class HFTRecommender extends TensorRecommender {
         for (TensorEntry te : testTensor) {
             int[] entryKeys = te.keys();
             int reviewIndex = entryKeys[2];
-            String reviewContent = reviewMappingData.inverse().get(reviewIndex);
+            String reviewContent = reviewMappingData.get(reviewIndex);
             String[] fReviewContent = reviewContent.split(":");
             for (String word : fReviewContent) {
                 if (!iwDict.containsKey(word) && StringUtils.isNotEmpty(word)) {
@@ -172,9 +167,9 @@ public class HFTRecommender extends TensorRecommender {
             String[] wordsList = words.split(":");
             String[] topicList = new String[wordsList.length];
             for (int i = 0; i < wordsList.length; i++) {
-                topicList[i] = Integer.toString(rn.uniform(K));
+                topicList[i] = Integer.toString(Randoms.uniform(K));
             }
-            String s = str.toString(topicList, ":");
+            String s = StringUtil.toString(topicList, ":");
             topicAssignment.set(u, j, s);
         }
         calculateThetas();
@@ -206,7 +201,7 @@ public class HFTRecommender extends TensorRecommender {
      * @return the old values if new values contain NaN
      * @throws Exception if error occurs
      */
-    protected double[] updateArray(double[] oldValues, double [] newValues) throws Exception {
+    protected double[] updateArray(double[] oldValues, double[] newValues) throws Exception {
         boolean containNan = false;
         double[] newDoubles = Maths.softmax(newValues);
         for (double doubleValue : newDoubles) {
@@ -225,7 +220,7 @@ public class HFTRecommender extends TensorRecommender {
     protected void calculateThetas() {
         for (int i = 0; i < numUsers; i++) {
             try {
-                thetaus[i] = updateArray(thetaus[i], Maths.softmax(userFactors.row(i).getData()));
+                thetaus[i] = updateArray(thetaus[i], Maths.softmax(userFactors.row(i).getValues()));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -235,7 +230,7 @@ public class HFTRecommender extends TensorRecommender {
     protected void calculatePhis() {
         for (int i = 0; i < K; i++) {
             try {
-                phiks[i] = updateArray(phiks[i], Maths.softmax(topicToWord.row(i).getData()));
+                phiks[i] = updateArray(phiks[i], Maths.softmax(topicToWord.row(i).getValues()));
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -243,7 +238,7 @@ public class HFTRecommender extends TensorRecommender {
         }
     }
 
-    protected String sampleTopicsToWords (String[] wordsList, int u) throws Exception {
+    protected String sampleTopicsToWords(String[] wordsList, int u) throws Exception {
         String[] topicList = new String[wordsList.length];
         for (int i = 0; i < wordsList.length; i++) {
             double[] topicDistribute = new double[K];
@@ -251,9 +246,9 @@ public class HFTRecommender extends TensorRecommender {
                 topicDistribute[s] = thetaus[u][s] * phiks[s][Integer.parseInt(wordsList[i])];
             }
             topicDistribute = Maths.norm(topicDistribute);
-            topicList[i] = Integer.toString(rn.discrete(topicDistribute));
+            topicList[i] = Integer.toString(Randoms.discrete(topicDistribute));
         }
-        return str.toString(topicList, ":");
+        return StringUtil.toString(topicList, ":");
     }
 
     /**
@@ -282,11 +277,11 @@ public class HFTRecommender extends TensorRecommender {
                     // update factors
                     double bu = userBiases.get(u);
                     double sgd = euj - regBias * bu;
-                    userBiases.add(u, learnRate * sgd);
+                    userBiases.plus(u, learnRate * sgd);
                     // loss += regB * bu * bu;
                     double bj = itemBiases.get(j);
                     sgd = euj - regBias * bj;
-                    itemBiases.add(j, learnRate * sgd);
+                    itemBiases.plus(j, learnRate * sgd);
                     // loss += regB * bj * bj;
 
                     if (StringUtils.isEmpty(ws[0])) {
@@ -300,17 +295,17 @@ public class HFTRecommender extends TensorRecommender {
                         double sgd_u = euj * qjf - regUser * puf;
                         double sgd_j = euj * (puf) - regItem * qjf;
 
-                        userFactors.add(u, f, learnRate * sgd_u);
+                        userFactors.plus(u, f, learnRate * sgd_u);
 
-                        itemFactors.add(j, f, learnRate * sgd_j);
+                        itemFactors.plus(j, f, learnRate * sgd_j);
 
                         for (int x = 0; x < ws.length; x++) {
 
                             int k = Integer.parseInt(wk[x]);
                             if (f == k)
-                                userFactors.add(u, f, learnRate * (1 - thetaus[u][k]));
+                                userFactors.plus(u, f, learnRate * (1 - thetaus[u][k]));
                             else
-                                userFactors.add(u, f, learnRate * (-thetaus[u][k]));
+                                userFactors.plus(u, f, learnRate * (-thetaus[u][k]));
 
                             loss -= Maths.log(thetaus[u][k] * phiks[k][Integer.parseInt(ws[x])], 2);
                         }
@@ -320,9 +315,9 @@ public class HFTRecommender extends TensorRecommender {
                         int k = Integer.parseInt(wk[x]);
                         for (int ss = 0; ss < numberOfWords; ss++) {
                             if (ss == Integer.parseInt(ws[x]))
-                                topicToWord.add(k, Integer.parseInt(ws[x]), learnRate * (-1 + phiks[k][Integer.parseInt(ws[x])]));
+                                topicToWord.plus(k, Integer.parseInt(ws[x]), learnRate * (-1 + phiks[k][Integer.parseInt(ws[x])]));
                             else
-                                topicToWord.add(k, Integer.parseInt(ws[x]), learnRate * (phiks[k][Integer.parseInt(ws[x])]));
+                                topicToWord.plus(k, Integer.parseInt(ws[x]), learnRate * (phiks[k][Integer.parseInt(ws[x])]));
                         }
                     }
                 }
@@ -344,52 +339,8 @@ public class HFTRecommender extends TensorRecommender {
         return predict(indices[0], indices[1]);
     }
 
-    protected double predict(int u, int j) {
-        double pred = globalMean + userBiases.get(u) + itemBiases.get(j) + DenseMatrix.rowMult(userFactors, u, itemFactors, j);
-        return pred;
+    protected double predict(int userIdx, int itemIdx) {
+        return userFactors.row(userIdx).dot(itemFactors.row(itemIdx)) + userBiases.get(userIdx) + itemBiases.get(itemIdx) + globalMean;
+
     }
-
-
-    @Override
-    public Map<Measure.MeasureValue, Double> evaluateMap() throws LibrecException {
-        Map<Measure.MeasureValue, Double> evaluatedMap = new HashMap<>();
-        List<Measure.MeasureValue> measureValueList = Measure.getMeasureEnumList(isRanking, topN);
-        if (measureValueList != null) {
-            for (Measure.MeasureValue measureValue : measureValueList) {
-                RecommenderEvaluator evaluator = ReflectionUtil
-                        .newInstance(measureValue.getMeasure().getEvaluatorClass());
-                if (isRanking && measureValue.getTopN() != null && measureValue.getTopN() > 0) {
-                    evaluator.setTopN(measureValue.getTopN());
-                }
-                double evaluatedValue = evaluator.evaluate(context, recommendedList);
-                evaluatedMap.put(measureValue, evaluatedValue);
-            }
-        }
-        return evaluatedMap;
-    }
-
-    @Override
-    public List<RecommendedItem> getRecommendedList() {
-        if (recommendedList != null && recommendedList.size() > 0) {
-            List<RecommendedItem> userItemList = new ArrayList<>();
-            Iterator<UserItemRatingEntry> recommendedEntryIter = recommendedList.entryIterator();
-            if (userMappingData != null && userMappingData.size() > 0 && itemMappingData != null && itemMappingData.size() > 0) {
-                BiMap<Integer, String> userMappingInverse = userMappingData.inverse();
-                BiMap<Integer, String> itemMappingInverse = itemMappingData.inverse();
-                while (recommendedEntryIter.hasNext()) {
-                    UserItemRatingEntry userItemRatingEntry = recommendedEntryIter.next();
-                    if (userItemRatingEntry != null) {
-                        String userId = userMappingInverse.get(userItemRatingEntry.getUserIdx());
-                        String itemId = itemMappingInverse.get(userItemRatingEntry.getItemIdx());
-                        if (StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(itemId)) {
-                            userItemList.add(new GenericRecommendedItem(userId, itemId, userItemRatingEntry.getValue()));
-                        }
-                    }
-                }
-                return userItemList;
-            }
-        }
-        return null;
-    }
-
 }

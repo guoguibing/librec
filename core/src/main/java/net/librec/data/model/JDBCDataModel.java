@@ -29,7 +29,7 @@ public class JDBCDataModel extends AbstractDataModel {
     @Override
     protected void buildConvert() throws LibrecException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override

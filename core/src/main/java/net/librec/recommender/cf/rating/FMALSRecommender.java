@@ -22,6 +22,7 @@ import com.google.common.collect.Table;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.*;
+import net.librec.math.structure.Vector.VectorEntry;
 import net.librec.recommender.FactorizationMachineRecommender;
 
 import java.util.Iterator;
@@ -41,7 +42,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
     /**
      * train appender matrix
      */
-    private SparseMatrix trainFeatureMatrix;
+    private SequentialAccessSparseMatrix trainFeatureMatrix;
 
     @Override
     protected void setup() throws LibrecException {
@@ -61,22 +62,20 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
                 trainTable.put(i, indexOfFeatureVector, 1.0);
             }
         }
-        trainFeatureMatrix = new SparseMatrix(n, p, trainTable);
+        trainFeatureMatrix = new SequentialAccessSparseMatrix(n, p, trainTable);
     }
 
     @Override
     protected void trainModel() throws LibrecException {
         // precomputing Q and errors, for efficiency
-        DenseVector errors = new DenseVector(n);
+        VectorBasedDenseVector errors = new VectorBasedDenseVector(n);
         int ind = 0;
-        int userDimension = trainTensor.getUserDimension();
-        int itemDimension = trainTensor.getItemDimension();
         for (TensorEntry me : trainTensor) {
             int[] entryKeys = me.keys();
-            SparseVector x = tenserKeysToFeatureVector(entryKeys);
+            VectorBasedSequentialSparseVector x = tenserKeysToFeatureVector(entryKeys);
 
             double rate = me.get();
-            double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], x);
+            double pred = predict(entryKeys);
 
             double err = rate - pred;
             errors.set(ind, err);
@@ -101,7 +100,6 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
          */
 
         for (int iter = 0; iter < numIterations; iter++) {
-            lastLoss = loss;
             loss = 0.0;
             // global bias
             double numerator = 0;
@@ -138,9 +136,9 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
                 numerator = 0;
                 denominator = 0;
 
-                Iterator<VectorEntry> rowIter = trainFeatureMatrix.rowIterator(l);
-                while (rowIter.hasNext()) {
-                    VectorEntry vectorEntry = rowIter.next();
+                Iterator<VectorEntry> iterator = trainFeatureMatrix.column(l).iterator();
+                while (iterator.hasNext()) {
+                    VectorEntry vectorEntry = iterator.next();
                     double h_theta = vectorEntry.get();
                     int i = vectorEntry.index();
                     numerator += oldWl * h_theta * h_theta + h_theta * errors.get(i);
@@ -153,9 +151,9 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
 
 
                 // update errors
-                rowIter = trainFeatureMatrix.rowIterator(l);
-                while (rowIter.hasNext()) {
-                    VectorEntry vectorEntry = rowIter.next();
+                iterator = trainFeatureMatrix.column(l).iterator();
+                while (iterator.hasNext()) {
+                    VectorEntry vectorEntry = iterator.next();
                     int i = vectorEntry.index();
 
                     double oldErr = errors.get(i);
@@ -178,7 +176,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
                     double oldVlf = V.get(l, f);
                     numerator = 0;
                     denominator = 0;
-                    Iterator<VectorEntry> rowIter = trainFeatureMatrix.rowIterator(l);
+                    Iterator<VectorEntry> rowIter = trainFeatureMatrix.column(l).iterator();
                     while (rowIter.hasNext()) {
                         VectorEntry vectorEntry = rowIter.next();
                         int i = vectorEntry.index();
@@ -192,7 +190,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
                     double newVlf = numerator / denominator;
 
                     // update errors and Q
-                    rowIter = trainFeatureMatrix.rowIterator(l);
+                    rowIter = trainFeatureMatrix.column(l).iterator();
                     while (rowIter.hasNext()) {
                         VectorEntry vectorEntry = rowIter.next();
                         int i = vectorEntry.index();
@@ -216,7 +214,7 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
                     // update V
                     V.set(l, f, newVlf);
 
-//                    DenseVector errorGround = computeGroundError();
+//                    VectorBasedDenseVector errorGround = computeGroundError();
 //                    errors = errorGround;
                     loss += regF * oldVlf * oldVlf;
                 }
@@ -224,8 +222,11 @@ public class FMALSRecommender extends FactorizationMachineRecommender {
             }
 
             // System.out.println("after 2-way:" + errors.sum());
-            if (isConverged(iter) && earlyStop)
+            if (isConverged(iter) && earlyStop){
+
                 break;
+            }
+            lastLoss = loss;
         }
     }
 

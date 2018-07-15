@@ -29,18 +29,21 @@ import java.util.Arrays;
  * @author WangYuFeng TangJiaxi and Ma Chen
  */
 public class ArffInstance {
-    /** Attributes of the instance */
+    /**
+     * Attributes of the instance
+     */
     public static ArrayList<ArffAttribute> attrs;
 
-    /** Data of the instance */
+    /**
+     * Data of the instance
+     */
     private ArrayList<String> instanceData;
 
     /**
      * Initializes a newly created {@code ArffInstance} object
      * with instance data.
      *
-     * @param instanceData
-     *              data of the instance
+     * @param instanceData data of the instance
      */
     public ArffInstance(ArrayList<String> instanceData) {
         this.instanceData = instanceData;
@@ -49,10 +52,8 @@ public class ArffInstance {
     /**
      * Get data value by the attribute name.
      *
-     * @param attrName
-     *              name of the attribute
-     *
-     * @return  data value
+     * @param attrName name of the attribute
+     * @return data value
      * @throws LibrecException if attrName is invalid
      */
     public Object getValueByAttrName(String attrName) throws LibrecException {
@@ -73,10 +74,8 @@ public class ArffInstance {
     /**
      * Get data value by index.
      *
-     * @param idx
-     *          index of the data.
-     *
-     * @return  data value
+     * @param idx index of the data.
+     * @return data value
      */
     public Object getValueByIndex(int idx) {
         Object res = new Object();
@@ -100,9 +99,8 @@ public class ArffInstance {
     /**
      * Get attribute type by index.
      *
-     * @param idx
-     *          index of the attribute
-     * @return  attribute type
+     * @param idx index of the attribute
+     * @return attribute type
      */
     public String getTypeByIndex(int idx) {
         ArffAttribute attr = attrs.get(idx);

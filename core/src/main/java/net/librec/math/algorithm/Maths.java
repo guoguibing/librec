@@ -12,7 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a clone of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
@@ -28,7 +28,6 @@ public class Maths {
      * Golden ratio: http://en.wikipedia.org/wiki/Golden_ratio
      * <p>
      * (a+b)/a = a/b = phi (golden ratio) = 1.618033988749895
-     *
      */
     public final static double golden_ratio = 0.5 * (Math.sqrt(5) + 1);
 
@@ -41,8 +40,8 @@ public class Maths {
     /**
      * Check if given string is a number (digits only)
      *
-     * @param string  the given string
-     * @return  true if the given string is a number (digits only)
+     * @param string the given string
+     * @return true if the given string is a number (digits only)
      */
     public static boolean isNumber(String string) {
         return string.matches("^\\d+$");
@@ -51,8 +50,8 @@ public class Maths {
     /**
      * Check if given string is numeric (-+0..9(.)0...9)
      *
-     * @param string  the given string
-     * @return  true if the given string is numeric (-+0..9(.)0...9)
+     * @param string the given string
+     * @return true if the given string is numeric (-+0..9(.)0...9)
      */
     public static boolean isNumeric(String string) {
         return string.matches("^[-+]?\\d+(\\.\\d+)?$");
@@ -61,8 +60,8 @@ public class Maths {
     /**
      * Check if given string is number with dot separator and two decimals.
      *
-     * @param string  the given string
-     * @return  true if the given string is number with dot separator and two decimals.
+     * @param string the given string
+     * @return true if the given string is number with dot separator and two decimals.
      */
     public static boolean isNumberWith2Decimals(String string) {
         return string.matches("^\\d+\\.\\d{2}$");
@@ -91,7 +90,7 @@ public class Maths {
      * Return  ln(e)=log_e(n)
      *
      * @param n the given parameter of the function log_e(n)
-     * @return  ln(e)=log_e(n)
+     * @return ln(e)=log_e(n)
      */
     public static double ln(double n) {
         return Math.log(n);
@@ -104,8 +103,8 @@ public class Maths {
     /**
      * Given log(a) and log(b), return log(a + b)
      *
-     * @param log_a  {@code log(a)}
-     * @param log_b  {@code log(b)}
+     * @param log_a {@code log(a)}
+     * @param log_b {@code log(b)}
      * @return {@code log(a + b)}
      */
     public static double logSum(double log_a, double log_b) {
@@ -121,6 +120,7 @@ public class Maths {
 
     /**
      * logistic function g(x)
+     *
      * @param x the given parameter x of the function g(x)
      * @return value of the logistic function g(x)
      */
@@ -138,6 +138,15 @@ public class Maths {
      */
     protected double gaussian(double x, double mu, double sigma) {
         return Math.exp(-0.5 * Math.pow(x - mu, 2) / (sigma * sigma));
+    }
+
+    @Deprecated
+    public static double[] softmax_deprecated(double[] x) throws Exception {
+        double[] expx = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            expx[i] = Math.exp(x[i]);
+        }
+        return norm(expx);
     }
 
     /**
@@ -181,8 +190,8 @@ public class Maths {
     /**
      * Gradient value of logistic function logistic(x).
      *
-     * @param x  parameter x of the function logistic(x)
-     * @return  gradient value of logistic function logistic(x)
+     * @param x parameter x of the function logistic(x)
+     * @return gradient value of logistic function logistic(x)
      */
     public static double logisticGradientValue(double x) {
         return logistic(x) * logistic(-x);
@@ -207,8 +216,8 @@ public class Maths {
     /**
      * Fabonacci sequence.
      *
-     * @param n  length of the sequence
-     * @return   sum of the sequence
+     * @param n length of the sequence
+     * @return sum of the sequence
      */
     public static int fabonacci(int n) {
         assert n > 0;
@@ -226,9 +235,9 @@ public class Maths {
      * <p>
      * reference: http://en.wikipedia.org/wiki/Greatest_common_divisor
      *
-     * @param a  given parameter a of the function
-     * @param b  given parameter b of the function
-     * @return   Greatest common divisor (gcd) or greatest common factor (gcf)
+     * @param a given parameter a of the function
+     * @param b given parameter b of the function
+     * @return Greatest common divisor (gcd) or greatest common factor (gcf)
      */
     public static int gcd(int a, int b) {
         if (b == 0)
@@ -240,9 +249,9 @@ public class Maths {
     /**
      * least common multiple (lcm).
      *
-     * @param a  given parameter a of the function
-     * @param b  given parameter b of the function
-     * @return   least common multiple (lcm)
+     * @param a given parameter a of the function
+     * @param b given parameter b of the function
+     * @return least common multiple (lcm)
      */
     public static int lcm(int a, int b) {
         if (a > 0 && b > 0)
@@ -254,8 +263,8 @@ public class Maths {
     /**
      * sqrt(a^2 + b^2) without under/overflow.
      *
-     * @param a  given parameter a of the function
-     * @param b  given parameter b of the function
+     * @param a given parameter a of the function
+     * @param b given parameter b of the function
      * @return {@code sqrt(a^2 + b^2) without under/overflow}
      */
     public static double hypot(double a, double b) {
@@ -275,8 +284,8 @@ public class Maths {
     /**
      * Return mean value of a sample.
      *
-     * @param data  a sample
-     * @return  mean value of the sample
+     * @param data a sample
+     * @return mean value of the sample
      */
     public static double mean(Collection<? extends Number> data) {
         double sum = 0.0;
@@ -289,4 +298,5 @@ public class Maths {
         }
         return sum / count;
     }
+
 }

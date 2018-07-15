@@ -18,7 +18,7 @@
 package net.librec.data;
 
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 
 /**
  * A <tt>DataSplitter</tt> is an interface to split
@@ -38,37 +38,36 @@ public interface DataSplitter {
     /**
      * Split the data.
      *
-     * @throws LibrecException
-     *         if error occurs during splitting
+     * @throws LibrecException if error occurs during splitting
      */
-    public void splitData() throws LibrecException;
+    void splitData() throws LibrecException;
 
     /**
      * Set the data convertor of this splitter.
      *
-     * @param dataConvertor
-     *        a data convertor for this splitter.
+     * @param dataConvertor a data convertor for this splitter.
      */
-    public void setDataConvertor(DataConvertor dataConvertor);
+    void setDataConvertor(DataConvertor dataConvertor);
 
     /**
      * Get train data.
      *
-     * @return  a {@code SparseMatrix} object built by the train set.
+     * @return a {@code SparseMatrix} object built by the train set.
      */
-    public SparseMatrix getTrainData();
+    SequentialAccessSparseMatrix getTrainData();
 
     /**
      * Get test data.
      *
-     * @return  a {@code SparseMatrix} object built by the test set.
+     * @return a {@code SparseMatrix} object built by the test set.
      */
-    public SparseMatrix getTestData();
+    SequentialAccessSparseMatrix getTestData();
 
     /**
      * Get valid data.
      *
-     * @return  a {@code SparseMatrix} object built by the valid set.
+     * @return a {@code SparseMatrix} object built by the valid set.
      */
-    public SparseMatrix getValidData();
+    SequentialAccessSparseMatrix getValidData();
+    boolean nextFold();
 }

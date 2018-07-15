@@ -21,8 +21,8 @@ import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector.VectorEntry;
 import net.librec.recommender.SocialRecommender;
 
 /**
@@ -53,33 +53,38 @@ public class RSTERecommender extends SocialRecommender {
             DenseMatrix tempUserFactors = new DenseMatrix(numUsers, numFactors);
             DenseMatrix tempItemFactors = new DenseMatrix(numItems, numFactors);
 
-
-
             // ratings
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-                SparseVector userSoicalValues = socialMatrix.row(userIdx);
-                int[] userSocialIndice = userSoicalValues.getIndex();
+                SequentialSparseVector userSoicalValues = socialMatrix.row(userIdx);
 
                 double weightSocialSum = 0;
-                for (int userSoicalIdx : userSocialIndice)
-                    weightSocialSum += userSoicalValues.get(userSoicalIdx);
+                for (VectorEntry ve : userSoicalValues) {
+                    double socialValue = ve.get();
+                    weightSocialSum += socialValue;
+                }
 
                 double[] sumUserSocialFactor = new double[numFactors];
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int userSoicalIdx : userSocialIndice)
-                        sumUserSocialFactor[factorIdx] += userSoicalValues.get(userSoicalIdx) * userFactors.get(userSoicalIdx, factorIdx);
+                    for (VectorEntry ve : userSoicalValues) {
+                        int userSocialIdx = ve.index();
+                        double socialValue = ve.get();
+                        sumUserSocialFactor[factorIdx] += socialValue * userFactors.get(userSocialIdx, factorIdx);
+                    }
                 }
 
                 for (VectorEntry vectorEntry : trainMatrix.row(userIdx)) {
                     int itemIdx = vectorEntry.index();
-                    double rating =  vectorEntry.get();
+                    double rating = vectorEntry.get();
                     double norRating = Maths.normalize(rating, minRate, maxRate);
 
                     // compute directly to speed up calculation
-                    double predictRating = DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+                    double predictRating = userFactors.row(userIdx).dot(itemFactors.row(itemIdx));
                     double sum = 0.0;
-                    for (int k : userSocialIndice)
-                        sum += userSoicalValues.get(k) * DenseMatrix.rowMult(userFactors, k, itemFactors, itemIdx);
+                    for (VectorEntry ve : userSoicalValues) {
+                        int userSocialIdx = ve.index();
+                        double socialValue = ve.get();
+                        sum += socialValue * userFactors.row(userSocialIdx).dot(itemFactors.row(itemIdx));
+                    }
 
                     double socialPredictRating = weightSocialSum > 0 ? sum / weightSocialSum : 0;
                     double finalPredictRating = userSocialRatio * predictRating + (1 - userSocialRatio) * socialPredictRating;
@@ -99,8 +104,8 @@ public class RSTERecommender extends SocialRecommender {
                         double userSocialFactorValue = weightSocialSum > 0 ? sumUserSocialFactor[factorIdx] / weightSocialSum : 0;
                         double itemDeriValue = deriValue * (userSocialRatio * userFactorValue + (1 - userSocialRatio) * userSocialFactorValue) + regItem * itemFactorValue;
 
-                        tempUserFactors.add(userIdx, factorIdx, userDeriValue);
-                        tempItemFactors.add(itemIdx, factorIdx, itemDeriValue);
+                        tempUserFactors.plus(userIdx, factorIdx, userDeriValue);
+                        tempItemFactors.plus(itemIdx, factorIdx, itemDeriValue);
 
                         loss += regUser * userFactorValue * userFactorValue + regItem * itemFactorValue * itemFactorValue;
                     }
@@ -110,49 +115,46 @@ public class RSTERecommender extends SocialRecommender {
             // social
             for (int userSocialIdx = 0; userSocialIdx < numUsers; userSocialIdx++) {
 
-                SparseVector socialUserValues = socialMatrix.column(userSocialIdx);
-                for (int socialUserIdx : socialUserValues.getIndex()) {
-                    if (socialUserIdx >= numUsers)
-                        continue;
+                SequentialSparseVector socialUserValues = socialMatrix.column(userSocialIdx);
+                for (VectorEntry ve_1: socialUserValues) {
+                    int socialUserIdx = ve_1.index();
+                    double socialUserValue = ve_1.get();
 
-                    SparseVector socialItemValues = trainMatrix.row(socialUserIdx);
-                    SparseVector socialUserSoicalValues = socialMatrix.row(socialUserIdx);
-                    int[] socialUserSocialIndices = socialUserSoicalValues.getIndex();
+                    SequentialSparseVector socialItemValues = trainMatrix.row(socialUserIdx);
+                    SequentialSparseVector socialUserSoicalValues = socialMatrix.row(socialUserIdx);
+                    int[] socialUserSocialIndices = socialUserSoicalValues.getIndices();
 
-                    for (int socialItemIdx : socialItemValues.getIndex()) {
+                    for (VectorEntry ve_2: socialItemValues) {
+                        int socialItemIdx = ve_2.index();
+                        double socialItemValue = ve_2.get();
 
                         // compute prediction for user-item (p, j)
-                        double predictRating = DenseMatrix.rowMult(userFactors, socialUserIdx, itemFactors, socialItemIdx);
+                        double predictRating = userFactors.row(socialUserIdx).dot(itemFactors.row(socialItemIdx));
                         double sum = 0.0, socialWeightSum = 0.0;
-                        for (int socialUserSocialIdx : socialUserSocialIndices) {
-                            double socialUserSocialValue = socialUserSoicalValues.get(socialUserSocialIdx);
-                            sum += socialUserSocialValue * DenseMatrix.rowMult(userFactors, socialUserSocialIdx, itemFactors, socialItemIdx);
+                        for (VectorEntry ve_3: socialUserSoicalValues) {
+                            int socialUserSocialIdx = ve_3.index();
+                            double socialUserSocialValue = ve_3.get();
+                            sum += socialUserSocialValue * userFactors.row(socialUserSocialIdx).dot(itemFactors.row(socialItemIdx));
                             socialWeightSum += socialUserSocialValue;
                         }
+
                         double socialPredictRating = socialWeightSum > 0 ? sum / socialWeightSum : 0;
                         double finalPredictRating = userSocialRatio * predictRating + (1 - userSocialRatio) * socialPredictRating;
 
                         // double pred = predict(p, j, false);
-                        double error = Maths.logistic(finalPredictRating) - Maths.normalize(socialItemValues.get(socialItemIdx), minRate, maxRate);
-                        double deriValue = Maths.logisticGradientValue(finalPredictRating) * error * socialUserValues.get(socialUserIdx);
+                        double error = Maths.logistic(finalPredictRating) - Maths.normalize(socialItemValue, minRate, maxRate);
+                        double deriValue = Maths.logisticGradientValue(finalPredictRating) * error * socialUserValue;
 
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
-                            tempUserFactors.add(userSocialIdx, factorIdx, (1 - userSocialRatio) * deriValue * itemFactors.get(socialItemIdx, factorIdx));
+                            tempUserFactors.plus(userSocialIdx, factorIdx, (1 - userSocialRatio) * deriValue * itemFactors.get(socialItemIdx, factorIdx));
                     }
                 }
             }
 
-
-
-
-            userFactors = userFactors.add(tempUserFactors.scale(-learnRate));
-            itemFactors = itemFactors.add(tempItemFactors.scale(-learnRate));
+            userFactors = userFactors.plus(tempUserFactors.times(-learnRate));
+            itemFactors = itemFactors.plus(tempItemFactors.times(-learnRate));
 
             loss *= 0.5d;
-
-
-
-
 
             if (isConverged(iter) && earlyStop) {
                 break;
@@ -162,13 +164,15 @@ public class RSTERecommender extends SocialRecommender {
     }
 
     protected double predict(int userIdx, int itemIdx) {
-        double predictRating = DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+        double predictRating = userFactors.row(userIdx).dot(itemFactors.row(itemIdx));
         double sum = 0.0, socialWeightSum = 0.0;
-        SparseVector userSocialVector = socialMatrix.row(userIdx);
+        SequentialSparseVector userSocialVector = socialMatrix.row(userIdx);
 
-        for (int userSoicalIdx : userSocialVector.getIndex()) {
-            double userSocialValue = userSocialVector.get(userSoicalIdx);
-            sum += userSocialValue * DenseMatrix.rowMult(userFactors, userSoicalIdx, itemFactors, itemIdx);
+        for (VectorEntry ve : userSocialVector) {
+            int userSoicalIdx = ve.index();
+            double userSocialValue = ve.get();
+
+            sum += userSocialValue * userFactors.row(userSoicalIdx).dot(itemFactors.row(itemIdx));
             socialWeightSum += userSocialValue;
         }
 
@@ -178,4 +182,6 @@ public class RSTERecommender extends SocialRecommender {
 
         return predictRating;
     }
+
+
 }

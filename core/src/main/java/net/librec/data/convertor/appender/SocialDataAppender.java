@@ -17,11 +17,13 @@
  */
 package net.librec.data.convertor.appender;
 
-import com.google.common.collect.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import net.librec.conf.Configuration;
 import net.librec.conf.Configured;
 import net.librec.data.DataAppender;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
@@ -42,19 +44,29 @@ import java.util.List;
  */
 public class SocialDataAppender extends Configured implements DataAppender {
 
-    /** The size of the buffer */
+    /**
+     * The size of the buffer
+     */
     private static final int BSIZE = 1024 * 1024;
 
-    /** a {@code SparseMatrix} object build by the social data */
-    private SparseMatrix userSocialMatrix;
+    /**
+     * a {@code SparseMatrix} object build by the social data
+     */
+    private SequentialAccessSparseMatrix userSocialMatrix;
 
-    /** The path of the appender data file */
+    /**
+     * The path of the appender data file
+     */
     private String inputDataPath;
 
-    /** User {raw id, inner id} map from rating data */
+    /**
+     * User {raw id, inner id} map from rating data
+     */
     private BiMap<String, Integer> userIds;
 
-    /** Item {raw id, inner id} map from rating data */
+    /**
+     * Item {raw id, inner id} map from rating data
+     */
     private BiMap<String, Integer> itemIds;
 
     /**
@@ -68,7 +80,7 @@ public class SocialDataAppender extends Configured implements DataAppender {
      * Initializes a newly created {@code SocialDataAppender} object with a
      * {@code Configuration} object
      *
-     * @param conf  {@code Configuration} object for construction
+     * @param conf {@code Configuration} object for construction
      */
     public SocialDataAppender(Configuration conf) {
         this.conf = conf;
@@ -91,15 +103,12 @@ public class SocialDataAppender extends Configured implements DataAppender {
      * Read data from the data file. Note that we didn't take care of the
      * duplicated lines.
      *
-     * @param inputDataPath
-     *            the path of the data file
+     * @param inputDataPath the path of the data file
      * @throws IOException if I/O error occurs during reading
      */
     private void readData(String inputDataPath) throws IOException {
         // Table {row-id, col-id, rate}
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        // Map {col-id, multiple row-id}: used to fast build a rating matrix
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
         // BiMap {raw id, inner id} userIds, itemIds
         final List<File> files = new ArrayList<File>();
         final ArrayList<Long> fileSizeList = new ArrayList<Long>();
@@ -141,7 +150,6 @@ public class SocialDataAppender extends Configured implements DataAppender {
                         int row = userIds.get(userA);
                         int col = userIds.get(userB);
                         dataTable.put(row, col, rate);
-                        colMap.put(col, row);
                     }
                 }
                 if (!isComplete) {
@@ -154,7 +162,7 @@ public class SocialDataAppender extends Configured implements DataAppender {
         }
         int numRows = userIds.size(), numCols = userIds.size();
         // build rating matrix
-        userSocialMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
+        userSocialMatrix = new SequentialAccessSparseMatrix(numRows, numCols, dataTable);
         // release memory of data table
         dataTable = null;
     }
@@ -164,7 +172,7 @@ public class SocialDataAppender extends Configured implements DataAppender {
      *
      * @return the {@code SparseMatrix} object built by the social data.
      */
-    public SparseMatrix getUserAppender() {
+    public SequentialAccessSparseMatrix getUserAppender() {
         return userSocialMatrix;
     }
 
@@ -173,15 +181,14 @@ public class SocialDataAppender extends Configured implements DataAppender {
      *
      * @return null
      */
-    public SparseMatrix getItemAppender() {
+    public SequentialAccessSparseMatrix getItemAppender() {
         return null;
     }
 
     /**
      * Set user mapping data.
      *
-     * @param userMappingData
-     *            user {raw id, inner id} map
+     * @param userMappingData user {raw id, inner id} map
      */
     @Override
     public void setUserMappingData(BiMap<String, Integer> userMappingData) {
@@ -191,8 +198,7 @@ public class SocialDataAppender extends Configured implements DataAppender {
     /**
      * Set item mapping data.
      *
-     * @param itemMappingData
-     *            item {raw id, inner id} map
+     * @param itemMappingData item {raw id, inner id} map
      */
     @Override
     public void setItemMappingData(BiMap<String, Integer> itemMappingData) {

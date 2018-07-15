@@ -21,7 +21,6 @@ import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseVector;
 import net.librec.math.structure.SymmMatrix;
 import net.librec.recommender.SocialRecommender;
 
@@ -83,8 +82,8 @@ public class SoRegRecommender extends SocialRecommender {
                     double userFactorValue = userFactors.get(userIdx, factorIdx);
                     double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
 
-                    tempUserFactors.add(userIdx, factorIdx, error * itemFactorValue + regUser * userFactorValue);
-                    tempItemFactors.add(itemIdx, factorIdx, error * userFactorValue + regItem * itemFactorValue);
+                    tempUserFactors.plus(userIdx, factorIdx, error * itemFactorValue + regUser * userFactorValue);
+                    tempItemFactors.plus(itemIdx, factorIdx, error * userFactorValue + regItem * itemFactorValue);
 
                     loss += regUser * userFactorValue * userFactorValue + regItem * itemFactorValue * itemFactorValue;
                 }
@@ -93,14 +92,14 @@ public class SoRegRecommender extends SocialRecommender {
             // friends
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
                 // out links: F+
-                SparseVector userOutLinks = socialMatrix.row(userIdx);
+                int[] userOutLinks = socialMatrix.row(userIdx).getIndices();
 
-                for (int userOutIdx : userOutLinks.getIndex()) {
+                for (int userOutIdx : userOutLinks) {
                     double userOutSim = userSocialCorrs.get(userIdx, userOutIdx);
                     if (!Double.isNaN(userOutSim)) {
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                             double errorOut = userFactors.get(userIdx, factorIdx) - userFactors.get(userOutIdx, factorIdx);
-                            tempUserFactors.add(userIdx, factorIdx, regSocial * userOutSim * errorOut);
+                            tempUserFactors.plus(userIdx, factorIdx, regSocial * userOutSim * errorOut);
 
                             loss += regSocial * userOutSim * errorOut * errorOut;
                         }
@@ -108,13 +107,13 @@ public class SoRegRecommender extends SocialRecommender {
                 }
 
                 // in links: F-
-                SparseVector userInLinks = socialMatrix.column(userIdx);
-                for (int userInIdx : userInLinks.getIndex()) {
+                int[] userInLinks = socialMatrix.column(userIdx).getIndices();
+                for (int userInIdx : userInLinks) {
                     double userInSim = userSocialCorrs.get(userIdx, userInIdx);
                     if (!Double.isNaN(userInSim)) {
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                             double errorIn = userFactors.get(userIdx, factorIdx) - userFactors.get(userInIdx, factorIdx);
-                            tempUserFactors.add(userIdx, factorIdx, regSocial * userInSim * errorIn);
+                            tempUserFactors.plus(userIdx, factorIdx, regSocial * userInSim * errorIn);
 
                             loss += regSocial * userInSim * errorIn * errorIn;
                         }
@@ -122,8 +121,8 @@ public class SoRegRecommender extends SocialRecommender {
                 }
 
             } // end of for loop
-            userFactors.addEqual(tempUserFactors.scale(-learnRate));
-            itemFactors.addEqual(tempItemFactors.scale(-learnRate));
+            userFactors = userFactors.plus(tempUserFactors.times(-learnRate));
+            itemFactors = itemFactors.plus(tempItemFactors.times(-learnRate));
 
             loss *= 0.5d;
 

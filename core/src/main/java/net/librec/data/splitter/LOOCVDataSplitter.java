@@ -18,15 +18,17 @@
 package net.librec.data.splitter;
 
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataConvertor;
+import net.librec.data.convertor.ArffDataConvertor;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
 import net.librec.util.RatingContext;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,18 +39,25 @@ import java.util.List;
  * Leave random or the last one user/item out as test set and the rest treated<br>
  * as the train set.
  *
- * @author WangYuFeng and Liuxz
+ * @author WangYuFeng, Liuxz and Keqiang Wang
  */
 public class LOOCVDataSplitter extends AbstractDataSplitter {
 
-    /** The rate dataset for splitting */
-    private SparseMatrix preferenceMatrix;
+    /**
+     * The rate dataset for splitting
+     */
+    private SequentialAccessSparseMatrix preferenceMatrix;
 
-    /** The datetime dataset for splitting */
-    private SparseMatrix datetimeMatrix;
+    /**
+     * The datetime dataset for splitting
+     */
+    private SequentialAccessSparseMatrix datetimeMatrix;
 
-    /** wrap kcv into leave-one-out if leave every rate out  */
+    /**
+     * wrap kcv into leave-one-out if leave every rate out
+     */
     private KCVDataSplitter kcv;
+
     /**
      * Empty constructor.
      */
@@ -59,17 +68,17 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
      * Initializes a newly created {@code LOOCVDataSplitter} object
      * with convertor and configuration.
      *
-     * @param dataConvertor
-     *          the convertor for the splitter.
-     * @param conf
-     *          the configuration for the splitter.
+     * @param dataConvertor the convertor for the splitter.
+     * @param conf          the configuration for the splitter.
      */
     public LOOCVDataSplitter(DataConvertor dataConvertor, Configuration conf) {
         this.dataConvertor = dataConvertor;
         this.conf = conf;
     }
 
-    /** Types of the LOOCVDataSplitter */
+    /**
+     * Types of the LOOCVDataSplitter
+     */
     enum LOOCVType {
         LOOByUser, LOOByItem
     }
@@ -81,8 +90,19 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
      */
     @Override
     public void splitData() throws LibrecException {
-        preferenceMatrix = dataConvertor.getPreferenceMatrix();
-        datetimeMatrix = dataConvertor.getDatetimeMatrix();
+        if (null == this.preferenceMatrix) {
+//            if (Objects.equals(conf.get("data.convert.columns"), null)) {
+//                this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
+//            } else {
+//                this.preferenceMatrix = dataConvertor.getPreferenceMatrix(conf.get("data.convert.columns").split(","));
+//            }
+            this.preferenceMatrix = dataConvertor.getPreferenceMatrix(conf);
+            if ((!(dataConvertor instanceof ArffDataConvertor))
+                    &&(StringUtils.equals(conf.get("data.column.format"), "UIRT"))) {
+                this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+            }
+        }
+
         String splitter = conf.get("data.splitter.loocv");
         switch (splitter.toLowerCase()) {
             case "user": {
@@ -101,15 +121,19 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
                 getLooByItemsDate();
                 break;
             }
-            case "rate":{
-                if (null == kcv) {
-                    conf.setInt("data.splitter.cv.number", dataConvertor.getPreferenceMatrix().size());
-                    kcv = new KCVDataSplitter(dataConvertor, conf);
-                    kcv.splitFolds();
-                }
-                kcv.splitData();
-                trainMatrix = kcv.getTrainData();
-                testMatrix = kcv.getTestData();
+//            case "rate": {
+//                if (null == kcv) {
+//                    conf.setInt("data.splitter.cv.number", dataConvertor.getPreferenceMatrix().size());
+//                    kcv = new KCVDataSplitter(dataConvertor, conf);
+//                    kcv.splitFolds();
+//                }
+//                kcv.splitData();
+//                trainMatrix = kcv.getTrainData();
+//                testMatrix = kcv.getTestData();
+//                break;
+//            }
+            default:{
+                LOG.info("Please check ");
             }
         }
     }
@@ -119,25 +143,25 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
      * the test set and the remaining data as the training set.
      */
     public void getLOOByUser() {
-        trainMatrix = new SparseMatrix(preferenceMatrix);
+        trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
 
-        for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-            List<Integer> items = preferenceMatrix.getColumns(u);
-
-            int randId = (int) (items.size() * Randoms.uniform());
-            int i = items.get(randId);
+        for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+            int numColumnEntries = preferenceMatrix.row(rowIndex).getNumEntries();
+            if (numColumnEntries == 0){
+                continue;
+            }
+            int randomRowPosition = (int) (numColumnEntries * Randoms.uniform());
             this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
 
-            trainMatrix.set(u, i, 0);
+            trainMatrix.setAtColumnPosition(rowIndex, randomRowPosition, 0.0D);
 
-            dataTable.put(u, i, preferenceMatrix.get(u, i));
-            colMap.put(i, u);
+            dataTable.put(rowIndex, preferenceMatrix.row(rowIndex).getIndexAtPosition(randomRowPosition),
+                    preferenceMatrix.getAtColumnPosition(rowIndex, randomRowPosition));
         }
 
-        SparseMatrix.reshape(trainMatrix);
-        testMatrix = new SparseMatrix(preferenceMatrix.numRows(), preferenceMatrix.numColumns(), dataTable, colMap);
+        trainMatrix.reshape();
+        testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix.rowSize(), preferenceMatrix.columnSize(), dataTable);
     }
 
     /**
@@ -145,26 +169,28 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
      * preserved as the test set and the remaining data as the training set.
      */
     public void getLOOByUserDate() {
-        trainMatrix = new SparseMatrix(preferenceMatrix);
+        trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
 
-        for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-            List<Integer> items = preferenceMatrix.getColumns(u);
-            int i = -1;
-
-            List<RatingContext> rcs = new ArrayList<>();
-            for (int j : items) {
-                rcs.add(new RatingContext(u, j, (long) datetimeMatrix.get(u, j)));
+        for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+            SequentialSparseVector itemRatingVector = preferenceMatrix.row(rowIndex);
+            if (itemRatingVector.getNumEntries() == 0){
+                continue;
             }
-            Collections.sort(rcs);
-            i = rcs.get(rcs.size() - 1).getItem();
-            trainMatrix.set(u, i, 0);
-            dataTable.put(u, i, preferenceMatrix.get(u, i));
-            colMap.put(i, u);
+
+            List<RatingContext> ratingContexts = new ArrayList<>(itemRatingVector.getNumEntries());
+            for (Vector.VectorEntry vectorEntry: itemRatingVector) {
+                ratingContexts.add(new RatingContext(rowIndex, vectorEntry.position(),
+                        (long) datetimeMatrix.getAtColumnPosition(rowIndex, vectorEntry.position())));
+            }
+            Collections.sort(ratingContexts);
+            int columnPosition = ratingContexts.get(ratingContexts.size() - 1).getItem();
+            trainMatrix.setAtColumnPosition(rowIndex, columnPosition, 0.0D);
+            dataTable.put(rowIndex, preferenceMatrix.row(rowIndex).getIndexAtPosition(columnPosition),
+                    preferenceMatrix.getAtColumnPosition(rowIndex, columnPosition));
         }
-        SparseMatrix.reshape(trainMatrix);
-        testMatrix = new SparseMatrix(preferenceMatrix.numRows(), preferenceMatrix.numColumns(), dataTable, colMap);
+        trainMatrix.reshape();
+        testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix.rowSize(), preferenceMatrix.columnSize(), dataTable);
     }
 
     /**
@@ -172,24 +198,24 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
      * the test set and the remaining data as the training set.
      */
     public void getLOOByItems() {
-        trainMatrix = new SparseMatrix(preferenceMatrix);
+        trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
 
-        for (int i = 0, im = preferenceMatrix.numColumns(); i < im; i++) {
-            List<Integer> users = preferenceMatrix.getRows(i);
+        for (int columnIndex = 0, columnSize = preferenceMatrix.columnSize(); columnIndex < columnSize; columnIndex++) {
+            int numRowEntries = preferenceMatrix.column(columnIndex).getNumEntries();
+            if (numRowEntries == 0){
+                continue;
+            }
+            int randomRowPosition = (int) (numRowEntries * Randoms.uniform());
 
-            int randId = (int) (users.size() * Randoms.uniform());
-            int u = users.get(randId);
-
-            trainMatrix.set(u, i, 0);
-            dataTable.put(u, i, preferenceMatrix.get(u, i));
-            colMap.put(i, u);
+            trainMatrix.setAtRowPosition(randomRowPosition, columnIndex, 0.0D);
+            dataTable.put(preferenceMatrix.column(columnIndex).getIndexAtPosition(randomRowPosition),
+                    columnIndex, preferenceMatrix.getAtRowPosition(randomRowPosition, columnIndex));
         }
 
-        SparseMatrix.reshape(trainMatrix);
-        testMatrix = new SparseMatrix(preferenceMatrix.numRows(), preferenceMatrix.numColumns(), dataTable, colMap);
+        trainMatrix.reshape();
+        testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix.rowSize(), preferenceMatrix.columnSize(), dataTable);
     }
 
     /**
@@ -197,29 +223,31 @@ public class LOOCVDataSplitter extends AbstractDataSplitter {
      * preserved as the test set and the remaining data as the training set.
      */
     public void getLooByItemsDate() {
-        trainMatrix = new SparseMatrix(preferenceMatrix);
+        trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
 
-        for (int i = 0, im = preferenceMatrix.numColumns(); i < im; i++) {
-            List<Integer> users = preferenceMatrix.getRows(i);
-            int u = -1;
-
-            List<RatingContext> rcs = new ArrayList<>();
-            for (int v : users) {
-                rcs.add(new RatingContext(v, i, (long) datetimeMatrix.get(v, i)));
+        for (int columnIndex = 0, columnSize = preferenceMatrix.columnSize(); columnIndex < columnSize; columnIndex++) {
+            SequentialSparseVector userRatingVector = preferenceMatrix.column(columnIndex);
+            if (userRatingVector.getNumEntries() == 0){
+                continue;
             }
-            Collections.sort(rcs);
-            u = rcs.get(rcs.size() - 1).getUser();
 
-            trainMatrix.set(u, i, 0);
-            dataTable.put(u, i, preferenceMatrix.get(u, i));
-            colMap.put(i, u);
+            List<RatingContext> ratingContexts = new ArrayList<>();
+            for (Vector.VectorEntry vectorEntry : userRatingVector) {
+                ratingContexts.add(new RatingContext(vectorEntry.position(), columnIndex,
+                        (long) datetimeMatrix.getAtRowPosition(vectorEntry.position(), columnIndex)));
+            }
+            Collections.sort(ratingContexts);
+            int rowPosition = ratingContexts.get(ratingContexts.size() - 1).getUser();
+
+            trainMatrix.setAtRowPosition(rowPosition, columnIndex, 0.0D);
+            dataTable.put(preferenceMatrix.column(columnIndex).getIndexAtPosition(rowPosition), columnIndex,
+                    preferenceMatrix.getAtRowPosition(rowPosition, columnIndex));
         }
 
-        SparseMatrix.reshape(trainMatrix);
-        testMatrix = new SparseMatrix(preferenceMatrix.numRows(), preferenceMatrix.numColumns(), dataTable, colMap);
+        trainMatrix.reshape();
+        testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix.rowSize(), preferenceMatrix.columnSize(), dataTable);
     }
 
 }

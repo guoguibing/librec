@@ -29,8 +29,8 @@ public class CosineSimilarity extends AbstractRecommenderSimilarity {
     /**
      * calculate the similarity between thisList and thatList.
      *
-     * @param thisList  this list
-     * @param thatList  that list
+     * @param thisList this list
+     * @param thatList that list
      * @return similarity
      */
     protected double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {

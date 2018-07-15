@@ -125,8 +125,8 @@ public class StringUtil {
     /**
      * default sep="," between all objects
      *
-     * @param strings  the strings to be concatenated
-     * @return  the concatenated strings
+     * @param strings the strings to be concatenated
+     * @return the concatenated strings
      */
     public static String toString(Object[] strings) {
         return toString(strings, ", ");
@@ -312,7 +312,7 @@ public class StringUtil {
      * Return a subset of the string with given length 50.
      *
      * @param input the input string
-     * @return      the sub string
+     * @return the sub string
      */
     public static String shortStr(String input) {
         return shortStr(input, 50);
@@ -323,7 +323,7 @@ public class StringUtil {
      *
      * @param input the input string
      * @param len   the length of the sub string
-     * @return      the sub string
+     * @return the sub string
      */
     public static String shortStr(String input, int len) {
         int begin = 0;
@@ -337,9 +337,9 @@ public class StringUtil {
     /**
      * Parse a {@code Collection<T>} data into string
      *
-     * @param ts   the input data
-     * @param <T>  type parameter
-     * @return  string of the input data
+     * @param ts  the input data
+     * @param <T> type parameter
+     * @return string of the input data
      */
     public static <T> String toString(Collection<T> ts) {
 
@@ -362,10 +362,10 @@ public class StringUtil {
     /**
      * Parse a {@code Collection<T>} data into string
      *
-     * @param ts   the input data
-     * @param <T>  type parameter
-     * @param sep  separator
-     * @return  string of the input data
+     * @param ts  the input data
+     * @param <T> type parameter
+     * @param sep separator
+     * @return string of the input data
      */
     public static <T> String toString(Collection<T> ts, String sep) {
         return Joiner.on(sep).skipNulls().join(ts);
@@ -377,7 +377,7 @@ public class StringUtil {
      * @param map the input data
      * @param <K> type parameter
      * @param <V> type parameter
-     * @return  string of the input data
+     * @return string of the input data
      */
     public static <K, V> String toString(Map<K, V> map) {
         return toString(map, "\n");
@@ -390,7 +390,7 @@ public class StringUtil {
      * @param <K> type parameter
      * @param <V> type parameter
      * @param sep separator
-     * @return  string of the input data
+     * @return string of the input data
      */
     public static <K, V> String toString(Map<K, V> map, String sep) {
         return Joiner.on(sep).withKeyValueSeparator(" -> ").join(map);
@@ -438,7 +438,7 @@ public class StringUtil {
      * convert to a section of message
      *
      * @param msgs a list of messages
-     * @return  a section of message
+     * @return a section of message
      */
     public static String toSection(List<String> msgs) {
         StringBuilder sb = new StringBuilder();

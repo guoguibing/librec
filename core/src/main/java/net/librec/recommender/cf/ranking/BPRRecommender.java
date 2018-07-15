@@ -17,18 +17,16 @@
  */
 package net.librec.recommender.cf.ranking;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.recommender.MatrixFactorizationRecommender;
+import org.apache.commons.lang.ArrayUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Rendle et al., <strong>BPR: Bayesian Personalized Ranking from Implicit Feedback</strong>, UAI 2009.
@@ -37,7 +35,6 @@ import java.util.Set;
  */
 @ModelData({"isRanking", "bpr", "userFactors", "itemFactors"})
 public class BPRRecommender extends MatrixFactorizationRecommender {
-    private List<Set<Integer>> userItemsSet;
 
     @Override
     protected void setup() throws LibrecException {
@@ -47,23 +44,24 @@ public class BPRRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void trainModel() throws LibrecException {
 
-        userItemsSet = getUserItemsSet(trainMatrix);
+        IntOpenHashSet[] userItemsSet = getUserItemsSet(trainMatrix);
+        int maxSample = trainMatrix.size();
 
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
-            for (int sampleCount = 0, smax = numUsers * 100; sampleCount < smax; sampleCount++) {
+            for (int sampleCount = 0; sampleCount < maxSample; sampleCount++) {
 
                 // randomly draw (userIdx, posItemIdx, negItemIdx)
                 int userIdx, posItemIdx, negItemIdx;
                 while (true) {
                     userIdx = Randoms.uniform(numUsers);
-                    Set<Integer> itemSet = userItemsSet.get(userIdx);
+                    Set<Integer> itemSet = userItemsSet[userIdx];
                     if (itemSet.size() == 0 || itemSet.size() == numItems)
                         continue;
 
-                    List<Integer> itemList = trainMatrix.getColumns(userIdx);
-                    posItemIdx = itemList.get(Randoms.uniform(itemList.size()));
+                    int[] itemIndices = trainMatrix.row(userIdx).getIndices();
+                    posItemIdx = itemIndices[Randoms.uniform(itemIndices.length)];
                     do {
                         negItemIdx = Randoms.uniform(numItems);
                     } while (itemSet.contains(negItemIdx));
@@ -86,9 +84,9 @@ public class BPRRecommender extends MatrixFactorizationRecommender {
                     double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
                     double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
-                    userFactors.add(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
-                    itemFactors.add(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
-                    itemFactors.add(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
+                    userFactors.plus(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
+                    itemFactors.plus(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
+                    itemFactors.plus(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
 
                     loss += regUser * userFactorValue * userFactorValue + regItem * posItemFactorValue * posItemFactorValue + regItem * negItemFactorValue * negItemFactorValue;
                 }
@@ -100,11 +98,16 @@ public class BPRRecommender extends MatrixFactorizationRecommender {
         }
     }
 
-    private List<Set<Integer>> getUserItemsSet(SparseMatrix sparseMatrix) {
-        List<Set<Integer>> userItemsSet = new ArrayList<>();
+    private IntOpenHashSet[] getUserItemsSet(SequentialAccessSparseMatrix sparseMatrix) {
+        IntOpenHashSet[] tempUserItemsSet = new IntOpenHashSet[numUsers];
         for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsSet.add(new HashSet(sparseMatrix.getColumns(userIdx)));
+            int[] itemIndices = sparseMatrix.row(userIdx).getIndices();
+            IntOpenHashSet itemSet = new IntOpenHashSet(itemIndices.length);
+            for(int index = 0; index< itemIndices.length; index++){
+                itemSet.add(itemIndices[index]);
+            }
+            tempUserItemsSet[userIdx] = itemSet;
         }
-        return userItemsSet;
+        return tempUserItemsSet;
     }
 }

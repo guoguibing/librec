@@ -42,7 +42,7 @@ public class RecDriver implements LibrecTool {
      * @return exit code.
      * @throws Exception if error occurs
      */
-    public int run(String[] args) throws Exception{
+    public int run(String[] args) throws Exception {
         // init options
         Options options = new Options();
         options.addOption("build", false, "build model");
@@ -102,11 +102,8 @@ public class RecDriver implements LibrecTool {
         CommandLine cmd = parser.parse(options, args);
 
         if (cmd.hasOption("build")) {
-            ;
         } else if (cmd.hasOption("load")) {
-            ;
         } else if (cmd.hasOption("save")) {
-            ;
         } else if (cmd.hasOption("exec")) {
             tool.run(args);
         }

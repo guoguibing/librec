@@ -19,12 +19,12 @@
 package net.librec.recommender.baseline;
 
 import net.librec.common.LibrecException;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.recommender.MatrixRecommender;
 
 /**
  * Baseline: predict by a constant rating
  */
-public class ConstantGuessRecommender extends AbstractRecommender {
+public class ConstantGuessRecommender extends MatrixRecommender {
 
     /**
      * given constant to predict the rating
@@ -47,4 +47,5 @@ public class ConstantGuessRecommender extends AbstractRecommender {
     protected double predict(int userIdx, int itemIdx) {
         return constant;
     }
+
 }

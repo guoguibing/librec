@@ -12,7 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a clone of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
@@ -37,8 +37,8 @@ public class Gamma {
      * Reference: Pike MC &amp; Hill ID (1966) Algorithm 291: Logarithm of the gamma function. Communications of the
      * Association for Computing Machinery, 9:684
      *
-     * @param x  parameter of the gamma function
-     * @return   the log of the gamma function of the given alpha
+     * @param x parameter of the gamma function
+     * @return the log of the gamma function of the given alpha
      */
     public static double logGamma(double x) {
         double tmp = (x - 0.5) * Math.log(x + 4.5) - (x + 4.5);
@@ -54,8 +54,8 @@ public class Gamma {
      * <p>
      * Uses Lanczos approximation formula.
      *
-     * @param x  parameter of the gamma function
-     * @return   gamma function of the given alpha
+     * @param x parameter of the gamma function
+     * @return gamma function of the given alpha
      */
     public static double gamma(double x) {
         return Math.exp(logGamma(x));
@@ -64,8 +64,8 @@ public class Gamma {
     /**
      * digamma(x) = d log Gamma(x)/ dx
      *
-     * @param x  parameter of the gamma function
-     * @return   derivative of the gamma function
+     * @param x parameter of the gamma function
+     * @return derivative of the gamma function
      */
     public static double digamma(double x) {
         double y = 0.0;
@@ -80,7 +80,7 @@ public class Gamma {
         }
 
         if (x < 0.0) {
-            y = digamma(-x + 1) + Math.PI * (1.0 / Math.tan(-Math.PI * x));
+            y = gamma(-x + 1) + Math.PI * (1.0 / Math.tan(-Math.PI * x));
             return y;
         }
 
@@ -112,16 +112,16 @@ public class Gamma {
         return y;
     }
 
-//    /**
-//     * Newton iteration to solve digamma(x)-y = 0.
-//     *
-//     * @param y  parameter y in the function above
-//     * @return the inverse function of digamma, i.e., returns x such that digamma(x) = y adapted from Tony Minka fastfit
-//     * Matlab code
-//     */
-//    public static double invDigamma(double y) {
-//        // Newton iteration to solve digamma(x)-y = 0
-//        return y < -2.22 ? (-1.0 / (y - digamma(1))) : (Math.exp(y) + 0.5);
-//    }
+    /**
+     * Newton iteration to solve digamma(x)-y = 0.
+     *
+     * @param y parameter y in the function above
+     * @return the inverse function of digamma, i.e., returns x such that digamma(x) = y adapted from Tony Minka fastfit
+     * Matlab code
+     */
+    public static double invDigamma(double y) {
+        // Newton iteration to solve digamma(x)-y = 0
+        return y < -2.22 ? (-1.0 / (y - digamma(1))) : (Math.exp(y) + 0.5);
+    }
 
 }

@@ -45,11 +45,11 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 
 		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
-		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"), -1.0);
+		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"), "[ ]");
 
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
 		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4-date.txt");
-		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"), -1.0);
+		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"), "[ ]");
 	}
 
 	/**
@@ -62,8 +62,8 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	public void test01GivenNByUser() throws Exception {
 		conf.set("data.splitter.givenn", "user");
 		conf.set("data.splitter.givenn.n", "1");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor.processData();
-
 		GivenNDataSplitter splitter = new GivenNDataSplitter(convertor, conf);
 		splitter.splitData();
 
@@ -81,6 +81,7 @@ public class GivenNDataSplitterTestCase extends BaseTestCase{
 	public void test02GivenNByItem() throws Exception {
 		conf.set("data.splitter.givenn", "item");
 		conf.set("data.splitter.givenn.n", "1");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor.processData();
 
 		GivenNDataSplitter splitter = new GivenNDataSplitter(convertor, conf);

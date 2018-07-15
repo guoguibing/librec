@@ -132,9 +132,9 @@ public class TrustMFRecommender extends SocialRecommender {
                     double trusterUserTrusterFactorValue = trusterUserTrusterFactors.get(userIdx, factorIdx);
                     double trusterItemFactorValue = trusterItemFactors.get(itemIdx, factorIdx);
 
-                    userTrusterGradients.add(userIdx, factorIdx, deriValue * trusterItemFactorValue
+                    userTrusterGradients.plus(userIdx, factorIdx, deriValue * trusterItemFactorValue
                             + regUser * trusterUserTrusterFactorValue);
-                    itemGradients.add(itemIdx, factorIdx, deriValue * trusterUserTrusterFactorValue
+                    itemGradients.plus(itemIdx, factorIdx, deriValue * trusterUserTrusterFactorValue
                             + regItem * trusterItemFactorValue);
 
                     loss += regUser * trusterUserTrusterFactorValue * trusterUserTrusterFactorValue +
@@ -149,7 +149,7 @@ public class TrustMFRecommender extends SocialRecommender {
                 double socialValue = matrixEntry.get();
 
                 if (socialValue > 0) {
-                    double preddictSocialValue = DenseMatrix.rowMult(trusterUserTrusterFactors, userIdx, trusterUserTrusteeFactors, userSocialIdx);
+                    double preddictSocialValue = trusterUserTrusterFactors.row(userIdx).dot(trusterUserTrusteeFactors.row(userSocialIdx));
                     double socialError = Maths.logistic(preddictSocialValue) - socialValue;
 
                     loss += regSocial * socialError * socialError;
@@ -160,9 +160,9 @@ public class TrustMFRecommender extends SocialRecommender {
                         double trusterUserTrusterFactorValue = trusterUserTrusterFactors.get(userIdx, factorIdx);
                         double trusterUserTrusteeFactorValue = trusterUserTrusteeFactors.get(userSocialIdx, factorIdx);
 
-                        userTrusterGradients.add(userIdx, factorIdx, regSocial * deriValue * trusterUserTrusteeFactorValue
+                        userTrusterGradients.plus(userIdx, factorIdx, regSocial * deriValue * trusterUserTrusteeFactorValue
                                 + regUser * trusterUserTrusterFactorValue);
-                        userTrusteeGradients.add(userSocialIdx, factorIdx, regSocial * deriValue * trusterUserTrusterFactorValue
+                        userTrusteeGradients.plus(userSocialIdx, factorIdx, regSocial * deriValue * trusterUserTrusterFactorValue
                                 + regUser * trusterUserTrusteeFactorValue);
 
                         loss += regUser * trusterUserTrusterFactorValue * trusterUserTrusterFactorValue +
@@ -171,9 +171,9 @@ public class TrustMFRecommender extends SocialRecommender {
                 }
             }
 
-            trusterUserTrusterFactors.addEqual(userTrusterGradients.scale(-learnRate));
-            trusterItemFactors.addEqual(itemGradients.scale(-learnRate));
-            trusterUserTrusteeFactors.addEqual(userTrusteeGradients.scale(-learnRate));
+            trusterUserTrusterFactors = trusterUserTrusterFactors.plus(userTrusterGradients.times(-learnRate));
+            trusterItemFactors = trusterItemFactors.plus(itemGradients.times(-learnRate));
+            trusterUserTrusteeFactors = trusterUserTrusteeFactors.plus(userTrusteeGradients.times(-learnRate));
 
             loss *= 0.5d;
 
@@ -216,8 +216,8 @@ public class TrustMFRecommender extends SocialRecommender {
                     double trusteeUserTrusteeFactorValue = trusteeUserTrusteeFactors.get(userIdx, factorIdx);
                     double trusteeItemFactorValue = trusteeItemFactors.get(itemIdx, factorIdx);
 
-                    userTrusteeGradients.add(userIdx, factorIdx, deriValue * trusteeItemFactorValue + regUser * trusteeUserTrusteeFactorValue);
-                    itemGradients.add(itemIdx, factorIdx, deriValue * trusteeUserTrusteeFactorValue + regItem * trusteeItemFactorValue);
+                    userTrusteeGradients.plus(userIdx, factorIdx, deriValue * trusteeItemFactorValue + regUser * trusteeUserTrusteeFactorValue);
+                    itemGradients.plus(itemIdx, factorIdx, deriValue * trusteeUserTrusteeFactorValue + regItem * trusteeItemFactorValue);
 
                     loss += regUser * trusteeUserTrusteeFactorValue * trusteeUserTrusteeFactorValue +
                             regItem * trusteeItemFactorValue * trusteeItemFactorValue;
@@ -230,7 +230,7 @@ public class TrustMFRecommender extends SocialRecommender {
                 int userIdx = matrixEntry.column();
                 double socialValue = matrixEntry.get();
                 if (socialValue > 0) {
-                    double predictSocialValue = DenseMatrix.rowMult(trusteeUserTrusterFactors, userSocialIdx, trusteeUserTrusteeFactors, userIdx);
+                    double predictSocialValue = trusteeUserTrusterFactors.row(userSocialIdx).dot(trusteeUserTrusteeFactors.row(userIdx));
                     double socialError = Maths.logistic(predictSocialValue) - socialValue;
 
                     loss += regSocial * socialError * socialError;
@@ -241,9 +241,9 @@ public class TrustMFRecommender extends SocialRecommender {
                         double trusteeUserTrusteeFactorValue = trusteeUserTrusteeFactors.get(userIdx, factorIdx);
                         double trusteeUserTrusterFactorValue = trusteeUserTrusterFactors.get(userSocialIdx, factorIdx);
 
-                        userTrusteeGradients.add(userIdx, factorIdx, regSocial * deriValue * trusteeUserTrusterFactorValue
+                        userTrusteeGradients.plus(userIdx, factorIdx, regSocial * deriValue * trusteeUserTrusterFactorValue
                                 + regUser * trusteeUserTrusteeFactorValue);
-                        userTrusterGradients.add(userSocialIdx, factorIdx, regSocial * deriValue * trusteeUserTrusteeFactorValue
+                        userTrusterGradients.plus(userSocialIdx, factorIdx, regSocial * deriValue * trusteeUserTrusteeFactorValue
                                 + regUser * trusteeUserTrusterFactorValue);
 
                         loss += regUser * trusteeUserTrusteeFactorValue * trusteeUserTrusteeFactorValue +
@@ -252,9 +252,9 @@ public class TrustMFRecommender extends SocialRecommender {
                 }
             }
 
-            trusteeUserTrusterFactors.addEqual(userTrusterGradients.scale(-learnRate));
-            trusteeItemFactors.addEqual(itemGradients.scale(-learnRate));
-            trusteeUserTrusteeFactors.addEqual(userTrusteeGradients.scale(-learnRate));
+            trusteeUserTrusterFactors = trusteeUserTrusterFactors.plus(userTrusterGradients.times(-learnRate));
+            trusteeItemFactors = trusteeItemFactors.plus(itemGradients.times(-learnRate));
+            trusteeUserTrusteeFactors = trusteeUserTrusteeFactors.plus(userTrusteeGradients.times(-learnRate));
 
             loss *= 0.5d;
 
@@ -287,16 +287,16 @@ public class TrustMFRecommender extends SocialRecommender {
         double predictRating;
         switch (model) {
             case "Tr":
-                predictRating = DenseMatrix.rowMult(trusterUserTrusterFactors, userIdx, trusterItemFactors, itemIdx);
+                predictRating = trusterUserTrusterFactors.row(userIdx).dot(trusterItemFactors.row(itemIdx));
                 break;
             case "Te":
-                predictRating = DenseMatrix.rowMult(trusteeUserTrusteeFactors, userIdx, trusteeItemFactors, itemIdx);
+                predictRating = trusteeUserTrusteeFactors.row(userIdx).dot(trusteeItemFactors.row(itemIdx));
                 break;
             case "T":
             default:
-                DenseVector userVector = trusterUserTrusterFactors.row(userIdx).add(trusteeUserTrusteeFactors.row(userIdx, false));
-                DenseVector itemVector = trusterItemFactors.row(itemIdx).add(trusteeItemFactors.row(itemIdx, false));
-                predictRating = userVector.inner(itemVector) / 4;
+                DenseVector userVector = trusterUserTrusterFactors.row(userIdx).plus(trusteeUserTrusteeFactors.row(userIdx));
+                DenseVector itemVector = trusterItemFactors.row(itemIdx).plus(trusteeItemFactors.row(itemIdx));
+                predictRating = userVector.dot(itemVector) / 4;
         }
 
         return predictRating;

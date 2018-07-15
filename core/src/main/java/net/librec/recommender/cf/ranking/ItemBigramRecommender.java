@@ -21,16 +21,16 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Gamma;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 import net.librec.util.RatingContext;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
-
-import static net.librec.math.algorithm.Gamma.digamma;
 
 /**
  * Hanna M. Wallach, <strong>Topic Modeling: Beyond Bag-of-Words</strong>, ICML 2006.
@@ -38,7 +38,7 @@ import static net.librec.math.algorithm.Gamma.digamma;
  * @author Keqiang Wang
  **/
 @ModelData({"isRanking", "itembigram", "userTopicProbs", "topicPreItemCurItemProbs"})
-public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
+public class ItemBigramRecommender extends MatrixProbabilisticGraphicalRecommender {
 
     private Map<Integer, List<Integer>> userItemsMap;
 
@@ -54,7 +54,7 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
     /**
      * vector of hyperparameters for alpha
      */
-    protected DenseVector alpha;
+    protected VectorBasedDenseVector alpha;
 
     /**
      * number of topics
@@ -84,7 +84,7 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
     /**
      * entry[u]: number of tokens rated by user u.
      */
-    protected DenseVector userTokenNumbers;
+    protected VectorBasedDenseVector userTokenNumbers;
 
     /**
      * posterior probabilities of parameters
@@ -99,7 +99,12 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
     /**
      * time sparse matrix
      */
-    private SparseMatrix timeMatrix;
+    private SequentialAccessSparseMatrix timeMatrix;
+
+    /**
+     * time table
+     */
+    private Table<Integer, Integer, Double> timeTable;
 
     @Override
     protected void setup() throws LibrecException {
@@ -109,17 +114,21 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
         initAlpha = conf.getFloat("rec.user.dirichlet.prior", 0.01f);
         initBeta = conf.getFloat("rec.topic.dirichlet.prior", 0.01f);
 
-        timeMatrix =  (SparseMatrix) getDataModel().getDatetimeDataSet();
+        timeMatrix = (SequentialAccessSparseMatrix) getDataModel().getDatetimeDataSet();
+        timeTable = timeMatrix.getDataTable();
 
         // build the training data, sorting by date
         userItemsMap = new HashMap<>();
         for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-            List<Integer> unsortedItems = trainMatrix.getColumns(userIdx);
+            // List<Integer> unsortedItems = trainMatrix.getColumns(userIdx);
+            int[] itemIndexes = trainMatrix.row(userIdx).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> unsortedItems = Arrays.asList(inputBoxed);
             int size = unsortedItems.size();
 
             List<RatingContext> rcs = new ArrayList<>(size);
             for (Integer itemIdx : unsortedItems) {
-                rcs.add(new RatingContext(userIdx, itemIdx, (long) timeMatrix.get(userIdx, itemIdx)));
+                rcs.add(new RatingContext(userIdx, itemIdx, timeTable.get(userIdx, itemIdx).longValue()));
             }
             Collections.sort(rcs);
 
@@ -134,7 +143,7 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
         // count variables
         // initialize count variables.
         userTopicNumbers = new DenseMatrix(numUsers, numTopics);
-        userTokenNumbers = new DenseVector(numUsers);
+        userTokenNumbers = new VectorBasedDenseVector(numUsers);
 
         topicPreItemCurItemNum = new int[numTopics][numItems + 1][numItems];
         topicItemProbs = new DenseMatrix(numTopics, numItems + 1);
@@ -147,11 +156,11 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
         topicPreItemCurItemProbs = new double[numTopics][numItems + 1][numItems];
 
         // hyper-parameters
-        alpha = new DenseVector(numTopics);
-        alpha.setAll(initAlpha);
+        alpha = new VectorBasedDenseVector(numTopics);
+        alpha.assign(((index, value) -> initAlpha));
 
         beta = new DenseMatrix(numTopics, numItems + 1);
-        beta.setAll(initBeta);
+        beta.assign(((row, column, value) -> initBeta));
 
         // initialization
         topicAssignments = HashBasedTable.create();
@@ -165,12 +174,12 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
                 int topicIdx = (int) (Math.random() * numTopics);
                 topicAssignments.put(userIdx, itemIdx, topicIdx);
 
-                userTopicNumbers.add(userIdx, topicIdx, 1.0);
-                userTokenNumbers.add(userIdx, 1.0);
+                userTopicNumbers.plus(userIdx, topicIdx, 1.0);
+                userTokenNumbers.plus(userIdx, 1.0);
 
                 int preItemIdx = itemIdxIndex > 0 ? itemIdxList.get(itemIdxIndex - 1) : numItems;
                 topicPreItemCurItemNum[topicIdx][preItemIdx][itemIdx]++;
-                topicItemProbs.add(topicIdx, preItemIdx, 1);
+                topicItemProbs.plus(topicIdx, preItemIdx, 1);
             }
         }
     }
@@ -188,18 +197,18 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
                 int itemIdx = items.get(itemIdxIndex);
                 int topicIdx = topicAssignments.get(userIdx, itemIdx);
 
-                userTopicNumbers.add(userIdx, topicIdx, -1.0);
-                userTokenNumbers.add(userIdx, -1.0);
+                userTopicNumbers.plus(userIdx, topicIdx, -1.0);
+                userTokenNumbers.plus(userIdx, -1.0);
 
                 int preItemIdx = itemIdxIndex > 0 ? items.get(itemIdxIndex - 1) : numItems;
                 topicPreItemCurItemNum[topicIdx][preItemIdx][itemIdx]--;
-                topicItemProbs.add(topicIdx, preItemIdx, -1);
+                topicItemProbs.plus(topicIdx, preItemIdx, -1);
 
                 double[] tempUserProbs = new double[numTopics];
                 for (int topicInIdx = 0; topicInIdx < numTopics; topicInIdx++) {
                     tempValue1 = (userTopicNumbers.get(userIdx, topicIdx) + alpha.get(topicInIdx)) / (userTokenNumbers.get(userIdx) + sumAlpha);
                     tempValue2 = (topicPreItemCurItemNum[topicInIdx][preItemIdx][itemIdx] + beta.get(topicInIdx, preItemIdx))
-                            / (topicItemProbs.get(topicInIdx, preItemIdx) + beta.sumOfRow(topicInIdx));
+                            / (topicItemProbs.get(topicInIdx, preItemIdx) + beta.row(topicInIdx).sum());
 
                     tempUserProbs[topicInIdx] = tempValue1 * tempValue2;
                 }
@@ -216,11 +225,11 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
 
                 topicAssignments.put(userIdx, itemIdx, topicIdx);
 
-                userTopicNumbers.add(userIdx, topicIdx, 1.0d);
-                userTokenNumbers.add(userIdx, 1.0d);
+                userTopicNumbers.plus(userIdx, topicIdx, 1.0d);
+                userTokenNumbers.plus(userIdx, 1.0d);
 
                 topicPreItemCurItemNum[topicIdx][preItemIdx][itemIdx]++;
-                topicItemProbs.add(topicIdx, preItemIdx, 1.0d);
+                topicItemProbs.plus(topicIdx, preItemIdx, 1.0d);
             }
         }
     }
@@ -228,26 +237,41 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
     @Override
     protected void mStep() {
         double sumAlpha = alpha.sum();
-        for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
-            double alphaTopicValue = alpha.get(topicIdx);
-            double numerator = 0, denominator = 0;
-            for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-                numerator += digamma(userTopicNumbers.get(userIdx, topicIdx) + alphaTopicValue) - digamma(alphaTopicValue);
-                denominator += digamma(userTokenNumbers.get(userIdx) + sumAlpha) - digamma(sumAlpha);
-            }
+        double alphaDigamma = Gamma.digamma(sumAlpha);
+        double alphaDenominator = 0;
 
-            if (numerator != 0)
-                alpha.set(topicIdx, alphaTopicValue * (numerator / denominator));
+        // opt by hong
+        for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+            alphaDenominator += Gamma.digamma(userTokenNumbers.get(userIdx) + sumAlpha) - alphaDigamma;
         }
 
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
-            double betaTopicValue = beta.sumOfRow(topicIdx);
+            double alphaTopicValue = alpha.get(topicIdx);
+            double alphaTopicDigamma = Gamma.digamma(alphaTopicValue);
+            double numerator = 0;
+            for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+                numerator += Gamma.digamma(userTopicNumbers.get(userIdx, topicIdx) + alphaTopicValue) - alphaTopicDigamma;
+            }
+
+            if (numerator != 0)
+                alpha.set(topicIdx, alphaTopicValue * (numerator / alphaDenominator));
+        }
+
+        for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
+            double betaTopicValue = beta.row(topicIdx).sum();
+            double betaTopicDigamma = Gamma.digamma(betaTopicValue);
+            double[] itemDenominators = new double[numItems + 1];
+            for (int itemIdx = 0; itemIdx < numItems + 1; itemIdx++) {
+                itemDenominators[itemIdx] = Gamma.digamma(topicItemProbs.get(topicIdx, itemIdx) + betaTopicValue) - betaTopicDigamma;
+            }
+
             for (int itemIdx = 0; itemIdx < numItems + 1; itemIdx++) {
                 double betaTopicItemValue = beta.get(topicIdx, itemIdx);
+                double betaTopicItemDigamma = Gamma.digamma(betaTopicItemValue);
                 double numerator = 0.0d, denominator = 0.0d;
                 for (int preItemIdx = 0; preItemIdx < numItems; preItemIdx++) {
-                    numerator += digamma(topicPreItemCurItemNum[topicIdx][itemIdx][preItemIdx] + betaTopicItemValue) - digamma(betaTopicItemValue);
-                    denominator += digamma(topicItemProbs.get(topicIdx, itemIdx) + betaTopicValue) - digamma(betaTopicValue);
+                    numerator += Gamma.digamma(topicPreItemCurItemNum[topicIdx][itemIdx][preItemIdx] + betaTopicItemValue) - betaTopicItemDigamma;
+                    denominator += itemDenominators[itemIdx];
                 }
 
                 if (numerator != 0)
@@ -264,12 +288,12 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
         for (int userIdx = 0; userIdx < numTopics; userIdx++) {
             for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
                 val = (userTopicNumbers.get(userIdx, topicIdx) + alpha.get(topicIdx)) / (userTokenNumbers.get(userIdx) + sumAlpha);
-                userTopicProbsSum.add(userIdx, topicIdx, val);
+                userTopicProbsSum.plus(userIdx, topicIdx, val);
             }
         }
 
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
-            double betaTopicValue = beta.sumOfRow(topicIdx);
+            double betaTopicValue = beta.row(topicIdx).sum();
             for (int itemIdx = 0; itemIdx < numItems + 1; itemIdx++) {
                 for (int preItemIdx = 0; preItemIdx < numItems; preItemIdx++) {
                     val = (topicPreItemCurItemNum[topicIdx][itemIdx][preItemIdx] + beta.get(topicIdx, itemIdx)) / (topicItemProbs.get(topicIdx, itemIdx) + betaTopicValue);
@@ -283,7 +307,7 @@ public class ItemBigramRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected void estimateParams() {
-        userTopicProbs = userTopicProbsSum.scale(1.0 / numStats);
+        userTopicProbs = userTopicProbsSum.times(1.0 / numStats);
 
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
             for (int itemIdx = 0; itemIdx < numItems + 1; itemIdx++) {

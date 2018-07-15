@@ -20,7 +20,7 @@ package net.librec.recommender;
 import net.librec.common.LibrecException;
 import net.librec.data.convertor.appender.SocialDataAppender;
 import net.librec.math.algorithm.Maths;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 
 /**
  * Social Recommender
@@ -31,7 +31,7 @@ public abstract class SocialRecommender extends MatrixFactorizationRecommender {
     /**
      * socialMatrix: social rate matrix, indicating a user is connecting to a number of other users
      */
-    protected SparseMatrix socialMatrix;
+    protected SequentialAccessSparseMatrix socialMatrix;
 
     /**
      * social regularization
@@ -60,7 +60,7 @@ public abstract class SocialRecommender extends MatrixFactorizationRecommender {
      * denormalize a prediction to the region (minRate, maxRate)
      *
      * @param predictRating a prediction to the region (minRate, maxRate)
-     * @return  a denormalized prediction to the region (minRate, maxRate)
+     * @return a denormalized prediction to the region (minRate, maxRate)
      */
     protected double denormalize(double predictRating) {
         return minRate + predictRating * (maxRate - minRate);
@@ -70,7 +70,7 @@ public abstract class SocialRecommender extends MatrixFactorizationRecommender {
      * normalize a rating to the region (0, 1)
      *
      * @param rating a given rating
-     * @return  a normalized rating
+     * @return a normalized rating
      */
     protected double normalize(double rating) {
         return (rating - minRate) / (maxRate - minRate);

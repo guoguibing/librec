@@ -19,9 +19,8 @@ package net.librec.recommender.cf.rating;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
+import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 /**
@@ -39,26 +38,26 @@ public class BiasedMFRecommender extends MatrixFactorizationRecommender {
     /**
      * user biases
      */
-    protected DenseVector userBiases;
+    protected VectorBasedDenseVector userBiases;
 
     /**
-     * user biases
+     * item biases
      */
-    protected DenseVector itemBiases;
+    protected VectorBasedDenseVector itemBiases;
 
     /*
      * (non-Javadoc)
 	 *
-	 * @see net.librec.recommender.AbstractRecommender#setup()
+	 * @see net.librec.recommender.MatrixRecommender#setup()
 	 */
     @Override
-    protected void setup() throws LibrecException {
+    protected void setup() throws LibrecException{
         super.setup();
         regBias = conf.getDouble("rec.bias.regularization", 0.01);
 
         //initialize the userBiased and itemBiased
-        userBiases = new DenseVector(numUsers);
-        itemBiases = new DenseVector(numItems);
+        userBiases = new VectorBasedDenseVector(numUsers);
+        itemBiases = new VectorBasedDenseVector(numItems);
 
         userBiases.init(initMean, initStd);
         itemBiases.init(initMean, initStd);
@@ -81,11 +80,11 @@ public class BiasedMFRecommender extends MatrixFactorizationRecommender {
 
                 // update user and item bias
                 double userBiasValue = userBiases.get(userIdx);
-                userBiases.add(userIdx, learnRate * (error - regBias * userBiasValue));
+                userBiases.plus(userIdx, learnRate * (error - regBias * userBiasValue));
                 loss += regBias * userBiasValue * userBiasValue;
 
                 double itemBiasValue = itemBiases.get(itemIdx);
-                itemBiases.add(itemIdx, learnRate * (error - regBias * itemBiasValue));
+                itemBiases.plus(itemIdx, learnRate * (error - regBias * itemBiasValue));
                 loss += regBias * itemBiasValue * itemBiasValue;
 
                 //update user and item factors
@@ -93,8 +92,8 @@ public class BiasedMFRecommender extends MatrixFactorizationRecommender {
                     double userFactorValue = userFactors.get(userIdx, factorIdx);
                     double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
 
-                    userFactors.add(userIdx, factorIdx, learnRate * (error * itemFactorValue - regUser * userFactorValue));
-                    itemFactors.add(itemIdx, factorIdx, learnRate * (error * userFactorValue - regItem * itemFactorValue));
+                    userFactors.plus(userIdx, factorIdx, learnRate * (error * itemFactorValue - regUser * userFactorValue));
+                    itemFactors.plus(itemIdx, factorIdx, learnRate * (error * userFactorValue - regItem * itemFactorValue));
                     loss += regUser * userFactorValue * userFactorValue + regItem * itemFactorValue * itemFactorValue;
                 }
             }
@@ -117,6 +116,6 @@ public class BiasedMFRecommender extends MatrixFactorizationRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx) + userBiases.get(userIdx) + itemBiases.get(itemIdx) + globalMean;
+        return userFactors.row(userIdx).dot(itemFactors.row(itemIdx)) + userBiases.get(userIdx) + itemBiases.get(itemIdx) + globalMean;
     }
 }

@@ -2,22 +2,28 @@ package net.librec.util;
 
 public class RatingContext implements Comparable<RatingContext> {
 
-    /** rating time stamp */
+    /**
+     * rating time stamp
+     */
     private long timestamp;
 
-    /** user index */
+    /**
+     * user index
+     */
     private int user;
 
-    /** item index */
+    /**
+     * item index
+     */
     private int item;
 
     /**
      * Create a new object with the given rating time stamp, user index
      * and item index.
      *
-     * @param user       user index
-     * @param item       item index
-     * @param timestamp  rating time stamp
+     * @param user      user index
+     * @param item      item index
+     * @param timestamp rating time stamp
      */
     public RatingContext(int user, int item, long timestamp) {
         this.user = user;

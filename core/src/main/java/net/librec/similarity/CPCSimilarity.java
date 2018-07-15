@@ -19,7 +19,7 @@ package net.librec.similarity;
 
 import net.librec.data.DataModel;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 
 import java.util.List;
 
@@ -35,11 +35,10 @@ public class CPCSimilarity extends AbstractRecommenderSimilarity {
     /**
      * Build social similarity matrix with trainMatrix in dataModel.
      *
-     * @param dataModel
-     *            the input data model
+     * @param dataModel the input data model
      */
     public void buildSimilarityMatrix(DataModel dataModel) {
-        SparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
+        SequentialAccessSparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
         double maximum = 0.0;
         double minimum = 100.0;
         for (MatrixEntry me : trainMatrix) {
@@ -58,10 +57,8 @@ public class CPCSimilarity extends AbstractRecommenderSimilarity {
     /**
      * Calculate the similarity between thisList and thatList.
      *
-     * @param thisList
-     *            this list
-     * @param thatList
-     *            that list
+     * @param thisList this list
+     * @param thatList that list
      * @return similarity
      */
     protected double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {

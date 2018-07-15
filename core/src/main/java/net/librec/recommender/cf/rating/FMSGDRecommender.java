@@ -20,9 +20,9 @@ package net.librec.recommender.cf.rating;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseVector;
 import net.librec.math.structure.TensorEntry;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.Vector.VectorEntry;
+import net.librec.math.structure.VectorBasedSequentialSparseVector;
 import net.librec.recommender.FactorizationMachineRecommender;
 
 
@@ -56,17 +56,14 @@ public class FMSGDRecommender extends FactorizationMachineRecommender {
 
     private void buildRatingModel() throws LibrecException {
         for (int iter = 0; iter < numIterations; iter++) {
-            lastLoss = loss;
             loss = 0.0;
 
-            int userDimension = trainTensor.getUserDimension();
-            int itemDimension = trainTensor.getItemDimension();
             for (TensorEntry me : trainTensor) {
                 int[] entryKeys = me.keys();
-                SparseVector vector = tenserKeysToFeatureVector(entryKeys);
+                VectorBasedSequentialSparseVector vector = tenserKeysToFeatureVector(entryKeys);
 
                 double rate = me.get();
-                double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], vector);
+                double pred = predict(entryKeys);
 
                 double err = pred - rate;
                 loss += err * err;
@@ -82,12 +79,12 @@ public class FMSGDRecommender extends FactorizationMachineRecommender {
                 w0 += -learnRate * gradW0;
 
                 // 1-way interactions
-                for(VectorEntry ve: vector){
+                for (VectorEntry ve : vector) {
                     int l = ve.index();
-                   double oldWl = W.get(l);
+                    double oldWl = W.get(l);
                     double hWl = ve.get();
                     double gradWl = gradLoss * hWl + regW * oldWl;
-                    W.add(l, -learnRate * gradWl);
+                    W.plus(l, -learnRate * gradWl);
 
                     loss += regW * oldWl * oldWl;
 
@@ -95,16 +92,16 @@ public class FMSGDRecommender extends FactorizationMachineRecommender {
                     for (int f = 0; f < k; f++) {
                         double oldVlf = V.get(l, f);
                         double hVlf = 0;
-                        double xl =ve.get();
-                        for(VectorEntry ve2: vector){
+                        double xl = ve.get();
+                        for (VectorEntry ve2 : vector) {
                             int j = ve2.index();
-                            if(j!=l){
+                            if (j != l) {
                                 hVlf += xl * V.get(j, f) * ve2.get();
                             }
                         }
 
                         double gradVlf = gradLoss * hVlf + regF * oldVlf;
-                        V.add(l, f, -learnRate * gradVlf);
+                        V.plus(l, f, -learnRate * gradVlf);
                         loss += regF * oldVlf * oldVlf;
                     }
                 }
@@ -113,19 +110,10 @@ public class FMSGDRecommender extends FactorizationMachineRecommender {
 
             loss *= 0.5;
 
-            if (isConverged(iter)  && earlyStop)
+            if (isConverged(iter) && earlyStop) {
                 break;
+            }
+            lastLoss = loss;
         }
-    }
-
-
-    /**
-     * This kind of prediction function cannot be applied to Factorization Machine.
-     *
-     * Using the predict() in FactorizationMachineRecommender class instead of this method.
-     */
-    @Deprecated
-    protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return 0.0;
     }
 }

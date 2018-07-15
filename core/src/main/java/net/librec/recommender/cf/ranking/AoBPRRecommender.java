@@ -24,10 +24,10 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.algorithm.Stats;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.recommender.MatrixFactorizationRecommender;
-import net.librec.recommender.item.RecommendedItemList;
 import net.librec.util.Lists;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
 
@@ -76,7 +76,6 @@ public class AoBPRRecommender extends MatrixFactorizationRecommender {
         for (int i = 0; i < numItems; i++) {
             RankingPro[i] /= sum;
         }
-        recommendedList = new RecommendedItemList(numUsers);
     }
 
     @Override
@@ -87,10 +86,12 @@ public class AoBPRRecommender extends MatrixFactorizationRecommender {
         List<Integer> itemTrainList = dataLists[1];
         int countIter = 0;
 
+        int maxSample = trainMatrix.size();
+
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
-            for (int s = 0, smax = numUsers * 100; s < smax; s++) {
+            for (int s = 0; s < maxSample; s++) {
                 //update Ranking every |I|log|I|
                 if (countIter % loopNumber == 0) {
                     updateRankingInFactor();
@@ -156,9 +157,9 @@ public class AoBPRRecommender extends MatrixFactorizationRecommender {
                     double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
                     double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
-                    userFactors.add(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
-                    itemFactors.add(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
-                    itemFactors.add(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
+                    userFactors.plus(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
+                    itemFactors.plus(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
+                    itemFactors.plus(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
 
                     loss += regUser * userFactorValue * userFactorValue + regItem * posItemFactorValue * posItemFactorValue + regItem * negItemFactorValue * negItemFactorValue;
                 }
@@ -174,7 +175,7 @@ public class AoBPRRecommender extends MatrixFactorizationRecommender {
 
     public List<Map.Entry<Integer, Double>> sortByDenseVectorValue(DenseVector vector) {
         List<Map.Entry<Integer, Double>> sortList = new ArrayList<>();
-        for (int itemIdx = 0, length = vector.getData().length; itemIdx < length; itemIdx++) {
+        for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
             sortList.add(new AbstractMap.SimpleImmutableEntry(itemIdx, vector.get(itemIdx)));
         }
         Lists.sortList(sortList, true);
@@ -184,6 +185,7 @@ public class AoBPRRecommender extends MatrixFactorizationRecommender {
     public void updateRankingInFactor() {
         //echo for each factors
         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
+            // VectorBasedDenseVector factorVector = itemFactors.column(factorIdx).clone();
             DenseVector factorVector = itemFactors.column(factorIdx).clone();
             List<Map.Entry<Integer, Double>> sort = sortByDenseVectorValue(factorVector);
             double[] valueList = new double[numItems];
@@ -192,19 +194,22 @@ public class AoBPRRecommender extends MatrixFactorizationRecommender {
                 valueList[itemIdx] = sort.get(itemIdx).getValue();
             }
             //get
-            var[factorIdx] = Stats.var(valueList);
+            var[factorIdx] = Stats.variance(valueList);
         }
     }
 
-    private List<Set<Integer>> getUserItemsSet(SparseMatrix sparseMatrix) {
+    private List<Set<Integer>> getUserItemsSet(SequentialAccessSparseMatrix sparseMatrix) {
         List<Set<Integer>> userItemsSet = new ArrayList<>();
         for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsSet.add(new HashSet(sparseMatrix.getColumns(userIdx)));
+            int[] itemIndexes = sparseMatrix.row(userIdx).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> itemList = Arrays.asList(inputBoxed);
+            userItemsSet.add(new HashSet(itemList));
         }
         return userItemsSet;
     }
 
-    private List<Integer>[] getTrainList(SparseMatrix sparseMatrix) {
+    private List<Integer>[] getTrainList(SequentialAccessSparseMatrix sparseMatrix) {
         List<Integer> userTrainList = new ArrayList<>(), itemTrainList = new ArrayList<>();
         for (MatrixEntry matrixEntry : sparseMatrix) {
             int userIdx = matrixEntry.row();

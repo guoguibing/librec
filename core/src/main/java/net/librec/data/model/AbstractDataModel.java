@@ -17,10 +17,11 @@
  */
 package net.librec.data.model;
 
+import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configured;
 import net.librec.data.*;
-import net.librec.data.splitter.KCVDataSplitter;
+import net.librec.math.structure.DataFrame;
 import net.librec.math.structure.DataSet;
 import net.librec.util.DriverClassUtil;
 import net.librec.util.ReflectionUtil;
@@ -58,7 +59,9 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
      */
     protected DataSet validDataSet;
 
-    /** The convertor of the model {@link net.librec.data.DataConvertor} */
+    /**
+     * The convertor of the model {@link net.librec.data.DataConvertor}
+     */
     protected DataConvertor dataConvertor;
 
     /**
@@ -73,28 +76,23 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     /**
      * Build Convert.
      *
-     * @throws LibrecException
-     *             if error occurs when building convert.
+     * @throws LibrecException if error occurs when building convert.
      */
     protected abstract void buildConvert() throws LibrecException;
 
     /**
      * Build Splitter.
      *
-     * @throws LibrecException
-     *             if error occurs when building splitter.
+     * @throws LibrecException if error occurs when building splitter.
      */
     protected void buildSplitter() throws LibrecException {
         String splitter = conf.get("data.model.splitter");
         try {
-        	if (dataSplitter == null){
-        		dataSplitter = (DataSplitter) ReflectionUtil.newInstance(DriverClassUtil.getClass(splitter), conf);	
-        	}
+            if (dataSplitter == null) {
+                dataSplitter = (DataSplitter) ReflectionUtil.newInstance(DriverClassUtil.getClass(splitter), conf);
+            }
             if (dataSplitter != null) {
                 dataSplitter.setDataConvertor(dataConvertor);
-                if (dataSplitter instanceof KCVDataSplitter) {
-                    ((KCVDataSplitter) dataSplitter).splitFolds();
-                }
                 dataSplitter.splitData();
                 trainDataSet = dataSplitter.getTrainData();
                 testDataSet = dataSplitter.getTestData();
@@ -106,9 +104,8 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
 
     /**
      * Build appender data.
-     * 
-     * @throws LibrecException
-     *             if error occurs when building appender.
+     *
+     * @throws LibrecException if error occurs when building appender.
      */
     protected void buildFeature() throws LibrecException {
         String feature = conf.get("data.appender.class");
@@ -129,8 +126,7 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     /**
      * Build data model.
      *
-     * @throws LibrecException
-     *             if error occurs when building model.
+     * @throws LibrecException if error occurs when building model.
      */
     @Override
     public void buildDataModel() throws LibrecException {
@@ -141,23 +137,36 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
             conf.setBoolean("data.convert.read.ready", true);
         }
         buildSplitter();
-        LOG.info("Split data to train Set and test Set successfully!");
-        if (trainDataSet != null && trainDataSet.size() > 0 && testDataSet != null && testDataSet.size() > 0) {
-            LOG.info("Data size of training is " + trainDataSet.size());
-            LOG.info("Data size of testing is " + testDataSet.size());
-        }
         if (StringUtils.isNotBlank(conf.get("data.appender.class")) && !conf.getBoolean("data.appender.read.ready")) {
             buildFeature();
             LOG.info("Transform data to Feature successfully!");
             conf.setBoolean("data.appender.read.ready", true);
         }
+        LOG.info("Split data to train Set and test Set successfully!");
+        if (trainDataSet != null && trainDataSet.size() > 0 && testDataSet != null && testDataSet.size() > 0) {
+            LOG.info("Data cardinality of training is " + trainDataSet.size());
+            LOG.info("Data cardinality of testing is " + testDataSet.size());
+        }
+    }
+
+    @Override
+    public boolean hasNextFold(){
+        // where or not has next fold( decided by Splitter
+        return dataSplitter.nextFold();
+    }
+
+    @Override
+    public void nextFold(){
+        trainDataSet = dataSplitter.getTrainData();
+        testDataSet = dataSplitter.getTestData();
+        validDataSet = dataSplitter.getValidData();
+        // generate next fold by Splitter
     }
 
     /**
      * Load data model.
      *
-     * @throws LibrecException
-     *             if error occurs during loading
+     * @throws LibrecException if error occurs during loading
      */
     @Override
     public void loadDataModel() throws LibrecException {
@@ -168,8 +177,7 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     /**
      * Save data model.
      *
-     * @throws LibrecException
-     *             if error occurs during saving
+     * @throws LibrecException if error occurs during saving
      */
     @Override
     public void saveDataModel() throws LibrecException {
@@ -222,6 +230,7 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
      *
      * @return the appender of data model.
      */
+    @Override
     public DataAppender getDataAppender() {
         return dataAppender;
     }
@@ -234,5 +243,20 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     @Override
     public DataContext getContext() {
         return context;
+    }
+
+    @Override
+    public DataSet getDatetimeDataSet() {
+        return null;
+    }
+
+    @Override
+    public BiMap<String, Integer> getUserMappingData(){
+        return DataFrame.getInnerMapping("user");
+    }
+
+    @Override
+    public BiMap<String, Integer> getItemMappingData(){
+        return DataFrame.getInnerMapping("item");
     }
 }

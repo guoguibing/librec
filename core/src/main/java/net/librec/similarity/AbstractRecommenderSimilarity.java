@@ -20,9 +20,10 @@ package net.librec.similarity;
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
 import net.librec.data.convertor.appender.SocialDataAppender;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import net.librec.math.structure.SequentialSparseVector;
 import net.librec.math.structure.SymmMatrix;
+import net.librec.math.structure.Vector;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import java.util.List;
  * Calculate Recommender Similarity, such as cosine, Pearson, Jaccard
  * similarity, etc.
  *
- * @author zhanghaidong
+ * @author zhanghaidong and Keqiang Wang (email: sei.wkq2008@gmail.com)
  */
 
 public abstract class AbstractRecommenderSimilarity implements RecommenderSimilarity {
@@ -49,79 +50,80 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
     /**
      * Build social similarity matrix with trainMatrix in dataModel.
      *
-     * @param dataModel
-     *            the input data model
+     * @param dataModel the input data model
      */
     @Override
     public void buildSimilarityMatrix(DataModel dataModel) {
         conf = dataModel.getContext().getConf();
         String similarityKey = conf.get("rec.recommender.similarity.key", "user");
-        if(StringUtils.isNotBlank(similarityKey)){
+        if (StringUtils.isNotBlank(similarityKey)) {
             if (StringUtils.equals(similarityKey, "social")) {
                 buildSocialSimilarityMatrix(dataModel);
             } else {
-                // calculate the similarity between users, or the similarity between
-                // items.
-                boolean isUser = StringUtils.equals(similarityKey, "user") ? true : false;
-                SparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
-                int numUsers = trainMatrix.numRows();
-                int numItems = trainMatrix.numColumns();
+                // calculate the similarity between users, or the similarity between items.
+                boolean isUser = StringUtils.equals(similarityKey, "user");
+                SequentialAccessSparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
+                int numUsers = trainMatrix.rowSize();
+                int numItems = trainMatrix.columnSize();
                 int count = isUser ? numUsers : numItems;
-                
+
                 similarityMatrix = new SymmMatrix(count);
-                
-                for (int i = 0; i < count; i++) {
-                    SparseVector thisVector = isUser ? trainMatrix.row(i) : trainMatrix.column(i);
-                    if (thisVector.getCount() == 0) {
-                        continue;
-                    }
-                    // user/item itself exclusive
-                    for (int j = i + 1; j < count; j++) {
-                        SparseVector thatVector = isUser ? trainMatrix.row(j) : trainMatrix.column(j);
-                        if (thatVector.getCount() == 0) {
-                            continue;
-                        }
-                        
-                        double sim = getCorrelation(thisVector, thatVector);
-                        if (!Double.isNaN(sim) && sim != 0) {
-                            similarityMatrix.set(i, j, sim);
-                        }
-                    }
+                List<Integer> indexList = new ArrayList<>();
+                for (int index = 0; index < count; index++) {
+                    indexList.add(index);
                 }
+//                for (int thisIndex:indexList) {
+                indexList.parallelStream().forEach((Integer thisIndex) -> {
+                    SequentialSparseVector thisVector = isUser ? trainMatrix.row(thisIndex) : trainMatrix.column(thisIndex);
+                    if (thisVector.getNumEntries() != 0) {
+                        // user/item itself exclusive
+                        for (int thatIndex = thisIndex + 1; thatIndex < count; thatIndex++) {
+                            SequentialSparseVector thatVector = isUser ? trainMatrix.row(thatIndex) : trainMatrix.column(thatIndex);
+                            if (thatVector.getNumEntries() == 0) {
+                                continue;
+                            }
+
+                            double sim = getCorrelation(thisVector, thatVector);
+                            if (!Double.isNaN(sim) && sim != 0.0) {
+                                similarityMatrix.set(thisIndex, thatIndex, sim);
+                            }
+                        }
+                    }
+                });
+//                }
             }
         }
-
     }
 
     /**
      * Build social similarity matrix with trainMatrix
      * and socialMatrix in dataModel.
-     * 
-     * @param dataModel
-     *            the input data model
+     *
+     * @param dataModel the input data model
      */
     public void buildSocialSimilarityMatrix(DataModel dataModel) {
-        SparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
-        SparseMatrix socialMatrix = ((SocialDataAppender) dataModel.getDataAppender()).getUserAppender();
-        int numUsers = trainMatrix.numRows();
+        SequentialAccessSparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
+        SequentialAccessSparseMatrix socialMatrix = ((SocialDataAppender) dataModel.getDataAppender()).getUserAppender();
+        int numUsers = trainMatrix.rowSize();
 
         similarityMatrix = new SymmMatrix(numUsers);
 
         for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-            SparseVector userVector = trainMatrix.row(userIdx);
-            if (userVector.getCount() == 0) {
+            SequentialSparseVector userVector = trainMatrix.row(userIdx);
+            if (userVector.getNumEntries() == 0) {
                 continue;
             }
-            List<Integer> socialList = socialMatrix.getRows(userIdx);
-            for (int socialIdx : socialList) {
-                SparseVector socialVector = trainMatrix.row(socialIdx);
-                if (socialVector.getCount() == 0) {
+            SequentialSparseVector socialVector = socialMatrix.row(userIdx);
+            for (Vector.VectorEntry vectorEntry : socialVector) {
+                int socialUserIndex = vectorEntry.index();
+                SequentialSparseVector socialUserVector = trainMatrix.row(socialUserIndex);
+                if (socialUserVector.getNumEntries() == 0) {
                     continue;
                 }
 
                 double sim = getCorrelation(userVector, socialVector);
                 if (!Double.isNaN(sim)) {
-                    similarityMatrix.set(userIdx, socialIdx, sim);
+                    similarityMatrix.set(userIdx, socialUserIndex, sim);
                 }
             }
         }
@@ -131,25 +133,35 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
      * Find the common rated items by this user and that user, or the common
      * users have rated this item or that item. And then return the similarity.
      *
-     * @param thisVector:
-     *            the rated items by this user, or users that have rated this
-     *            item .
-     * @param thatVector:
-     *            the rated items by that user, or users that have rated that
-     *            item.
+     * @param thisVector: the rated items by this user, or users that have rated this
+     *                    item.
+     * @param thatVector: the rated items by that user, or users that have rated that
+     *                    item.
      * @return similarity
      */
-    public double getCorrelation(SparseVector thisVector, SparseVector thatVector) {
+    public double getCorrelation(SequentialSparseVector thisVector, SequentialSparseVector thatVector) {
         // compute similarity
-        List<Double> thisList = new ArrayList<Double>();
-        List<Double> thatList = new ArrayList<Double>();
+        List<Double> thisList = new ArrayList<>();
+        List<Double> thatList = new ArrayList<>();
 
-        for (Integer idx : thatVector.getIndex()) {
-            if (thisVector.contains(idx)) {
-                thisList.add(thisVector.get(idx));
-                thatList.add(thatVector.get(idx));
+        int thisPosition = 0, thatPosition = 0;
+        int thisSize = thisVector.getNumEntries(), thatSize = thatVector.getNumEntries();
+        int thisIndex, thatIndex;
+        while (thisPosition < thisSize && thatPosition < thatSize) {
+            thisIndex = thisVector.getIndexAtPosition(thisPosition);
+            thatIndex = thatVector.getIndexAtPosition(thatPosition);
+            if (thisIndex == thatIndex) {
+                thisList.add(thisVector.getAtPosition(thisPosition));
+                thatList.add(thatVector.getAtPosition(thatPosition));
+                thisPosition++;
+                thatPosition++;
+            } else if (thisIndex > thatIndex) {
+                thatPosition++;
+            } else {
+                thisPosition++;
             }
         }
+
         double sim = getSimilarity(thisList, thatList);
 
         // shrink to account for vector size
@@ -163,13 +175,27 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
         return sim;
     }
 
+
+    /**
+     * Find the common rated items by this user and that user, or the common
+     * users have rated this item or that item. And then return the similarity.
+     *
+     * @param thisVector: the rated items by this user, or users that have rated this
+     *                    item .
+     * @param thatVector: the rated items by that user, or users that have rated that
+     *                    item.
+     * @return similarity
+     */
+    public double getCorrelationIndependently(Configuration conf, SequentialSparseVector thisVector, SequentialSparseVector thatVector) {
+        this.conf = conf;
+        return getCorrelation(thisVector, thatVector);
+    }
+
     /**
      * Calculate the similarity between thisList and thatList.
      *
-     * @param thisList
-     *            this list
-     * @param thatList
-     *            that list
+     * @param thisList this list
+     * @param thatList that list
      * @return similarity
      */
     protected abstract double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList);

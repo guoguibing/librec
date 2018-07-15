@@ -19,18 +19,8 @@ package net.librec.filter;
 
 import net.librec.BaseTestCase;
 import net.librec.common.LibrecException;
-import net.librec.conf.Configuration;
-import net.librec.conf.Configuration.Resource;
-import net.librec.data.DataModel;
-import net.librec.data.model.TextDataModel;
-import net.librec.recommender.Recommender;
-import net.librec.recommender.RecommenderContext;
-import net.librec.recommender.cf.UserKNNRecommender;
 import net.librec.recommender.item.GenericRecommendedItem;
 import net.librec.recommender.item.RecommendedItem;
-import net.librec.similarity.PCCSimilarity;
-import net.librec.similarity.RecommenderSimilarity;
-import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -118,38 +108,38 @@ public class GenericRecommendedFilterTestCase extends BaseTestCase {
      */
     @Test
     public void test03WithAlgorithm() throws Exception {
-        Configuration conf = new Configuration();
-        Resource resource = new Resource("rec/cf/userknn-test.properties");
-        conf.addResource(resource);
-        DataModel dataModel = new TextDataModel(conf);
-        dataModel.buildDataModel();
-        RecommenderContext context = new RecommenderContext(conf, dataModel);
-        RecommenderSimilarity similarity = new PCCSimilarity();
-        similarity.buildSimilarityMatrix(dataModel);
-        context.setSimilarity(similarity);
-        Recommender recommender = new UserKNNRecommender();
-        recommender.setContext(context);
-//        String filePath = conf.get("dfs.result.dir") + "/model-"
-//                + DriverClassUtil.getDriverName(UserKNNRecommender.class);
-//        recommender.loadModel(filePath);
-        recommender.recommend(context);
-        List<RecommendedItem> recommendedItemList = recommender.getRecommendedList();
-        GenericRecommendedFilter filter = new GenericRecommendedFilter();
-        filter.setUserIdList(userIdList);
-        filter.setItemIdList(itemIdList);
-        recommendedItemList = filter.filter(recommendedItemList);
-        for (RecommendedItem recommendedItem : recommendedItemList) {
-            if (StringUtils.equals(recommendedItem.getUserId(), "2")) {
-                System.out.println("user:"+recommendedItem.getUserId() + " "
-                        + "item:"+recommendedItem.getItemId() + " "
-                        + "value:"+recommendedItem.getValue());
-            }
-        }
-        System.out.println("---------------------------------------------------");
-        for (RecommendedItem recommendedItem : recommendedItemList) {
-            System.out.println("user:"+recommendedItem.getUserId() + " "
-                    + "item:"+recommendedItem.getItemId() + " "
-                    + "value:"+recommendedItem.getValue());
-        }
+//        Configuration conf = new Configuration();
+//        Resource resource = new Resource("rec/cf/userknn-test.properties");
+//        conf.addResource(resource);
+//        DataModel dataModel = new TextDataModel(conf);
+//        dataModel.buildDataModel();
+//        RecommenderContext context = new RecommenderContext(conf, dataModel);
+//        RecommenderSimilarity similarity = new PCCSimilarity();
+//        similarity.buildSimilarityMatrix(dataModel);
+//        context.setSimilarity(similarity);
+//        Recommender recommender = new UserKNNRecommender();
+//        recommender.setContext(context);
+////        String filePath = conf.get("dfs.result.dir") + "/model-"
+////                + DriverClassUtil.getDriverName(UserKNNRecommender.class);
+////        recommender.loadModel(filePath);
+//        recommender.train(context);
+//        List<RecommendedItem> recommendedItemList = recommender.getRecommendedList();
+//        GenericRecommendedFilter filter = new GenericRecommendedFilter();
+//        filter.setUserIdList(userIdList);
+//        filter.setItemIdList(itemIdList);
+//        recommendedItemList = filter.filter(recommendedItemList);
+//        for (RecommendedItem recommendedItem : recommendedItemList) {
+//            if (StringUtils.equals(recommendedItem.getUserId(), "2")) {
+//                System.out.println("user:"+recommendedItem.getUserId() + " "
+//                        + "item:"+recommendedItem.getItemId() + " "
+//                        + "value:"+recommendedItem.getValue());
+//            }
+//        }
+//        System.out.println("---------------------------------------------------");
+//        for (RecommendedItem recommendedItem : recommendedItemList) {
+//            System.out.println("user:"+recommendedItem.getUserId() + " "
+//                    + "item:"+recommendedItem.getItemId() + " "
+//                    + "value:"+recommendedItem.getValue());
+//        }
     }
 }

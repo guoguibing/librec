@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="459.0" prefWidth="800.0" style="-fx-background-color: #07042b;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.FilterController">
+    <children>
+        <FlowPane layoutX="45.0" layoutY="130.0" prefHeight="141.0" prefWidth="200.0" />
+        <ImageView fitHeight="80.0" fitWidth="400.0" layoutX="618.0" opacity="0.86" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@librec_2.png" />
+            </image>
+        </ImageView>
+        <Label layoutX="52.0" layoutY="40.0" prefHeight="32.0" prefWidth="377.0" text="%filter.conf.label" textFill="#ddd9d9">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+        <JFXButton layoutX="468.0" layoutY="340.0" onAction="#goBack" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #FF4500;" text="%data.finish.button" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+        <GridPane layoutX="53.0" layoutY="119.0" prefHeight="283.0" prefWidth="346.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="168.0" minWidth="10.0" prefWidth="114.0" />
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="240.0" minWidth="10.0" prefWidth="232.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            <children>
+                <Label prefHeight="19.0" prefWidth="125.0" text="%filter.user.list" textFill="#d0caca">
+                    <font>
+                        <Font size="14.0" />
+                    </font></Label>
+                <JFXTextField fx:id="userListField" prefHeight="23.0" prefWidth="141.0" style="-fx-text-fill: #d0caca;" GridPane.columnIndex="1" />
+                <Label prefHeight="15.0" prefWidth="94.0" text="%filter.type" textFill="#d0caca" GridPane.rowIndex="2">
+                    <font>
+                        <Font size="14.0" />
+                    </font></Label>
+                <JFXTextField fx:id="itemListField" prefHeight="23.0" prefWidth="95.0" style="-fx-text-fill: #d0caca;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                <Label prefHeight="19.0" prefWidth="129.0" text="%filter.item.list" textFill="#d0caca" GridPane.rowIndex="1">
+                    <font>
+                        <Font size="14.0" />
+                    </font></Label>
+                <ChoiceBox fx:id="filterChoiceBox" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            </children>
+        </GridPane>
+        <JFXButton layoutX="652.0" layoutY="402.0" onAction="#returnToMain" prefHeight="50.0" prefWidth="141.0" style="-fx-background-color: #07042b;" text="%main.label.exit" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+    </children>
+</AnchorPane>

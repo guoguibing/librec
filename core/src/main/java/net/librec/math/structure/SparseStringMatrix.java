@@ -55,10 +55,10 @@ public class SparseStringMatrix {
     /**
      * Construct a sparse matrix with both CRS and CCS structures
      *
-     * @param rows  number of rows
-     * @param cols  number of columns
-     * @param dT    data table
-     * @param cM    column map
+     * @param rows number of rows
+     * @param cols number of columns
+     * @param dT   data table
+     * @param cM   column map
      */
     public SparseStringMatrix(int rows, int cols, Table<Integer, Integer, ? extends String> dT,
                               Multimap<Integer, Integer> cM) {
@@ -70,11 +70,11 @@ public class SparseStringMatrix {
     }
 
     /**
-     *  Construct a sparse matrix with only CRS structures
+     * Construct a sparse matrix with only CRS structures
      *
-     * @param rows  number of rows
-     * @param cols  number of columns
-     * @param dataTable    data table
+     * @param rows      number of rows
+     * @param cols      number of columns
+     * @param dataTable data table
      */
     public SparseStringMatrix(int rows, int cols, Table<Integer, Integer, ? extends String> dataTable) {
         this(rows, cols, dataTable, null);
@@ -83,8 +83,8 @@ public class SparseStringMatrix {
     /**
      * Define a sparse matrix without data, only use for {@code transpose} method
      *
-     * @param rows  number of rows
-     * @param cols  number of columns
+     * @param rows number of rows
+     * @param cols number of columns
      */
     private SparseStringMatrix(int rows, int cols) {
         numRows = rows;
@@ -269,7 +269,7 @@ public class SparseStringMatrix {
      *
      * @param row    row id
      * @param column column id
-     * @param val    value to add
+     * @param val    value to plus
      */
     public void add(int row, int column, double val) {
         int index = getCRSIndex(row, column);
@@ -342,10 +342,10 @@ public class SparseStringMatrix {
     }
      */
     /**
-     * query the size of a specific row
+     * query the cardinality of a specific row
      *
      * @param row row id
-     * @return the size of non-zero elements of a row
+     * @return the cardinality of non-zero elements of a row
      */
     public int rowSize(int row) {
 
@@ -379,10 +379,10 @@ public class SparseStringMatrix {
     }
 
     /**
-     * query the size of a specific col
+     * query the cardinality of a specific col
      *
      * @param col col id
-     * @return the size of non-zero elements of a row
+     * @return the cardinality of non-zero elements of a row
      */
     public int columnSize(int col) {
 
@@ -463,8 +463,8 @@ public class SparseStringMatrix {
     /**
      * Finds the insertion index of CRS
      *
-     * @param row  row index
-     * @param col  col index
+     * @param row row index
+     * @param col col index
      */
     private int getCRSIndex(int row, int col) {
         int i = Arrays.binarySearch(colInd, rowPtr[row], rowPtr[row + 1], col);
@@ -479,8 +479,8 @@ public class SparseStringMatrix {
     /**
      * Finds the insertion index of CCS
      *
-     * @param row  row index
-     * @param col  col index
+     * @param row row index
+     * @param col col index
      */
     private int getCCSIndex(int row, int col) {
         int i = Arrays.binarySearch(rowInd, colPtr[col], colPtr[col + 1], row);

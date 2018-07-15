@@ -33,8 +33,7 @@ public class DocumentDataAppender implements DataAppender {
     /**
      * Process appender data.
      *
-     * @throws IOException
-     *         if the path is not valid
+     * @throws IOException if the path is not valid
      */
     @Override
     public void processData() throws IOException {
@@ -45,7 +44,7 @@ public class DocumentDataAppender implements DataAppender {
     /**
      * Set user mapping data.
      *
-     * @param userMappingData  user {raw id, inner id} map
+     * @param userMappingData user {raw id, inner id} map
      */
     @Override
     public void setUserMappingData(BiMap<String, Integer> userMappingData) {
@@ -56,7 +55,7 @@ public class DocumentDataAppender implements DataAppender {
     /**
      * Set item mapping data.
      *
-     * @param itemMappingData   item {raw id, inner id} map
+     * @param itemMappingData item {raw id, inner id} map
      */
     @Override
     public void setItemMappingData(BiMap<String, Integer> itemMappingData) {

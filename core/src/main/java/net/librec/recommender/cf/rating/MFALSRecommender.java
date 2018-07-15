@@ -19,9 +19,7 @@ package net.librec.recommender.cf.rating;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.DiagMatrix;
+import net.librec.math.structure.*;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 /**
@@ -40,65 +38,57 @@ import net.librec.recommender.MatrixFactorizationRecommender;
 public class MFALSRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void trainModel() throws LibrecException {
-        DiagMatrix identify = DiagMatrix.eye(numFactors);
+        DenseMatrix identify = BuildEyeMatrix(numFactors);
         for (int iter = 1; iter <= numIterations; iter++) {
             // fix item matrix M, solve user matrix U
-            for (int userIdx = 0; userIdx < userFactors.numRows(); userIdx++) {
+            for (int userIdx = 0; userIdx < numUsers; userIdx++) {
                 // number of items rated by user userIdx
-                int numitems = trainMatrix.rowSize(userIdx);
-                DenseMatrix M = new DenseMatrix(numitems, numFactors);
+                SequentialSparseVector userRatingVec = trainMatrix.row(userIdx);
+                int numItemOfUser = userRatingVec.size();
+                DenseMatrix M = new DenseMatrix(numItemOfUser, numFactors);
+                DenseVector uservector = new VectorBasedDenseVector(numItemOfUser);
                 int index = 0;
-                for (int itemIdx = 0; itemIdx < itemFactors.numRows(); itemIdx++) {
-                    if (trainMatrix.get(userIdx, itemIdx) > 0) {
-                        M.setRow(index++, itemFactors.row(itemIdx));
-                    }
+                for (Vector.VectorEntry ve : userRatingVec) {
+                    int itemIdx = ve.index();
+                    double rating = ve.get();
+                    M.set(index, itemFactors.row(itemIdx));
+                    uservector.set(index, rating);
+                    index += 1;
                 }
 
-                // step 1:
-                DenseMatrix A = M.transpose().mult(M).add(identify.scale(regUser).scale(numitems));
-                // step 2:
-                // ratings of this userIdx
-                DenseVector uservector = new DenseVector(numitems);
-                int index1 = 0;
-                for (int itemIdx = 0; itemIdx < trainMatrix.numColumns(); itemIdx++) {
-                    Double realRating = trainMatrix.get(userIdx, itemIdx);
-                    if (realRating > 0) {
-                        uservector.set(index1++, realRating);
-                    }
-                }
-                // step 3: the updated user matrix wrt user j
-                userFactors.setRow(userIdx, A.inv().mult(M.transpose().mult(uservector)));
+                DenseMatrix A = M.transpose().times(M).plus(identify.times(regUser).times(numItemOfUser));
+
+                userFactors.set(userIdx, A.inverse().times(M.transpose().times(uservector)));
             }
             // fix user matrix U, solve item matrix M
-            for (int itemIdx = 0; itemIdx < itemFactors.numRows(); itemIdx++) {
+            for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
                 // latent factor of users that have rated item itemIdx
                 // number of users rate item j
-                int numusers = trainMatrix.columnSize(itemIdx);
+                SequentialSparseVector itemRatingVec = trainMatrix.column(itemIdx);
+                int numusers = itemRatingVec.size();
                 DenseMatrix U = new DenseMatrix(numusers, numFactors);
+                DenseVector itemvector = new VectorBasedDenseVector(numusers);
                 int index = 0;
-                for (int userIdx = 0; userIdx < userFactors.numRows(); userIdx++) {
-                    if (trainMatrix.get(userIdx, itemIdx) > 0) {
-                        U.setRow(index++, userFactors.row(userIdx));
-                    }
+                for (Vector.VectorEntry ve : itemRatingVec) {
+                    int userIdx = ve.index();
+                    double rating = ve.get();
+                    U.set(index, userFactors.row(userIdx));
+                    itemvector.set(index, rating);
+                    index += 1;
                 }
-                if (U.numRows() == 0)
-                    continue;
-                // step 1:
-                DenseMatrix A = U.transpose().mult(U).add(identify.scale(regItem).scale(numusers));
-                // step 2:
-                // ratings of this item
-                DenseVector itemvector = new DenseVector(numusers);
-                int index1 = 0;
-                for (int userIdx = 0; userIdx < trainMatrix.numRows(); userIdx++) {
-                    Double realRating = trainMatrix.get(userIdx, itemIdx);
-                    if (realRating > 0) {
-                        itemvector.set(index1++, realRating);
-                    }
-                }
-                // step 3: the updated item matrix wrt item j
-                itemFactors.setRow(itemIdx, A.inv().mult(U.transpose().mult(itemvector)));
+
+                DenseMatrix A = U.transpose().times(U).plus(identify.times(regItem).times(numusers));
+                itemFactors.set(itemIdx, A.inverse().times(U.transpose().times(itemvector)));
             }
         }
+    }
+
+    protected DenseMatrix BuildEyeMatrix(int numDim) throws LibrecException {
+        double[][] values = new double[numDim][numDim];
+        for (int i=0; i<numDim; i++) {
+            values[i][i] = 1.0;
+        }
+        return new DenseMatrix(values);
     }
 
 }

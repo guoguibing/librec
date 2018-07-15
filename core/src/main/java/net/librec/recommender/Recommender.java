@@ -19,43 +19,32 @@ package net.librec.recommender;
 
 import net.librec.common.LibrecException;
 import net.librec.data.DataModel;
-import net.librec.eval.Measure.MeasureValue;
-import net.librec.eval.RecommenderEvaluator;
-import net.librec.recommender.item.RecommendedItem;
-
-import java.util.List;
-import java.util.Map;
+import net.librec.data.structure.AbstractBaseDataEntry;
+import net.librec.data.structure.LibrecDataList;
+import net.librec.math.structure.DataSet;
+import net.librec.recommender.item.RecommendedList;
 
 /**
  * General recommenders
  *
- * @author WangYuFeng
+ * @author WangYuFeng and Keqiang Wang
  */
 public interface Recommender {
     /**
-     * recommend
+     * train recommender model
      *
-     * @param context  recommender context
+     * @param context recommender context
      * @throws LibrecException if error occurs during recommending
      */
-    void recommend(RecommenderContext context) throws LibrecException;
+    void train(RecommenderContext context) throws LibrecException;
 
-    /**
-     * evaluate
-     *
-     * @param  evaluator recommender evaluator
-     * @return evaluate result
-     * @throws LibrecException if error occurs during evaluating
-     */
-    double evaluate(RecommenderEvaluator evaluator) throws LibrecException;
+    RecommendedList recommendRating(DataSet predictDataSet) throws LibrecException;
 
-    /**
-     * evaluate Map
-     *
-     * @return evaluate map
-     * @throws LibrecException if error occurs during constructing evaluate map
-     */
-    Map<MeasureValue, Double> evaluateMap() throws LibrecException;
+    RecommendedList recommendRating(LibrecDataList<AbstractBaseDataEntry> dataList) throws LibrecException;
+
+    RecommendedList recommendRank() throws LibrecException;
+
+    RecommendedList recommendRank(LibrecDataList<AbstractBaseDataEntry> dataList) throws LibrecException;
 
     /**
      * get DataModel
@@ -78,12 +67,12 @@ public interface Recommender {
      */
     void saveModel(String filePath);
 
-    /**
-     * get Recommended List
-     *
-     * @return  recommended list
-     */
-    List<RecommendedItem> getRecommendedList();
+//    /**
+//     * get Recommended List
+//     *
+//     * @return recommended list
+//     */
+//    List<RecommendedItem> getRecommendedList(RecommendedList recommendedList);
 
 
     /**

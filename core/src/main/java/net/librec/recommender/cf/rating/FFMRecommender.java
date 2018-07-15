@@ -21,12 +21,11 @@ package net.librec.recommender.cf.rating;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.SparseVector;
 import net.librec.math.structure.TensorEntry;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.Vector.VectorEntry;
+import net.librec.math.structure.VectorBasedSequentialSparseVector;
 import net.librec.recommender.FactorizationMachineRecommender;
 
-import java.io.FileDescriptor;
 import java.util.HashMap;
 
 /**
@@ -44,9 +43,9 @@ public class FFMRecommender extends FactorizationMachineRecommender {
      */
     private double learnRate;
     /**
-     *  record the <feature: filed>
+     * record the <feature: filed>
      */
-    private HashMap<Integer , Integer> map = new HashMap<Integer, Integer>();
+    private HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
 
     @Override
     protected void setup() throws LibrecException {
@@ -61,7 +60,7 @@ public class FFMRecommender extends FactorizationMachineRecommender {
         //init the map for feature of filed
         int colindex = 0;
         for (int dim = 0; dim < trainTensor.numDimensions; dim++) {
-            for (int index = 0; index < trainTensor.dimensions[dim]; index++){
+            for (int index = 0; index < trainTensor.dimensions[dim]; index++) {
                 map.put(colindex + index, dim);
             }
             colindex += trainTensor.dimensions[dim];
@@ -85,10 +84,10 @@ public class FFMRecommender extends FactorizationMachineRecommender {
             int itemDimension = trainTensor.getItemDimension();
             for (TensorEntry me : trainTensor) {
                 int[] entryKeys = me.keys();
-                SparseVector x = tenserKeysToFeatureVector(entryKeys);
+                VectorBasedSequentialSparseVector vector = tenserKeysToFeatureVector(entryKeys);
 
                 double rate = me.get();
-                double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], x);
+                double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], vector);
 
                 double err = pred - rate;
                 loss += err * err;
@@ -104,13 +103,12 @@ public class FFMRecommender extends FactorizationMachineRecommender {
                 w0 += -learnRate * gradW0;
 
                 // 1-way interactions
-                for (int l = 0; l < p; l++) {
-                    if (!x.contains(l))
-                        continue;
+                for (VectorEntry ve : vector) {
+                    int l = ve.index();
                     double oldWl = W.get(l);
-                    double hWl = x.get(l);
+                    double hWl = ve.get();
                     double gradWl = gradLoss * hWl + regW * oldWl;
-                    W.add(l, -learnRate * gradWl);
+                    W.plus(l, -learnRate * gradWl);
 
                     loss += regW * oldWl * oldWl;
 
@@ -118,13 +116,15 @@ public class FFMRecommender extends FactorizationMachineRecommender {
                     for (int f = 0; f < k; f++) {
                         double oldVlf = V.get(l, map.get(l) + f);
                         double hVlf = 0;
-                        double xl = x.get(l);
-                        for (int j = 0; j < p; j++) {
-                            if (j != l && x.contains(j))
-                                hVlf += xl * V.get(j, map.get(l) + f) * x.get(j);
+                        double xl = ve.get();
+                        for (VectorEntry ve2 : vector) {
+                            int j = ve2.index();
+                            if (j != l) {
+                                hVlf += xl * V.get(j, f) * ve2.get();
+                            }
                         }
                         double gradVlf = gradLoss * hVlf + regF * oldVlf;
-                        V.add(l, map.get(l) + f, -learnRate * gradVlf);
+                        V.plus(l, map.get(l) + f, -learnRate * gradVlf);
                         loss += regF * oldVlf * oldVlf;
                     }
 
@@ -133,13 +133,14 @@ public class FFMRecommender extends FactorizationMachineRecommender {
 
             loss *= 0.5;
 
-            if (isConverged(iter)  && earlyStop)
+            if (isConverged(iter) && earlyStop) {
                 break;
+            }
+            lastLoss = loss;
         }
     }
 
-    @Override
-    protected double predict(int userId, int itemId, SparseVector x) throws LibrecException {
+    protected double predict(int userId, int itemId, VectorBasedSequentialSparseVector x) throws LibrecException {
         double res = 0;
         // global bias
         res += w0;

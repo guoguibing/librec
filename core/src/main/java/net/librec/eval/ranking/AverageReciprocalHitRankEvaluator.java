@@ -1,8 +1,7 @@
 package net.librec.eval.ranking;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.recommender.item.ItemEntry;
+import net.librec.recommender.item.KeyValue;
 import net.librec.recommender.item.RecommendedList;
 
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.List;
  * is split into a training set and a testing set by randomly selecting one of the non-zero entries of each user and
  * placing it into the testing set.
  *
- * @author WangYuFeng and Keqiang Wang
+ * @author Keqiang Wang
  */
 
 public class AverageReciprocalHitRankEvaluator extends AbstractRecommenderEvaluator {
@@ -24,33 +23,31 @@ public class AverageReciprocalHitRankEvaluator extends AbstractRecommenderEvalua
     /**
      * Evaluate on the test set with the the list of recommended items.
      *
-     * @param testMatrix
-     *            the given test set
-     * @param recommendedList
-     *            the list of recommended items
+     * @param groundTruthList the given ground truth list
+     * @param recommendedList the list of recommended items
      * @return evaluate result
      */
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
         double reciprocalRank = 0.0;
-        int numUsers = testMatrix.numRows();
-        int nonZeroNumUsers = 0;
-        for (int userID = 0; userID < numUsers; userID++) {
-            List<Integer> testListByUser = testMatrix.getColumns(userID);
-            if (testListByUser.size() > 0) {
+        int numContext = groundTruthList.size();
+        int nonZeroContext = 0;
+        for (int contextIdx = 0; contextIdx < numContext; ++contextIdx) {
+            List<KeyValue<Integer, Double>> testListByContext = groundTruthList.getKeyValueListByContext(contextIdx);
+            if (testListByContext.size() > 0) {
+                List<KeyValue<Integer, Double>> recommendListByContext = recommendedList.getKeyValueListByContext(contextIdx);
 
-                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userID);
-                int trueItemIdx = testListByUser.get(0);
-                int topK = this.topN <= recommendListByUser.size() ? this.topN : recommendListByUser.size();
-                for (int indexOfItem = 0; indexOfItem < topK; indexOfItem++) {
-                    if (recommendListByUser.get(indexOfItem).getKey() == trueItemIdx) {
-                        reciprocalRank += 1.0 / (indexOfItem + 1.0);
+                int trueKeyIdx = testListByContext.get(0).getKey();
+                int topK = this.topN <= recommendListByContext.size() ? this.topN : recommendListByContext.size();
+                for (int indexOfKey = 0; indexOfKey < topK; ++indexOfKey) {
+                    if (recommendListByContext.get(indexOfKey).getKey() == trueKeyIdx) {
+                        reciprocalRank += 1.0 / (indexOfKey + 1.0);
                         break;
                     }
                 }
-                nonZeroNumUsers++;
+                nonZeroContext++;
             }
         }
 
-        return nonZeroNumUsers > 0 ? reciprocalRank / nonZeroNumUsers : 0.0d;
+        return nonZeroContext > 0 ? reciprocalRank / nonZeroContext : 0.0d;
     }
 }

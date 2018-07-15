@@ -22,13 +22,11 @@ import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.recommender.SocialRecommender;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -45,7 +43,7 @@ public class SBPRRecommender extends SocialRecommender {
     /**
      * items biases vector
      */
-    private DenseVector itemBiases;
+    private VectorBasedDenseVector itemBiases;
 
     /**
      * bias regularization
@@ -73,7 +71,7 @@ public class SBPRRecommender extends SocialRecommender {
         regBias = conf.getFloat("rec.bias.regularization", 0.01f);
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=5000,expireAfterAccess=50m");
 
-        itemBiases = new DenseVector(numItems);
+        itemBiases = new VectorBasedDenseVector(numItems);
         itemBiases.init();
 
         userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
@@ -96,7 +94,7 @@ public class SBPRRecommender extends SocialRecommender {
                 continue; // no rated items
 
             // find items rated by trusted neighbors only
-            List<Integer> trustedUsers = socialMatrix.getColumns(userIdx);
+            int[] trustedUsers = socialMatrix.row(userIdx).getIndices();
             List<Integer> items = new ArrayList<>();
             for (int trustedUserIdx : trustedUsers) {
 
@@ -118,17 +116,18 @@ public class SBPRRecommender extends SocialRecommender {
 
     @Override
     protected void trainModel() throws LibrecException {
+        int maxSample = trainMatrix.size();
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
 
-            for (int sample = 0, smax = numUsers * 100; sample < smax; sample++) {
+            for (int sample = 0; sample < maxSample; sample++) {
                 // uniformly draw (userIdx, posItemIdx, k, negItemIdx)
                 int userIdx, posItemIdx, negItemIdx;
                 // userIdx
                 List<Integer> ratedItems = null;
                 do {
-                    userIdx = Randoms.uniform(trainMatrix.numRows());
+                    userIdx = Randoms.uniform(numUsers);
                     try {
                         ratedItems = userItemsCache.get(userIdx);
                     } catch (ExecutionException e) {
@@ -156,15 +155,15 @@ public class SBPRRecommender extends SocialRecommender {
                     int socialItemIdx = Randoms.random(socialItemsList);
                     double socialPredictRating = predict(userIdx, socialItemIdx);
 
-                    SparseVector trustedUsersVector = socialMatrix.row(userIdx);
+                    int[] trustedUserIdices = socialMatrix.row(userIdx).getIndices();
                     double socialWeight = 0;
-                    for (VectorEntry trustedVectorEntry : trustedUsersVector) {
-                        int trustedUserIdx = trustedVectorEntry.index();
-                        if (trustedUserIdx < trainMatrix.numRows()) {
-                            double socialRating = trainMatrix.get(trustedUserIdx, socialItemIdx);
-                            if (socialRating > 0)
-                                socialWeight += 1;
-                        }
+                    for (int trustedUserIdx : trustedUserIdices) {
+
+                        int[] indices = trainMatrix.row(trustedUserIdx).getIndices();
+                        int socialRating = Arrays.binarySearch(indices, socialItemIdx);
+                        if (socialRating > 0)
+                            socialWeight += 1;
+
                     }
 
                     double posSocialDiffValue = (posPredictRating - socialPredictRating) / (1 + socialWeight);
@@ -177,15 +176,15 @@ public class SBPRRecommender extends SocialRecommender {
 
                     // update bi, bk, bj
                     double posItemBiasValue = itemBiases.get(posItemIdx);
-                    itemBiases.add(posItemIdx, learnRate * (posSocialGradient / (1 + socialWeight) - regBias * posItemBiasValue));
+                    itemBiases.plus(posItemIdx, learnRate * (posSocialGradient / (1 + socialWeight) - regBias * posItemBiasValue));
                     loss += regBias * posItemBiasValue * posItemBiasValue;
 
                     double socialItemBiasValue = itemBiases.get(socialItemIdx);
-                    itemBiases.add(socialItemIdx, learnRate * (-posSocialGradient / (1 + socialWeight) + socialNegGradient - regBias * socialItemBiasValue));
+                    itemBiases.plus(socialItemIdx, learnRate * (-posSocialGradient / (1 + socialWeight) + socialNegGradient - regBias * socialItemBiasValue));
                     loss += regBias * socialItemBiasValue * socialItemBiasValue;
 
                     double negItemBiasValue = itemBiases.get(negItemIdx);
-                    itemBiases.add(negItemIdx, learnRate * (-socialNegGradient - regBias * negItemBiasValue));
+                    itemBiases.plus(negItemIdx, learnRate * (-socialNegGradient - regBias * negItemBiasValue));
                     loss += regBias * negItemBiasValue * negItemBiasValue;
 
                     // update P, Q
@@ -197,15 +196,15 @@ public class SBPRRecommender extends SocialRecommender {
 
                         double delta_puf = posSocialGradient * (posItemFactorValue - socialItemFactorValue) / (1 + socialWeight)
                                 + socialNegGradient * (socialItemFactorValue - negItemFactorValue);
-                        userFactors.add(userIdx, factorIdx, learnRate * (delta_puf - regUser * userFactorValue));
+                        userFactors.plus(userIdx, factorIdx, learnRate * (delta_puf - regUser * userFactorValue));
 
-                        itemFactors.add(posItemIdx, factorIdx, learnRate * (posSocialGradient * userFactorValue / (1 + socialWeight)
+                        itemFactors.plus(posItemIdx, factorIdx, learnRate * (posSocialGradient * userFactorValue / (1 + socialWeight)
                                 - regItem * posItemFactorValue));
 
                         double delta_qkf = posSocialGradient * (-userFactorValue / (1 + socialWeight)) + socialNegGradient * userFactorValue;
-                        itemFactors.add(socialItemIdx, factorIdx, learnRate * (delta_qkf - regItem * socialItemFactorValue));
+                        itemFactors.plus(socialItemIdx, factorIdx, learnRate * (delta_qkf - regItem * socialItemFactorValue));
 
-                        itemFactors.add(negItemIdx, factorIdx, learnRate * (socialNegGradient * (-userFactorValue) -
+                        itemFactors.plus(negItemIdx, factorIdx, learnRate * (socialNegGradient * (-userFactorValue) -
                                 regItem * negItemFactorValue));
 
                         loss += regUser * userFactorValue * userFactorValue + regItem * posItemFactorValue * posItemFactorValue +
@@ -220,11 +219,11 @@ public class SBPRRecommender extends SocialRecommender {
 
                     // update bi, bj
                     double posItemBiasValue = itemBiases.get(posItemIdx);
-                    itemBiases.add(posItemIdx, learnRate * (posNegGradient - regBias * posItemBiasValue));
+                    itemBiases.plus(posItemIdx, learnRate * (posNegGradient - regBias * posItemBiasValue));
                     loss += regBias * posItemBiasValue * posItemBiasValue;
 
                     double negItemBiasValue = itemBiases.get(negItemIdx);
-                    itemBiases.add(negItemIdx, learnRate * (-posNegGradient - regBias * negItemBiasValue));
+                    itemBiases.plus(negItemIdx, learnRate * (-posNegGradient - regBias * negItemBiasValue));
                     loss += regBias * negItemBiasValue * negItemBiasValue;
 
                     // update user factors, item factors
@@ -233,9 +232,9 @@ public class SBPRRecommender extends SocialRecommender {
                         double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
                         double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
-                        userFactors.add(userIdx, factorIdx, learnRate * (posNegGradient * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
-                        itemFactors.add(posItemIdx, factorIdx, learnRate * (posNegGradient * userFactorValue - regItem * posItemFactorValue));
-                        itemFactors.add(negItemIdx, factorIdx, learnRate * (posNegGradient * (-userFactorValue) - regItem * negItemFactorValue));
+                        userFactors.plus(userIdx, factorIdx, learnRate * (posNegGradient * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
+                        itemFactors.plus(posItemIdx, factorIdx, learnRate * (posNegGradient * userFactorValue - regItem * posItemFactorValue));
+                        itemFactors.plus(negItemIdx, factorIdx, learnRate * (posNegGradient * (-userFactorValue) - regItem * negItemFactorValue));
 
                         loss += regUser * userFactorValue * userFactorValue + regItem * posItemFactorValue * posItemFactorValue +
                                 regItem * negItemFactorValue * negItemFactorValue;
@@ -260,7 +259,7 @@ public class SBPRRecommender extends SocialRecommender {
      * @throws LibrecException if error occurs
      */
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        double predictRating = itemBiases.get(itemIdx) + DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+        double predictRating = itemBiases.get(itemIdx) + userFactors.row(userIdx).dot(itemFactors.row(itemIdx));
 
         return predictRating;
     }

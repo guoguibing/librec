@@ -29,13 +29,11 @@ public class MSESimilarity extends AbstractRecommenderSimilarity {
     /**
      * Calculate the similarity between thisList and thatList.
      *
-     * @param thisList
-     *            this list
-     * @param thatList
-     *            that list
+     * @param thisList this list
+     * @param thatList that list
      * @return similarity
      */
-    protected double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {
+    public double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {
         if (thisList == null || thatList == null || thisList.size() < 1 || thatList.size() < 1 || thisList.size() != thatList.size()) {
             return Double.NaN;
         }

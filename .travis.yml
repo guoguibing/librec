@@ -1,7 +1,0 @@
-sudo: required
-language: java
- - oraclejdk7
- - openjdk7
- - oraclejdk8
- - openjdk8
-script: mvn test -B -e

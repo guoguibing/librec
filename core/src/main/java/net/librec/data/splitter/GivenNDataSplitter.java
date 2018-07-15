@@ -20,28 +20,36 @@ package net.librec.data.splitter;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataConvertor;
+import net.librec.data.convertor.ArffDataConvertor;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.util.Lists;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
 import net.librec.util.RatingContext;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
 /**
  * GivenN Data Splitter<br>
  * Split dataset into train set and test set by given number.<br>
  *
- * @author WangYuFeng and liuxz
+ * @author WangYuFeng, liuxz and Keqiang Wang
  */
 public class GivenNDataSplitter extends AbstractDataSplitter {
 
-    /** The rate dataset for splitting */
-    private SparseMatrix preferenceMatrix;
+    /**
+     * The rate dataset for splitting
+     */
+    private SequentialAccessSparseMatrix preferenceMatrix;
 
-    /** The datetime dataset for splitting */
-    private SparseMatrix datetimeMatrix;
+    /**
+     * The datetime dataset for splitting
+     */
+    private SequentialAccessSparseMatrix datetimeMatrix;
 
     /**
      * Empty constructor.
@@ -53,8 +61,8 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
      * Initializes a newly created {@code GivenNDataSplitter} object
      * with configuration.
      *
-     * @param dataConvertor  data convertor
-     * @param conf           the configuration for the splitter.
+     * @param dataConvertor data convertor
+     * @param conf          the configuration for the splitter.
      */
     public GivenNDataSplitter(DataConvertor dataConvertor, Configuration conf) {
         this.dataConvertor = dataConvertor;
@@ -68,8 +76,19 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
      */
     @Override
     public void splitData() throws LibrecException {
-        this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
-        this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+        if (null == this.preferenceMatrix) {
+//            if (Objects.equals(conf.get("data.convert.columns"), null)) {
+//                this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
+//            } else {
+//                this.preferenceMatrix = dataConvertor.getPreferenceMatrix(conf.get("data.convert.columns").split(","));
+//            }
+            this.preferenceMatrix = dataConvertor.getPreferenceMatrix(conf);
+            if ((!(dataConvertor instanceof ArffDataConvertor))
+                    &&(StringUtils.equals(conf.get("data.column.format"), "UIRT"))) {
+                this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+            }
+        }
+
         String splitter = conf.get("data.splitter.givenn");
         switch (splitter.toLowerCase()) {
             case "user": {
@@ -104,6 +123,8 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
                 }
                 break;
             }
+            default:
+                break;
         }
     }
 
@@ -118,31 +139,31 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
     public void getGivenNByUser(int numGiven) throws Exception {
         if (numGiven > 0) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-                List<Integer> items = preferenceMatrix.getColumns(u);
-                int numRated = items.size();
+            for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+                int numRated = preferenceMatrix.row(rowIndex).getNumEntries();
 
                 if (numRated > numGiven) {
-                    int[] givenIndex = Randoms.nextIntArray(numGiven, numRated);
+                    int[] givenPositions = Randoms.nextIntArray(numGiven, numRated);
 
-                    for (int i = 0, j = 0; j < numRated; j++) {
-                        if (i < givenIndex.length && givenIndex[i] == j) {
-                            testMatrix.set(u, items.get(j), 0.0);
-                            i++;
+                    for (int testColumnPosition = 0, columnPosition = 0; columnPosition < numRated; columnPosition++) {
+                        if (testColumnPosition < givenPositions.length && givenPositions[testColumnPosition] == columnPosition) {
+                            testMatrix.setAtColumnPosition(rowIndex, columnPosition, 0.0D);
+                            testColumnPosition++;
                         } else {
-                            trainMatrix.set(u, items.get(j), 0.0);
+                            trainMatrix.setAtColumnPosition(rowIndex, columnPosition, 0.0D);
                         }
                     }
                 } else {
-                    for (int j : items)
-                        testMatrix.set(u, j, 0.0);
+                    for (Vector.VectorEntry vectorEntry : preferenceMatrix.row(rowIndex)) {
+                        testMatrix.setAtColumnPosition(rowIndex, vectorEntry.position(), 0.0D);
+                    }
                 }
             }
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(testMatrix);
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
     }
 
@@ -156,28 +177,32 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
     public void getGivenNByUserDate(int numGiven) {
         if (numGiven > 0) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-                List<Integer> items = preferenceMatrix.getColumns(u);
-                List<RatingContext> rcs = new ArrayList<>(Lists.initSize(items.size()));
-                for (int j : items)
-                    rcs.add(new RatingContext(u, j, (long) datetimeMatrix.get(u, j)));
-                Collections.sort(rcs);
+            for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+                SequentialSparseVector itemRatingVector = preferenceMatrix.row(rowIndex);
+                if (itemRatingVector.getNumEntries() < 1) {
+                    continue;
+                }
+                List<RatingContext> itemRatingList = new ArrayList<>(itemRatingVector.getNumEntries());
 
-                for (int i = 0; i < rcs.size(); i++) {
-                    RatingContext rc = rcs.get(i);
-                    int j = rc.getItem();
+                for (Vector.VectorEntry vectorEntry : itemRatingVector) {
+                    itemRatingList.add(new RatingContext(rowIndex, vectorEntry.position(), (long) vectorEntry.get()));
+                }
 
-                    if (i < numGiven)
-                        testMatrix.set(u, j, 0.0);
-                    else
-                        trainMatrix.set(u, j, 0.0);
+                Collections.sort(itemRatingList);
+
+                for (int index = 0; index < itemRatingList.size(); index++) {
+                    if (index < numGiven) {
+                        testMatrix.setAtColumnPosition(rowIndex, itemRatingList.get(index).getItem(), 0.0D);
+                    } else {
+                        trainMatrix.setAtColumnPosition(rowIndex, itemRatingList.get(index).getItem(), 0.0D);
+                    }
                 }
             }
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(testMatrix);
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
     }
 
@@ -192,30 +217,30 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
     public void getGivenNByItem(int numGiven) throws Exception {
         if (numGiven > 0) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int j = 0, jm = preferenceMatrix.numColumns(); j < jm; j++) {
-                List<Integer> users = preferenceMatrix.getRows(j);
-                int numRated = users.size();
+            for (int columnIndex = 0, columnSize = preferenceMatrix.columnSize(); columnIndex < columnSize; columnIndex++) {
+                int numRated = preferenceMatrix.column(columnIndex).getNumEntries();
                 if (numRated > numGiven) {
-
-                    int[] givenIndex = Randoms.nextIntArray(numGiven, numRated);
-                    for (int i = 0, k = 0; k < numRated; k++) {
-                        if (i < givenIndex.length && givenIndex[i] == k) {
-                            testMatrix.set(users.get(k), j, 0.0);
-                            i++;
+                    int[] givenPositions = Randoms.nextIntArray(numGiven, numRated);
+                    for (int testRowPosition = 0, rowPosition = 0; rowPosition < numRated; rowPosition++) {
+                        if (testRowPosition < givenPositions.length && givenPositions[testRowPosition] == rowPosition) {
+                            testMatrix.setAtRowPosition(rowPosition, columnIndex, 0.0D);
+                            testRowPosition++;
                         } else {
-                            trainMatrix.set(users.get(k), j, 0.0);
+                            trainMatrix.setAtRowPosition(rowPosition, columnIndex, 0.0D);
                         }
                     }
                 } else {
-                    for (int u : users)
-                        testMatrix.set(u, j, 0.0);
+                    for (int rowPosition = 0; rowPosition < numRated; rowPosition++) {
+                        testMatrix.setAtRowPosition(rowPosition, columnIndex, 0.0D);
+                    }
                 }
             }
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(testMatrix);
+
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
     }
 
@@ -228,31 +253,34 @@ public class GivenNDataSplitter extends AbstractDataSplitter {
      */
     public void getGivenNByItemDate(int numGiven) {
         if (numGiven > 0) {
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int j = 0, jm = preferenceMatrix.numRows(); j < jm; j++) {
-                List<Integer> users = preferenceMatrix.getRows(j);
-                List<RatingContext> rcs = new ArrayList<>(Lists.initSize(users.size()));
+            for (int columnIndex = 0, columnSize = preferenceMatrix.columnSize(); columnIndex < columnSize; columnIndex++) {
+                SequentialSparseVector userRatingVector = preferenceMatrix.column(columnIndex);
 
-                for (int u : users)
-                    rcs.add(new RatingContext(u, j, (long) datetimeMatrix.get(u, j)));
-
-                Collections.sort(rcs);
-                for (int i = 0; i < rcs.size(); i++) {
-                    RatingContext rc = rcs.get(i);
-                    int u = rc.getUser();
-
-                    if (i < numGiven)
-                        testMatrix.set(u, j, 0.0);
-                    else
-                        trainMatrix.set(u, j, 0.0);
+                if (userRatingVector.getNumEntries() < 1) {
+                    continue;
                 }
-                SparseMatrix.reshape(trainMatrix);
-                SparseMatrix.reshape(testMatrix);
+
+                List<RatingContext> ratingContexts = new ArrayList<>(userRatingVector.getNumEntries());
+
+                for (Vector.VectorEntry vectorEntry : userRatingVector) {
+                    ratingContexts.add(new RatingContext(vectorEntry.position(), columnIndex,
+                            (long) datetimeMatrix.getAtRowPosition(vectorEntry.position(), columnIndex)));
+                }
+
+                Collections.sort(ratingContexts);
+                for (int rowPosition = 0; rowPosition < ratingContexts.size(); rowPosition++) {
+                    RatingContext ratingContext = ratingContexts.get(rowPosition);
+                    if (rowPosition < numGiven)
+                        testMatrix.setAtRowPosition(ratingContext.getUser(), columnIndex, 0.0D);
+                    else
+                        trainMatrix.setAtRowPosition(ratingContext.getUser(), columnIndex, 0.0D);
+                }
             }
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
     }
-
-
 }

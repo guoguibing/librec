@@ -17,22 +17,15 @@
  */
 package net.librec.recommender.context.rating;
 
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.*;
+import net.librec.math.structure.Vector.VectorEntry;
 import net.librec.recommender.cf.rating.BiasedMFRecommender;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,434 +33,77 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Guo Guibing and Ma Chen
  */
-@ModelData({"isRating", "timesvd", "userFactors", "itemFactors", "userBiases", "itemBiases", "trainMatrix", "timeMatrix"})
 public class TimeSVDRecommender extends BiasedMFRecommender {
     /**
      * the span of days of rating timestamps
      */
     private static int numDays;
-
-    /**
-     * {user, mean date}
-     */
-    private DenseVector userMeanDate;
-
-    /**
-     * time decay factor
-     */
-    private float beta;
-
-    /**
-     * number of bins over all the items
-     */
-    private int numBins;
-
-    /**
-     * item's implicit influence
-     */
-    private DenseMatrix Y;
-
-    /**
-     * {item, bin(t)} bias matrix
-     */
-    private DenseMatrix Bit;
-
-    /**
-     * {user, day, bias} table
-     */
-    private Table<Integer, Integer, Double> But;
-
-    /**
-     * user bias weight parameters
-     */
-    private DenseVector Alpha;
-
-    /**
-     * {user, appender} alpha matrix
-     */
-    private DenseMatrix Auk;
-
-    /**
-     * {user, {appender, day, value} } map
-     */
-    private Map<Integer, Table<Integer, Integer, Double>> Pukt;
-
-    /**
-     * {user, user scaling stable part}
-     */
-    private DenseVector Cu;
-
-    /**
-     * {user, day, day-specific scaling part}
-     */
-    private DenseMatrix Cut;
-
     /**
      * minimum, maximum timestamp
      */
     private static long minTimestamp, maxTimestamp;
-
-    /**
-     * Guava cache configuration
-     */
-    protected static String cacheSpec;
-
-    /**
-     * user-items cache
-     */
-    private LoadingCache<Integer, List<Integer>> userItemsCache;
-
     /**
      * matrix of time stamp
      */
-    private static SparseMatrix timeMatrix;
+    private static SequentialAccessSparseMatrix instantMatrix;
+    /**
+     * {user, mean date}
+     */
+    private DenseVector userMeanDays;
+    /**
+     * number of bins over all the items
+     */
+    private int numSections;
+    /**
+     * {user, appender} alpha matrix
+     */
+    private DenseMatrix userImplicitFactors;
+    /**
+     * item's implicit influence
+     */
+    private DenseMatrix itemImplicitFactors;
+    private DenseMatrix userExplicitFactors;
+    private DenseMatrix itemExplicitFactors;
+    /**
+     * {item, bin(t)} bias matrix
+     */
+    private DenseMatrix itemSectionBiases;
+    /**
+     * {user, day, bias} table
+     */
+    private  DenseMatrix userDayBiases;
+//    private Table<Integer, Integer, Double> userDayBiases;
+    /**
+     * user bias weight parameters
+     */
+    private DenseVector userBiasWeights;
+    /**
+     * {user, {appender, day, value} } map
+     */
+//    private Table<Integer, Integer, double[]> userDayFactors;
+    private Map<Integer, double[]>[] userDayFactors;
 
     /**
-     * factorized item-factor matrix
+     * {user, user scaling stable part}
      */
-    protected DenseMatrix Q;
-
+    private DenseVector userScales;
     /**
-     * factorized user-factor matrix
+     * {user, day, day-specific scaling part}
      */
-    protected DenseMatrix P;
+    private DenseMatrix userDayScales;
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see net.librec.recommender.cf.rating.BiasedMFRecommender#setup()
-     */
-    @Override
-    protected void setup() throws LibrecException {
-        super.setup();
+    private double beta = 0.4;
 
-        beta = conf.getFloat("rec.learnrate.decay", 0.015f);
-        numBins = conf.getInt("rec.numBins", 6);
-
-        timeMatrix = (SparseMatrix) getDataModel().getDatetimeDataSet();
-        getMaxAndMinTimeStamp();
-
-        numDays = days(maxTimestamp, minTimestamp) + 1;
-
-        userBiases = new DenseVector(numUsers);
-        userBiases.init();
-
-        itemBiases = new DenseVector(numItems);
-        itemBiases.init();
-
-        Alpha = new DenseVector(numUsers);
-        Alpha.init();
-
-        Bit = new DenseMatrix(numItems, numBins);
-        Bit.init();
-
-        Y = new DenseMatrix(numItems, numFactors);
-        Y.init();
-
-        Auk = new DenseMatrix(numUsers, numFactors);
-        Auk.init();
-
-        But = HashBasedTable.create();
-        Pukt = new HashMap<>();
-
-        Cu = new DenseVector(numUsers);
-        Cu.init();
-
-        Cut = new DenseMatrix(numUsers, numDays);
-        Cut.init();
-
-        cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
-        userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
-
-        P = new DenseMatrix(numUsers, numFactors);
-        Q = new DenseMatrix(numItems, numFactors);
-        P.init();
-        Q.init();
-
-        // global average date
-        double sum = 0;
-        int cnt = 0;
-        for (MatrixEntry me : trainMatrix) {
-            int u = me.row();
-            int i = me.column();
-            double rui = me.get();
-
-            if (rui <= 0)
-                continue;
-
-            sum += days((long) timeMatrix.get(u, i), minTimestamp);
-            cnt++;
-        }
-        double globalMeanDate = sum / cnt;
-
-        // compute user's mean of rating timestamps
-        userMeanDate = new DenseVector(numUsers);
-        List<Integer> Ru = null;
-        for (int u = 0; u < numUsers; u++) {
-
-            sum = 0;
-            try {
-                Ru = userItemsCache.get(u);
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-            for (int i : Ru) {
-                sum += days((long) timeMatrix.get(u, i), minTimestamp);
-            }
-
-            double mean = (Ru.size() > 0) ? (sum + 0.0) / Ru.size() : globalMeanDate;
-            userMeanDate.set(u, mean);
-        }
-    }
-
-    @Override
-    protected void trainModel() throws LibrecException {
-        for (int iter = 1; iter <= numIterations; iter++) {
-            loss = 0;
-
-            for (MatrixEntry me : trainMatrix) {
-                int u = me.row();
-                int i = me.column();
-                double rui = me.get();
-
-                long timestamp = (long) timeMatrix.get(u, i);
-                // day t
-                int t = days(timestamp, minTimestamp);
-                int bin = bin(t);
-                double dev_ut = dev(u, t);
-
-                double bi = itemBiases.get(i);
-                double bit = Bit.get(i, bin);
-                double bu = userBiases.get(u);
-
-                double cu = Cu.get(u);
-                double cut = Cut.get(u, t);
-
-                // lazy initialization
-                if (!But.contains(u, t))
-                    But.put(u, t, Randoms.random());
-                double but = But.get(u, t);
-
-                double au = Alpha.get(u); // alpha_u
-
-                double pui = globalMean + (bi + bit) * (cu + cut); // mu + bi(t)
-                pui += bu + au * dev_ut + but; // bu(t)
-
-                // qi * yj
-                List<Integer> Ru = null;
-                try {
-                    Ru = userItemsCache.get(u);
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-
-                double sum_y = 0;
-                for (int j : Ru) {
-                    sum_y += DenseMatrix.rowMult(Y, j, Q, i);
-                }
-                double wi = Ru.size() > 0 ? Math.pow(Ru.size(), -0.5) : 0;
-                pui += sum_y * wi;
-
-                // qi * pu(t)
-                if (!Pukt.containsKey(u)) {
-                    Table<Integer, Integer, Double> data = HashBasedTable.create();
-                    Pukt.put(u, data);
-                }
-
-                Table<Integer, Integer, Double> Pkt = Pukt.get(u);
-                for (int k = 0; k < numFactors; k++) {
-                    double qik = Q.get(i, k);
-
-                    // lazy initialization
-                    if (!Pkt.contains(k, t))
-                        Pkt.put(k, t, Randoms.random());
-
-                    double puk = P.get(u, k) + Auk.get(u, k) * dev_ut + Pkt.get(k, t);
-
-                    pui += puk * qik;
-                }
-
-                double eui = pui - rui;
-                loss += eui * eui;
-
-                // update bi
-                double sgd = eui * (cu + cut) + regBias * bi;
-                itemBiases.add(i, -learnRate * sgd);
-                loss += regBias * bi * bi;
-
-                // update bi,bin(t)
-                sgd = eui * (cu + cut) + regBias * bit;
-                Bit.add(i, bin, -learnRate * sgd);
-                loss += regBias * bit * bit;
-
-                // update cu
-                sgd = eui * (bi + bit) + regBias * cu;
-                Cu.add(u, -learnRate * sgd);
-                loss += regBias * cu * cu;
-
-                // update cut
-                sgd = eui * (bi + bit) + regBias * cut;
-                Cut.add(u, t, -learnRate * sgd);
-                loss += regBias * cut * cut;
-
-                // update bu
-                sgd = eui + regBias * bu;
-                userBiases.add(u, -learnRate * sgd);
-                loss += regBias * bu * bu;
-
-                // update au
-                sgd = eui * dev_ut + regBias * au;
-                Alpha.add(u, -learnRate * sgd);
-                loss += regBias * au * au;
-
-                // update but
-                sgd = eui + regBias * but;
-                double delta = but - learnRate * sgd;
-                But.put(u, t, delta);
-                loss += regBias * but * but;
-
-                for (int k = 0; k < numFactors; k++) {
-                    double qik = Q.get(i, k);
-                    double puk = P.get(u, k);
-                    double auk = Auk.get(u, k);
-                    double pkt = Pkt.get(k, t);
-
-                    // update qik
-                    double pukt = puk + auk * dev_ut + pkt;
-
-                    double sum_yk = 0;
-                    for (int j : Ru)
-                        sum_yk += Y.get(j, k);
-
-                    sgd = eui * (pukt + wi * sum_yk) + regItem * qik;
-                    Q.add(i, k, -learnRate * sgd);
-                    loss += regItem * qik * qik;
-
-                    // update puk
-                    sgd = eui * qik + regUser * puk;
-                    P.add(u, k, -learnRate * sgd);
-                    loss += regUser * puk * puk;
-
-                    // update auk
-                    sgd = eui * qik * dev_ut + regUser * auk;
-                    Auk.add(u, k, -learnRate * sgd);
-                    loss += regUser * auk * auk;
-
-                    // update pkt
-                    sgd = eui * qik + regUser * pkt;
-                    delta = pkt - learnRate * sgd;
-                    Pkt.put(k, t, delta);
-                    loss += regUser * pkt * pkt;
-
-                    // update yjk
-                    for (int j : Ru) {
-                        double yjk = Y.get(j, k);
-                        sgd = eui * wi * qik + regItem * yjk;
-                        Y.add(j, k, -learnRate * sgd);
-                        loss += regItem * yjk * yjk;
-                    }
-                }
-            }
-
-            loss *= 0.5;
-
-            if (isConverged(iter))
-                break;
-        }
-    }
-
-    /**
-     * predict a specific rating for user userIdx on item itemIdx.
-     *
-     * @param userIdx user index
-     * @param itemIdx item index
-     * @return predictive rating for user userIdx on item itemIdx
-     * @throws LibrecException if error occurs
-     */
-    protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        // retrieve the test rating timestamp
-        long timestamp = (long) timeMatrix.get(userIdx, itemIdx);
-        int t = days(timestamp, minTimestamp);
-        int bin = bin(t);
-        double dev_ut = dev(userIdx, t);
-
-        double pred = globalMean;
-
-        // bi(t): eq. (12)
-        pred += (itemBiases.get(itemIdx) + Bit.get(itemIdx, bin)) * (Cu.get(userIdx) + Cut.get(userIdx, t));
-
-        // bu(t): eq. (9)
-        double but = But.contains(userIdx, t) ? But.get(userIdx, t) : 0;
-        pred += userBiases.get(userIdx) + Alpha.get(userIdx) * dev_ut + but;
-
-        // qi * yj
-        List<Integer> Ru = null;
-        try {
-            Ru = userItemsCache.get(userIdx);
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        double sum_y = 0;
-        for (int j : Ru)
-            sum_y += DenseMatrix.rowMult(Y, j, Q, itemIdx);
-
-        double wi = Ru.size() > 0 ? Math.pow(Ru.size(), -0.5) : 0;
-        pred += sum_y * wi;
-
-        // qi * pu(t)
-        for (int k = 0; k < numFactors; k++) {
-            double qik = Q.get(itemIdx, k);
-            // eq. (13)
-            double puk = P.get(userIdx, k) + Auk.get(userIdx, k) * dev_ut;
-
-            if (Pukt.containsKey(userIdx)) {
-                Table<Integer, Integer, Double> pkt = Pukt.get(userIdx);
-                if (pkt != null) {
-                    // eq. (13)
-                    puk += (pkt.contains(k, t) ? pkt.get(k, t) : 0);
-                }
-            }
-
-            pred += puk * qik;
-        }
-
-        return pred;
-    }
-
-    /**
-     * get the time deviation for a specific timestamp
-     *
-     * @param userId the inner id of a user
-     * @param t the time stamp
-     * @return the time deviation for a specific timestamp t w.r.t the mean date tu
-     */
-    private double dev(int userId, int t) {
-        double tu = userMeanDate.get(userId);
-
-        // date difference in days
-        double diff = t - tu;
-
-        return Math.signum(diff) * Math.pow(Math.abs(diff), beta);
-    }
-
-    /**
-     * get the bin number for a specific time stamp
-     *
-     * @param day time stamp of a day
-     * @return the bin number (starting from 0..numBins-1) for a specific timestamp t;
-     */
-    private int bin(int day) {
-        return (int) (day / (numDays + 0.0) * numBins);
-    }
+    private RowSequentialAccessSparseMatrix trainTimeMatrix, testTimeMatrix;
 
     /**
      * get the number of days for a given time difference
      *
-     * @param diff the difference between two time stamps
+     * @param duration the difference between two time stamps
      * @return number of days for a given time difference
      */
-    private static int days(long diff) {
-        return (int) TimeUnit.MILLISECONDS.toDays(diff);
+    private static int days(long duration) {
+        return (int) TimeUnit.SECONDS.toDays(duration);
     }
 
     /**
@@ -481,15 +117,330 @@ public class TimeSVDRecommender extends BiasedMFRecommender {
         return days(Math.abs(t1 - t2));
     }
 
+    /*
+     * (non-Javadoc)
+     *
+     * @see net.librec.recommender.cf.rating.BiasedMFRecommender#setup()
+     */
+    protected void setup() throws LibrecException {
+        super.setup();
+        beta = conf.getDouble("rec.timesvd.beta", 0.1D);
+        numSections = conf.getInt("rec.numBins", 20);
+        instantMatrix = (SequentialAccessSparseMatrix) getDataModel().getDatetimeDataSet();
+        getMaxAndMinTimeStamp();
+        numDays = days(maxTimestamp, minTimestamp) + 1;
+
+        userBiasWeights = new VectorBasedDenseVector(numUsers);
+        userBiasWeights.init(initMean, initStd);
+
+        itemSectionBiases = new DenseMatrix(numItems, numSections);
+        itemSectionBiases.init(initMean, initStd);
+
+        itemImplicitFactors = new DenseMatrix(numItems, numFactors);
+        itemImplicitFactors.init(initMean, initStd);
+
+        userImplicitFactors = new DenseMatrix(numUsers, numFactors);
+        userImplicitFactors.init(initMean, initStd);
+
+        userDayBiases = new DenseMatrix(numUsers, numDays);
+
+        userDayFactors = new Map[numUsers];
+        for(int userIndex=0; userIndex< numUsers;userIndex++){
+            userDayFactors[userIndex] = new HashMap<>();
+        }
+
+        userScales = new VectorBasedDenseVector(numUsers);
+        userScales.init(initMean, initStd);
+
+        userDayScales = new DenseMatrix(numUsers, numDays);
+        userDayScales.init(initMean, initStd);
+
+        userExplicitFactors = new DenseMatrix(numUsers, numFactors);
+        userExplicitFactors.init(initMean, initStd);
+
+        itemExplicitFactors = new DenseMatrix(numItems, numFactors);
+        itemExplicitFactors.init(initMean, initStd);
+
+        // global average date
+        double mean;
+        double sum = 0D;
+        int count = 0;
+        trainTimeMatrix = new RowSequentialAccessSparseMatrix(trainMatrix, true);
+
+        for (MatrixEntry matrixEntry : trainTimeMatrix) {
+            int userIndex = matrixEntry.row();
+            int itemIndex = matrixEntry.column();
+            int tempDay = days((long) instantMatrix.get(userIndex, itemIndex), minTimestamp);
+            matrixEntry.set(tempDay);
+            sum += tempDay;
+            double[] dayFactors = new double[numFactors];
+            for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                dayFactors[factorIndex] = Randoms.uniform(initMean, initStd);
+            }
+            userDayFactors[userIndex].put(tempDay, dayFactors);
+            userDayBiases.set(userIndex, tempDay, Randoms.uniform(initMean, initStd));
+            count++;
+        }
+
+        double[] dayFactors = new double[numFactors];
+        testTimeMatrix = new RowSequentialAccessSparseMatrix(testMatrix, true);
+
+        for (MatrixEntry matrixEntry : testTimeMatrix) {
+            int userIndex = matrixEntry.row();
+            int itemIndex = matrixEntry.column();
+            int tempDay = days((long) instantMatrix.get(userIndex, itemIndex), minTimestamp);
+            matrixEntry.set(tempDay);
+            if (!userDayFactors[userIndex].containsKey(tempDay)){
+                userDayFactors[userIndex].put(tempDay, dayFactors);
+            }
+        }
+        System.gc();
+
+        double globalMeanDays = sum / count;
+        // compute user's mean of rating timestamps
+        userMeanDays = new VectorBasedDenseVector(numUsers);
+        for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+            sum = 0D;
+            SequentialSparseVector userVector = trainTimeMatrix.row(userIndex);
+            for (VectorEntry vectorEntry: userVector) {
+                sum += days((long) vectorEntry.get(), minTimestamp);
+            }
+            mean = (userVector.size() > 0) ? (sum + 0D) / userVector.size() : globalMeanDays;
+            userMeanDays.set(userIndex, mean);
+        }
+    }
+
+    protected void trainModel() throws LibrecException {
+        DenseVector factorVector = new VectorBasedDenseVector(numFactors);
+
+        for (int iterationStep = 1; iterationStep <= numIterations; iterationStep++) {
+            loss = 0D;
+            for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+                SequentialSparseVector rateVector = trainMatrix.row(userIndex);
+                SequentialSparseVector timeVector = trainTimeMatrix.row(userIndex);
+                int size = rateVector.size();
+                if (size == 0) {
+                    continue;
+                }
+
+                double[] step = new double[numFactors];
+
+                for (VectorEntry vectorEntry : rateVector) {
+                    factorVector.assign((index, value) -> itemImplicitFactors.row(vectorEntry.index()).get(index) + value);
+                }
+                double scale = Math.pow(size, -0.5);
+                factorVector.assign((index, value) -> value * scale);
+
+                for (VectorEntry vectorEntry : rateVector) {
+                    int itemExplicitIndex = vectorEntry.index();
+                    double rate = vectorEntry.get();
+                    int days = (int) timeVector.getAtPosition(vectorEntry.position());
+                    // day t
+                    int section = section(days);
+                    double deviation = deviation(userIndex, days);
+                    double userBias = userBiases.get(userIndex);
+                    double itemBias = itemBiases.get(itemExplicitIndex);
+
+                    double userScale = userScales.get(userIndex);
+                    double dayScale = userDayScales.get(userIndex, days);
+                    // lazy initialization
+                    double userDayBias = userDayBiases.get(userIndex, days);
+                    double itemSectionBias = itemSectionBiases.get(itemExplicitIndex, section);
+                    // alpha_u
+                    double userWeight = userBiasWeights.get(userIndex);
+                    // mu bi(t)
+                    double predict = globalMean + (itemBias + itemSectionBias) * (userScale + dayScale);
+                    // bu(t)
+                    predict += userBias + userWeight * deviation + userDayBias;
+                    // qi * yj
+                    DenseVector itemExplicitVector = itemExplicitFactors.row(itemExplicitIndex);
+                    double sum = factorVector.dot(itemExplicitVector);
+                    predict += sum;
+                    // qi * pu(t)
+                    double[] dayFactors = userDayFactors[userIndex].get(days);
+//
+                    for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                        double qik = itemExplicitFactors.get(itemExplicitIndex, factorIndex);
+                        double puk = userExplicitFactors.get(userIndex, factorIndex) + userImplicitFactors.get(userIndex, factorIndex) * deviation + dayFactors[factorIndex];
+                        predict += puk * qik;
+                    }
+                    double error = predict - rate;
+                    loss += error * error;
+
+                    // update bi
+                    double sgd = error * (userScale + dayScale) + regBias * itemBias;
+                    itemBiases.plus(itemExplicitIndex, -learnRate * sgd);
+                    loss += regBias * itemBias * itemBias;
+
+                    // update bi,bin(t)
+                    sgd = error * (userScale + dayScale) + regBias * itemSectionBias;
+                    itemSectionBiases.plus(itemExplicitIndex, section, -learnRate * sgd);
+                    loss += regBias * itemSectionBias * itemSectionBias;
+
+                    // update cu
+                    sgd = error * (itemBias + itemSectionBias) + regBias * userScale;
+                    userScales.plus(userIndex, -learnRate * sgd);
+                    loss += regBias * userScale * userScale;
+
+                    // update cut
+                    sgd = error * (itemBias + itemSectionBias) + regBias * dayScale;
+                    userDayScales.plus(userIndex, days, -learnRate * sgd);
+                    loss += regBias * dayScale * dayScale;
+
+                    // update bu
+                    sgd = error + regBias * userBias;
+                    userBiases.plus(userIndex, -learnRate * sgd);
+                    loss += regBias * userBias * userBias;
+
+                    // update au
+                    sgd = error * deviation + regBias * userWeight;
+                    userBiasWeights.plus(userIndex, -learnRate * sgd);
+                    loss += regBias * userWeight * userWeight;
+
+                    // update but
+                    sgd = error + regBias * userDayBias;
+                    double delta = userDayBias - learnRate * sgd;
+//
+                    userDayBiases.set(userIndex, days, delta);
+                    loss += regBias * userDayBias * userDayBias;
+
+                    for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                        double userExplicitFactor = userExplicitFactors.get(userIndex, factorIndex);
+                        double itemExplicitFactor = itemExplicitFactors.get(itemExplicitIndex, factorIndex);
+                        double userImplicitFactor = userImplicitFactors.get(userIndex, factorIndex);
+                        delta = dayFactors[factorIndex];
+
+                        sum = 0D;
+                        // update userExplicitFactor
+                        sgd = error * itemExplicitFactor + regUser * userExplicitFactor;
+                        userExplicitFactors.plus(userIndex, factorIndex, -learnRate * sgd);
+                        loss += regUser * userExplicitFactor * userExplicitFactor;
+
+                        // update itemExplicitFactors
+                        for (VectorEntry explicitVectorEntry : rateVector) {
+                            int itemImplicitIndex = explicitVectorEntry.index();
+                            sum += itemImplicitFactors.get(itemImplicitIndex, factorIndex);
+                        }
+                        sgd = error * (userExplicitFactor + userImplicitFactor * deviation + delta + scale * sum) + regItem * itemExplicitFactor;
+                        itemExplicitFactors.plus(itemExplicitIndex, factorIndex, -learnRate * sgd);
+                        loss += regItem * itemExplicitFactor * itemExplicitFactor;
+
+                        // update userImplicitFactors
+                        sgd = error * itemExplicitFactor * deviation + regUser * userImplicitFactor;
+                        userImplicitFactors.plus(userIndex, factorIndex, -learnRate * sgd);
+                        loss += regUser * userImplicitFactor * userImplicitFactor;
+
+                        // update pkt
+                        sgd = error * itemExplicitFactor + regUser * delta;
+                        loss += regUser * delta * delta;
+                        delta = delta - learnRate * sgd;
+                        dayFactors[factorIndex] = delta;
+
+                        step[factorIndex] += error * scale * itemExplicitFactor;
+
+                    }
+                }
+                double sgd;
+                for (VectorEntry vectorEntry : rateVector) {
+                    int itemImplicitIndex = vectorEntry.index();
+                    for(int factorIndex=0; factorIndex< numFactors; factorIndex++) {
+                        double itemImplicitFactor = itemImplicitFactors.get(itemImplicitIndex, factorIndex);
+                        sgd = step[factorIndex] + regItem * itemImplicitFactor * size;
+                        itemImplicitFactors.plus(itemImplicitIndex, factorIndex, -learnRate * sgd);
+                        loss += regItem * itemImplicitFactor * itemImplicitFactor * size;
+                    }
+                }
+            }
+
+            loss *= 0.5D;
+            if (isConverged(iterationStep)) {
+                break;
+            }
+            updateLRate(iterationStep);
+            lastLoss = loss;
+        }
+    }
+
+    /**
+     * predict a specific rating for user userIdx on item itemIdx.
+     *
+     * @param userIndex user index
+     * @param itemIndex item index
+     * @return predictive rating for user userIdx on item itemIdx
+     * @throws LibrecException if error occurs
+     */
+    @Override
+    protected double predict(int userIndex, int itemIndex) {
+        // retrieve the test rating timestamp
+        int days = (int) testTimeMatrix.get(userIndex, itemIndex);
+//        int days = days(instant, minTimestamp);
+        int section = section(days);
+        double deviation = deviation(userIndex, days);
+        double value = globalMean;
+
+        // bi(t): eq. (12)
+        value += (itemBiases.get(itemIndex) + itemSectionBiases.get(itemIndex, section)) * (userScales.get(userIndex) + userDayScales.get(userIndex, days));
+        // bu(t): eq. (9)
+        value += (userBiases.get(userIndex) + userBiasWeights.get(userIndex) * deviation + userDayBiases.get(userIndex, days));
+        // qi * yj
+        SequentialSparseVector userVector = trainMatrix.row(userIndex);
+
+        double sum = 0;
+        DenseVector itemExplicitVector = itemExplicitFactors.row(itemIndex);
+        for (VectorEntry vectorEntry : userVector) {
+            DenseVector itemImplicitVector = itemImplicitFactors.row(vectorEntry.index());
+            sum += itemImplicitVector.dot(itemExplicitVector);
+        }
+        double weight = userVector.size() > 0 ? Math.pow(userVector.size(), -0.5D) : 0D;
+        value += sum * weight;
+
+        // qi * pu(t)
+        double[] dayFactors = userDayFactors[userIndex].get(days);
+
+        for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+            double itemExplicitFactor = itemExplicitFactors.get(itemIndex, factorIndex);
+            // eq. (13)
+            double userExplicitFactor = userExplicitFactors.get(userIndex, factorIndex) + userImplicitFactors.get(userIndex, factorIndex) * deviation;
+            userExplicitFactor += dayFactors[factorIndex];
+            value += userExplicitFactor * itemExplicitFactor;
+        }
+        return value;
+    }
+
+    /**
+     * get the time deviation for a specific timestamp
+     *
+     * @param userIndex the inner id of a user
+     * @param days      the time stamp
+     * @return the time deviation for a specific timestamp t w.r.t the mean date
+     * tu
+     */
+    private double deviation(int userIndex, int days) {
+        double mean = userMeanDays.get(userIndex);
+        // date difference in days
+        double deviation = days - mean;
+        return Math.signum(deviation) * Math.pow(Math.abs(deviation), beta);
+    }
+
+    /**
+     * get the bin number for a specific time stamp
+     *
+     * @param days time stamp of a day
+     * @return the bin number (starting from 0..numBins-1) for a specific
+     * timestamp t;
+     */
+    private int section(int days) {
+        return (int) (days / (numDays + 0D) * numSections);
+    }
+
     /**
      * get the maximum and minimum time stamps in the time matrix
-     *
      */
     private void getMaxAndMinTimeStamp() {
         minTimestamp = Long.MAX_VALUE;
         maxTimestamp = Long.MIN_VALUE;
 
-        for (MatrixEntry entry : timeMatrix) {
+        for (MatrixEntry entry : instantMatrix) {
             long timeStamp = (long) entry.get();
             if (timeStamp < minTimestamp) {
                 minTimestamp = timeStamp;

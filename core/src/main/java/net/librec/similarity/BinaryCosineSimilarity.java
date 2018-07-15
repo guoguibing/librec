@@ -17,7 +17,7 @@
  */
 package net.librec.similarity;
 
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.SequentialSparseVector;
 
 import java.util.List;
 
@@ -36,8 +36,8 @@ public class BinaryCosineSimilarity extends AbstractRecommenderSimilarity {
      *                    item.
      * @return similarity
      */
-    public double getCorrelation(SparseVector thisVector, SparseVector thatVector) {
-        return thisVector.inner(thatVector) / (Math.sqrt(thisVector.inner(thisVector)) * Math.sqrt(thatVector.inner(thatVector)));
+    public double getCorrelation(SequentialSparseVector thisVector, SequentialSparseVector thatVector) {
+        return thisVector.dot(thatVector) / (Math.sqrt(thisVector.getLengthSquared()) * Math.sqrt(thatVector.getLengthSquared()));
     }
 
     protected double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {

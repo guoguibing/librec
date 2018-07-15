@@ -20,8 +20,9 @@ package net.librec.recommender.ext;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
+import net.librec.recommender.MatrixRecommender;
 
 /**
  * Weighted Slope One: Lemire and Maclachlan,
@@ -32,7 +33,7 @@ import net.librec.recommender.AbstractRecommender;
  * @author GuoGuibing and Keqiang Wang
  */
 @ModelData({"isRating", "slopeone", "devMatrix", "cardMatrix", "trainMatrix"})
-public class SlopeOneRecommender extends AbstractRecommender {
+public class SlopeOneRecommender extends MatrixRecommender {
     /**
      * matrices for item-item differences with number of occurrences/cardinary
      */
@@ -60,16 +61,16 @@ public class SlopeOneRecommender extends AbstractRecommender {
     protected void trainModel() throws LibrecException {
         // compute items' differences
         for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-            SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-            int[] items = itemRatingsVector.getIndex();
-
-            for (int itemIdx : items) {
-                double userItemRating = itemRatingsVector.get(itemIdx);
-                for (int comparedItemIdx : items) {
+            SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+            for (Vector.VectorEntry itemIdxRating : itemRatingsVector) {
+                int itemIdx = itemIdxRating.index();
+                double userItemRating = itemIdxRating.get();
+                for (Vector.VectorEntry comparedItemIdxRating : itemRatingsVector) {
+                    int comparedItemIdx = comparedItemIdxRating.index();
                     if (itemIdx != comparedItemIdx) {
-                        double comparedRating = itemRatingsVector.get(comparedItemIdx);
-                        devMatrix.add(itemIdx, comparedItemIdx, userItemRating - comparedRating);
-                        cardMatrix.add(itemIdx, comparedItemIdx, 1);
+                        double comparedRating = comparedItemIdxRating.get();
+                        devMatrix.set(itemIdx, comparedItemIdx, userItemRating - comparedRating);
+                        cardMatrix.set(itemIdx, comparedItemIdx, 1);
                     }
                 }
             }
@@ -98,12 +99,17 @@ public class SlopeOneRecommender extends AbstractRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        SparseVector itemRatingsVector = trainMatrix.row(userIdx, itemIdx);
+        SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
         double predictRatings = 0, cardinaryValues = 0;
-        for (int comparedItemIdx : itemRatingsVector.getIndex()) {
+        for (Vector.VectorEntry itemIdxRating : itemRatingsVector) {
+            int comparedItemIdx = itemIdxRating.index();
+            if (comparedItemIdx == itemIdx) {
+                continue;
+            }
+            double userItemRating = itemIdxRating.get();
             double cardinaryValue = cardMatrix.get(itemIdx, comparedItemIdx);
             if (cardinaryValue > 0) {
-                predictRatings += (devMatrix.get(itemIdx, comparedItemIdx) + itemRatingsVector.get(comparedItemIdx)) * cardinaryValue;
+                predictRatings += (devMatrix.get(itemIdx, comparedItemIdx) + userItemRating) * cardinaryValue;
                 cardinaryValues += cardinaryValue;
             }
         }

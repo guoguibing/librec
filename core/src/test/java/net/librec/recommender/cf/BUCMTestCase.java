@@ -35,27 +35,27 @@ import java.io.IOException;
  */
 public class BUCMTestCase extends BaseTestCase {
 
-	@Override
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+    }
 
-	/**
-	 * test the whole process of BUCM Recommendation
-	 *
-	 * @throws ClassNotFoundException
-	 * @throws LibrecException
-	 * @throws IOException
-	 */
-	@Test
-	public void testRecommenderRating() throws ClassNotFoundException, LibrecException, IOException {
-		Resource resource = new Resource("rec/cf/bucm-test.properties");
-		conf.addResource(resource);
-		RecommenderJob job = new RecommenderJob(conf);
-		job.runJob();
-	}
-	
+    /**
+     * test the whole process of BUCM Recommendation
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommenderRating() throws ClassNotFoundException, LibrecException, IOException {
+        Resource resource = new Resource("rec/cf/bucm-test.properties");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
+
     /**
      * test the whole rating process of BUCM Recommender in ranking
      *

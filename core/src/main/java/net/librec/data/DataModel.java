@@ -31,89 +31,90 @@ public interface DataModel {
     /**
      * Build data model.
      *
-     * @throws LibrecException
-     *         if error occurs during building
+     * @throws LibrecException if error occurs during building
      */
-    public void buildDataModel() throws LibrecException;
+    void buildDataModel() throws LibrecException;
 
     /**
      * Load data model.
      *
-     * @throws LibrecException
-     *         if error occurs during loading
+     * @throws LibrecException if error occurs during loading
      */
-    public void loadDataModel() throws LibrecException;
+    void loadDataModel() throws LibrecException;
 
     /**
      * Save data model.
      *
-     * @throws LibrecException
-     *         if error occurs during saving
+     * @throws LibrecException if error occurs during saving
      */
-    public void saveDataModel() throws LibrecException;
+    void saveDataModel() throws LibrecException;
 
     /**
      * Get data splitter.
      *
-     * @return  the splitter of data model.
+     * @return the splitter of data model.
      */
-    public DataSplitter getDataSplitter();
+    DataSplitter getDataSplitter();
 
     /**
      * Get train data set.
      *
-     * @return  the train data set of data model.
+     * @return the train data set of data model.
      */
-    public DataSet getTrainDataSet();
+    DataSet getTrainDataSet();
 
     /**
      * Get test data set.
      *
-     * @return  the test data set of data model.
+     * @return the test data set of data model.
      */
-    public DataSet getTestDataSet();
+    DataSet getTestDataSet();
 
     /**
      * Get valid data set.
      *
-     * @return  the valid data set of data model.
+     * @return the valid data set of data model.
      */
-    public DataSet getValidDataSet();
+    DataSet getValidDataSet();
 
     /**
      * Get datetime data set.
      *
-     * @return  the datetime data set of data model.
+     * @return the datetime data set of data model.
      */
-    public DataSet getDatetimeDataSet();
+    DataSet getDatetimeDataSet();
 
     /**
      * Get user mapping data.
      *
-     * @return  the user {raw id, inner id} map of data model.
+     * @return the user {raw id, inner id} map of data model.
      */
-    public BiMap<String, Integer> getUserMappingData();
+    BiMap<String, Integer> getUserMappingData();
 
     /**
      * Get item mapping data.
      *
-     * @return  the item {raw id, inner id} map of data model.
+     * @return the item {raw id, inner id} map of data model.
      */
-    public BiMap<String, Integer> getItemMappingData();
+    BiMap<String, Integer> getItemMappingData();
 
     /**
      * Get data appender.
      *
-     * @return  the appender of data model.
+     * @return the appender of data model.
      */
-    public DataAppender getDataAppender();
-    
+    DataAppender getDataAppender();
+
 
     /**
      * Get data Context.
      *
-     * @return  the appender of data model.
+     * @return the appender of data model.
      */
-    public DataContext getContext();
-    
+    DataContext getContext();
+
+    void nextFold();
+
+    boolean hasNextFold();
+
 }

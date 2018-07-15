@@ -53,7 +53,7 @@ public class BHFreeTestCase extends BaseTestCase{
         RecommenderJob job = new RecommenderJob(conf);
         job.runJob();
     }
-    
+
     /**
      * test the whole rating process of BHFree Recommender in ranking
      *
@@ -69,6 +69,6 @@ public class BHFreeTestCase extends BaseTestCase{
         RecommenderJob job = new RecommenderJob(conf);
         job.runJob();
     }
-    
-    
+
+
 }

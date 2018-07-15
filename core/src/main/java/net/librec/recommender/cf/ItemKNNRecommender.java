@@ -19,29 +19,36 @@ package net.librec.recommender.cf;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.SymmMatrix;
-import net.librec.math.structure.VectorEntry;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.*;
+import net.librec.recommender.MatrixRecommender;
 import net.librec.util.Lists;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 /**
  * ItemKNNRecommender
+ * <p>
+ * optimized by Keqiang Wang
  *
  * @author WangYuFeng and Keqiang Wang
  */
 @ModelData({"isRanking", "knn", "itemMeans", "trainMatrix", "similarityMatrix"})
-public class ItemKNNRecommender extends AbstractRecommender {
+public class ItemKNNRecommender extends MatrixRecommender {
     private int knn;
     private DenseVector itemMeans;
+    /**
+     * the similarity matrix between items.
+     */
     private SymmMatrix similarityMatrix;
-    private List<Map.Entry<Integer, Double>>[] itemSimilarityList;
-    private int currentUserIdx = -1;
-    private Set<Integer> currentItemIdxSet;
+    /**
+     * Top similarity item list for each item
+     */
+    private List<Entry<Integer, Double>>[] itemSimilarityList;
+
+    private List<Integer> itemList;
 
     /**
      * (non-Javadoc)
@@ -51,7 +58,7 @@ public class ItemKNNRecommender extends AbstractRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        knn = conf.getInt("rec.neighbors.knn.number",50);
+        knn = conf.getInt("rec.neighbors.knn.number", 50);
         similarityMatrix = context.getSimilarity().getSimilarityMatrix();
     }
 
@@ -62,74 +69,67 @@ public class ItemKNNRecommender extends AbstractRecommender {
      */
     @Override
     protected void trainModel() throws LibrecException {
-        itemMeans = new DenseVector(numItems);
-        int numRates = trainMatrix.size();
-        double globalMean = trainMatrix.sum() / numRates;
-        for (int  itemIdx = 0; itemIdx < numItems; itemIdx++) {
-            SparseVector userRatingVector = trainMatrix.column(itemIdx);
-            itemMeans.set(itemIdx, userRatingVector.getCount() > 0 ? userRatingVector.mean() : globalMean);
+        itemMeans = new VectorBasedDenseVector(numItems);
+        double globalMean = trainMatrix.mean();
+        itemList = new ArrayList<>();
+        for (int itemIndex = 0; itemIndex < numItems; itemIndex++) {
+            itemList.add(itemIndex);
         }
+        itemList.parallelStream().forEach(itemIndex -> {
+            SequentialSparseVector itemRatingVector = trainMatrix.column(itemIndex);
+            itemMeans.set(itemIndex, itemRatingVector.getNumEntries() > 0 ? itemRatingVector.mean() : globalMean);
+        });
+
+        createItemSimilarityList();
     }
 
     /**
      * (non-Javadoc)
      *
-     * @see net.librec.recommender.AbstractRecommender#predict(int, int)
+     * @see net.librec.recommender.MatrixRecommender#predict(int, int)
      */
+    @Override
     public double predict(int userIdx, int itemIdx) throws LibrecException {
-        //create itemSimilarityList if not exists
-        if (!(null != itemSimilarityList && itemSimilarityList.length > 0)) {
-            createItemSimilarityList();
+        List<Entry<Integer, Double>> simList = itemSimilarityList[itemIdx];
+        SequentialSparseVector itemRatingVector = trainMatrix.row(userIdx);
+        int itemRatingSize = itemRatingVector.getNumEntries(), simItemSize = simList.size();
+        if (itemRatingSize == 0 || simItemSize == 0) {
+            return isRanking ? 0D : globalMean;
         }
 
-        if (currentUserIdx != userIdx) {
-            currentItemIdxSet = trainMatrix.getColumnsSet(userIdx);
-            currentUserIdx = userIdx;
-        }
+        double predictValue = 0.0D, simSum = 0.0D;
 
-        // find a number of similar items
-        List<Map.Entry<Integer, Double>> nns = new ArrayList<>();
-        List<Map.Entry<Integer, Double>> simList = itemSimilarityList[itemIdx];
+        Entry<Integer, Double> simUserEntry;
+        double sim;
+        int itemRatingPosition = 0, simItemPosition = 0;
+        int simItemIndex, ratingItemIndex;
 
-        int count = 0;
-        for (Map.Entry<Integer, Double> itemRatingEntry : simList) {
-            int similarItemIdx = itemRatingEntry.getKey();
-            if (!currentItemIdxSet.contains(similarItemIdx)) {
-                continue;
+        while (simItemPosition < simItemSize && itemRatingPosition < itemRatingSize) {
+            simUserEntry = simList.get(simItemPosition);
+            ratingItemIndex = itemRatingVector.getIndexAtPosition(itemRatingPosition);
+            simItemIndex = simUserEntry.getKey();
+            if (simItemIndex == ratingItemIndex) {
+                sim = simUserEntry.getValue();
+                if (isRanking) {
+                    predictValue += sim;
+                } else if (sim > 0) {
+                    predictValue += sim * (itemRatingVector.getAtPosition(itemRatingPosition)
+                            - itemMeans.get(simItemIndex));
+                    simSum += sim;
+                }
+                simItemPosition++;
+                itemRatingPosition++;
+            } else if (simItemIndex < ratingItemIndex) {
+                simItemPosition++;
+            } else {
+                itemRatingPosition++;
             }
+        }
 
-            double sim = itemRatingEntry.getValue();
-            if (isRanking) {
-                nns.add(itemRatingEntry);
-                count++;
-            } else if (sim > 0) {
-                nns.add(itemRatingEntry);
-                count++;
-            }
-            if (count == knn) {
-                break;
-            }
-        }
-        if (nns.size() == 0) {
-            return isRanking ? 0 : globalMean;
-        }
         if (isRanking) {
-            double sum = 0.0d;
-            for (Entry<Integer, Double> itemRatingEntry : nns) {
-                sum += itemRatingEntry.getValue();
-            }
-            return sum;
+            return predictValue;
         } else {
-            // for rating prediction
-            double sum = 0, ws = 0;
-            for (Entry<Integer, Double> itemRatingEntry : nns) {
-                int similarItemIdx = itemRatingEntry.getKey();
-                double sim = itemRatingEntry.getValue();
-                double rate = trainMatrix.get(userIdx, similarItemIdx);
-                sum += sim * (rate - itemMeans.get(similarItemIdx));
-                ws += Math.abs(sim);
-            }
-            return ws > 0 ? itemMeans.get(itemIdx) + sum / ws : globalMean;
+            return predictValue > 0 ? itemMeans.get(userIdx) + predictValue / simSum : globalMean;
         }
     }
 
@@ -138,16 +138,16 @@ public class ItemKNNRecommender extends AbstractRecommender {
      */
     public void createItemSimilarityList() {
         itemSimilarityList = new ArrayList[numItems];
-        for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
-            SparseVector similarityVector = similarityMatrix.row(itemIdx);
-            itemSimilarityList[itemIdx] = new ArrayList<>(similarityVector.size());
-            Iterator<VectorEntry> simItr = similarityVector.iterator();
-            while (simItr.hasNext()) {
-                VectorEntry simVectorEntry = simItr.next();
-                itemSimilarityList[itemIdx].add(new AbstractMap.SimpleImmutableEntry<>(simVectorEntry.index(), simVectorEntry.get()));
+        SequentialAccessSparseMatrix simMatrix = similarityMatrix.toSparseMatrix();
+        itemList.parallelStream().forEach(itemIndex -> {
+            SequentialSparseVector similarityVector = simMatrix.row(itemIndex);
+            itemSimilarityList[itemIndex] = new ArrayList<>(similarityVector.size());
+            for (Vector.VectorEntry simVectorEntry : similarityVector) {
+                itemSimilarityList[itemIndex].add(new AbstractMap.SimpleImmutableEntry<>(simVectorEntry.index(), simVectorEntry.get()));
             }
-            Lists.sortList(itemSimilarityList[itemIdx], true);
-        }
-    }
+            itemSimilarityList[itemIndex] = Lists.sortListTopK(itemSimilarityList[itemIndex], true, knn);
+            Lists.sortListByKey(itemSimilarityList[itemIndex], false);
 
+        });
+    }
 }

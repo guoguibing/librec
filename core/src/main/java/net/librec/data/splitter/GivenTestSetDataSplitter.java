@@ -21,12 +21,8 @@ import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.conf.Configured;
 import net.librec.data.DataConvertor;
-import net.librec.data.convertor.ArffDataConvertor;
 import net.librec.data.convertor.TextDataConvertor;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.TensorEntry;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 
 import java.io.IOException;
 
@@ -42,7 +38,7 @@ public class GivenTestSetDataSplitter extends AbstractDataSplitter {
     /**
      * The rate dataset for training
      */
-    private SparseMatrix preferenceMatrix;
+    private SequentialAccessSparseMatrix preferenceMatrix;
 
     /**
      * Empty constructor.
@@ -62,56 +58,42 @@ public class GivenTestSetDataSplitter extends AbstractDataSplitter {
         this.conf = conf;
     }
 
-    /**
-     * Split the data.
-     *
-     * @throws LibrecException if error occurs
-     */
     @Override
-    public void splitData() throws LibrecException {
+    public void splitData() throws LibrecException{
         DataConvertor testConvertor = null;
         String dataFormat = conf.get("data.model.format");
-        switch (dataFormat.toLowerCase()) {
+        switch (dataFormat.toLowerCase()){
             case "text":
-                preferenceMatrix = dataConvertor.getPreferenceMatrix();
-                trainMatrix = new SparseMatrix(preferenceMatrix);
-                testMatrix = new SparseMatrix(preferenceMatrix);
-                testConvertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT, "UIR"),
-                        conf.get(Configured.CONF_DFS_DATA_DIR) + "/" + conf.get("data.testset.path"),
-                        conf.getDouble("data.convert.binarize.threshold", -1.0),
-                        ((TextDataConvertor) dataConvertor).getUserIds(),
-                        ((TextDataConvertor) dataConvertor).getItemIds());
+                String[] inputDataPath = conf.get("data.testset.path").trim().split(":");
+                for (int i = 0; i < inputDataPath.length; i++) {
+                    inputDataPath[i] = conf.get(Configured.CONF_DFS_DATA_DIR) + "/" + inputDataPath[i];
+                }
+                String dataColumnFormat = conf.get(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
+                testConvertor = new TextDataConvertor(dataColumnFormat,
+                        inputDataPath,"[\t;, ]");
                 try {
                     testConvertor.processData();
-                } catch (IOException e) {
-                    throw new LibrecException(e);
+                }catch (IOException e) {
+                    e.printStackTrace();
                 }
-                for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-                    SparseVector uv = preferenceMatrix.row(u);
-                    for (VectorEntry j : uv) {
-                        if (testConvertor.getPreferenceMatrix().get(u, j.index()) == 0) {
-                            testMatrix.set(u, j.index(), 0.0);
-                        } else {
-                            trainMatrix.set(u, j.index(), 0.0);
-                        }
-                    }
-                }
-                SparseMatrix.reshape(trainMatrix);
-                SparseMatrix.reshape(testMatrix);
-
                 break;
-            case "arff":
-                testConvertor = new ArffDataConvertor(
-                        conf.get(Configured.CONF_DFS_DATA_DIR) + "/" + conf.get("data.testset.path"),
-                        ((ArffDataConvertor) dataConvertor).getAllFeatureIds());
-                try {
-                    testConvertor.processData();
-                } catch (IOException e) {
-                    throw new LibrecException(e);
-                }
-                testMatrix = testConvertor.getSparseTensor().rateMatrix();
-
-                break;
+            default:
+                LOG.info("Not implement now or please check data.model.format");
         }
+
+
+        testMatrix = testConvertor.getPreferenceMatrix(conf);
+        trainMatrix = dataConvertor.getPreferenceMatrix(conf);
+
+//        if (Objects.equals(conf.get("data.convert.columns"), null)){
+//            testMatrix = testConvertor.getPreferenceMatrix();
+//        }else{
+//            testMatrix =testConvertor.getPreferenceMatrix(conf.get("data.convert.columns").split(","));
+//        }
+//       if (Objects.equals(conf.get("data.convert.columns"), null)) {
+//            trainMatrix= dataConvertor.getPreferenceMatrix();
+//        } else {
+//            trainMatrix = dataConvertor.getPreferenceMatrix(conf.get("data.convert.columns").split(","));
+//       }
     }
 }

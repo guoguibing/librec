@@ -12,13 +12,11 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a clone of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
 package net.librec.math.algorithm;
-
-import net.librec.util.Lists;
 
 import java.util.*;
 
@@ -29,8 +27,8 @@ public class Stats {
 
     /**
      * Return mean value of a sample.
-     * @param data  the set to sample from
      *
+     * @param data the set to sample from
      * @return mean value of a sample
      */
     public static double mean(Collection<? extends Number> data) {
@@ -48,9 +46,9 @@ public class Stats {
 
     /**
      * Return harmonic mean.
+     *
      * @param a parameter of the function
      * @param b parameter of the function
-     *
      * @return harmonic mean
      */
     public static double hMean(double a, double b) {
@@ -63,20 +61,65 @@ public class Stats {
      * <p>
      * Notes: the sample mean and population mean is estimated in the same way.
      *
-     * @param data  the set to sample from
+     * @param data the set to sample from
      * @return mean value of a sample
      */
     public static double mean(double[] data) {
-        double sum = 0.0;
+        return mean(data, 0, data.length);
+    }
+
+    public static double mean(double[] data, int from, int to) {
+        double sum = 0D;
         int count = 0;
-        for (double d : data) {
-            if (!Double.isNaN(d)) {
-                sum += d;
-                count++;
-            }
+        for (int index = from; index < to; index++) {
+            double value = data[index];
+            sum += value;
+            count++;
+        }
+        return sum / count;
+    }
+
+    public static double sum(double[] data, int from, int to) {
+        double sum = 0D;
+        for (int index = from; index < to; index++) {
+            sum += data[index];
+        }
+        return sum;
+    }
+
+    /**
+     * Calculate a sample's variance
+     * <p>
+     * refers to:
+     * http://www.weibull.com/DOEWeb/unbiased_and_biased_estimators.htm, for an
+     * explanation why the denominator is (n-1) rather than n.
+     *
+     * @param data a data array
+     * @param mean mean of the data array
+     * @return the sample's variance
+     */
+    public static double variance(double[] data, int from, int to, double mean) {
+        if (data.length == 0) {
+            return Double.NaN;
         }
 
-        return sum / count;
+        double sum = 0.0;
+        for (int index = from; index < to; index++) {
+            sum += (data[index] - mean) * (data[index] - mean);
+        }
+
+        return sum / (to - from);
+    }
+
+    /**
+     * Calculate a sample's standard deviation.
+     *
+     * @param data a data array
+     * @param mean mean of the data
+     * @return sample's standard deviation
+     */
+    public static double standardDeviation(double[] data, int from, int to, double mean) {
+        return Math.sqrt(variance(data, from, to, mean));
     }
 
     public static double mode(double[] data) {
@@ -116,8 +159,8 @@ public class Stats {
     /**
      * Return weighted average value of {@code data} and {@code weights}.
      *
-     * @param data     data set
-     * @param weights  weight for the data
+     * @param data    data set
+     * @param weights weight for the data
      * @return weighted average value of {@code data} and {@code weights}
      */
     public static double average(List<Double> data, List<Double> weights) {
@@ -138,8 +181,8 @@ public class Stats {
      * Calculate the median value of an array,
      * <em>Note that the values of doulbe.NaN will be ignored silently.</em>
      *
-     * @param data  an array
-     * @return  median value of an array,
+     * @param data an array
+     * @return median value of an array,
      */
     public static double median(double[] data) {
         double median = 0.0;
@@ -165,21 +208,32 @@ public class Stats {
      * Calculate the median value of a data collection,
      * <em>Note that the values of doulbe.NaN will be ignored silently</em>
      *
-     * @param data  a data collection
-     * @return  the median value of the data collection
+     * @param data a data collection
+     * @return the median value of the data collection
      */
     public static double median(Collection<? extends Number> data) {
-        return median(Lists.toArray(data));
+        return median(toArray(data));
+    }
+
+    public static double[] toArray(Collection<? extends Number> data) {
+        if (data == null || data.size() < 1)
+            return null;
+        double da[] = new double[data.size()];
+        int i = 0;
+        for (Number d : data)
+            da[i++] = d.doubleValue();
+
+        return da;
     }
 
     /**
      * Calculate a sample's variance.
      *
-     * @param data  a data array
-     * @return  variance of the sample
+     * @param data a data array
+     * @return variance of the sample
      */
-    public static double var(double[] data) {
-        return var(data, mean(data));
+    public static double variance(double[] data) {
+        return variance(data, mean(data));
     }
 
     /**
@@ -189,39 +243,32 @@ public class Stats {
      * http://www.weibull.com/DOEWeb/unbiased_and_biased_estimators.htm, for an
      * explanation why the denominator is (n-1) rather than n.
      *
-     * @param data  a data array
-     * @param mean  mean of the data array
+     * @param data a data array
+     * @param mean mean of the data array
      * @return the sample's variance
      */
-    public static double var(double[] data, double mean) {
-        if (data.length == 0)
-            return Double.NaN;
-
-        double sum = 0.0;
-        for (int i = 0; i < data.length; i++)
-            sum += (data[i] - mean) * (data[i] - mean);
-
-        return sum / data.length;
+    public static double variance(double[] data, double mean) {
+        return variance(data, 0, data.length, mean);
     }
 
     /**
      * Calculate the standard deviation.
      *
-     * @param data  a data collection
-     * @return  standard deviation of the collection
+     * @param data a data collection
+     * @return standard deviation of the collection
      */
-    public static double sd(Collection<? extends Number> data) {
-        return sd(data, mean(data));
+    public static double standardDeviation(Collection<? extends Number> data) {
+        return standardDeviation(data, mean(data));
     }
 
     /**
      * Calculate the standard deviation.
      *
-     * @param data  a data collection
-     * @param mean  mean of the collection
-     * @return  standard deviation of the collection
+     * @param data a data collection
+     * @param mean mean of the collection
+     * @return standard deviation of the collection
      */
-    public static double sd(Collection<? extends Number> data, double mean) {
+    public static double standardDeviation(Collection<? extends Number> data, double mean) {
         double sum = 0.0;
         for (Number d : data)
             sum += Math.pow(d.doubleValue() - mean, 2);
@@ -233,10 +280,10 @@ public class Stats {
      * Calculate a sample's standard deviation.
      *
      * @param data a data array
-     * @return  sample's standard deviation
+     * @return sample's standard deviation
      */
-    public static double sd(double[] data) {
-        return sd(data, mean(data));
+    public static double standardDeviation(double[] data) {
+        return standardDeviation(data, mean(data));
     }
 
     /**
@@ -244,18 +291,14 @@ public class Stats {
      *
      * @param data a data array
      * @param mean mean of the data
-     * @return  sample's standard deviation
+     * @return sample's standard deviation
      */
-    public static double sd(double[] data, double mean) {
-        return Math.sqrt(var(data, mean));
+    public static double standardDeviation(double[] data, double mean) {
+        return Math.sqrt(variance(data, mean));
     }
 
     public static double sum(double[] data) {
-        double sum = 0.0;
-        for (int i = 0; i < data.length; i++)
-            sum += data[i];
-
-        return sum;
+        return sum(data, 0, data.length);
     }
 
     public static double sum(Collection<? extends Number> data) {
@@ -276,8 +319,8 @@ public class Stats {
     /**
      * The sum from 1 to n.
      *
-     * @param n  max of the sum sequence
-     * @return  sum of the sequence 1 to n
+     * @param n max of the sum sequence
+     * @return sum of the sequence 1 to n
      */
     public static int sum(int n) {
         return n * (n - 1) / 2;
@@ -286,8 +329,8 @@ public class Stats {
     /**
      * The sum from 1^2 to n^2, with the largest value to n^3/3
      *
-     * @param n  parameter n of the function
-     * @return  sum from 1^2 to n^2, with the largest value to n^3/3
+     * @param n parameter n of the function
+     * @return sum from 1^2 to n^2, with the largest value to n^3/3
      */
     public static double sumSquare(int n) {
         return n * (n + 0.5) * (n + 1) / 3;
@@ -296,7 +339,7 @@ public class Stats {
     /**
      * Find out the maximum element and its index of an array
      *
-     * @param data  a data array
+     * @param data a data array
      * @return the maximum element and its index of an array
      */
     public static double[] max(double[] data) {
@@ -316,7 +359,7 @@ public class Stats {
      * Find out the maximum element and its index of an array.
      *
      * @param data a data array
-     * @return   the maximum element and its index of an array
+     * @return the maximum element and its index of an array
      */
     public static int[] max(int[] data) {
         int max = Integer.MIN_VALUE;
@@ -334,8 +377,8 @@ public class Stats {
     /**
      * Find out the minimum element and its index of an array.
      *
-     * @param data  a data array
-     * @return  the minimum element and its index of an array.
+     * @param data a data array
+     * @return the minimum element and its index of an array.
      */
     public static int[] min(int[] data) {
         int min = Integer.MAX_VALUE;
@@ -368,5 +411,4 @@ public class Stats {
         }
         return new double[]{min, index};
     }
-
 }

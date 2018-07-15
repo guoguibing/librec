@@ -33,22 +33,19 @@ public interface DataAppender {
      *
      * @throws IOException if I/O error occurs
      */
-    public void processData() throws IOException;
+    void processData() throws IOException;
 
     /**
      * Set user mapping data.
      *
-     * @param userMappingData
-     *              user {raw id, inner id} map
-     *
+     * @param userMappingData user {raw id, inner id} map
      */
-    public void setUserMappingData(BiMap<String, Integer> userMappingData);
+    void setUserMappingData(BiMap<String, Integer> userMappingData);
 
     /**
      * Set item mapping data.
      *
-     * @param itemMappingData
-     *              item {raw id, inner id} map
+     * @param itemMappingData item {raw id, inner id} map
      */
-    public void setItemMappingData(BiMap<String, Integer> itemMappingData);
+    void setItemMappingData(BiMap<String, Integer> itemMappingData);
 }

@@ -24,10 +24,10 @@ import java.io.IOException;
 public class JobStatusTestCase {
 
 	public static void main(String[] args) throws IOException {
-		TextDataConvertor textDataConvertor = new TextDataConvertor("../data/filmtrust/rating");;
+		TextDataConvertor textDataConvertor = new TextDataConvertor("../data/filmtrust/rating");
 		Thread x = new Thread(textDataConvertor);
 		x.start();
-		textDataConvertor.processData();;
+		textDataConvertor.processData();
 	}
 
 }

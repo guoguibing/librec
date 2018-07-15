@@ -46,11 +46,13 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 
 		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/ratings.txt");
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
-		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
+		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT),
+				conf.get("inputDataPath"), "[ \t]");
 
 		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
 		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/ratings-date.txt");
-		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
+		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT),
+				conf.get("inputDataPath"), "[ \t]");
 	}
 
 	/**
@@ -62,6 +64,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	public void test01RatingRatio() throws Exception{
 		conf.set("data.splitter.ratio", "rating");
 		conf.set("data.splitter.trainset.ratio", "0.8");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 
 		convertor.processData();
 		RatioDataSplitter splitter = new RatioDataSplitter(convertor, conf);
@@ -80,6 +83,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	public void test02UserRatio() throws Exception{
 		conf.set("data.splitter.ratio", "user");
 		conf.set("data.splitter.trainset.ratio", "0.8");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 
 		convertor.processData();
 		RatioDataSplitter splitter = new RatioDataSplitter(convertor, conf);
@@ -98,6 +102,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	public void test03ItemRatio() throws Exception{
 		conf.set("data.splitter.ratio", "item");
 		conf.set("data.splitter.trainset.ratio", "0.8");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 
 		convertor.processData();
 		RatioDataSplitter splitter = new RatioDataSplitter(convertor, conf);
@@ -117,6 +122,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 		conf.set("data.splitter.ratio", "valid");
 		conf.set("data.splitter.trainset.ratio", "0.5");
 		conf.set("data.splitter.validset.ratio", "0.3");
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 
 		convertor.processData();
 		RatioDataSplitter splitter = new RatioDataSplitter(convertor, conf);
@@ -193,7 +199,6 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	public double calTrainRatio(RatioDataSplitter splitter, TextDataConvertor convertor){
 		double trainSize = splitter.getTrainData().size();
 		double totalSize = convertor.getPreferenceMatrix().size();
-
 		return trainSize/totalSize;
 	}
 
@@ -206,7 +211,7 @@ public class RatioDataSplitterTestCase extends BaseTestCase{
 	 */
 	public double calValidRatio(RatioDataSplitter splitter, TextDataConvertor convertor){
 		double validSize = splitter.getValidData().size();
-		double totalSize = convertor.getPreferenceMatrix().size();
+		double totalSize = convertor.getMatrix().toSparseMatrix().size();
 
 		return validSize/totalSize;
 	}

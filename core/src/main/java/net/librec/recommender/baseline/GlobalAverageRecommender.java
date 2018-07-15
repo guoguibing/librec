@@ -19,12 +19,12 @@
 package net.librec.recommender.baseline;
 
 import net.librec.common.LibrecException;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.recommender.MatrixRecommender;
 
 /**
  * Baseline: predict by average rating of all users
  */
-public class GlobalAverageRecommender extends AbstractRecommender {
+public class GlobalAverageRecommender extends MatrixRecommender {
 
     @Override
     protected void trainModel() throws LibrecException {

@@ -17,13 +17,11 @@
 //
 package net.librec.recommender.baseline;
 
+import com.google.common.collect.Sets;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.*;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,7 +35,7 @@ import java.util.Set;
  *
  * @author Guo Guibing and zhanghaidong
  */
-public class ItemClusterRecommender extends ProbabilisticGraphicalRecommender {
+public class ItemClusterRecommender extends MatrixProbabilisticGraphicalRecommender {
     private DenseMatrix topicRatingProbs;   // Pkr
     private DenseVector topicInitialProbs;  // Pi
 
@@ -54,7 +52,7 @@ public class ItemClusterRecommender extends ProbabilisticGraphicalRecommender {
         super.setup();
 
         isRanking = false;
-        Set<Double> ratingScaleSet = trainMatrix.getValueSet();
+        Set<Double> ratingScaleSet = Sets.newTreeSet(trainMatrix.getDataTable().values());
         ratingScale = new ArrayList<>(ratingScaleSet);
         numRatingLevels = ratingScale.size();
         Collections.sort(ratingScale);
@@ -68,20 +66,20 @@ public class ItemClusterRecommender extends ProbabilisticGraphicalRecommender {
             }
         }
 
-        topicInitialProbs = new DenseVector(Randoms.randProbs(numTopics));
+        topicInitialProbs = new VectorBasedDenseVector(Randoms.randProbs(numTopics));
 
         itemTopicProbs = new DenseMatrix(numItems, numTopics);
 
         itemNumEachRating = new DenseMatrix(numItems, numRatingLevels);
-        itemNumRatings = new DenseVector(numItems);
+        itemNumRatings = new VectorBasedDenseVector(numItems);
 
         for (int i = 0; i < numItems; i++) {
-            SparseVector ri = trainMatrix.column(i);
+            SequentialSparseVector ri = trainMatrix.column(i);
 
-            for (VectorEntry vi : ri) {
+            for (Vector.VectorEntry vi : ri) {
                 double rui = vi.get();
                 int r = ratingScale.indexOf(rui);
-                itemNumEachRating.add(i, r, 1);
+                itemNumEachRating.plus(i, r, 1);
             }
             itemNumRatings.set(i, ri.size());
         }
@@ -93,13 +91,13 @@ public class ItemClusterRecommender extends ProbabilisticGraphicalRecommender {
     protected void eStep() {
         for (int i = 0; i < numItems; i++) {
             BigDecimal sum_i = BigDecimal.ZERO;
-            SparseVector ri = trainMatrix.column(i);
+            SequentialSparseVector ri = trainMatrix.column(i);
 
             BigDecimal[] sum_ik = new BigDecimal[numTopics];
             for (int k = 0; k < numTopics; k++) {
                 BigDecimal itemTopicProb = new BigDecimal(topicInitialProbs.get(k));
 
-                for (VectorEntry vi : ri) {
+                for (Vector.VectorEntry vi : ri) {
                     double rui = vi.get();
                     int r = ratingScale.indexOf(rui);
                     BigDecimal topicRatingProb = new BigDecimal(topicRatingProbs.get(k, r));

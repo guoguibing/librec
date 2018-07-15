@@ -1,12 +1,11 @@
 package net.librec.recommender.cf.rating;
 
+import com.google.common.collect.Table;
+import com.google.common.primitives.Ints;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.KernelSmoothing;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.*;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 import java.util.List;
@@ -27,7 +26,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
     private int numThreads;
     protected double globalRegUser, globalRegItem, localRegUser, localRegItem;
     private double globalLearnRate, localLearnRate;
-    private SparseMatrix predictMatrix;
+    private SequentialAccessSparseMatrix predictMatrix;
     private int numLocalModels;
     private DenseMatrix globalUserFactors, globalItemFactors;
 
@@ -67,7 +66,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
         globalItemFactors.init(initMean, initStd);
         this.buildGlobalModel();
 
-        predictMatrix = new SparseMatrix(testMatrix);
+        predictMatrix = new SequentialAccessSparseMatrix(testMatrix);
     }
 
 
@@ -79,7 +78,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
                 int itemIdx = matrixEntry.column(); // item
                 double rating = matrixEntry.get();
 
-                double predictRating = DenseMatrix.rowMult(globalUserFactors, userIdx, globalItemFactors, itemIdx);
+                double predictRating = globalUserFactors.row(userIdx).dot(globalItemFactors.row(itemIdx));
                 double error = rating - predictRating;
 
                 // update factors
@@ -87,8 +86,8 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
                     double puf = globalUserFactors.get(userIdx, factorIdx);
                     double qif = globalItemFactors.get(itemIdx, factorIdx);
 
-                    globalUserFactors.add(userIdx, factorIdx, globalLearnRate * (error * qif - globalRegUser * puf));
-                    globalItemFactors.add(itemIdx, factorIdx, globalLearnRate * (error * puf - globalRegItem * qif));
+                    globalUserFactors.plus(userIdx, factorIdx, globalLearnRate * (error * qif - globalRegUser * puf));
+                    globalItemFactors.plus(itemIdx, factorIdx, globalLearnRate * (error * puf - globalRegItem * qif));
                 }
             }
         }// end of training
@@ -109,19 +108,20 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
         int waitingThreadPointer = 0;
         int nextRunningSlot = 0;
 
-        SparseMatrix cumPredictionMatrix = new SparseMatrix(testMatrix);
-        SparseMatrix cumWeightMatrix = new SparseMatrix(testMatrix);
+        SequentialAccessSparseMatrix cumPredictionMatrix = new SequentialAccessSparseMatrix(testMatrix);
+        SequentialAccessSparseMatrix cumWeightMatrix = new SequentialAccessSparseMatrix(testMatrix);
         for (MatrixEntry matrixEntry : testMatrix) {
             int userIdx = matrixEntry.row();
-            int itemIdx = matrixEntry.column();
-            cumPredictionMatrix.set(userIdx, itemIdx, 0.0);
-            cumWeightMatrix.set(userIdx, itemIdx, 0.0);
+//            int itemIdx = matrixEntry.column();
+            int columnPosition = matrixEntry.columnPosition();
+            cumPredictionMatrix.setAtColumnPosition(userIdx, columnPosition, 0.0);
+            cumWeightMatrix.setAtColumnPosition(userIdx, columnPosition, 0.0);
         }
 
         // Parallel training:
         while (completeModelCount < numLocalModels) {
             int anchorUser = Randoms.uniform(numUsers);
-            List<Integer> itemList = trainMatrix.getColumns(anchorUser);
+            List<Integer> itemList = Ints.asList(trainMatrix.row(anchorUser).getIndices());
 
             if (itemList != null && itemList.size() > 0) {
                 if (runningThreadCount < numThreads && modelCount < numLocalModels) {
@@ -150,7 +150,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
                     try {
                         learners[waitingThreadPointer].join();
                     } catch (InterruptedException ie) {
-                        LOG.error("Join failed: " + ie);
+                        System.out.println("Join failed: " + ie);
                     }
 
                     int currentModelThreadIdx = waitingThreadPointer;
@@ -158,7 +158,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
                     completeModelCount++;
 
                     // Predicting with the new local model and all previous models:
-                    predictMatrix = new SparseMatrix(testMatrix);
+                    predictMatrix = new SequentialAccessSparseMatrix(testMatrix);
                     for (MatrixEntry matrixEntry : testMatrix) {
                         int userIdx = matrixEntry.row();
                         int itemIdx = matrixEntry.column();
@@ -167,19 +167,20 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
                                 0.8, KernelSmoothing.EPANECHNIKOV_KERNEL) * KernelSmoothing.kernelize(getItemSimilarity(anchorArrayItem[currentModelAnchorIdx],
                                 itemIdx), 0.8, KernelSmoothing.EPANECHNIKOV_KERNEL);
 
-                        double newPrediction = (learners[currentModelThreadIdx].getLocalUserFactors().row(userIdx, false)
-                                .inner(learners[currentModelThreadIdx].getLocalItemFactors().row(itemIdx, false))) * weight;
+                        double newPrediction = (learners[currentModelThreadIdx].getLocalUserFactors().viewRow(userIdx)
+                                .dot(learners[currentModelThreadIdx].getLocalItemFactors().viewRow(itemIdx))) * weight;
 
-                        cumWeightMatrix.set(userIdx, itemIdx, cumWeightMatrix.get(userIdx, itemIdx) + weight);
-                        cumPredictionMatrix.set(userIdx, itemIdx, cumPredictionMatrix.get(userIdx, itemIdx) + newPrediction);
+                        int columnPosition = matrixEntry.columnPosition();
+                        cumWeightMatrix.setAtColumnPosition(userIdx, columnPosition, cumWeightMatrix.getAtColumnPosition(userIdx, columnPosition) + weight);
+                        cumPredictionMatrix.setAtColumnPosition(userIdx, columnPosition, cumPredictionMatrix.getAtColumnPosition(userIdx, columnPosition) + newPrediction);
 
-                        double prediction = cumPredictionMatrix.get(userIdx, itemIdx) / cumWeightMatrix.get(userIdx, itemIdx);
+                        double prediction = cumPredictionMatrix.getAtColumnPosition(userIdx, columnPosition) / cumWeightMatrix.getAtColumnPosition(userIdx, columnPosition);
 
                         prediction = Double.isNaN(prediction) || prediction == 0.0 ? globalMean : prediction;
                         prediction = prediction < minRate ? minRate : prediction;
                         prediction = prediction > maxRate ? maxRate : prediction;
 
-                        predictMatrix.set(userIdx, itemIdx, prediction);
+                        predictMatrix.setAtColumnPosition(userIdx, columnPosition, prediction);
                     }
 
                     nextRunningSlot = waitingThreadPointer;
@@ -203,8 +204,8 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
         DenseVector userVector1 = globalUserFactors.row(userIdx1);
         DenseVector userVector2 = globalUserFactors.row(userIdx2);
 
-        sim = 1 - 2.0 / Math.PI * Math.acos(userVector1.inner(userVector2) / (Math.sqrt(userVector1.inner(userVector1))
-                * Math.sqrt(userVector2.inner(userVector2))));
+        sim = 1 - 2.0 / Math.PI * Math.acos(userVector1.dot(userVector2) / (Math.sqrt(userVector1.dot(userVector1))
+                * Math.sqrt(userVector2.dot(userVector2))));
 
         if (Double.isNaN(sim)) {
             sim = 0.0;
@@ -225,8 +226,8 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
         DenseVector itemVector1 = globalItemFactors.row(itemIdx1);
         DenseVector itemVector2 = globalItemFactors.row(itemIdx2);
 
-        sim = 1 - 2.0 / Math.PI * Math.acos(itemVector1.inner(itemVector2) / (Math.sqrt(itemVector1.inner(itemVector1))
-                * Math.sqrt(itemVector2.inner(itemVector2))));
+        sim = 1 - 2.0 / Math.PI * Math.acos(itemVector1.dot(itemVector2) / (Math.sqrt(itemVector1.dot(itemVector1))
+                * Math.sqrt(itemVector2.dot(itemVector2))));
         if (Double.isNaN(sim)) {
             sim = 0.0;
         }
@@ -246,7 +247,7 @@ public class LLORMARecommender extends MatrixFactorizationRecommender {
      * @return The kernel-smoothed values for all users or all items.
      */
     private DenseVector kernelSmoothing(int size, int anchorIdx, int kernelType, double width, boolean isItemFeature) {
-        DenseVector newFeatureVector = new DenseVector(size);
+        DenseVector newFeatureVector = new VectorBasedDenseVector(size);
         newFeatureVector.set(anchorIdx, 1.0);
 
         for (int index = 0; index < size; index++) {

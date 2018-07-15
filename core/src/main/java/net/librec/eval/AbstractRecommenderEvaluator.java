@@ -18,7 +18,6 @@
 package net.librec.eval;
 
 import net.librec.conf.Configuration;
-import net.librec.math.structure.SparseMatrix;
 import net.librec.math.structure.SymmMatrix;
 import net.librec.recommender.RecommenderContext;
 import net.librec.recommender.item.RecommendedList;
@@ -57,27 +56,57 @@ public abstract class AbstractRecommenderEvaluator implements RecommenderEvaluat
      * @param recommendedList  the list of recommended items
      * @return  evaluate result
      */
-    public double evaluate(RecommenderContext context, RecommendedList recommendedList) {
-        SparseMatrix testMatrix = context.getDataModel().getDataSplitter().getTestData();
+    public double evaluate(RecommenderContext context, RecommendedList groundTruthList, RecommendedList recommendedList) {
         conf = context.getConf();
         String[] similarityKeys = conf.getStrings("rec.recommender.similarities");
         if (similarityKeys != null && similarityKeys.length > 0) {
             similarityMatrix = context.getSimilarity().getSimilarityMatrix();
             similarities = context.getSimilarities();
         }
-        return evaluate(testMatrix, recommendedList);
+        return evaluate(groundTruthList, recommendedList);
+    }
+
+    public double evaluate(EvalContext evalContext){
+        conf = evalContext.getConf();
+
+        if (evalContext.getSimilarityMatrix() != null){
+            similarityMatrix = evalContext.getSimilarityMatrix();
+        }
+
+        if (evalContext.getSimilarities() != null){
+            similarities = evalContext.getSimilarities();
+        }
+        return evaluate(evalContext.getGroundTruthList(), evalContext.getRecommendedList());
     }
 
     /**
      * Evaluate on the test set with the the list of recommended items.
      *
-     * @param testMatrix
-     *            the given test set
+     * @param groundTruthList
+     *            the given test set ground truth List
      * @param recommendedList
      *            the list of recommended items
      * @return evaluate result
      */
-    public abstract double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList);
+    public abstract double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList);
+
+    /**
+     * Evaluate independently on the test set with the the list of recommended items.
+     *
+     * @param conf
+     *            the configuration fo the evaluator
+     * @param groundTruthList
+     *            the given test set ground truth List
+     * @param recommendedList
+     *            the list of recommended items
+     * @return evaluate result
+     */
+    public double evaluateIndependently(Configuration conf, RecommendedList groundTruthList, RecommendedList recommendedList){
+        this.conf = conf;
+        this.topN = conf != null ? conf.getInt("rec.recommender.ranking.topn", -1): -1;
+        RecommendedList[] lists = groundTruthList.joinTransform(recommendedList, topN);
+        return evaluate(lists[0], lists[1]);
+    }
 
     /**
      * Set the number of recommended items.

@@ -24,8 +24,7 @@ import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
+import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 import net.librec.util.Lists;
 
@@ -62,7 +61,7 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
     /**
      * items biases
      */
-    private DenseVector itemBiases;
+    private VectorBasedDenseVector itemBiases;
 
     /**
      * bias regularization
@@ -80,7 +79,7 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
 
         regBias = conf.getFloat("rec.bias.regularization", 0.01f);
 
-        itemBiases = new DenseVector(numItems);
+        itemBiases = new VectorBasedDenseVector(numItems);
         itemBiases.init(0.01);
 
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
@@ -90,7 +89,7 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
         // pre-compute and sort by item's popularity
         sortedItemPops = new ArrayList<>();
         for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-            sortedItemPops.add(new AbstractMap.SimpleEntry<>(itemIdx, Double.valueOf(trainMatrix.columnSize(itemIdx))));
+            sortedItemPops.add(new AbstractMap.SimpleEntry<>(itemIdx, Double.valueOf(trainMatrix.column(itemIdx).getNumEntries())));
         }
         Lists.sortList(sortedItemPops, true);
 
@@ -100,10 +99,11 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
 
     @Override
     protected void trainModel() throws LibrecException {
+        int maxSample = trainMatrix.size();
         for (int iter = 1; iter <= numIterations; iter++) {
 
             loss = 0.0d;
-            for (int sampleCount = 0, smax = numUsers * 100; sampleCount < smax; sampleCount++) {
+            for (int sampleCount = 0; sampleCount < maxSample; sampleCount++) {
                 // randomly draw (userIdx, posItemIdx, negItemIdx)
                 int userIdx = 0, posItemIdx = 0, negItemIdx = 0;
                 List<Integer> ratedItems = null;
@@ -153,8 +153,8 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
 
                 // update bias
                 double posItemBiasValue = itemBiases.get(posItemIdx), negItemBiasValue = itemBiases.get(negItemIdx);
-                itemBiases.add(posItemIdx, learnRate * (deriValue - regBias * posItemBiasValue));
-                itemBiases.add(negItemIdx, learnRate * (-deriValue - regBias * negItemBiasValue));
+                itemBiases.plus(posItemIdx, learnRate * (deriValue - regBias * posItemBiasValue));
+                itemBiases.plus(negItemIdx, learnRate * (-deriValue - regBias * negItemBiasValue));
                 loss += regBias * (posItemBiasValue * posItemBiasValue + negItemBiasValue * negItemBiasValue);
 
                 // update user/item vectors
@@ -163,9 +163,9 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
                     double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
                     double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
-                    userFactors.add(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
-                    itemFactors.add(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
-                    itemFactors.add(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
+                    userFactors.plus(userIdx, factorIdx, learnRate * (deriValue * (posItemFactorValue - negItemFactorValue) - regUser * userFactorValue));
+                    itemFactors.plus(posItemIdx, factorIdx, learnRate * (deriValue * userFactorValue - regItem * posItemFactorValue));
+                    itemFactors.plus(negItemIdx, factorIdx, learnRate * (deriValue * (-userFactorValue) - regItem * negItemFactorValue));
 
                     loss += regUser * userFactorValue * userFactorValue + regItem * posItemFactorValue * posItemFactorValue + regItem * negItemFactorValue * negItemFactorValue;
                 }
@@ -186,7 +186,7 @@ public class WBPRRecommender extends MatrixFactorizationRecommender {
      * @throws LibrecException if error occurs
      */
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return itemBiases.get(itemIdx) + DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+        return itemBiases.get(itemIdx) + super.predict(userIdx, itemIdx);
     }
 
     /**

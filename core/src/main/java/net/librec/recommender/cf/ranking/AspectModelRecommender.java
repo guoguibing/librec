@@ -24,7 +24,8 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 /**
  * <h3> Latent class models for collaborative filtering</h3>
@@ -37,7 +38,7 @@ import net.librec.recommender.ProbabilisticGraphicalRecommender;
  * @author Haidong Zhang and Keqiang Wang
  */
 
-public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
+public class AspectModelRecommender extends MatrixProbabilisticGraphicalRecommender {
 
     /**
      * number of topics
@@ -71,8 +72,8 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
         isRanking = true;
 
         // Initialize topic distribution
-        topicProbs = new DenseVector(numTopics);
-        topicProbsSum = new DenseVector(numTopics);
+        topicProbs = new VectorBasedDenseVector(numTopics);
+        topicProbsSum = new VectorBasedDenseVector(numTopics);
         double[] probs = Randoms.randProbs(numTopics);
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
             topicProbs.set(topicIdx, probs[topicIdx]);
@@ -132,9 +133,15 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected void mStep() {
-        topicProbsSum.setAll(0.0);
-        topicUserProbsSum.setAll(0.0);
-        topicItemProbsSum.setAll(0.0);
+//        topicProbsSum.setAll(0.0);
+//        topicUserProbsSum.setAll(0.0);
+//        topicItemProbsSum.setAll(0.0);
+        topicProbsSum.assign((index, tempValue)->0);
+        topicUserProbsSum.assign((rowId, colId, tempValue)->0);
+        topicItemProbsSum.assign((rowId, colId, tempValue)->0);
+        for (int i = 0; i < topicProbs.size(); i++) {
+            System.out.println(topicProbs.get(i));
+        }
 
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
             for (MatrixEntry trainMatrixEntry : trainMatrix) {
@@ -143,20 +150,20 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
                 double num = trainMatrixEntry.get();
 
                 double val = entryTopicDistribution.get(userIdx, itemIdx)[topicIdx] * num;
-                topicProbsSum.add(topicIdx, val);
-                topicUserProbsSum.add(topicIdx, userIdx, val);
-                topicItemProbsSum.add(topicIdx, itemIdx, val);
+                topicProbsSum.plus(topicIdx, val);
+                topicUserProbsSum.plus(topicIdx, userIdx, val);
+                topicItemProbsSum.plus(topicIdx, itemIdx, val);
             }
         }
-        topicProbs = topicProbsSum.scale(1.0 / topicProbsSum.sum());
+        topicProbs = topicProbsSum.times(1.0 / topicProbsSum.sum());
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
-            double userProbsSum = topicUserProbs.sumOfColumn(topicIdx);
+            double userProbsSum = topicUserProbs.column(topicIdx).sum();
             // avoid Nan
             userProbsSum = userProbsSum > 0.0d ? userProbsSum : 1.0d;
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
                 topicUserProbs.set(topicIdx, userIdx, topicUserProbsSum.get(topicIdx, userIdx) / userProbsSum);
             }
-            double itemProbsSum = topicItemProbs.sumOfColumn(topicIdx);
+            double itemProbsSum = topicItemProbs.column(topicIdx).sum();
             // avoid Nan
             itemProbsSum = itemProbsSum > 0.0d ? itemProbsSum : 1.0d;
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {

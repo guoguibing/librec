@@ -56,8 +56,8 @@ public class PMFRecommender extends MatrixFactorizationRecommender {
                 for (int factorId = 0; factorId < numFactors; factorId++) {
                     double userFactor = userFactors.get(userId, factorId), itemFactor = itemFactors.get(itemId, factorId);
 
-                    userFactors.add(userId, factorId, learnRate * (error * itemFactor - regUser * userFactor));
-                    itemFactors.add(itemId, factorId, learnRate * (error * userFactor - regItem * itemFactor));
+                    userFactors.plus(userId, factorId, learnRate * (error * itemFactor - regUser * userFactor));
+                    itemFactors.plus(itemId, factorId, learnRate * (error * userFactor - regItem * itemFactor));
 
                     loss += regUser * userFactor * userFactor + regItem * itemFactor * itemFactor;
                 }

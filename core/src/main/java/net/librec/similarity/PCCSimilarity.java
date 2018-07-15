@@ -31,13 +31,11 @@ public class PCCSimilarity extends AbstractRecommenderSimilarity {
     /**
      * Calculate the similarity between thisList and thatList.
      *
-     * @param thisList
-     *            this list
-     * @param thatList
-     *            that list
+     * @param thisList this list
+     * @param thatList that list
      * @return similarity
      */
-    protected double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {
+    public double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {
         // compute similarity
 
         if (thisList == null || thatList == null || thisList.size() < 2 || thatList.size() < 2 || thisList.size() != thatList.size()) {

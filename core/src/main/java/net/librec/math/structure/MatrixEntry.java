@@ -12,7 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a clone of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
@@ -20,6 +20,8 @@ package net.librec.math.structure;
 
 /**
  * An entry of a matrix.
+ *
+ * @author Keqiang Wang (email: sei.wkq2008@gmail.com)
  */
 public interface MatrixEntry {
 
@@ -47,8 +49,11 @@ public interface MatrixEntry {
     /**
      * Sets the value at the current index
      *
-     * @param value  the value to set
+     * @param value the value to set
      */
     void set(double value);
 
+    int rowPosition();
+
+    int columnPosition();
 }

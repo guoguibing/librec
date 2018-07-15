@@ -40,7 +40,7 @@ public class Configured implements Configurable {
     /**
      * Construct a Configured.
      *
-     * @param conf  object for construction
+     * @param conf object for construction
      */
     public Configured(Configuration conf) {
         setConf(conf);

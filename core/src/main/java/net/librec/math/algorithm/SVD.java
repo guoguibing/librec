@@ -12,7 +12,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a clone of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
@@ -57,9 +57,9 @@ public class SVD {
 
         // Initialize.
         DenseMatrix matClone = mat.clone();
-        double[][] A = matClone.data;
-        m = matClone.numRows;
-        n = matClone.numColumns;
+        double[][] A = matClone.getValues();
+        m = matClone.rowSize();
+        n = matClone.columnSize();
 
 		/*
          * Apparently the failing cases are only a proper subset of (m<n), so let's not throw error.
@@ -463,7 +463,7 @@ public class SVD {
      * @return U
      */
     public DenseMatrix getU() {
-        return new DenseMatrix(U, m, Math.min(m + 1, n));
+        return new DenseMatrix(U);
     }
 
     /**
@@ -472,7 +472,7 @@ public class SVD {
      * @return V
      */
     public DenseMatrix getV() {
-        return new DenseMatrix(V, n, n);
+        return new DenseMatrix(V);
     }
 
     /**

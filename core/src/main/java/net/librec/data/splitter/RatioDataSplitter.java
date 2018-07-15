@@ -20,12 +20,14 @@ package net.librec.data.splitter;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataConvertor;
+import net.librec.data.convertor.ArffDataConvertor;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
 import net.librec.util.RatingContext;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,15 +37,15 @@ import java.util.List;
  * Ratio Data Splitter.<br>
  * Split dataset into train set, test set, valid set by ratio.<br>
  *
- * @author WangYuFeng and Liuxz
+ * @author WangYuFeng, Liuxz and Keqiang Wang
  */
 public class RatioDataSplitter extends AbstractDataSplitter {
 
-    /** The rate dataset for splitting */
-    private SparseMatrix preferenceMatrix;
 
-    /** The datetime dataset for splitting */
-    private SparseMatrix datetimeMatrix;
+    /**
+     * The datetime dataset for splitting
+     */
+    private SequentialAccessSparseMatrix datetimeMatrix;
 
     /**
      * Empty constructor.
@@ -55,10 +57,8 @@ public class RatioDataSplitter extends AbstractDataSplitter {
      * Initializes a newly created {@code RatioDataSplitter} object
      * with convertor and configuration.
      *
-     * @param dataConvertor
-     *          the convertor for the splitter.
-     * @param conf
-     *          the configuration for the splitter.
+     * @param dataConvertor the convertor for the splitter.
+     * @param conf          the configuration for the splitter.
      */
     public RatioDataSplitter(DataConvertor dataConvertor, Configuration conf) {
         this.dataConvertor = dataConvertor;
@@ -72,8 +72,14 @@ public class RatioDataSplitter extends AbstractDataSplitter {
      */
     @Override
     public void splitData() throws LibrecException {
-        this.preferenceMatrix = dataConvertor.getPreferenceMatrix();
-        this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+        if (null == this.preferenceMatrix) {
+            this.preferenceMatrix = dataConvertor.getPreferenceMatrix(conf);
+            if ((!(dataConvertor instanceof ArffDataConvertor))
+                    &&(StringUtils.equals(conf.get("data.column.format"), "UIRT"))) {
+                this.datetimeMatrix = dataConvertor.getDatetimeMatrix();
+            }
+        }
+
         String splitter = conf.get("data.splitter.ratio");
         switch (splitter.toLowerCase()) {
             case "rating": {
@@ -117,6 +123,8 @@ public class RatioDataSplitter extends AbstractDataSplitter {
                 getRatioByItemDate(ratio);
                 break;
             }
+            default:
+                break;
         }
     }
 
@@ -128,24 +136,22 @@ public class RatioDataSplitter extends AbstractDataSplitter {
     public void getRatioByRating(double ratio) {
         if (ratio > 0 && ratio < 1) {
 
-            testMatrix = new SparseMatrix(preferenceMatrix);
-            trainMatrix = new SparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for(MatrixEntry matrixEntry: preferenceMatrix){
-                int userIdx = matrixEntry.row();
-                int itemIdx = matrixEntry.column();
+            for (MatrixEntry matrixEntry : preferenceMatrix) {
 
                 double rdm = Randoms.uniform();
 
                 if (rdm < ratio) {
-                    testMatrix.set(userIdx, itemIdx, 0.0);
+                    testMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
                 } else {
-                    trainMatrix.set(userIdx, itemIdx, 0.0);
+                    trainMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
                 }
             }
 
-            SparseMatrix.reshape(testMatrix);
-            SparseMatrix.reshape(trainMatrix);
+            testMatrix.reshape();
+            trainMatrix.reshape();
         }
     }
 
@@ -158,29 +164,30 @@ public class RatioDataSplitter extends AbstractDataSplitter {
     public void getRatioByRatingDate(double ratio) {
         if (ratio > 0 && ratio < 1) {
 
-            testMatrix = new SparseMatrix(preferenceMatrix);
-            trainMatrix = new SparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            List<RatingContext> rcs = new ArrayList<>(datetimeMatrix.size());
-            for (MatrixEntry me : preferenceMatrix)
-                rcs.add(new RatingContext(me.row(), me.column(), (long) datetimeMatrix.get(me.row(), me.column())));
-            Collections.sort(rcs);
+            List<RatingContext> ratingContexts = new ArrayList<>(datetimeMatrix.size());
+            for (MatrixEntry matrixEntry : preferenceMatrix) {
+                ratingContexts.add(new RatingContext(matrixEntry.row(), matrixEntry.columnPosition(),
+                        (long) datetimeMatrix.getAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition())));
+            }
+            Collections.sort(ratingContexts);
 
-            int trainSize = (int) (rcs.size() * ratio);
-            for (int i = 0; i < rcs.size(); i++) {
-                RatingContext rc = rcs.get(i);
-                int u = rc.getUser();
-                int j = rc.getItem();
+            int trainSize = (int) (ratingContexts.size() * ratio);
+            for (int index = 0; index < ratingContexts.size(); index++) {
+                RatingContext rc = ratingContexts.get(index);
+                int rowIndex = rc.getUser();
+                int columnPosition = rc.getItem();
 
-                if (i < trainSize)
-                    testMatrix.set(u, j, 0.0);
+                if (index < trainSize)
+                    testMatrix.setAtColumnPosition(rowIndex, columnPosition, 0.0D);
                 else
-                    trainMatrix.set(u, j, 0.0);
+                    trainMatrix.setAtColumnPosition(rowIndex, columnPosition, 0.0D);
             }
 
-            rcs = null;
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(testMatrix);
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
     }
 
@@ -189,31 +196,25 @@ public class RatioDataSplitter extends AbstractDataSplitter {
      * ratings where {@code ratio} percentage of ratings are preserved for each
      * user, and the rest are used as the testing data.
      *
-     * @param ratio  the ratio of training data
+     * @param ratio the ratio of training data
      */
     public void getRatioByUser(double ratio) {
-
         if (ratio > 0 && ratio < 1) {
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
-
-            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-
-                List<Integer> items = preferenceMatrix.getColumns(u);
-
-                for (int j : items) {
+            for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+                for (Vector.VectorEntry vectorEntry : preferenceMatrix.row(rowIndex)) {
                     if (Randoms.uniform() < ratio) {
-                        testMatrix.set(u, j, 0.0);
+                        testMatrix.setAtColumnPosition(rowIndex, vectorEntry.position(), 0.0D);
                     } else {
-                        trainMatrix.set(u, j, 0.0);
+                        trainMatrix.setAtColumnPosition(rowIndex, vectorEntry.position(), 0.0D);
                     }
                 }
             }
-
-            SparseMatrix.reshape(testMatrix);
-            SparseMatrix.reshape(trainMatrix);
         }
+        testMatrix.reshape();
+        trainMatrix.reshape();
     }
 
 
@@ -223,28 +224,32 @@ public class RatioDataSplitter extends AbstractDataSplitter {
      * {@code ratio} are preserved for each user as training data with the rest
      * as test.
      *
-     *  @param ratio  the ratio of training data
+     * @param ratio the ratio of training data
      */
     public void getFixedRatioByUser(double ratio) {
 
         if (ratio > 0 && ratio < 1) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
+            for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+                int numRated = preferenceMatrix.row(rowIndex).getNumEntries();
 
-                List<Integer> items = preferenceMatrix.getColumns(u);
                 // k is the test set, this will be smaller, so we want these indices in the list
-                int k = (int) Math.floor(items.size() * (1 - ratio));
+                int numRatio = (int) Math.floor(numRated * (1 - ratio));
+                if (numRatio < 1) {
+                    continue;
+                }
                 try {
-                    List<Integer> testIndexes = Randoms.randInts(k, 0, items.size());
+                    int[] givenPositions = Randoms.nextIntArray(numRatio, numRated);
 
-                    for (int j : items) {
-                        if (testIndexes.contains(j)) {
-                            trainMatrix.set(u, j, 0.0);
+                    for (int testColumnPosition = 0, columnPosition = 0; columnPosition < numRated; columnPosition++) {
+                        if (testColumnPosition < givenPositions.length && givenPositions[testColumnPosition] == columnPosition) {
+                            testMatrix.setAtColumnPosition(rowIndex, testColumnPosition, 0.0D);
+                            testColumnPosition++;
                         } else {
-                            testMatrix.set(u, j, 0.0);
+                            trainMatrix.setAtColumnPosition(rowIndex, testColumnPosition, 0.0D);
                         }
                     }
                 } catch (java.lang.Exception e) {
@@ -252,8 +257,8 @@ public class RatioDataSplitter extends AbstractDataSplitter {
                 }
             }
 
-            SparseMatrix.reshape(testMatrix);
-            SparseMatrix.reshape(trainMatrix);
+            testMatrix.reshape();
+            trainMatrix.reshape();
         }
     }
 
@@ -267,35 +272,34 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 
         if (ratio > 0 && ratio < 1) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int user = 0, um = preferenceMatrix.numRows(); user < um; user++) {
-                List<Integer> unsortedItems = preferenceMatrix.getColumns(user);
-
-                int size = unsortedItems.size();
-
-                List<RatingContext> rcs = new ArrayList<>(size);
-                for (int item : unsortedItems) {
-                    rcs.add(new RatingContext(user, item, (long) datetimeMatrix.get(user, item)));
+            for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+                SequentialSparseVector itemRatingVector = preferenceMatrix.row(rowIndex);
+                if (itemRatingVector.getNumEntries() < 1) {
+                    continue;
                 }
-                Collections.sort(rcs);
+                List<RatingContext> itemRatingList = new ArrayList<>(itemRatingVector.getNumEntries());
 
-                int trainSize = (int) (rcs.size() * ratio);
-                for (int i = 0; i < rcs.size(); i++) {
-                    RatingContext rc = rcs.get(i);
-                    int u = rc.getUser();
-                    int j = rc.getItem();
-                    if (i < trainSize)
-                        testMatrix.set(u, j, 0.0);
-                    else
-                        trainMatrix.set(u, j, 0.0);
+                for (Vector.VectorEntry vectorEntry : itemRatingVector) {
+                    itemRatingList.add(new RatingContext(rowIndex, vectorEntry.position(), (long) vectorEntry.get()));
+                }
+                int trainSize = (int) (itemRatingList.size() * ratio);
+
+                Collections.sort(itemRatingList);
+
+                for (int index = 0; index < itemRatingList.size(); index++) {
+                    if (index < trainSize) {
+                        testMatrix.setAtColumnPosition(rowIndex, itemRatingList.get(index).getItem(), 0.0D);
+                    } else {
+                        trainMatrix.setAtColumnPosition(rowIndex, itemRatingList.get(index).getItem(), 0.0D);
+                    }
                 }
             }
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(testMatrix);
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
-
     }
 
     /**
@@ -303,29 +307,26 @@ public class RatioDataSplitter extends AbstractDataSplitter {
      * ratings where {@code ratio} percentage of ratings are preserved for each
      * item, and the rest are used as the testing data.
      *
-     * @param ratio  the ratio of training data
+     * @param ratio the ratio of training data
      */
     public void getRatioByItem(double ratio) {
 
         if (ratio > 0 && ratio < 1) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int i = 0, im = preferenceMatrix.numColumns(); i < im; i++) {
-
-                List<Integer> users = preferenceMatrix.getRows(i);
-
-                for (int u : users) {
+            for (int columnIndex = 0, columnSize = preferenceMatrix.columnSize(); columnIndex < columnSize; columnIndex++) {
+                for (Vector.VectorEntry vectorEntry : preferenceMatrix.column(columnIndex)) {
                     if (Randoms.uniform() < ratio) {
-                        testMatrix.set(u, i, 0.0);
+                        testMatrix.setAtRowPosition(vectorEntry.position(), columnIndex, 0.0D);
                     } else {
-                        trainMatrix.set(u, i, 0.0);
+                        trainMatrix.setAtRowPosition(vectorEntry.position(), columnIndex, 0.0D);
                     }
                 }
             }
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(testMatrix);
+            trainMatrix.reshape();
+            testMatrix.reshape();
         }
     }
 
@@ -339,33 +340,36 @@ public class RatioDataSplitter extends AbstractDataSplitter {
 
         if (ratio > 0 && ratio < 1) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int item = 0, im = preferenceMatrix.numColumns(); item < im; item++) {
-                List<Integer> unsortedUsers = preferenceMatrix.getRows(item);
+            for (int columnIndex = 0, columnSize = preferenceMatrix.columnSize(); columnIndex < columnSize; columnIndex++) {
+                SequentialSparseVector userRatingVector = preferenceMatrix.column(columnIndex);
 
-                int size = unsortedUsers.size();
-                List<RatingContext> rcs = new ArrayList<>(size);
-                for (int user : unsortedUsers) {
-                    rcs.add(new RatingContext(user, item, (long) datetimeMatrix.get(user, item)));
+                if (userRatingVector.getNumEntries() < 1) {
+                    continue;
                 }
-                Collections.sort(rcs);
 
-                int trainSize = (int) (rcs.size() * ratio);
-                for (int i = 0; i < rcs.size(); i++) {
-                    RatingContext rc = rcs.get(i);
-                    int u = rc.getUser();
-                    int j = rc.getItem();
+                List<RatingContext> ratingContexts = new ArrayList<>(userRatingVector.getNumEntries());
 
-                    if (i < trainSize)
-                        testMatrix.set(u, j, 0.0);
+                for (Vector.VectorEntry vectorEntry : userRatingVector) {
+                    ratingContexts.add(new RatingContext(vectorEntry.position(), columnIndex,
+                            (long) datetimeMatrix.getAtRowPosition(vectorEntry.position(), columnIndex)));
+                }
+
+                Collections.sort(ratingContexts);
+                int trainSize = (int) (ratingContexts.size() * ratio);
+
+                for (int rowPosition = 0; rowPosition < ratingContexts.size(); rowPosition++) {
+                    RatingContext ratingContext = ratingContexts.get(rowPosition);
+                    if (rowPosition < trainSize)
+                        testMatrix.setAtRowPosition(ratingContext.getUser(), columnIndex, 0.0D);
                     else
-                        trainMatrix.set(u, j, 0.0);
+                        trainMatrix.setAtRowPosition(ratingContext.getUser(), columnIndex, 0.0D);
                 }
             }
-            SparseMatrix.reshape(testMatrix);
-            SparseMatrix.reshape(trainMatrix);
+            testMatrix.reshape();
+            trainMatrix.reshape();
         }
     }
 
@@ -379,34 +383,32 @@ public class RatioDataSplitter extends AbstractDataSplitter {
     public void getRatio(double trainRatio, double validationRatio) {
         if ((trainRatio > 0 && validationRatio > 0) && (trainRatio + validationRatio) < 1) {
 
-            trainMatrix = new SparseMatrix(preferenceMatrix);
-            validationMatrix = new SparseMatrix(preferenceMatrix);
-            testMatrix = new SparseMatrix(preferenceMatrix);
+            trainMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            validationMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
+            testMatrix = new SequentialAccessSparseMatrix(preferenceMatrix);
 
-            for (int u = 0, um = preferenceMatrix.numRows(); u < um; u++) {
-
-                SparseVector uv = preferenceMatrix.row(u);
-                for (VectorEntry j : uv) {
-                    double rdm = Randoms.uniform();
-                    if (rdm < trainRatio) {
-                        // training
-                        validationMatrix.set(u, j.index(), 0.0);
-                        testMatrix.set(u, j.index(), 0.0);
-                    } else if (rdm < trainRatio + validationRatio) {
-                        // validation
-                        trainMatrix.set(u, j.index(), 0.0);
-                        testMatrix.set(u, j.index(), 0.0);
-                    } else {
-                        // test
-                        trainMatrix.set(u, j.index(), 0.0);
-                        validationMatrix.set(u, j.index(), 0.0);
-                    }
+//            for (int rowIndex = 0, rowSize = preferenceMatrix.rowSize(); rowIndex < rowSize; rowIndex++) {
+//                SequentialAccessSparseVector userRatingVector = preferenceMatrix.row(rowIndex);
+            for (MatrixEntry matrixEntry : preferenceMatrix) {
+                double rdm = Randoms.uniform();
+                if (rdm < trainRatio) {
+                    // training
+                    validationMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                    testMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                } else if (rdm < trainRatio + validationRatio) {
+                    // validation
+                    trainMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                    testMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                } else {
+                    // test
+                    trainMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                    validationMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
                 }
             }
 
-            SparseMatrix.reshape(trainMatrix);
-            SparseMatrix.reshape(validationMatrix);
-            SparseMatrix.reshape(testMatrix);
+            trainMatrix.reshape();
+            validationMatrix.reshape();
+            testMatrix.reshape();
         }
     }
 }

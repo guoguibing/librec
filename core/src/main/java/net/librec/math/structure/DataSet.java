@@ -27,6 +27,6 @@ public interface DataSet {
     /**
      * @return number of entries of the dataset
      */
-    public int size();
+    int size();
 
 }

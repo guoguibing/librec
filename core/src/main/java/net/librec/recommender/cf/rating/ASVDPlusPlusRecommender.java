@@ -20,9 +20,12 @@ package net.librec.recommender.cf.rating;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -68,10 +71,10 @@ public class ASVDPlusPlusRecommender extends BiasedMFRecommender {
 
                 // update factors
                 double userBiasValue = userBiases.get(userIdx);
-                userBiases.add(userIdx, learnRate * (error - regBias * userBiasValue));
+                userBiases.plus(userIdx, learnRate * (error - regBias * userBiasValue));
 
                 double itemBiasValue = itemBiases.get(itemIdx);
-                itemBiases.add(itemIdx, learnRate * (error - regBias * itemBiasValue));
+                itemBiases.plus(itemIdx, learnRate * (error - regBias * itemBiasValue));
 
                 double[] sumImpItemsFactors = new double[numFactors];
                 double[] sumNeiItemsFactors = new double[numFactors];
@@ -96,8 +99,8 @@ public class ASVDPlusPlusRecommender extends BiasedMFRecommender {
                             * (userFactorIdx + sumImpItemsFactors[factorIdx] + sumNeiItemsFactors[factorIdx])
                             - regItem * itemFactorIdx;
 
-                    userFactors.add(userIdx, factorIdx, learnRate * sgd_user);
-                    itemFactors.add(itemIdx, factorIdx, learnRate * sgd_item);
+                    userFactors.plus(userIdx, factorIdx, learnRate * sgd_user);
+                    itemFactors.plus(itemIdx, factorIdx, learnRate * sgd_item);
                     for (int ImpitemIdx : items) {
                         double impItemFactorIdx = impItemFactors.get(ImpitemIdx, factorIdx);
                         double neiItemFactorIdx = neiItemFactors.get(ImpitemIdx, factorIdx);
@@ -105,8 +108,8 @@ public class ASVDPlusPlusRecommender extends BiasedMFRecommender {
                         double delta_neiItem = error * itemFactorIdx
                                 * (realRating - globalMean - userBiases.get(userIdx) - itemBiases.get(ImpitemIdx)) / impNor
                                 - regUser * neiItemFactorIdx;
-                        impItemFactors.add(ImpitemIdx, factorIdx, learnRate * delta_impItem);
-                        neiItemFactors.add(ImpitemIdx, factorIdx, learnRate * delta_neiItem);
+                        impItemFactors.plus(ImpitemIdx, factorIdx, learnRate * delta_impItem);
+                        neiItemFactors.plus(ImpitemIdx, factorIdx, learnRate * delta_neiItem);
                     }
                 }
 
@@ -118,23 +121,33 @@ public class ASVDPlusPlusRecommender extends BiasedMFRecommender {
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
         double predictRating = globalMean + userBiases.get(userIdx) + itemBiases.get(itemIdx)
-                + DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+                + super.predict(userIdx, itemIdx);
+
+        // plus to adapt to 3.0
+        HashMap<Integer, Integer> itemHashMap = new HashMap<>();
+        int[] itemIndices = trainMatrix.row(userIdx).getIndices();
+        for (int i = 0; i < itemIndices.length; i++) {
+            itemHashMap.put(itemIndices[i], i);
+        }
 
         List<Integer> items = userItemsList.get(userIdx);
         double w = Math.sqrt(items.size());
         for (int k : items) {
-            predictRating += DenseMatrix.rowMult(impItemFactors, k, itemFactors, itemIdx) / w;
+            predictRating += impItemFactors.row(k).dot(itemFactors.row(itemIdx)) / w;
             predictRating += neiItemFactors.row(k)
-                    .scale(trainMatrix.get(userIdx, k) - globalMean - userBiases.get(userIdx) - itemBiases.get(k))
-                    .inner(itemFactors.row(itemIdx)) / w;
+                    .times(trainMatrix.row(userIdx).getAtPosition(itemHashMap.get(k)) - globalMean - userBiases.get(userIdx) - itemBiases.get(k))
+                    .dot(itemFactors.row(itemIdx)) / w;
         }
         return predictRating;
     }
 
-    private List<List<Integer>> getUserItemsList(SparseMatrix sparseMatrix) {
+    private List<List<Integer>> getUserItemsList(SequentialAccessSparseMatrix sparseMatrix) {
         List<List<Integer>> userItemsList = new ArrayList<>();
         for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsList.add(sparseMatrix.getColumns(userIdx));
+            int[] itemIndexes = trainMatrix.row(userIdx).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> itemList = Arrays.asList(inputBoxed);
+            userItemsList.add(itemList);
         }
         return userItemsList;
     }

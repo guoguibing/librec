@@ -34,24 +34,24 @@ import java.io.IOException;
  */
 public class URPTestCase extends BaseTestCase {
 
-	@Override
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+    }
 
-	/**
-	 * test the whole process of SVDPP Recommendation
-	 *
-	 * @throws ClassNotFoundException
-	 * @throws LibrecException
-	 * @throws IOException
-	 */
-	@Test
-	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
-		Resource resource = new Resource("rec/cf/rating/urp-test.properties");
-		conf.addResource(resource);
-		RecommenderJob job = new RecommenderJob(conf);
-		job.runJob();
-	}
+    /**
+     * test the whole process of SVDPP Recommendation
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+        Resource resource = new Resource("rec/cf/rating/urp-test.properties");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
 }

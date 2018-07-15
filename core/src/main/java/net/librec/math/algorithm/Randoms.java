@@ -12,20 +12,20 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
-// You should have received a copy of the GNU General Public License
+// You should have received a clone of the GNU General Public License
 // along with LibRec. If not, see <http://www.gnu.org/licenses/>.
 //
 
 package net.librec.math.algorithm;
 
-import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.DenseVector;
+import net.librec.math.structure.VectorBasedDenseVector;
 
 import java.util.*;
 
 /**
- * @author Guo Guibing
+ * @author Guo Guibing and Keqiang Wang
  */
 public class Randoms {
     private static Random r = new Random(System.currentTimeMillis());
@@ -35,8 +35,8 @@ public class Randoms {
     /**
      * Random generate an integer in [0, range)
      *
-     * @param range  range of the interval
-     * @return  an integer random generated in [0, range)
+     * @param range range of the interval
+     * @return an integer random generated in [0, range)
      */
     public static int uniform(int range) {
         return uniform(0, range);
@@ -49,9 +49,9 @@ public class Randoms {
     /**
      * Random generate an integer in [min, max)
      *
-     * @param min  minimum of the range
-     * @param max  maximum of the range
-     * @return     an integer random generated in [min, max)
+     * @param min minimum of the range
+     * @param max maximum of the range
+     * @return an integer random generated in [min, max)
      */
     public static int uniform(int min, int max) {
         return min + r.nextInt(max - min);
@@ -82,7 +82,7 @@ public class Randoms {
     /**
      * A random double array with values in [0, 1)
      *
-     * @param size the size of random array
+     * @param size the cardinality of random array
      * @return a random double array with values in [0, 1)
      */
     public static double[] doubles(int size) {
@@ -98,7 +98,7 @@ public class Randoms {
      *
      * @param min  minimum
      * @param max  maximum
-     * @param size the size of random array
+     * @param size the cardinality of random array
      * @return a random double array with values in [min, max)
      */
     public static double[] doubles(double min, double max, int size) {
@@ -153,7 +153,7 @@ public class Randoms {
      *
      * @param mu    mean
      * @param sigma stddev
-     * @return  a real number from a Gaussian distribution with given mean and stddev
+     * @return a real number from a Gaussian distribution with given mean and stddev
      */
     public static double gaussian(double mu, double sigma) {
         return mu + sigma * r.nextGaussian();
@@ -164,7 +164,7 @@ public class Randoms {
      * (http://mahout.apache.org/), available under Apache 2 license.
      *
      * @param alpha alpha parameter for Gamma Distribution.
-     * @param scale scale parameter for Gamma Distribution.
+     * @param scale times parameter for Gamma Distribution.
      * @return a sample point randomly drawn from the given distribution.
      */
     public static double gamma(double alpha, double scale) {
@@ -362,17 +362,16 @@ public class Randoms {
     /**
      * Randomly sample a matrix from Wishart Distribution with the given parameters.
      *
-     * @param scale scale parameter for Wishart Distribution.
+     * @param scale times parameter for Wishart Distribution.
      * @param df    degree of freedom for Wishart Distribution.
      * @return the sample randomly drawn from the given distribution.
-     * @throws LibrecException if error occurs
      */
-    public static DenseMatrix wishart(DenseMatrix scale, double df) throws LibrecException {
+    public static DenseMatrix wishart(DenseMatrix scale, double df) {
         DenseMatrix A = scale.cholesky();
         if (A == null)
             return null;
 
-        int p = scale.numRows();
+        int p = scale.rowSize();
         DenseMatrix z = new DenseMatrix(p, p);
 
         for (int i = 0; i < p; i++) {
@@ -381,7 +380,7 @@ public class Randoms {
             }
         }
 
-        SparseVector y = new SparseVector(p);
+        DenseVector y = new VectorBasedDenseVector(p);
         for (int i = 0; i < p; i++)
             y.set(i, Randoms.gamma((df - (i + 1)) / 2, 2));
 
@@ -391,11 +390,11 @@ public class Randoms {
         if (p > 1) {
             // rest of diagonal:
             for (int j = 1; j < p; j++) {
-                SparseVector zz = new SparseVector(j);
+                double tmpValue = 0.0D;
                 for (int k = 0; k < j; k++)
-                    zz.set(k, z.get(k, j));
+                    tmpValue += z.get(k, j) * z.get(k, j);
 
-                B.set(j, j, y.get(j) + zz.inner(zz));
+                B.set(j, j, y.get(j) + tmpValue);
             }
 
             // first row and column:
@@ -408,27 +407,24 @@ public class Randoms {
         if (p > 2) {
             for (int j = 2; j < p; j++) {
                 for (int i = 1; i <= j - 1; i++) {
-                    SparseVector zki = new SparseVector(i);
-                    SparseVector zkj = new SparseVector(i);
-
+                    double tempValue = 0.0D;
                     for (int k = 0; k <= i - 1; k++) {
-                        zki.set(k, z.get(k, i));
-                        zkj.set(k, z.get(k, j));
+                        tempValue += z.get(k, i) * z.get(k, j);
                     }
-                    B.set(i, j, z.get(i, j) * Math.sqrt(y.get(i)) + zki.inner(zkj));
+                    B.set(i, j, z.get(i, j) * Math.sqrt(y.get(i)) + tempValue);
                     B.set(j, i, B.get(i, j)); // mirror
                 }
             }
         }
 
-        return A.transpose().mult(B).mult(A);
+        return A.transpose().times(B).times(A);
     }
 
     /**
      * Return an integer with a Poisson distribution with mean lambda.
      *
-     * @param lambda  mean lambda
-     * @return  an integer with a Poisson distribution with mean lambda
+     * @param lambda mean lambda
+     * @return an integer with a Poisson distribution with mean lambda
      */
     public static int poisson(double lambda) {
         // using algorithm given by Knuth
@@ -446,7 +442,7 @@ public class Randoms {
     /**
      * Return a real number with a Pareto distribution with parameter alpha.
      *
-     * @param alpha  parameter alpha
+     * @param alpha parameter alpha
      * @return a real number with a Pareto distribution with parameter alpha.
      */
     public static double pareto(double alpha) {
@@ -467,7 +463,7 @@ public class Randoms {
      * nonnegative and their sum (very nearly) equals 1.0.
      *
      * @param a probability a[i]
-     * @return  a number from the discrete distribution
+     * @return a number from the discrete distribution
      */
     public static int discrete(double[] a) {
         double EPSILON = 1E-6;
@@ -539,12 +535,12 @@ public class Randoms {
     }
 
     /**
-     * Generate no repeat {@code size} indexes from {@code min} to {@code max}
+     * Generate no repeat {@code cardinality} indexes from {@code min} to {@code max}
      *
-     * @param min   min of the range
-     * @param max   max of the range
-     * @param size  size of the index array
-     * @return  no repeat {@code size} indexes from {@code min} to {@code max}
+     * @param min  min of the range
+     * @param max  max of the range
+     * @param size cardinality of the index array
+     * @return no repeat {@code cardinality} indexes from {@code min} to {@code max}
      */
     public static int[] indexs(int size, int min, int max) {
         Set<Integer> used = new HashSet();
@@ -572,8 +568,8 @@ public class Randoms {
     /**
      * generate next integers array with no repeated elements
      *
-     * @param length     the length of the array
-     * @param range      the index range of the array, default [0, range)
+     * @param length the length of the array
+     * @param range  the index range of the array, default [0, range)
      * @return ascending sorted integer array
      * @throws Exception if the range is less than length, an exception will be thrown
      */
@@ -640,12 +636,12 @@ public class Randoms {
     /**
      * Get a normalize array of probabilities
      *
-     * @param size array size
+     * @param size array cardinality
      * @return a normalize array of probabilities
      */
     public static double[] randProbs(int size) {
         if (size < 1)
-            throw new IllegalArgumentException("The size param must be greate than zero");
+            throw new IllegalArgumentException("The cardinality param must be greate than zero");
 
         double[] pros = new double[size];
 

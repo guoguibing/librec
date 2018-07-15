@@ -20,13 +20,11 @@ package net.librec.recommender.ext;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.SymmMatrix;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.*;
 import net.librec.recommender.cf.ranking.RankSGDRecommender;
 import net.librec.util.Lists;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -70,9 +68,9 @@ public class PRankDRecommender extends RankSGDRecommender {
         Map<Integer, Double> itemProbsMap = new HashMap<>();
         double maxUsersCount = 0;
 
-        itemWeights = new DenseVector(numItems);
+        itemWeights = new VectorBasedDenseVector(numItems);
         for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-            int usersCount = trainMatrix.columnSize(itemIdx);
+            int usersCount = trainMatrix.column(itemIdx).size();
 
             maxUsersCount = maxUsersCount < usersCount ? usersCount : maxUsersCount;
             itemWeights.set(itemIdx, usersCount);
@@ -103,15 +101,15 @@ public class PRankDRecommender extends RankSGDRecommender {
 
             loss = 0.0d;
             // for each rated user-item (u,i) pair
-            for (int userIdx : trainMatrix.rows()) {
-                SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-                for (VectorEntry itemRatingEntry : itemRatingsVector) {
+            for (int userIdx = 0; userIdx < trainMatrix.rowSize(); userIdx++) {
+                SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+                for (Vector.VectorEntry itemRatingEntry : itemRatingsVector) {
                     // each rated item i
                     int posItemIdx = itemRatingEntry.index();
                     double posRating = itemRatingEntry.get();
 
                     int negItemIdx = -1;
-                    while (true) {
+                        while (true) {
                         // draw an item j with probability proportional to popularity
                         double sum = 0, randValue = Randoms.random();
                         for (Map.Entry<Integer, Double> mapEntry : itemProbs) {
@@ -126,7 +124,7 @@ public class PRankDRecommender extends RankSGDRecommender {
                         }
 
                         // ensure that it is unrated by user u
-                        if (!itemRatingsVector.contains(negItemIdx))
+                        if (!isContain(itemRatingsVector, negItemIdx))
                             break;
                     }
                     double negRating = 0;
@@ -147,9 +145,9 @@ public class PRankDRecommender extends RankSGDRecommender {
                         double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
                         double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
-                        userFactors.add(userIdx, factorIdx, -learnFactor * (posItemFactorValue - negItemFactorValue));
-                        itemFactors.add(posItemIdx, factorIdx, -learnFactor * userFactorValue);
-                        itemFactors.add(negItemIdx, factorIdx, learnFactor * userFactorValue);
+                        userFactors.set(userIdx, factorIdx, -learnFactor * (posItemFactorValue - negItemFactorValue));
+                        itemFactors.set(posItemIdx, factorIdx, -learnFactor * userFactorValue);
+                        itemFactors.set(negItemIdx, factorIdx, learnFactor * userFactorValue);
                     }
                 }
             }
@@ -160,6 +158,11 @@ public class PRankDRecommender extends RankSGDRecommender {
             }
             updateLRate(iter);
         }
+    }
+
+    private boolean isContain(SequentialSparseVector itemRatingsVector, int idx) {
+        int[] indices = itemRatingsVector.getIndices();
+        return Arrays.binarySearch(indices, 0, indices.length, idx) >= 0;
     }
 }
 

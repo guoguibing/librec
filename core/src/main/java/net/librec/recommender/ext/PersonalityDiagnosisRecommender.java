@@ -17,10 +17,15 @@
  */
 package net.librec.recommender.ext;
 
+import com.clearspring.analytics.util.Lists;
+import com.google.common.collect.Maps;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
+import net.librec.recommender.MatrixRecommender;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Related Work:
@@ -31,7 +36,7 @@ import net.librec.recommender.AbstractRecommender;
  *
  * @author guoguibing and Keqiang Wang
  */
-public class PersonalityDiagnosisRecommender extends AbstractRecommender {
+public class PersonalityDiagnosisRecommender extends MatrixRecommender {
     /**
      * Gaussian noise: 2.5 suggested in the paper
      */
@@ -41,6 +46,8 @@ public class PersonalityDiagnosisRecommender extends AbstractRecommender {
      * prior probability
      */
     private double prior;
+
+    List<Map<Integer, Integer>> userItemsPosList = Lists.newArrayList();
 
     /**
      * initialization
@@ -62,7 +69,15 @@ public class PersonalityDiagnosisRecommender extends AbstractRecommender {
      */
     @Override
     protected void trainModel() throws LibrecException {
-
+        // plus to adapt to 3.0
+        for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+            Map<Integer, Integer> itemIndexPosMap = Maps.newHashMap();
+            int[] itemIndices = trainMatrix.row(userIdx).getIndices();
+            for (int i = 0; i < itemIndices.length; i++) {
+                itemIndexPosMap.put(itemIndices[i], i);
+            }
+            userItemsPosList.add(itemIndexPosMap);
+        }
     }
 
 
@@ -78,26 +93,28 @@ public class PersonalityDiagnosisRecommender extends AbstractRecommender {
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
         double[] scaleProbs = new double[ratingScale.size()];
 
-        SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-        SparseVector userRatingsVector = trainMatrix.column(itemIdx);
+        SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+        SequentialSparseVector userRatingsVector = trainMatrix.column(itemIdx);
 
         int index = 0;
         for (double ratingValue : ratingScale) {
 
             double prob = 0.0;
-            for (VectorEntry vectorEntry : userRatingsVector) {
+            for (Vector.VectorEntry vectorEntry : userRatingsVector) {
                 // other users who rated item j
                 int ratedUserIdx = vectorEntry.index();
                 double userRatingValue = vectorEntry.get();
 
-                SparseVector ratedItemRatingsVector = trainMatrix.row(ratedUserIdx);
+                SequentialSparseVector ratedItemRatingsVector = trainMatrix.row(ratedUserIdx);
+                Map<Integer, Integer> currItemIndexPosMap = userItemsPosList.get(ratedUserIdx);
                 double prod = 1.0;
-                for (VectorEntry itemRatingEntry : itemRatingsVector) {
+                for (Vector.VectorEntry itemRatingEntry : itemRatingsVector) {
                     int ratedItemIdx = itemRatingEntry.index();
                     double itemRatingValue = itemRatingEntry.get();
-                    double ratedItemRatingValue = ratedItemRatingsVector.get(ratedItemIdx);
-                    if (ratedItemRatingValue > 0)
+                    if (currItemIndexPosMap.get(ratedItemIdx) != null) {
+                        double ratedItemRatingValue = ratedItemRatingsVector.getAtPosition(currItemIndexPosMap.get(ratedItemIdx));
                         prod *= gaussian(itemRatingValue, ratedItemRatingValue, sigma);
+                    }
                 }
                 prob += gaussian(ratingValue, userRatingValue, sigma) * prod;
             }

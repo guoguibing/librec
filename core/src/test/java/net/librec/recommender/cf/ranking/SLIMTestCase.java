@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * SLIM Test Case corresponds to SLIMRecommender
- * {@link net.librec.recommender.cf.ranking.SLIMRecommender}
+ * {@link SLIMRecommender}
  *
  * @author SunYatong
  */

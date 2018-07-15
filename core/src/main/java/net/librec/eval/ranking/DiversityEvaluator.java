@@ -18,9 +18,8 @@
 package net.librec.eval.ranking;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
-import net.librec.math.structure.SparseMatrix;
 import net.librec.math.structure.SymmMatrix;
-import net.librec.recommender.item.ItemEntry;
+import net.librec.recommender.item.KeyValue;
 import net.librec.recommender.item.RecommendedList;
 
 import java.util.List;
@@ -30,49 +29,49 @@ import java.util.List;
  * recommended list at a specific cutoff position. Reference: Avoiding monotony:
  * improving the diversity of recommendation lists, ReSys, 2008
  *
- * @author WangYuFeng
+ * @author Keqiang Wang
  */
 public class DiversityEvaluator extends AbstractRecommenderEvaluator {
 
     /**
      * Evaluate on the test set with the the list of recommended items.
      *
-     * @param testMatrix
-     *            the given test set
+     * @param groundTruthList
+     *            the given ground truth list
      * @param recommendedList
      *            the list of recommended items
      * @return evaluate result
      */
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
 
         double totalDiversity = 0.0;
-        int numUsers = testMatrix.numRows();
-        int nonZeroNumUsers = 0;
+        int numContext = groundTruthList.size();
+        int nonZeroContext = 0;
 
         if (similarities.containsKey("item")) {
             SymmMatrix itemSimilarity = similarities.get("item").getSimilarityMatrix();
-            for (int userID = 0; userID < numUsers; userID++) {
-                List<ItemEntry<Integer, Double>> recommendArrayListByUser = recommendedList.getItemIdxListByUserIdx(userID);
-                if (recommendArrayListByUser.size() > 1) {
+            for (int contextIdx = 0; contextIdx < numContext; ++contextIdx) {
+                List<KeyValue<Integer, Double>> recommendArrayListByContext= recommendedList.getKeyValueListByContext(contextIdx);
+                if (recommendArrayListByContext.size() > 1) {
                     // calculate the sum of dissimilarities for each pair of items per user
-                    double totalDisSimilarityPerUser = 0.0;
-                    int topK = this.topN <= recommendArrayListByUser.size() ? this.topN : recommendArrayListByUser.size();
-                    for (int i = 0; i < topK; i++) {
-                        for (int j = 0; j < topK; j++) {
-                            if (i == j) {
+                    double totalDisSimilarityPerContext = 0.0;
+                    int topK = this.topN <= recommendArrayListByContext.size() ? this.topN : recommendArrayListByContext.size();
+                    for (int indexOut = 0; indexOut < topK; ++indexOut) {
+                        for (int indexIn = 0; indexIn < topK; ++indexIn) {
+                            if (indexOut == indexIn) {
                                 continue;
                             }
-                            int item1 = recommendArrayListByUser.get(i).getKey();
-                            int item2 = recommendArrayListByUser.get(j).getKey();
-                            totalDisSimilarityPerUser += 1.0 - itemSimilarity.get(item1, item2);
+                            int keyOut = recommendArrayListByContext.get(indexOut).getKey();
+                            int keyIn = recommendArrayListByContext.get(indexIn).getKey();
+                            totalDisSimilarityPerContext += 1.0 - itemSimilarity.get(keyOut, keyIn);
                         }
                     }
-                    totalDiversity += totalDisSimilarityPerUser * 2 / (topK * (topK - 1));
-                    nonZeroNumUsers++;
+                    totalDiversity += totalDisSimilarityPerContext / (topK * (topK - 1));
+                    nonZeroContext++;
                 }
             }
         }
 
-        return nonZeroNumUsers > 0 ? totalDiversity / nonZeroNumUsers : 0.0d;
+        return nonZeroContext > 0 ? totalDiversity / nonZeroContext : 0.0d;
     }
 }

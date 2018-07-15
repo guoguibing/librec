@@ -17,6 +17,7 @@
  */
 package net.librec.annotation;
 
+import net.librec.io.NullWritable;
 
 import java.lang.annotation.*;
 
@@ -32,9 +33,9 @@ import java.lang.annotation.*;
 public @interface ModelData {
     String[] value();
 
-//    Class<?> writable() default NullWritable.class;
-//
-//    Class<?> mapKey() default NullWritable.class;
-//
-//    Class<?> mapVal() default NullWritable.class;
+    Class<?> writable() default NullWritable.class;
+
+    Class<?> mapKey() default NullWritable.class;
+
+    Class<?> mapVal() default NullWritable.class;
 }

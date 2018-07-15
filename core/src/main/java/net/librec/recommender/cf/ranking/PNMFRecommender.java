@@ -20,8 +20,8 @@ package net.librec.recommender.cf.ranking;
 
 import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.recommender.MatrixFactorizationRecommender;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -91,7 +91,7 @@ import java.util.concurrent.*;
  *
  * @author Daniel Velten, Karlsruhe, Germany
  */
-public class PNMFRecommender extends AbstractRecommender {
+public class PNMFRecommender extends MatrixFactorizationRecommender{
 
     private static final int PARALLELIZE_USER_SPLIT_SIZE = 5000;
 
@@ -190,8 +190,8 @@ public class PNMFRecommender extends AbstractRecommender {
 
             //  See Formula 16 in "Projective non-negative matrix factorization with applications to facial image processing"
             for (int userIdx = fromUser; userIdx < toUser; userIdx++) {
-                SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-                if (itemRatingsVector.getCount() > 0) {
+                SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+                if (itemRatingsVector.getNumEntries() > 0) {
 
                     double[] thisUserLatentFactors = predictFactors(itemRatingsVector);
                     for (int factorIdx = 0; factorIdx < summedLatentFactors.length; factorIdx++) {
@@ -200,7 +200,7 @@ public class PNMFRecommender extends AbstractRecommender {
 
 
                     double[] second_term_numerator = new double[numFactors];
-                    for (int itemIdx : itemRatingsVector.getIndex()) {
+                    for (int itemIdx : itemRatingsVector.getIndices()) {
                         double estimate = 0;
                         for (int factorIdx = 0; factorIdx < thisUserLatentFactors.length; factorIdx++) {
                             estimate += thisUserLatentFactors[factorIdx] * w[factorIdx][itemIdx];
@@ -220,8 +220,8 @@ public class PNMFRecommender extends AbstractRecommender {
                             second_term_numerator[factorIdx] += estimateFactor * w[factorIdx][itemIdx];
                         }
                     }
-                    // Now we are able to add the second term numerator to each w element.
-                    for (int itemIdx : itemRatingsVector.getIndex()) {
+                    // Now we are able to plus the second term numerator to each w element.
+                    for (int itemIdx : itemRatingsVector.getIndices()) {
 
                         for (int factorIdx = 0; factorIdx < second_term_numerator.length; factorIdx++) {
                             resultNumerator[factorIdx][itemIdx] += second_term_numerator[factorIdx];
@@ -341,7 +341,7 @@ public class PNMFRecommender extends AbstractRecommender {
         LOG.info("Divergence (before iteration " + iteration +")=" + divergence);
     }
 
-    private double predict(SparseVector itemRatingsVector, int itemIdx) {
+    private double predict(SequentialSparseVector itemRatingsVector, int itemIdx) {
         double sum = 0;
         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
 
@@ -352,17 +352,17 @@ public class PNMFRecommender extends AbstractRecommender {
         return sum;
     }
 
-    private double predictFactor(SparseVector itemRatingsVector, int factorIdx) {
+    private double predictFactor(SequentialSparseVector itemRatingsVector, int factorIdx) {
         double sum = 0;
-        for (int itemIdx : itemRatingsVector.getIndex()) {
+        for (int itemIdx : itemRatingsVector.getIndices()) {
             sum += w[factorIdx][itemIdx];
         }
         return sum;
     }
 
-    private double[] predictFactors(SparseVector itemRatingsVector) {
+    private double[] predictFactors(SequentialSparseVector itemRatingsVector) {
         double[] latentFactors = new double[numFactors];
-        for (int itemIdx : itemRatingsVector.getIndex()) {
+        for (int itemIdx : itemRatingsVector.getIndices()) {
             for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                 latentFactors[factorIdx] += w[factorIdx][itemIdx];
             }
@@ -376,7 +376,7 @@ public class PNMFRecommender extends AbstractRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        SparseVector itemRatingsVector = trainMatrix.row(userIdx);
+        SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
 
         return predict(itemRatingsVector, itemIdx);
     }

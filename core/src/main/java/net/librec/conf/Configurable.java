@@ -25,7 +25,7 @@ public interface Configurable {
     /**
      * Set the configuration to be used by this object.
      *
-     * @param conf  the configuration to be used by this object
+     * @param conf the configuration to be used by this object
      */
     void setConf(Configuration conf);
 

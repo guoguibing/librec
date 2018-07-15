@@ -23,7 +23,7 @@ import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
+import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 import java.util.HashSet;
@@ -50,7 +50,7 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
     /**
      * items biases vector
      */
-    private DenseVector itemBiases;
+    private VectorBasedDenseVector itemBiases;
 
     /**
      * user-items cache, item-users cache
@@ -66,13 +66,12 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
     protected void setup() throws LibrecException {
         super.setup();
 
-        regBias = conf.getDouble("rec.bias.regularization", 0.01);
-        
-        itemBiases = new DenseVector(numItems);
+        itemBiases = new VectorBasedDenseVector(numItems);
         itemBiases.init();
 
-        rho = conf.getFloat("rec.gpbr.rho",1.5f);
-        gLen = conf.getInt("rec.gpbr.gsize",2);
+        rho = conf.getFloat("rec.gpbr.rho", 1.5f);
+        gLen = conf.getInt("rec.gpbr.gsize", 2);
+        regBias = conf.getDouble("rec.bias.regularization", 0.01);
 
         cacheSpec = conf.get("guava.cache.spec", "maximumSize=200,expireAfterAccess=2m");
         userItemsCache = trainMatrix.rowColumnsCache(cacheSpec);
@@ -80,21 +79,20 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
     }
 
     @Override
-    protected void trainModel() throws LibrecException {    	
+    protected void trainModel() throws LibrecException {
+        int maxSample = trainMatrix.size();
         for (int iter = 1; iter <= numIterations; iter++) {
-
             loss = 0.0d;
-
             DenseMatrix tempUserFactors = new DenseMatrix(numUsers, numFactors);
             DenseMatrix tempItemFactors = new DenseMatrix(numItems, numFactors);
 
-            for (int sample = 0, smax = numUsers * 100; sample < smax; sample++) {
+            for (int sample = 0; sample < maxSample; sample++) {
                 // uniformly draw (userIdx, posItemIdx, userGroupSet, negItemIdx)
                 int userIdx, posItemIdx, negItemIdx;
                 // userIdx
                 List<Integer> ratedItems = null; // row userIdx itemList
                 do {
-                    userIdx = Randoms.uniform(trainMatrix.numRows());
+                    userIdx = Randoms.uniform(numUsers);
                     try {
                         ratedItems = userItemsCache.get(userIdx);
                     } catch (ExecutionException e) {
@@ -142,11 +140,11 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
 
                 // update bi, bj
                 double posBiasValue = itemBiases.get(posItemIdx);
-                itemBiases.add(posItemIdx, learnRate * (deriValue - regBias * posBiasValue));
+                itemBiases.plus(posItemIdx, learnRate * (deriValue - regBias * posBiasValue));
                 loss += regBias * posBiasValue * posBiasValue;
 
                 double negBiasValue = itemBiases.get(negItemIdx);
-                itemBiases.add(negItemIdx, learnRate * (-deriValue - regBias * negBiasValue));
+                itemBiases.plus(negItemIdx, learnRate * (-deriValue - regBias * negBiasValue));
                 loss += regBias * negBiasValue * negBiasValue;
 
                 // update Pw
@@ -160,10 +158,8 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
                         double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
                         double deltaGroup = rho * averageWeight * posItemFactorValue + (1 - rho) * delta * posItemFactorValue - delta * negItemFactorValue;
-                        tempUserFactors.add(groupUserIdx, factorIdx, learnRate * (deriValue * deltaGroup - regUser * groupUserFactorValue));
-
+                        tempUserFactors.plus(groupUserIdx, factorIdx, learnRate * (deriValue * deltaGroup - regUser * groupUserFactorValue));
                         loss += regUser * groupUserFactorValue * groupUserFactorValue;
-                        
                         sumGroup[factorIdx] += groupUserFactorValue;
                     }
                 }
@@ -175,17 +171,16 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
                     double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
                     double posDelta = rho * averageWeight * sumGroup[factorIdx] + (1 - rho) * userFactorValue;
-                    tempItemFactors.add(posItemIdx, factorIdx, learnRate * (deriValue * posDelta - regItem * posItemFactorValue));
+                    tempItemFactors.plus(posItemIdx, factorIdx, learnRate * (deriValue * posDelta - regItem * posItemFactorValue));
                     loss += regItem * posItemFactorValue * posItemFactorValue;
-                    
-                    double negDelta = -userFactorValue;
-                    tempItemFactors.add(negItemIdx, factorIdx, learnRate * (deriValue * negDelta - regItem * negItemFactorValue));
                     loss += regItem * negItemFactorValue * negItemFactorValue;
+                    double negDelta = -userFactorValue;
+                    tempItemFactors.plus(negItemIdx, factorIdx, learnRate * (deriValue * negDelta - regItem * negItemFactorValue));
                 }
             }
 
-            userFactors.addEqual(tempUserFactors);
-            itemFactors.addEqual(tempItemFactors);
+            userFactors.assign(userFactors.plus(tempUserFactors));
+            itemFactors.assign(itemFactors.plus(tempItemFactors));
 
             if (isConverged(iter) && earlyStop) {
                 break;
@@ -200,14 +195,14 @@ public class GBPRRecommender extends MatrixFactorizationRecommender {
 
         double sum = 0;
         for (int groupUserIdx : groupSet)
-            sum += DenseMatrix.rowMult(userFactors, groupUserIdx, itemFactors, itemIdx);
+            sum += userFactors.row(groupUserIdx).dot(itemFactors.row(itemIdx));
 
         double groupRating = sum / groupSet.size() + itemBiases.get(itemIdx);
 
         return rho * groupRating + (1 - rho) * predictRating;
     }
 
-    protected double predict(int userIdx, int itemIdx){
-        return itemBiases.get(itemIdx) + DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+    protected double predict(int userIdx, int itemIdx) throws LibrecException {
+        return itemBiases.get(itemIdx) + super.predict(userIdx, itemIdx);
     }
 }

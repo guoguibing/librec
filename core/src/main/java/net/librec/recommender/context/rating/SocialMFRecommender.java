@@ -22,7 +22,8 @@ import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
 import net.librec.recommender.SocialRecommender;
 
 /**
@@ -66,8 +67,8 @@ public class SocialMFRecommender extends SocialRecommender {
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                     double userFactorValue = userFactors.get(userIdx, factorIdx);
                     double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
-                    tempUserFactors.add(userIdx, factorIdx, deriValue * itemFactorValue + regUser * userFactorValue);
-                    tempItemFactors.add(itemIdx, factorIdx, deriValue * userFactorValue + regItem * itemFactorValue);
+                    tempUserFactors.plus(userIdx, factorIdx, deriValue * itemFactorValue + regUser * userFactorValue);
+                    tempItemFactors.plus(itemIdx, factorIdx, deriValue * userFactorValue + regItem * itemFactorValue);
 
                     loss += regUser * userFactorValue * userFactorValue + regItem * itemFactorValue * itemFactorValue;
                 }
@@ -75,49 +76,57 @@ public class SocialMFRecommender extends SocialRecommender {
 
             // social regularization
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-                SparseVector userTrustVector = socialMatrix.row(userIdx);
+                SequentialSparseVector userTrustVector = socialMatrix.row(userIdx);
                 double trustSum = userTrustVector.sum();
                 if (trustSum <= 0)
                     continue;
 
                 double[] sumNNs = new double[numFactors];
-                for (int trustUserIdx : userTrustVector.getIndex()) {
+                for (Vector.VectorEntry ve : userTrustVector) {
+                    int trustUserIdx = ve.index();
+                    double trustUserValue = ve.get();
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
-                        sumNNs[factorIdx] += socialMatrix.get(userIdx, trustUserIdx) * userFactors.get(trustUserIdx, factorIdx);
+                        sumNNs[factorIdx] += trustUserValue * userFactors.get(trustUserIdx, factorIdx);
                 }
 
                 for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
                     double diffValue = userFactors.get(userIdx, factorIdx) - sumNNs[factorIdx] / trustSum;
-                    tempUserFactors.add(userIdx, factorIdx, regSocial * diffValue);
+                    tempUserFactors.plus(userIdx, factorIdx, regSocial * diffValue);
 
                     loss += regSocial * diffValue * diffValue;
                 }
 
                 // those who trusted user u
-                SparseVector userTrustedVector = socialMatrix.column(userIdx);
+                SequentialSparseVector userTrustedVector = socialMatrix.column(userIdx);
                 double trustedSum = userTrustedVector.sum();
-                for (int trustedUserIdx : userTrustedVector.getIndex()) {
-                    double trustedValue = socialMatrix.get(trustedUserIdx, userIdx);
 
-                    SparseVector trustedTrustVector = socialMatrix.row(trustedUserIdx);
+                for (Vector.VectorEntry ve_1 : userTrustedVector) {
+                    int trustedUserIdx = ve_1.index();
+                    double trustedValue = ve_1.get();
+
+                    SequentialSparseVector trustedTrustVector = socialMatrix.row(trustedUserIdx);
                     double[] sumDiffs = new double[numFactors];
-                    for (int trustedTrustUserIdx : trustedTrustVector.getIndex()) {
+
+                    for (Vector.VectorEntry ve : trustedTrustVector) {
+                        int trustedTrustUserIdx = ve.index();
+                        double trustedTrustUserValue = ve.get();
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
-                            sumDiffs[factorIdx] += socialMatrix.get(trustedUserIdx, trustedTrustUserIdx)
-                                    * userFactors.get(trustedTrustUserIdx, factorIdx);
+                            sumDiffs[factorIdx] += trustedTrustUserValue * userFactors.get(trustedTrustUserIdx, factorIdx);
                     }
 
                     trustSum = trustedTrustVector.sum();
                     if (trustSum > 0)
                         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++)
-                            tempUserFactors.add(userIdx, factorIdx, -regSocial * (trustedValue / trustedSum) *
+                            tempUserFactors.plus(userIdx, factorIdx, -regSocial * (trustedValue / trustedSum) *
                                     (userFactors.get(trustedUserIdx, factorIdx) - sumDiffs[factorIdx] / trustSum));
+
                 }
+
             }
 
             // update user factors
-            userFactors = userFactors.add(tempUserFactors.scale(-learnRate));
-            itemFactors = itemFactors.add(tempItemFactors.scale(-learnRate));
+            userFactors = userFactors.plus(tempUserFactors.times(-learnRate));
+            itemFactors = itemFactors.plus(tempItemFactors.times(-learnRate));
 
             loss *= 0.5d;
 
@@ -125,8 +134,6 @@ public class SocialMFRecommender extends SocialRecommender {
                 break;
             }
             updateLRate(iter);
-
-
         }
     }
 

@@ -17,6 +17,11 @@
  */
 package net.librec.conf;
 
+import net.librec.util.StringUtil;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,25 +30,15 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import net.librec.util.StringUtil;
-
 /**
  * Provides access to configuration parameters.
- *
+ * <p>
  * <h3 id="Resources">Resources</h3>
  * <p>
  * Configurations are specified by resources. A resource contains a set of
@@ -57,12 +52,12 @@ import net.librec.util.StringUtil;
  * loaded in-order from the classpath:
  * <ol>
  * <li><tt>
- * <a href="{@docRoot}/../librec.properties">
- * librec.properties</a></tt>: Read-only defaults for librec.</li>
- * <li><tt>librec.properties</tt>: Site-specific configuration for a given
- * librec installation.</li>
+ * <a href="{@docRoot}/../librec-default.properties">
+ * librec-default.properties</a></tt>: Read-only defaults for librec.</li>
+ * <li><tt>librec-default.properties</tt>: Site-specific configuration for a
+ * given librec installation.</li>
  * </ol>
- * Applications may add additional resources, which are loaded subsequent to
+ * Applications may plus additional resources, which are loaded subsequent to
  * these resources in the order they are added.
  *
  * @author WangYuFeng
@@ -97,13 +92,33 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         if (cL.getResource("librec-default.properties") != null) {
             addDefaultResource("librec-default.properties");
         }
-//         if (cL.getResource("driver.classes.props") != null) {
-//         LOG.warn("DEPRECATED: driver.classes.props found in the classpath.");
-//         }
+        // if (cL.getResource("driver.classes.props") != null) {
+        // LOG.warn("DEPRECATED: driver.classes.props found in the classpath.");
+        // }
         if (cL.getResource("librec.properties") != null) {
             addDefaultResource("librec.properties");
         }
         // addDefaultResource("driver.classes.props");
+    }
+
+    /**
+     * A new configuration.
+     */
+    public Configuration() {
+        this(true);
+    }
+
+    /**
+     * A new configuration where the behavior of reading from the default
+     * resources can be turned off.
+     * <p>
+     * If the parameter {@code loadDefaults} is false, the new instance will not
+     * load resources from the default files.
+     *
+     * @param loadDefaults specifies whether to load from the default files
+     */
+    public Configuration(boolean loadDefaults) {
+        this.loadDefaults = loadDefaults;
     }
 
     public static class Resource {
@@ -275,7 +290,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         return StringUtils.isNotBlank(value) ? value : defaultValue;
     }
 
-
     /**
      * Set the value of the <code>name</code> property to an <code>long</code>.
      *
@@ -378,7 +392,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     }
 
     /**
-     * Set the value of the <code>name</code> property to a <code>boolean</code>.
+     * Set the value of the <code>name</code> property to a <code>boolean</code>
+     * .
      *
      * @param name  property name.
      * @param value <code>boolean</code> value of the property.
@@ -401,7 +416,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         }
     }
 
-    private synchronized Properties getProps() {
+    protected synchronized Properties getProps() {
         if (properties == null) {
             properties = new Properties();
             loadResources(properties, resources);
@@ -488,7 +503,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     /**
      * Load a class by name.
      *
-     * @param name the class name.
+     * @param name        the class name.
      * @param defaultName the default class.
      * @return the class object.
      * @throws ClassNotFoundException if the class is not found.

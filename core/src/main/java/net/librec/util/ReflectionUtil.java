@@ -20,7 +20,7 @@ public class ReflectionUtil {
     /**
      * Create an object for the given class and initialize it from conf
      *
-     * @param <T> type parameter
+     * @param <T>        type parameter
      * @param theClass   a given Class object
      * @param paramClass Class type of the constructor
      * @param paramValue object for the constructor
@@ -46,7 +46,7 @@ public class ReflectionUtil {
     /**
      * Create an object for the given class and initialize it from conf
      *
-     * @param <T> type parameter
+     * @param <T>      type parameter
      * @param theClass class of which an object is created
      * @param conf     Configuration
      * @return a new object

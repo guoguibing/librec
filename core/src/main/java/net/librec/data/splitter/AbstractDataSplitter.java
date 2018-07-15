@@ -20,15 +20,17 @@ package net.librec.data.splitter;
 import net.librec.conf.Configured;
 import net.librec.data.DataConvertor;
 import net.librec.data.DataSplitter;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.math.structure.SparseTensor;
+import net.librec.math.structure.MatrixEntry;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.LinkedList;
 
 /**
  * Abstract Data Splitter
  *
- * @author WangYuFeng
+ * @author WangYuFeng and Keqiang Wang
  */
 public abstract class AbstractDataSplitter extends Configured implements DataSplitter {
     /**
@@ -42,19 +44,24 @@ public abstract class AbstractDataSplitter extends Configured implements DataSpl
     /**
      * trainMatrix
      */
-    protected SparseMatrix trainMatrix;
+    protected SequentialAccessSparseMatrix trainMatrix;
     /**
      * testMatrix
      */
-    protected SparseMatrix testMatrix;
+    protected SequentialAccessSparseMatrix testMatrix;
     /**
      * validationMatrix
      */
-    protected SparseMatrix validationMatrix;
-
+    protected SequentialAccessSparseMatrix validationMatrix;
     /**
-     * @param dataConvertor the dataConvertor to set
+     * assign matrix
      */
+    protected LinkedList<SequentialAccessSparseMatrix> assignMatrixList;
+
+    protected SequentialAccessSparseMatrix preferenceMatrix = null;
+    protected SequentialAccessSparseMatrix datetimeMatrix = null;
+
+    @Override
     public void setDataConvertor(DataConvertor dataConvertor) {
         this.dataConvertor = dataConvertor;
     }
@@ -64,7 +71,8 @@ public abstract class AbstractDataSplitter extends Configured implements DataSpl
      *
      * @see net.librec.data.DataModel#getTrainDataSet()
      */
-    public SparseMatrix getTrainData() {
+    @Override
+    public SequentialAccessSparseMatrix getTrainData() {
         return trainMatrix;
     }
 
@@ -73,7 +81,8 @@ public abstract class AbstractDataSplitter extends Configured implements DataSpl
      *
      * @see net.librec.data.DataModel#getTestDataSet()
      */
-    public SparseMatrix getTestData() {
+    @Override
+    public SequentialAccessSparseMatrix getTestData() {
         return testMatrix;
     }
 
@@ -82,8 +91,40 @@ public abstract class AbstractDataSplitter extends Configured implements DataSpl
      *
      * @see net.librec.data.DataModel#getValidDataSet()
      */
-    public SparseMatrix getValidData() {
+    @Override
+    public SequentialAccessSparseMatrix getValidData() {
         return validationMatrix;
     }
 
+    public void setPreferenceMatrix(SequentialAccessSparseMatrix preferenceMatrix) {
+        this.preferenceMatrix = preferenceMatrix;
+    }
+
+    @Override
+    public boolean nextFold() {
+        if (assignMatrixList == null) {
+            assignMatrixList = new LinkedList<>();
+            return true;
+        } else {
+            if (assignMatrixList.size() > 0) {
+                SequentialAccessSparseMatrix assign = assignMatrixList.poll();
+                trainMatrix = preferenceMatrix.clone();
+                testMatrix = preferenceMatrix.clone();
+
+                for (MatrixEntry matrixEntry : preferenceMatrix) {
+                    if (assign.get(matrixEntry.row(), matrixEntry.column()) == 1) {
+                        trainMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                    } else {
+                        testMatrix.setAtColumnPosition(matrixEntry.row(), matrixEntry.columnPosition(), 0.0D);
+                    }
+                }
+
+                trainMatrix.reshape();
+                testMatrix.reshape();
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
 }
