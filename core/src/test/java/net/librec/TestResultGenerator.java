@@ -38,7 +38,7 @@ public class TestResultGenerator extends BaseTestCase {
     @Test
     public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
         String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(Calendar.getInstance().getTime());
-        List<String> filePaths = getResourceFolderFiles("fail/rec/");
+        List<String> filePaths = getResourceFolderFiles("rec/test/");
         List<String> recNames = new ArrayList<>();
         List<String> timeList = new ArrayList<>();
         List<Map<Measure.MeasureValue, Double>> evalMaps = new ArrayList<>();

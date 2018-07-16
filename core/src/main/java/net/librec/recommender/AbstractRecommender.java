@@ -22,7 +22,6 @@ import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
 import net.librec.job.progress.ProgressBar;
-import net.librec.util.ModelDataUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -160,7 +159,6 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void loadModel(String filePath) {
-        ModelDataUtil.loadRecommenderModel(this, filePath);
     }
 
     /**
@@ -170,7 +168,6 @@ public abstract class AbstractRecommender implements Recommender {
      */
     @Override
     public void saveModel(String filePath) {
-        ModelDataUtil.saveRecommenderModel(this, filePath);
     }
 
     /**
