@@ -84,7 +84,7 @@ public class IncrementalKNNTestCase extends BaseTestCase {
         conf.addResource(resource);
         RecommenderJob job = new RecommenderJob(conf);
 
-        job.runJob();
+        //job.runJob();
     }
 
     @Test
@@ -135,7 +135,7 @@ public class IncrementalKNNTestCase extends BaseTestCase {
         candidateItems.add(0);
         candidateItems.add(1);
 
-        List<Entry<Integer, Double>> result = recommender.scoreItems(ratedItems, candidateItems);
+       // List<Entry<Integer, Double>> result = recommender.scoreItems(ratedItems, candidateItems);
     }
 
 }

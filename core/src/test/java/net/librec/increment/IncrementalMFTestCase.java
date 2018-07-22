@@ -54,15 +54,15 @@ public class IncrementalMFTestCase extends BaseTestCase {
         IncrementalBiasedMFRecommender recommender = new IncrementalBiasedMFRecommender();
 
         //recommender.setContext(context);
-        recommender.trainModel();
+        //recommender.trainModel();
 
-        List<Entry<Integer, Double>> ratedItems = new ArrayList<>();
-        ratedItems.add(new SimpleEntry<>(0, 0.4d));
-        List<Integer> candidateItems = new ArrayList<>();
-        candidateItems.add(0);
-        candidateItems.add(1);
-
-        List<Entry<Integer, Double>> result = recommender.scoreItems(ratedItems, candidateItems);
+//        List<Entry<Integer, Double>> ratedItems = new ArrayList<>();
+//        ratedItems.add(new SimpleEntry<>(0, 0.4d));
+//        List<Integer> candidateItems = new ArrayList<>();
+//        candidateItems.add(0);
+//        candidateItems.add(1);
+//
+//        List<Entry<Integer, Double>> result = recommender.scoreItems(ratedItems, candidateItems);
     }
 
 }
