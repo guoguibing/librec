@@ -76,10 +76,5 @@
 			<artifactId>nd4j-native-platform</artifactId>
 			<version>${nd4j.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>net.librec</groupId>
-			<artifactId>librec-core</artifactId>
-			<version>3.0.0-beta</version>
-		</dependency>
 	</dependencies>
 </project>
