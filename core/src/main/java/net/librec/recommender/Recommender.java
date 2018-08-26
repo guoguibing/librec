@@ -22,7 +22,10 @@ import net.librec.data.DataModel;
 import net.librec.data.structure.AbstractBaseDataEntry;
 import net.librec.data.structure.LibrecDataList;
 import net.librec.math.structure.DataSet;
+import net.librec.recommender.item.RecommendedItem;
 import net.librec.recommender.item.RecommendedList;
+
+import java.util.List;
 
 /**
  * General recommenders
@@ -67,12 +70,12 @@ public interface Recommender {
      */
     void saveModel(String filePath);
 
-//    /**
-//     * get Recommended List
-//     *
-//     * @return recommended list
-//     */
-//    List<RecommendedItem> getRecommendedList(RecommendedList recommendedList);
+    /**
+     * get Recommended List
+     *
+     * @return recommended list
+     */
+    List<RecommendedItem> getRecommendedList(RecommendedList recommendedList);
 
 
     /**

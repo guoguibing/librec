@@ -22,8 +22,17 @@ import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
 import net.librec.job.progress.ProgressBar;
+import net.librec.recommender.item.ContextKeyValueEntry;
+import net.librec.recommender.item.GenericRecommendedItem;
+import net.librec.recommender.item.RecommendedItem;
+import net.librec.recommender.item.RecommendedList;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Abstract Recommender Methods
@@ -197,36 +206,34 @@ public abstract class AbstractRecommender implements Recommender {
         return context.getDataModel();
     }
 
-//    /**
-//     * get Recommended List
-//     *
-//     * @return Recommended List
-//     */
-//    public List<RecommendedItem> getRecommendedList(RecommendedList recommendedList) {
-//        if (recommendedList != null && recommendedList.cardinality() > 0) {
-//            RecommendedContextList<AbstractContext> contextList = getContextList();
-//            List<RecommendedItem> userItemList = new ArrayList<>();
-//            Iterator<ContextKeyValueEntry> recommendedEntryIter = recommendedList.iterator();
-//            if (userMappingData != null && userMappingData.cardinality() > 0 && itemMappingData != null && itemMappingData.cardinality() > 0) {
-//                BiMap<Integer, String> userMappingInverse = userMappingData.inverse();
-//                BiMap<Integer, String> itemMappingInverse = itemMappingData.inverse();
-//                while (recommendedEntryIter.hasNext()) {
-//                    ContextKeyValueEntry contextKecyValueEntry = recommendedEntryIter.next();
-//                    if (contextKecyValueEntry != null) {
-//                        AbstractContext context = contextList.getContext(contextKecyValueEntry.getContextIdx());
-//                        int userIdx = context.getUserIdx();
-//                        String userId = userMappingInverse.get(userIdx);
-//                        String itemId = itemMappingInverse.get(contextKecyValueEntry.getKey());
-//                        if (StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(itemId)) {
-//                            userItemList.plus(new GenericRecommendedItem(userId, itemId, contextKecyValueEntry.getValue()));
-//                        }
-//                    }
-//                }
-//                return userItemList;
-//            }
-//        }
-//        return null;
-//    }
+    /**
+     * get Recommended List
+     *
+     * @return Recommended List
+     */
+    public List<RecommendedItem> getRecommendedList(RecommendedList recommendedList) {
+
+        if (recommendedList != null && recommendedList.size() > 0) {
+            List<RecommendedItem> userItemList = new ArrayList<>();
+            Iterator<ContextKeyValueEntry> recommendedEntryIter = recommendedList.iterator();
+            if (userMappingData != null && userMappingData.size() > 0 && itemMappingData != null && itemMappingData.size() > 0) {
+                BiMap<Integer, String> userMappingInverse = userMappingData.inverse();
+                BiMap<Integer, String> itemMappingInverse = itemMappingData.inverse();
+                while (recommendedEntryIter.hasNext()) {
+                    ContextKeyValueEntry contextKecyValueEntry = recommendedEntryIter.next();
+                    if (contextKecyValueEntry != null) {
+                        String userId = userMappingInverse.get(contextKecyValueEntry.getContextIdx());
+                        String itemId = itemMappingInverse.get(contextKecyValueEntry.getKeyIdx());
+                        if (StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(itemId)) {
+                            userItemList.add(new GenericRecommendedItem(userId, itemId, contextKecyValueEntry.getValue()));
+                        }
+                    }
+                }
+                return userItemList;
+            }
+        }
+        return null;
+    }
 
     /**
      * Post each iteration, we do things:

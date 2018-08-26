@@ -131,9 +131,15 @@ public class RecommenderJob {
             executeEvaluator(recommender, context);
         }
         printCVAverageResult();
-//        List<RecommendedItem> recommendedList = recommender.getRecommendedList(recommendedList);
-//        recommendedList = filterResult(recommendedList);
-//        saveResult(recommendedList);
+        boolean isRanking = conf.getBoolean("rec.recommender.isranking");
+        List<RecommendedItem> recommendedList = null;
+        if (isRanking){
+            recommendedList = recommender.getRecommendedList(recommender.recommendRank());
+        } else {
+            recommendedList = recommender.getRecommendedList(recommender.recommendRating(context.getDataModel().getTestDataSet()));
+        }
+        recommendedList = filterResult(recommendedList);
+        saveResult(recommendedList);
     }
 
     /**
