@@ -2,7 +2,7 @@ package net.librec.spark.recommender
 
 import net.librec.recommender.item.RecommendedList
 import net.librec.spark.{BaseTestSuite, _}
-import net.librec.spark.data.DataConvertor
+import net.librec.spark.data.DataConverter
 import net.librec.spark.rdd.SimilarityFunctions._
 import net.librec.spark.rdd.SplitterFunctions._
 import net.librec.spark.rdd.StatisticalFunctions
@@ -18,7 +18,7 @@ class ItemKNNTestCase extends BaseTestSuite {
   test("ItemKNNRankingTestCase") {
     val conf = new LibrecConf().setMaster(master).setAppName(appName)
     val lc = new LibrecContext(conf)
-    val data = new DataConvertor(lc).convertText("/Users/clzhang/Documents/IntelliJIDEA_program/librec/librec_3.0.0_matrix/data/spark/ratings.txt")
+    val data = new DataConverter(lc).convertText("/Users/clzhang/Documents/IntelliJIDEA_program/librec/librec_3.0.0_matrix/data/spark/ratings.txt")
     val algoData = data.splitByRatio(Array(0.8, 0.2), "rating", 1000)
     val (trainData, testData) = (algoData(0), algoData(1))
 
@@ -44,7 +44,7 @@ class ItemKNNTestCase extends BaseTestSuite {
   test("ItemKNNRatingTestCase") {
     val conf = new LibrecConf().setMaster(master).setAppName(appName)
     val lc = new LibrecContext(conf)
-    val trainData = new DataConvertor(lc).convertText("/Users/clzhang/Documents/IntelliJIDEA_program/librec/librec_2.0.0/data/spark/rating/ratings.txt")
+    val trainData = new DataConverter(lc).convertText("/Users/clzhang/Documents/IntelliJIDEA_program/librec/librec_2.0.0/data/spark/rating/ratings.txt")
 
     val itemNum = 10 // TODO: not indexed
     val testData = trainData.map(rats => (rats.user, rats.item.toString))

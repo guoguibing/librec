@@ -19,7 +19,7 @@ package net.librec.spark
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import net.librec.spark.data.{DataConvertor, Rating}
+import net.librec.spark.data.{DataConverter, Rating}
 import org.apache.commons.lang.StringUtils
 
 /**
@@ -38,7 +38,7 @@ class LibrecContext(val conf: LibrecConf) {
     * @return
     */
   def convertData(path: String): RDD[Rating] = {
-    val converter = new DataConvertor(this)
+    val converter = new DataConverter(this)
     converter.convertText(path)
   }
 

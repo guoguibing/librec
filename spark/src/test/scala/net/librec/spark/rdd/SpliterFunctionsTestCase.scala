@@ -7,14 +7,14 @@ import org.apache.spark.ml.tuning.{CrossValidator, CrossValidatorModel, TrainVal
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.random.{BernoulliCellSampler, XORShiftRandom}
 import net.librec.spark.rdd.SplitterFunctions._
-import net.librec.spark.data.{DataConvertor, Rating}
+import net.librec.spark.data.{DataConverter, Rating}
 
 
 class SpliterFunctionsTestCase extends BaseTestSuite{
   override val appName: String = "EvaluatorTestCase"
 
   test("SpliterFunctionsTestCase") {
-    val dataConverter = new DataConvertor(lc)
+    val dataConverter = new DataConverter(lc)
     val rdd = dataConverter.convertText("file:///E:/workspace/my_workspace/librec/librec/data/spark/rating/ratings.txt")
     /*
     val datas = rdd.randomSplit(Array(0.1,0.2,0.3))
@@ -59,7 +59,7 @@ class SpliterFunctionsTestCase extends BaseTestSuite{
 
 
   test("SpliterFunctionsTestCase-radio") {
-    val data = new DataConvertor(lc).convertText("file:///E:/workspace/my_workspace/librec/librec/data/spark/rating/ratings.txt")
+    val data = new DataConverter(lc).convertText("file:///E:/workspace/my_workspace/librec/librec/data/spark/rating/ratings.txt")
 //    data.splitByRatio(Array(0.8,0.2),"userfixed").map(x => x.foreach(println))
 //    val x = data.splitByLOO("item")
 //    for ((elem, count) <- x.zipWithIndex){

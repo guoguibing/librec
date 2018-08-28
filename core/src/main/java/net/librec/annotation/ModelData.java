@@ -17,8 +17,7 @@
  */
 package net.librec.annotation;
 
-
-import org.datavec.api.writable.NullWritable;
+import net.librec.io.NullWritable;
 
 import java.lang.annotation.*;
 

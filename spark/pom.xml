@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>net.librec</groupId>
 		<artifactId>librec</artifactId>
-		<version>3.0.0-beta</version>
+		<version>2.0.0-beta</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -22,7 +22,7 @@
 		<dependency>
 			<groupId>net.librec</groupId>
 			<artifactId>librec-core</artifactId>
-			<version>3.0.0-beta</version>
+			<version>2.0.0-beta</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
@@ -68,6 +68,40 @@
 			<version>8.2.1</version>
 		</dependency>
 
+		<!--
+        <dependency>
+            <groupId>com.github.scopt</groupId>
+            <artifactId>scopt_2.11</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-math</artifactId>
+			<version>0.13.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-hdfs</artifactId>
+			<version>0.12.2</version>
+		</dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-streaming_${scala.binary.version}</artifactId>
+            <version>${spark.version}</version>
+            <type>test-jar</type>
+        </dependency>
+        -->
 	</dependencies>
 	<build>
 		<plugins>
@@ -103,6 +137,29 @@
 					<target>${java.version}</target>
 				</configuration>
 			</plugin>
+
+			<!--&lt;!&ndash;&lt;!&ndash; collect all dependency jars to lib/compile &ndash;&gt;&ndash;&gt;-->
+			<!--<plugin>-->
+				<!--<groupId>org.apache.maven.plugins</groupId>-->
+				<!--<artifactId>maven-dependency-plugin</artifactId>-->
+				<!--<version>2.5</version>-->
+				<!--<executions>-->
+					<!--<execution>-->
+						<!--<id>copy-dependencies</id>-->
+						<!--<phase>package</phase>-->
+						<!--<goals>-->
+							<!--<goal>copy-dependencies</goal>-->
+						<!--</goals>-->
+						<!--<configuration>-->
+							<!--<outputDirectory>${project.basedir}/../lib/</outputDirectory>-->
+							<!--<overWriteReleases>false</overWriteReleases>-->
+							<!--<overWriteSnapshots>false</overWriteSnapshots>-->
+							<!--<overWriteIfNewer>true</overWriteIfNewer>-->
+							<!--<useSubDirectoryPerScope>true</useSubDirectoryPerScope>-->
+						<!--</configuration>-->
+					<!--</execution>-->
+				<!--</executions>-->
+			<!--</plugin>-->
 
 		</plugins>
 	</build>

@@ -18,7 +18,7 @@
 package net.librec.spark.recommender
 
 import net.librec.recommender.item.RecommendedList
-import net.librec.spark.data.DataConvertor
+import net.librec.spark.data.DataConverter
 import net.librec.spark.rdd.SimilarityFunctions._
 import net.librec.spark.rdd.SplitterFunctions._
 import net.librec.spark.rdd.StatisticalFunctions
@@ -38,7 +38,7 @@ class UserKNNTestCase extends BaseTestSuite {
     val conf = new LibrecConf().setMaster(master).setAppName(appName)
     conf.setInt("rec.similarity.shrinkage", 10)
     val lc = new LibrecContext(conf)
-    val data = new DataConvertor(lc).convertText("E:/workspace/hadoopworkspace/librec/data/spark/ratings.txt")
+    val data = new DataConverter(lc).convertText("E:/workspace/my_workspace/librec/librec/data/spark/ratings.txt")
     val algoData = data.splitByRatio(Array(0.8, 0.2), "rating", seed = 1)
     val similarity = StatisticalFunctions.toIndexedSparseVectors(data).computeSimilarity(Correlation.BCOS, conf)
     val userKNN = new UserKNN(knn = 200, isRanking = true, trainData = algoData(0), similarityData = similarity)
@@ -61,7 +61,7 @@ class UserKNNTestCase extends BaseTestSuite {
     val conf = new LibrecConf().setMaster(master).setAppName(appName)
     conf.setInt("rec.similarity.shrinkage", 10)
     val lc = new LibrecContext(conf)
-    val data = new DataConvertor(lc).convertText("E:/workspace/hadoopworkspace/librec/data/spark/ratings.txt")
+    val data = new DataConverter(lc).convertText("E:/workspace/my_workspace/librec/librec/data/spark/ratings.txt")
     val algoData = data.splitByRatio(Array(0.8, 0.2), "rating", seed = 1)
     val similarity = StatisticalFunctions.toIndexedSparseVectors(data).computeSimilarity(Correlation.BCOS, conf)
     val userKNN = new UserKNN(knn = 200, isRanking = false, trainData = algoData(0), similarityData = similarity)

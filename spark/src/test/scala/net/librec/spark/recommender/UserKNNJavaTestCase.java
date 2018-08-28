@@ -2,7 +2,7 @@ package net.librec.spark.recommender;
 
 import net.librec.recommender.item.RecommendedList;
 import net.librec.spark.*;
-import net.librec.spark.data.DataConvertor;
+import net.librec.spark.data.DataConverter;
 import net.librec.spark.data.Rating;
 import net.librec.spark.math.structure.IndexedVector;
 import net.librec.spark.rdd.SimilarityFunctions;
@@ -22,7 +22,7 @@ public class UserKNNJavaTestCase {
 
         LibrecConf conf = new LibrecConf().setMaster("local[*]").setAppName("UserKNNJava");
         LibrecContext lc = new LibrecContext(conf);
-        RDD<Rating> data = new DataConvertor(lc).convertText("/Users/clzhang/Documents/IntelliJIDEA_program/librec/librec_3.0.0_matrix/data/spark/ratings.txt", " ");
+        RDD<Rating> data = new DataConverter(lc).convertText("/Users/clzhang/Documents/IntelliJIDEA_program/librec/librec_3.0.0_matrix/data/spark/ratings.txt", " ");
         RDD<Rating>[] algoData = new SplitterFunctions(data).splitByRatio((new double[]{0.8, 0.2}), "rating", 1000);
         RDD<Rating> trainData = algoData[0];
         RDD<Rating> testData = algoData[1];

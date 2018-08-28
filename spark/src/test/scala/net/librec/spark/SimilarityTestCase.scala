@@ -1,6 +1,6 @@
 package net.librec.spark
 
-import net.librec.spark.data.DataConvertor
+import net.librec.spark.data.DataConverter
 import net.librec.spark.rdd.SimilarityFunctions._
 import net.librec.spark.rdd.StatisticalFunctions
 
@@ -11,11 +11,11 @@ import net.librec.spark.rdd.StatisticalFunctions
   */
 class SimilarityTestCase extends BaseTestSuite{
   override val appName: String = "SimilarityTestCase"
-  var dataConverter:DataConvertor = _
+  var dataConverter:DataConverter = _
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
-    dataConverter = new DataConvertor(lc)
+    dataConverter = new DataConverter(lc)
   }
 
   test("SimilarityTestCase") {
