@@ -7,6 +7,11 @@ import net.librec.spark.rdd.SplitterFunctions._
 import net.librec.spark.rdd.StatisticalFunctions
 import net.librec.spark.recommender.cf.UserKNN
 
+/**
+  * Librec Context Test Case
+  *
+  * @author WangYuFeng
+  */
 object SparkTest {
 
   def main(args: Array[String]): Unit = {
