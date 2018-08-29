@@ -6,6 +6,26 @@ testset_path=${dataset_name}/test
 eval_classes=mae,mse
 output_name=default
 
+nn_recommender_classes='autorec'
+regularizations='0.001'
+dimensions='200'
+for recommender_class in ${nn_recommender_classes}; do
+  for regularization in ${regularizations}; do
+    for dimension in ${dimensions}; do
+      echo ${recommender_class}, ${regularization}, ${dimension}
+      ./librec rec -exec \
+        -D data.input.path=${input_path}/train \
+        -D data.model.splitter=${model_splitter} \
+        -D data.testset.path=${testset_path} \
+        -D rec.eval.classes=${eval_classes} \
+        -D rec.recommender.class=${recommender_class} \
+        -D rec.weight.regularization=${regularization} \
+        -D rec.hidden.dimension=${dimension}
+    done
+  done
+done
+exit 0
+
 ext_recommender_classes='slopeone'
 factory_numbers='10 20 40 80'
 regularizations='0.001 0.01 0.1 1.0'
