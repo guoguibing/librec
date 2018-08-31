@@ -183,7 +183,7 @@ public class ItemClusterRecommender extends MatrixProbabilisticGraphicalRecommen
         double pred = 0;
 
         for (int k = 0; k < numTopics; k++) {
-            double pi_k = itemTopicProbs.get(itemIdx, k); // probability that user u belongs to cluster k
+            double pi_k = itemTopicProbs.get(itemIdx, k); // probability that item i belongs to cluster k
             double pred_k = 0;
 
             for (int r = 0; r < numRatingLevels; r++) {
