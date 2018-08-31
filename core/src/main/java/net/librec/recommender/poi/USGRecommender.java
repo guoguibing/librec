@@ -34,10 +34,10 @@ import java.util.*;
  * ###special notes###
  * 1. prediction for all user, please set:
  * data.testset.path = poi/Gowalla/checkin/Gowalla_test.txt
- * and delete the para setting for "rec.limit.userNum" in rankgeofm.properties
+ * and delete the para setting for "rec.limit.userNum" in usg.properties
  *
  * 2. prediction for small user set like userids in [0, 100],
- * in rankgeofm.properties, please set:
+ * in usg.properties, please set:
  * data.testset.path = poi/Gowalla/checkin/testDataFor101users.txt
  * rec.limit.userNum = 101
  * In EntropyEvaluator and NoveltyEvaluator, you also need to reset the variable "numUsers" = your limited userNum
