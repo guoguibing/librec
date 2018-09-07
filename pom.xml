@@ -31,14 +31,14 @@
 		<log4j.version>1.2.17</log4j.version>
 		<nd4j.version>0.9.1</nd4j.version>
 		<dl4j.version>0.9.1</dl4j.version>
-		<lombok.version>1.18.2</lombok.version>
+		<jetbrains-annotations.version>16.0.2</jetbrains-annotations.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok</artifactId>
-				<version>${lombok.version}</version>
+				<groupId>org.jetbrains</groupId>
+				<artifactId>annotations</artifactId>
+				<version>${jetbrains-annotations.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-cli</groupId>
@@ -82,6 +82,12 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>org.jetbrains</groupId>
+			<artifactId>annotations</artifactId>
+		</dependency>
+	</dependencies>
 	<build>
 		<pluginManagement>
 			<plugins>
