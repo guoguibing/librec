@@ -17,7 +17,7 @@
  */
 package net.librec.recommender.content;
 
-import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.datavec.api.util.RandomUtils;
 import org.nd4j.linalg.primitives.Pair;
 
@@ -40,7 +40,7 @@ public class ConvMFDocumentProvider {
     private int labelSize;
     private int numDoc;
 
-    public ConvMFDocumentProvider(@NonNull List<String> documents, @NonNull List<double[]> labelsForSentences) {
+    public ConvMFDocumentProvider(@NotNull List<String> documents, @NotNull List<double[]> labelsForSentences) {
         this(documents, labelsForSentences, new Random());
         if(documents == null) {
             throw new NullPointerException("document");
@@ -49,7 +49,7 @@ public class ConvMFDocumentProvider {
         }
     }
 
-    public ConvMFDocumentProvider(@NonNull List<String> documents, @NonNull List<double[]> labelsForDocuments, Random rng) {
+    public ConvMFDocumentProvider(@NotNull List<String> documents, @NotNull List<double[]> labelsForDocuments, Random rng) {
         this.cursor = 0;
         if(documents == null) {
             throw new NullPointerException("documents");
