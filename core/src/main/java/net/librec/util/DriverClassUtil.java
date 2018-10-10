@@ -83,6 +83,7 @@ public class DriverClassUtil {
             return Class.forName(driver);
         } else {
             String fullName = driverClassBiMap.get(driver);
+            System.out.println(fullName);
             return Class.forName(fullName);
         }
     }

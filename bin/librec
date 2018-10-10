@@ -125,6 +125,9 @@ do
 done
 export CLASSPATH=${CLASSPATH}:${LIB_CLASSPATH}:${LIBREC_HOME}/conf:${LIBREC_HOME}/bin:${LIBREC_HOME}/lib
 
+# override default core classpath
+export CLASSPATH=${LIBREC_HOME}/core/target/classes:${LIBREC_HOME}/core/target/test-classes:${CLASSPATH}
+
 JDK_VERSION=`$JAVA_HOME/bin/java -version 2>&1 | awk 'NR==1{gsub(/"/,""); print $3}'`
 if [ "$JDK_VERSION" \> 1.7 ] ; then
         if [ $verbose_flag = 1 ]; then print_verbose; fi

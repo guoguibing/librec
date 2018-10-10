@@ -24,6 +24,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -34,6 +36,8 @@ import java.util.Properties;
  * @author WangYuFeng
  */
 public class RecDriver implements LibrecTool {
+    // xiaojie
+    final static Log LOG = LogFactory.getLog(RecDriver.class);
 
     /**
      * Execute the command with the given arguments.
@@ -87,6 +91,9 @@ public class RecDriver implements LibrecTool {
     }
 
     public static void main(String[] args) throws Exception {
+        // xiaojie
+        LOG.info("We have overridden the default core classpath in librec.");
+
         LibrecTool tool = new RecDriver();
 
         Options options = new Options();
