@@ -17,6 +17,7 @@ import java.util.*;
  * Created by liuxz on 17-4-29.
  */
 public class TFIDFRecommender extends TensorRecommender {
+
     private BiMap<String, Integer> reviewMappingData;
     private Map<String, Integer> word2DocNum = new HashMap<>();
     private Map<String, String> iwDict = new HashMap<String, String>();
@@ -26,9 +27,12 @@ public class TFIDFRecommender extends TensorRecommender {
     private Table<Integer, Integer, double[]> featureVec_test = HashBasedTable.create();
     private CosineSimilarity similarity = new CosineSimilarity();
 
+    private double smooth;
+
     @Override
     protected void setup() throws LibrecException {
         super.setup();
+        smooth = conf.getDouble("rec.tfidf.smooth", 1D);
         reviewMappingData = DataFrame.getInnerMapping("review");
         int numberOfWords = 0;
         // build review matrix and counting the number of words
@@ -73,9 +77,8 @@ public class TFIDFRecommender extends TensorRecommender {
             }
         }
 
-
         for (String word : word2DocNum.keySet()) {
-            idf.put(word, Math.log10((res.size() / (word2DocNum.get(word) + 1))));
+            idf.put(word, Math.log10((res.size() / (word2DocNum.get(word) + smooth))));
         }
 
         Table<Integer, Integer, double[]> featureVec = HashBasedTable.create();

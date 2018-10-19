@@ -72,7 +72,7 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
                 for (int index = 0; index < count; index++) {
                     indexList.add(index);
                 }
-//                for (int thisIndex:indexList) {
+
                 indexList.parallelStream().forEach((Integer thisIndex) -> {
                     SequentialSparseVector thisVector = isUser ? trainMatrix.row(thisIndex) : trainMatrix.column(thisIndex);
                     if (thisVector.getNumEntries() != 0) {
@@ -90,7 +90,6 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
                         }
                     }
                 });
-//                }
             }
         }
     }
