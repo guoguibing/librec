@@ -28,6 +28,10 @@ import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 /**
+ * LDCC: Bayesian Co-clustering (BCC) with Gibbs sampling
+ * Wang et al.,<strong>Latent Dirichlet Bayesian Co-Clustering</strong>,
+ * Machine Learning and Knowledge Discovery in Databases, 2009.
+ *
  * @author Guo Guibing and zhanghaidong
  */
 public class LDCCRecommender extends MatrixProbabilisticGraphicalRecommender {
