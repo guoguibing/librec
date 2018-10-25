@@ -219,12 +219,12 @@ public abstract class AbstractRecommender implements Recommender {
                 BiMap<Integer, String> userMappingInverse = userMappingData.inverse();
                 BiMap<Integer, String> itemMappingInverse = itemMappingData.inverse();
                 while (recommendedEntryIter.hasNext()) {
-                    ContextKeyValueEntry contextKecyValueEntry = recommendedEntryIter.next();
-                    if (contextKecyValueEntry != null) {
-                        String userId = userMappingInverse.get(contextKecyValueEntry.getContextIdx());
-                        String itemId = itemMappingInverse.get(contextKecyValueEntry.getKeyIdx());
+                    ContextKeyValueEntry contextKeyValueEntry = recommendedEntryIter.next();
+                    if (contextKeyValueEntry != null) {
+                        String userId = userMappingInverse.get(contextKeyValueEntry.getContextIdx());
+                        String itemId = itemMappingInverse.get(contextKeyValueEntry.getKey());
                         if (StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(itemId)) {
-                            userItemList.add(new GenericRecommendedItem(userId, itemId, contextKecyValueEntry.getValue()));
+                            userItemList.add(new GenericRecommendedItem(userId, itemId, contextKeyValueEntry.getValue()));
                         }
                     }
                 }
