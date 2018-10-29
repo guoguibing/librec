@@ -23,6 +23,7 @@ import net.librec.math.structure.*;
 
 /**
  * SVD++ Recommender
+ * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model</strong>, KDD 2008.
  *
  * @author GuoGuibing and Keqiang Wang
  */

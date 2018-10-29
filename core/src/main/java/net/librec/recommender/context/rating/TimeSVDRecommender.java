@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * TimeSVD++ Recommender
+ * Koren, <strong>Collaborative Filtering with Temporal Dynamics</strong>, KDD 2009.
  *
  * @author Guo Guibing and Ma Chen
  */
