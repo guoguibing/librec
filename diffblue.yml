@@ -1,16 +1,18 @@
-# Tested on Deeptest release 1.7.0
+# Tested on Deeptest release 1.10.0
 cbmcArguments:
-  classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+  cover-function-only: false
   depth: false
-  slice-function-calls: org\.slf4j\.Logger.*
+  do-not-test-methods-with-access: [ private ]
+  java-generate-no-comments: true
 phases:
 -
   timeout: 300
   cbmcArguments:
+    classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
     java-assume-inputs-non-null: true
     max-nondet-array-length: 10
+    string-non-empty: true
     unwind: 1
-    string-non-empty: true 
 -
   timeout: 300
   cbmcArguments:
