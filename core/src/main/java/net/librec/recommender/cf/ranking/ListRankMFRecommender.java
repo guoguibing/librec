@@ -3,6 +3,7 @@ package net.librec.recommender.cf.ranking;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.DenseMatrix;
+import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
 import net.librec.math.structure.Vector.VectorEntry;
 import net.librec.math.structure.VectorBasedDenseVector;
@@ -26,10 +27,10 @@ public class ListRankMFRecommender extends MatrixFactorizationRecommender {
 
     protected void setup() throws LibrecException {
         super.setup();
-        userFactors.init(1.0);
-        userFactors.times(0.1);
-        itemFactors.init(1.0);
-        itemFactors.times(0.1);
+        userFactors.init(0, 0.1);
+        // userFactors.times(0.1);
+        itemFactors.init(0, 0.1);
+        // itemFactors.times(0.1);
 
         userExp = new VectorBasedDenseVector(numUsers);
         for (MatrixEntry matrixentry : trainMatrix) {
@@ -38,6 +39,54 @@ public class ListRankMFRecommender extends MatrixFactorizationRecommender {
             userExp.plus(userIdx, Math.exp(realRating));
         }
     }
+
+//    @Override
+//    protected void trainModel() throws LibrecException {
+//        for (int iter = 1; iter <= numIterations; iter++) {
+//            loss = 0;
+//            for(int u=0;u<numUsers;u++){
+//                double uexp = 0;
+//                int[] items = trainMatrix.row(u).getIndices();
+//                DenseVector userEmbed = userFactors.row(u);
+//                for (int itemIdx : items) {
+//                    DenseVector itemEmbed = itemFactors.row(itemIdx);
+//                    uexp += Math.exp(Maths.logistic(userEmbed.dot(itemEmbed)));
+//                }
+//
+//                DenseVector tempvector = new VectorBasedDenseVector(numFactors);
+//                for (int itemIdx : items) {
+//                    DenseVector qj=itemFactors.row(itemIdx);
+//                    double prui=userEmbed.dot(qj);
+//                    double  tempvalue=Math.exp(Maths.logistic(prui)) / uexp-Math.exp(trainMatrix.get(u, itemIdx)) / userExp.get(u);
+//                    tempvector=qj.times(Maths.logisticGradientValue(prui)*tempvalue);
+//
+//                }
+//                DenseVector delta_u=tempvector.plus(userEmbed.times(regUser)).times(learnRate);
+//                userEmbed=userEmbed.minus(delta_u);
+//                userFactors.set(u, userEmbed);
+//            }
+//
+//            for(int j=0;j<numItems;j++){
+//                double iexp = 0;
+//                int[] users = trainMatrix.column(j).getIndices();
+//                DenseVector itemEmbed = itemFactors.row(j);
+//                for (int userIdx : users) {
+//                    DenseVector userEmbed = userFactors.row(userIdx);
+//                    iexp += Math.exp(Maths.logistic(itemEmbed.dot(userEmbed)));
+//                }
+//                DenseVector tempvector = new VectorBasedDenseVector(numFactors);
+//                for (int userIdx : users) {
+//                    DenseVector pu = userFactors.row(userIdx);
+//                    double prui = pu.dot(itemEmbed);
+//                    double  tempvalue = Math.exp(Maths.logistic(prui)) / iexp-Math.exp(trainMatrix.get(userIdx, j)) / userExp.get(userIdx);
+//                    tempvector=pu.times(Maths.logisticGradientValue(prui)*tempvalue);
+//                }
+//                DenseVector delta_j=tempvector.plus(itemEmbed.times(regItem)).times(learnRate);
+//                itemEmbed=itemEmbed.minus(delta_j);
+//                itemFactors.set(j,itemEmbed);
+//            }
+//        }// end of training
+//    }
 
     @Override
     protected void trainModel() throws LibrecException {
