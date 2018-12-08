@@ -1,0 +1,20 @@
+@RELATION user-movie
+
+@ATTRIBUTE user STRING
+@ATTRIBUTE item STRING
+@ATTRIBUTE rating NUMERIC
+@ATTRIBUTE time NUMERIC
+@ATTRIBUTE location STRING
+@ATTRIBUTE age {young,mid,old}
+
+
+@DATA
+222,9999,2.5,2,abc,young
+333,8888,5,5,bcd,mid
+111,7777,3,4,efc,young
+444,5555,4,6,hij,mid
+444,4444,5,12,allen,mid
+555,9999,3.5999,2,bcd,old
+ 
+
+

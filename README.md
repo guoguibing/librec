@@ -2,7 +2,13 @@
 
 **LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms, aiming to resolve two classic recommendation tasks: **rating prediction** and **item ranking**. 
 
-[![Join the chat at https://gitter.im/librec/Lobby](https://badges.gitter.im/librec/Lobby.svg)](https://gitter.im/librec/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/librec/Lobby](https://badges.gitter.im/librec/Lobby.svg)](https://gitter.im/librec/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)[![Build Status](https://travis-ci.org/guoguibing/librec.svg?branch=2.0.0)](https://travis-ci.org/guoguibing/librec)
+
+### LibRec Demo
+A movie recommender system is designed and [available here](http://demo.librec.net).
+
+### Documentation
+Please refer to [LibRec Documentation](http://wiki.librec.net) and [API Documentation](http://librec.net/doc/librec-v2.0/)
 
 ### Authors Words about the NEW Version
 It has been a year since the last version was released. In this year, lots of changes have been taken to the LibRec project, and the most significant one is the formulation of the LibRec team. The team pushes forward the development of LibRec with the wisdom of many experts, and the collaboration of experienced and enthusiastic contributors. Without their great efforts and hardworking, it is impossible to reach the state that a single developer may dream of. 
@@ -17,18 +23,33 @@ PS: Follow us on WeChat to have first-hand and up-to-date information about LibR
 
 ### Features
 
-* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be added to the LibRec project.
-* **Module Composition:** LibRec has six main components including data split, data conversion, similarity, algorithms, evaluators and filters.
-* **Flexible Configuration:** LibRec is based on low coupling, flexible and either external textual or internal API configuration.
-* **High Performance:** LibRec has more efficient implementations than other counterparts while producing comparable accuracy.
-* **Simple Usage:** LibRec can get executed in a few lines of codes, and a number of demos are provided for easy start.
-* **Easy Expansion:** LibRec provides a set of recommendation interfaces for easy expansion to implement new recommenders.
+* **Rich Algorithms:** More than 70 recommendation algorithms have been implemented, and more will be done.
+* **High Modularity:** Six main components including data split, data conversion, similarity, algorithms, evaluators and filters.
+* **Great Performance:** More efficient implementations than other counterparts while producing comparable accuracy.
+* **Flexible Configuration:** Low coupling, flexible and either external textual or internal API configuration.
+* **Simple Usage:** Can get executed in a few lines of codes, and a number of demos are provided for easy start.
+* **Easy Expansion:** A set of recommendation interfaces for easy expansion to implement new recommenders.
 
-<img src="http://librec.net/images/modules.png" height="30%" width="30%" /> 
+<div style="text-align:center;"><img src="http://librec.net/images/modules.jpg" width="500" /> </div>
+
+The procedure of LibRec is illustrated as follows. 
+
+<div style="text-align:center;"><img src="http://librec.net/images/procedure.jpg" width="600" /> </div>
 
 ### Download
-* **librec-v2.0**
-    * RC version: check out the new 2.0.0-RC branch. 
+
+by maven
+```
+<dependency>
+    <groupId>net.librec</groupId>
+    <artifactId>librec-core</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
+
+by packages
+
+* **[librec-v2.0](https://github.com/guoguibing/librec/archive/librec-src-v2.0.zip)**
 * **[librec-v1.3](http://www.librec.net/release/librec-v1.3.zip)**
 * **[librec-v1.2](http://www.librec.net/release/librec-v1.2.zip)**
 * **[librec-v1.1](http://www.librec.net/release/librec-v1.1.zip)**
@@ -85,22 +106,23 @@ public void main(String[] args) throws Exception {
 }
 </pre>
 
-### Reference
-Please cite the following papers if LibRec is helpful to your research. 
+### News Report 
 
-1. Guibing Guo, Jie Zhang, Zhu Sun and Neil Yorke-Smith, [LibRec: A Java Library for Recommender Systems](http://ceur-ws.org/Vol-1388/demo_paper1.pdf), in Posters, Demos, Late-breaking Results and Workshop Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
+* [An Introduction to Open-source Recommendaion Toolkit: LibRec](http://chuansong.me/n/1701947351918) [by ResysChina in Chinese]
+* [LibRec: an Open-source and Cross-platform Software for Recommender Systems](http://chuansong.me/n/1751521251128) [by InfoQ in Chinese]
 
 ### Acknowledgement
 
-We would like to express our appreciation to the following people for contributing source codes to LibRec, including [Prof. Robin Burke](http://josquin.cti.depaul.edu/~rburke/), [Bin Wu](https://github.com/wubin7019088), [Ge Zhou](https://github.com/466152112), [Ran Locar](https://github.com/ranlocar), [Shawn Rutledge](https://github.com/shawndr), [Tao Lian](https://github.com/taolian), [Takuya Kitazawa](https://github.com/takuti), etc. 
+We would like to express our appreciation to the following people for contributing source codes to LibRec, including [Prof. Robin Burke](http://josquin.cti.depaul.edu/~rburke/), [Bin Wu](https://github.com/wubin7019088), [Diego Monti](https://github.com/dmm42), [Ge Zhou](https://github.com/466152112), Li Wenxi, [Marco Mera](https://github.com/mmera), [Ran Locar](https://github.com/ranlocar), [Shawn Rutledge](https://github.com/shawndr), [ShuLong Chen](https://github.com/ChenSuL), [Tao Lian](https://github.com/taolian), [Takuya Kitazawa](https://github.com/takuti), [Zhaohua Hong](mailto:jstarcraft@gmail.com), Tan Jiale, [Daniel Velten](https://github.com/dvelten), [Qian Shaofeng](https://github.com/shitou112), etc.  We gratefully thank Mr. Lijun Dai for designing and contributing the logo of LibRec, and also many thanks to [Mr. Jianbin Zhang](http://www.liaotian2020.com/) for implementing and sharing a [LibRec demo](http://demo.librec.net/). 
 
 We also appreciate many others for reporting bugs and issues, and for providing valuable suggestions and support. 
 
 ### Publications
-LibRec has been used in the following publications (let me know if your paper is not listed):
+Please cite the following papers if LibRec is helpful to your research. 
 
-1. G. Guo, J. Zhang and N. Yorke-Smith, TrustSVD: Collaborative Filtering with Both the Explicit and Implicit Influence of User Trust and of Item Ratings, in Proceedings of the 29th AAAI Conference on Artificial Intelligence (AAAI), 2015, 123-129.
-2. Z. Sun, G. Guo and J. Zhang, Exploiting Implicit Item Relationships for Recommender Systems, in Proceedings of the 23rd International Conference on User Modeling, Adaptation and Personalization (UMAP), 2015.
+1. G. Guo, J. Zhang, Z. Sun and N. Yorke-Smith, [LibRec: A Java Library for Recommender Systems](http://ceur-ws.org/Vol-1388/demo_paper1.pdf), in Posters, Demos, Late-breaking Results and Workshop Proceedings of the 23rd Conference on User Modelling, Adaptation and Personalization (UMAP), 2015.
+2. G. Guo, J. Zhang and N. Yorke-Smith, TrustSVD: Collaborative Filtering with Both the Explicit and Implicit Influence of User Trust and of Item Ratings, in Proceedings of the 29th AAAI Conference on Artificial Intelligence (AAAI), 2015, 123-129.
+3. Z. Sun, G. Guo and J. Zhang, Exploiting Implicit Item Relationships for Recommender Systems, in Proceedings of the 23rd International Conference on User Modeling, Adaptation and Personalization (UMAP), 2015.
 
 
 ### GPL License

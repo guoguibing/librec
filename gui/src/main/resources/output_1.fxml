@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="459.0" prefWidth="800.0" style="-fx-background-color: #07042b;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.OutputController">
+    <children>
+        <FlowPane layoutX="45.0" layoutY="130.0" prefHeight="141.0" prefWidth="200.0" />
+        <ImageView fitHeight="80.0" fitWidth="400.0" layoutX="618.0" opacity="0.86" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@librec_2.png" />
+            </image>
+        </ImageView>
+        <Label layoutX="52.0" layoutY="40.0" prefHeight="32.0" prefWidth="291.0" text="%output.label" textFill="#ddd9d9">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+        <JFXButton layoutX="42.0" layoutY="361.0" onAction="#execRec" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #FF4500;" text="%output.run" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+      <TitledPane layoutX="42.0" layoutY="118.0" prefHeight="223.0" prefWidth="717.0" text="%output.log">
+         <content>
+            <JFXTextArea fx:id="trainLog" />
+         </content>
+      </TitledPane>
+      <JFXButton layoutX="192.0" layoutY="80.0" onAction="#loadConf" ripplerFill="#3dbf64" style="-fx-background-color: #FF4500;" text="%output.load.button" textFill="WHITE" />
+      <JFXTextField fx:id="confPath" layoutX="42.0" layoutY="80.0" style="-fx-text-fill: #d0caca;" text="%output.local.conf" unFocusColor="#433f3f" />
+        <JFXButton layoutX="652.0" layoutY="402.0" onAction="#goBack" prefHeight="50.0" prefWidth="141.0" style="-fx-background-color: #07042b;" text="%main.label.exit" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+    </children>
+</AnchorPane>
