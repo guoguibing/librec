@@ -17,10 +17,16 @@
  */
 package net.librec.data.convertor;
 
+import net.librec.conf.Configuration;
 import net.librec.data.DataConvertor;
 import net.librec.job.progress.ProgressReporter;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.DataFrame;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.math.structure.SparseTensor;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.IOException;
 
 /**
  * A <tt>AbstractDataConvertor</tt> is a class to convert
@@ -29,41 +35,82 @@ import net.librec.math.structure.SparseTensor;
  * @author WangYuFeng
  */
 public abstract class AbstractDataConvertor extends ProgressReporter implements DataConvertor {
+    protected final Log LOG = LogFactory.getLog(this.getClass());
 
-    /** store rate data as {user, item, rate} matrix */
-    protected SparseMatrix preferenceMatrix;
+    /**
+     * store rate data as {user, item, rate} matrix
+     */
+    protected DataFrame matrix;
 
-    /** store time data as {user, item, rate} matrix */
-    protected SparseMatrix datetimeMatrix;
+    /**
+     * store rate data as {user, item, rate} matrix
+     */
+    protected SequentialAccessSparseMatrix preferenceMatrix;
 
-    /** store rate data as a sparse tensor */
+    /**
+     * store time data as {user, item, datetime} matrix
+     */
+    protected SequentialAccessSparseMatrix datetimeMatrix;
+
+    /**
+     * store rate data as a sparse tensor
+     */
     protected SparseTensor sparseTensor;
 
     /**
      * Return the rate matrix.
      *
-     * @return  {@link #preferenceMatrix}
+     * @return {@link #matrix}
      */
-    public SparseMatrix getPreferenceMatrix() {
+    @Override
+    public DataFrame getMatrix() {
+        if (null == matrix){
+            try {
+                processData();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return matrix;
+    }
+
+    @Override
+    public SequentialAccessSparseMatrix getPreferenceMatrix(){
+        if (null == preferenceMatrix){
+            preferenceMatrix = getMatrix().toSparseMatrix("preferenceMatrix");
+        }
         return preferenceMatrix;
     }
 
-    /**
-     * Return the date matrix.
-     *
-     * @return  {@link #datetimeMatrix}
-     */
-    public SparseMatrix getDatetimeMatrix() {
+    @Override
+    public SequentialAccessSparseMatrix getPreferenceMatrix(Configuration conf){
+        if (null == preferenceMatrix){
+            preferenceMatrix = getMatrix().toSparseMatrix(conf);
+        }
+        return preferenceMatrix;
+    }
+
+    @Override
+    public SequentialAccessSparseMatrix getDatetimeMatrix(){
+        if (null == datetimeMatrix){
+            datetimeMatrix = getMatrix().toSparseMatrix("datetimeMatrix");
+        }
         return datetimeMatrix;
     }
 
-    /**
-     * Return the rate tensor.
-     *
-     * @return  {@link #sparseTensor}
-     */
-    public SparseTensor getSparseTensor() {
+    @Override
+    public  SparseTensor getSparseTensor(){
+        if (null == sparseTensor){
+            sparseTensor = getMatrix().toSparseTensor();
+        }
         return sparseTensor;
     }
 
+    @Override
+    public  SparseTensor getSparseTensor(String[] indices, String valueIndex){
+        if (null == sparseTensor){
+            sparseTensor = getMatrix().toSparseTensor(indices, valueIndex);
+        }
+        return sparseTensor;
+    }
 }

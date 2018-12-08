@@ -37,12 +37,19 @@ public interface RecommenderEvaluator {
      * @param recommendedList  RecommendedList object
      * @return  evaluate result
      */
-    public double evaluate(RecommenderContext context, RecommendedList recommendedList);
+    double evaluate(RecommenderContext context, RecommendedList groundTruthList, RecommendedList recommendedList);
 
+    /**
+     * Evaluate on the evaluate context
+     * @param evalContext evaluate context, including conf, groundTruthList, recommendedList, and other things used
+     *                    in the evaluation
+     * @return evaluate result
+     */
+    double evaluate(EvalContext evalContext);
     /**
      * Set the number of recommended items.
      *
      * @param topN the number of recommended items
      */
-    public void setTopN(int topN);
+    void setTopN(int topN);
 }

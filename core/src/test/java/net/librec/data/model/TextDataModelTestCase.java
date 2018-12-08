@@ -279,11 +279,11 @@ public class TextDataModelTestCase extends BaseTestCase {
 		conf.set("data.model.splitter", "net.librec.data.splitter.KCVDataSplitter");
 		conf.set("data.splitter.cv.number", "6");
 		conf.set(Configured.CONF_DATA_INPUT_PATH, "test/datamodeltest/matrix4by4A-date.txt");
+		conf.set("data.column.format", "UIRT");
 		TextDataModel dataModel = new TextDataModel(conf);
-		for (int i = 1; i <= 6; i++) {
-			conf.set("data.splitter.cv.index", i + "");
-			dataModel.buildDataModel();
-			System.out.println("index: " + i);
+		dataModel.buildDataModel();
+		while(dataModel.hasNextFold()){
+			dataModel.nextFold();
 			assertEquals(getTrainSize(dataModel), 10);
 			assertEquals(getTestSize(dataModel), 2);
 		}

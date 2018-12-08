@@ -26,15 +26,15 @@ public interface RecommendedItem {
     /**
      * @return the userId
      */
-    public String getUserId();
+    String getUserId();
 
     /**
      * @return the itemId
      */
-    public String getItemId();
+    String getItemId();
 
     /**
      * @return the value
      */
-    public double getValue();
+    double getValue();
 }

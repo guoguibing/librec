@@ -20,6 +20,7 @@ package net.librec.data.convertor.appender;
 import net.librec.BaseTestCase;
 import net.librec.common.LibrecException;
 import net.librec.data.convertor.TextDataConvertor;
+import net.librec.math.structure.DataFrame;
 import net.librec.util.DriverClassUtil;
 import net.librec.util.ReflectionUtil;
 import org.junit.Before;
@@ -56,11 +57,11 @@ public class SocialDataAppenderTestCase extends BaseTestCase {
         textDataConvertor.processData();
         conf.set("data.appender.path", "filmtrust/trust/trust.txt");
         SocialDataAppender dataFeature = (SocialDataAppender) ReflectionUtil.newInstance(DriverClassUtil.getClass(conf.get("data.appender.class")), conf);
-        dataFeature.setUserMappingData(textDataConvertor.getUserIds());
+        dataFeature.setUserMappingData(DataFrame.getUserIds());
         dataFeature.processData();
 
-        assertTrue(dataFeature.getUserAppender().numRows() == dataFeature.getUserAppender().numColumns());
-        assertTrue(dataFeature.getUserAppender().numRows() <= textDataConvertor.getUserIds().size());
+        assertTrue(dataFeature.getUserAppender().rowSize() == dataFeature.getUserAppender().columnSize());
+        assertTrue(dataFeature.getUserAppender().rowSize() <= DataFrame.getUserIds().size());
     }
 
     /**
@@ -75,10 +76,10 @@ public class SocialDataAppenderTestCase extends BaseTestCase {
         textDataConvertor.processData();
         conf.set("data.appender.path", "test/test-append-dir");
         SocialDataAppender dataFeature = new SocialDataAppender(conf);
-        dataFeature.setUserMappingData(textDataConvertor.getUserIds());
+        dataFeature.setUserMappingData(DataFrame.getUserIds());
         dataFeature.processData();
 
-        assertTrue(dataFeature.getUserAppender().numRows() == dataFeature.getUserAppender().numColumns());
-        assertTrue(dataFeature.getUserAppender().numRows() <= textDataConvertor.getUserIds().size());
+        assertTrue(dataFeature.getUserAppender().rowSize() == dataFeature.getUserAppender().columnSize());
+        assertTrue(dataFeature.getUserAppender().rowSize() <= DataFrame.getUserIds().size());
     }
 }

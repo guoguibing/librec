@@ -17,15 +17,14 @@
  */
 package net.librec.recommender.hybrid;
 
-import java.io.IOException;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import net.librec.BaseTestCase;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration;
 import net.librec.job.RecommenderJob;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * Hybrid Test Case corresponds to HybridRedommender

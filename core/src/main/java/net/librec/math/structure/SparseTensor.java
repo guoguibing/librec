@@ -125,16 +125,41 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * number of dimensions, i.e., the order (or modes, ways) of a tensor
      */
     public int numDimensions;
-    public int[] dimensions;
-    public List<Integer>[] ndKeys; // n-dimensional array
-    public List<Double> values; // values
 
-    private Multimap<Integer, Integer>[] keyIndices; // each multimap = {key, {pos1, pos2, ...}}
+    /**
+     * the number of each dimension, i.e., the number of users, the number of items.
+     */
+    public int[] dimensions;
+
+    /**
+     * n-dimensional array, n-dimensional keys, length = data cardinality
+     */
+    public List<Integer>[] ndKeys;
+
+    /**
+     * data values, length  =  data cardinality
+     */
+    public List<Double> values;
+
+    /**
+     * the index of each dimension, each multimap = {key, {pos1, pos2, ...}}, something like inverted index
+     */
+    private Multimap<Integer, Integer>[] keyIndices;
+
+    /**
+     * the indexed dimension list in keyIndices
+     */
     private List<Integer> indexedDimensions; // indexed dimensions
+
+    /**
+     * the indexed dimension set in keyIndices
+     */
     private Set<Integer> indexedDimensionsSet;// indexed dimensionsSet
 
 
-    // dimensions of users and items
+    /**
+     * user and item dimension in this tensor
+     */
     private int userDimension, itemDimension;
 
     /**
@@ -173,9 +198,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
         values = vals == null ? new ArrayList<Double>() : new ArrayList<Double>(vals);
         indexedDimensions = new ArrayList<Integer>(numDimensions);
-        indexedDimensionsSet = new HashSet<Integer>((int) (numDimensions/0.7));
-
-
+        indexedDimensionsSet = new HashSet<Integer>((int) (numDimensions / 0.7));
     }
 
     /**
@@ -194,6 +217,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
         // copy indexed array
         res.indexedDimensions.addAll(this.indexedDimensions);
+        res.indexedDimensionsSet.addAll(this.indexedDimensionsSet);
 
         // others
         res.userDimension = userDimension;
@@ -205,7 +229,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
     /**
      * Add a value to a given i-entry
      *
-     * @param val  value to add
+     * @param val  value to plus
      * @param keys n-dimensional keys
      * @throws Exception if error occurs during adding
      */
@@ -217,7 +241,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
             // if keys exist: update value
             values.set(index, values.get(index) + val);
         } else {
-            // if keys do not exist: add a new entry
+            // if keys do not exist: plus a new entry
             set(val, keys);
         }
     }
@@ -257,9 +281,9 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * remove an entry with specific keys. NOTE: it is not recommended to remove by entry index because the index may be
      * changed after operations are executed, especially operation as addiction, remove, etc.
      *
-     * @param keys  n-dimensional keys
-     * @throws Exception if error occurs during removing
+     * @param keys n-dimensional keys
      * @return true if the operation succeed
+     * @throws Exception if error occurs during removing
      */
     public boolean remove(int... keys) throws Exception {
         int index = findIndex(keys);
@@ -302,9 +326,8 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
 
     /**
-     * @return all entries for a numDimensions-1 dimension subKey
-     *
      * @param subKey a numDimensions-1 dimension subKey
+     * @return all entries for a numDimensions-1 dimension subKey
      * @throws Exception if error occurs during getting
      */
     public List<Integer> getTargetKeyFromSubKey(Integer[] subKey) throws Exception {
@@ -345,7 +368,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
 
     /**
-     * find the inner index of a given keys
+     * find the inner index of a given keys by the first indexed dimension index, i.e., indexedDimensions.get(0)
      *
      * @param keys a given keys
      * @throws Exception if error occurs during finding
@@ -397,13 +420,13 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * @param keys the other fixed dimension keys
      * @return a sparse vector
      */
-    public SparseVector fiber(int dim, int... keys) {
+    public RandomAccessSparseVector fiber(int dim, int... keys) {
         if ((keys.length != numDimensions - 1) || size() < 1)
             throw new Error("The input indices do not match the fiber specification!");
 
         // find an indexed dimension for searching indices
         int d = -1;
-        if ((indexedDimensions.size() == 0) || (indexedDimensions.contains(dim) && indexedDimensions.size() == 1)) {
+        if ((indexedDimensions.size() == 0) || (indexedDimensionsSet.contains(dim) && indexedDimensionsSet.size() == 1)) {
             d = (dim != 0 ? 0 : 1);
             buildIndex(d);
         } else {
@@ -415,7 +438,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
             }
         }
 
-        SparseVector res = new SparseVector(dimensions[dim]);
+        RandomAccessSparseVector res = new RandomAccessSparseVector(dimensions[dim]);
 
         // all relevant positions
         Collection<Integer> indices = keyIndices[d].get(keys[d < dim ? d : d - 1]);
@@ -451,7 +474,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * @throws Exception if error occurs during checking
      */
     public boolean contains(int... keys) throws Exception {
-        return findIndex(keys) >= 0 ? true : false;
+        return findIndex(keys) >= 0;
     }
 
     /**
@@ -461,7 +484,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * @return whether a dimension d is indexed
      */
     public boolean isIndexed(int d) {
-        return indexedDimensions.contains(d);
+        return indexedDimensionsSet.contains(d);
     }
 
     /**
@@ -557,8 +580,10 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
                 keyIndices[d].put(key(d, index), index);
             }
 
-            if (!indexedDimensions.contains(d))
+            if (!indexedDimensionsSet.contains(d)) {
                 indexedDimensions.add(d);
+                indexedDimensionsSet.add(d);
+            }
         }
     }
 
@@ -603,8 +628,8 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
     /**
      * Return key in the position {@code index} of dimension {@code d}.
      *
-     * @param d      dimension
-     * @param index  a given index
+     * @param d     dimension
+     * @param index a given index
      * @return key in the position {@code index} of dimension {@code d}
      */
     public int key(int d, int index) {
@@ -657,7 +682,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * @param otherKeys keys of other dimensions
      * @return a sparse matrix
      */
-    public SparseMatrix slice(int rowDim, int colDim, int... otherKeys) {
+    public SequentialAccessSparseMatrix slice(int rowDim, int colDim, int... otherKeys) {
 
         if (otherKeys.length != numDimensions - 2)
             throw new Error("The input dimensions do not match the tensor specification!");
@@ -665,9 +690,9 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
         // find an indexed array to search
         int d = -1;
         boolean cond1 = indexedDimensions.size() == 0;
-        boolean cond2 = (indexedDimensions.contains(rowDim) || indexedDimensions.contains(colDim))
+        boolean cond2 = (indexedDimensionsSet.contains(rowDim) || indexedDimensionsSet.contains(colDim))
                 && indexedDimensions.size() == 1;
-        boolean cond3 = indexedDimensions.contains(rowDim) && indexedDimensions.contains(colDim)
+        boolean cond3 = indexedDimensionsSet.contains(rowDim) && indexedDimensionsSet.contains(colDim)
                 && indexedDimensions.size() == 2;
         if (cond1 || cond2 || cond3) {
             for (d = 0; d < numDimensions; d++) {
@@ -703,7 +728,6 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
             return null;
 
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
 
         // for each possible position
         for (int index : indices) {
@@ -724,11 +748,14 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
                 double val = values.get(index);
 
                 dataTable.put(row, col, val);
-                colMap.put(col, row);
             }
         }
+//        System.out.println(dimensions[rowDim]+" "+dimensions[colDim]+" "+dataTable.cardinality());
+//        if(dataTable.cardinality()==0){
+//            System.exit(0);
+//        }
 
-        return new SparseMatrix(dimensions[rowDim], dimensions[colDim], dataTable, colMap);
+        return new SequentialAccessSparseMatrix(dimensions[rowDim], dimensions[colDim], dataTable);
     }
 
     /**
@@ -737,7 +764,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      * @param n mode or dimension
      * @return an unfolded or flatten matrix
      */
-    public SparseMatrix matricization(int n) {
+    public SequentialAccessSparseMatrix matricization(int n) {
         int numRows = dimensions[n];
         int numCols = 1;
         for (int d = 0; d < numDimensions; d++) {
@@ -746,7 +773,6 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
         }
 
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
         for (TensorEntry te : this) {
             int[] keys = te.keys();
 
@@ -768,10 +794,9 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
             }
 
             dataTable.put(i, j, te.get());
-            colMap.put(j, i);
         }
 
-        return new SparseMatrix(numRows, numCols, dataTable, colMap);
+        return new SequentialAccessSparseMatrix(numRows, numCols, dataTable);
     }
 
     /**
@@ -784,12 +809,12 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      */
     public SparseTensor modeProduct(DenseMatrix mat, int dim) throws Exception {
 
-        if (dimensions[dim] != mat.numColumns)
+        if (dimensions[dim] != mat.columnSize())
             throw new Exception("Dimensions of a tensor and a matrix do not match for n-mode product!");
 
         int[] dims = new int[numDimensions];
         for (int i = 0; i < dims.length; i++) {
-            dims[i] = i == dim ? mat.numRows : dimensions[i];
+            dims[i] = i == dim ? mat.rowSize() : dimensions[i];
         }
 
         SparseTensor res = new SparseTensor(dims);
@@ -799,7 +824,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
             int[] keys = te.keys();
 
             int i = keys[dim];
-            for (int j = 0; j < mat.numRows; j++) {
+            for (int j = 0; j < mat.rowSize(); j++) {
 
                 int[] ks = new int[numDimensions];
                 for (int k = 0; k < ks.length; k++)
@@ -822,7 +847,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      */
     public SparseTensor modeProduct(DenseVector vec, int dim) throws Exception {
 
-        if (dimensions[dim] != vec.size)
+        if (dimensions[dim] != vec.cardinality())
             throw new Exception("Dimensions of a tensor and a vector do not match for n-mode product!");
 
         int[] dims = new int[numDimensions];
@@ -854,20 +879,18 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
      *
      * @return a sparse rating matrix
      */
-    public SparseMatrix rateMatrix() {
+    public SequentialAccessSparseMatrix rateMatrix() {
 
         Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
 
         for (TensorEntry te : this) {
             int u = te.key(userDimension);
             int i = te.key(itemDimension);
 
             dataTable.put(u, i, te.get());
-            colMap.put(i, u);
         }
 
-        return new SparseMatrix(dimensions[userDimension], dimensions[itemDimension], dataTable, colMap);
+        return new SequentialAccessSparseMatrix(dimensions[userDimension], dimensions[itemDimension], dataTable);
     }
 
     public Iterator<TensorEntry> iterator() {
@@ -901,7 +924,7 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
     }
 
     /**
-     * @param st  another tensor
+     * @param st another tensor
      * @return inner product with another tensor
      * @throws Exception if error occurs during product
      */
@@ -916,7 +939,6 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
 
             res += v1 * v2;
         }
-
         return res;
     }
 
@@ -1076,7 +1098,6 @@ public class SparseTensor implements DataSet, Iterable<TensorEntry>, Serializabl
         // fiber
         LOG.debug(st);
         int[] aa = {0, 0};
-        LOG.debug(String.format("fiber (0, 0, 0) = {}", st.fiber(0, aa).getIndex()));
         LOG.debug(String.format("fiber (1, 1, 0) = {}", st.fiber(1, 1, 0)));
         LOG.debug(String.format("fiber (2, 1, 0) = {}", st.fiber(2, 1, 0)));
 

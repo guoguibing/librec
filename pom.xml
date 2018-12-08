@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.librec</groupId>
 	<artifactId>librec</artifactId>
-	<version>2.0.0</version>
+	<version>3.0.0</version>
 	<packaging>pom</packaging>
 	<name>librec</name>
 	<modules>
 		<module>core</module>
-	</modules>
+		<module>spark</module>
+        <module>gui</module>
+    </modules>
 	<properties>
-		<librec.version.shortname>2.0.0</librec.version.shortname>
-		<java.version>1.7</java.version>
+		<librec.version.shortname>2.0.0-beta</librec.version.shortname>
+		<java.version>1.8</java.version>
 		<javadoc.encoding>UTF-8</javadoc.encoding>
 		<javadoc.locale>en_US</javadoc.locale>
 		<!-- Build Properties -->
@@ -26,6 +29,8 @@
 		<commons-lang3.version>3.1</commons-lang3.version>
 		<commons-logging.version>1.1.3</commons-logging.version>
 		<log4j.version>1.2.17</log4j.version>
+		<nd4j.version>0.9.1</nd4j.version>
+		<dl4j.version>0.9.1</dl4j.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -59,6 +64,16 @@
 				<artifactId>log4j</artifactId>
 				<version>${log4j.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro</artifactId>
+				<version>1.7.7</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-math3</artifactId>
+				<version>3.6</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<build>
@@ -89,21 +104,6 @@
 						<stylesheet>java</stylesheet>
 					</configuration>
 				</plugin>
-				<plugin>
-        			<groupId>org.apache.maven.plugins</groupId>
-        			<artifactId>maven-surefire-plugin</artifactId>
-        			<version>2.19.1</version>
-        			<configuration>
-          				<includes>
-            				<include>net.librec.recommender.cf.rating.*</include>
-          				</includes>
-          				<excludes>
-            				<exclude>net.librec.recommender.cf.rating.RfRecTestCase.java</exclude>
-            				<exclude>net.librec.recommender.cf.rating.FMSGDTestCase.java</exclude>
-            				<exclude>net.librec.recommender.cf.rating.FMALSTestCase.java</exclude>
-          				</excludes>
-        			</configuration>
-      			</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>

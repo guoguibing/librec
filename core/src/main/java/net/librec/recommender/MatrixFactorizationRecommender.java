@@ -9,7 +9,7 @@ import net.librec.math.structure.DenseMatrix;
  * <p>
  * Created by Keqiang Wang
  */
-public abstract class MatrixFactorizationRecommender extends AbstractRecommender {
+public abstract class MatrixFactorizationRecommender extends MatrixRecommender {
     /**
      * learn rate, maximum learning rate
      */
@@ -61,9 +61,9 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
      *
      * @throws LibrecException if error occurs during setting up
      */
-    protected void setup() throws LibrecException {
+    protected void setup() throws LibrecException{
         super.setup();
-        numIterations = conf.getInt("rec.iterator.maximum",100);
+        numIterations = conf.getInt("rec.iterator.maximum", 100);
         learnRate = conf.getFloat("rec.iterator.learnrate", 0.01f);
         maxLearnRate = conf.getFloat("rec.iterator.learnrate.maximum", 1000.0f);
 
@@ -78,7 +78,7 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
         itemFactors = new DenseMatrix(numItems, numFactors);
 
         initMean = 0.0f;
-        initStd = 0.1f;
+        initStd = 0.001f;
 
         // initialize factors
         userFactors.init(initMean, initStd);
@@ -94,24 +94,25 @@ public abstract class MatrixFactorizationRecommender extends AbstractRecommender
      * @throws LibrecException if error occurs during predicting
      */
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
+        return userFactors.row(userIdx).dot(itemFactors.row(itemIdx));
     }
-
 
     /**
      * Update current learning rate after each epoch <br>
      * <ol>
-     * <li>bold driver: Gemulla et al., Large-scale matrix factorization with distributed stochastic gradient descent,
+     * <li>bold driver: Gemulla et al., Large-times matrix factorization with distributed stochastic gradient descent,
      * KDD 2011.</li>
      * <li>constant decay: Niu et al, Hogwild!: A lock-free approach to parallelizing stochastic gradient descent, NIPS
      * 2011.</li>
      * <li>Leon Bottou, Stochastic Gradient Descent Tricks</li>
      * <li>more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
      * </ol>
+     *
      * @param iter the current iteration
      */
     protected void updateLRate(int iter) {
         if (learnRate < 0.0) {
+            lastLoss = loss;
             return;
         }
 

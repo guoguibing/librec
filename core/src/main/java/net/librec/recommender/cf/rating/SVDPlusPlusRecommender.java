@@ -19,16 +19,11 @@ package net.librec.recommender.cf.rating;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
-
-import java.util.ArrayList;
-import java.util.List;
+import net.librec.math.structure.*;
 
 /**
  * SVD++ Recommender
+ * Yehuda Koren, <strong>Factorization Meets the Neighborhood: a Multifaceted Collaborative Filtering Model</strong>, KDD 2008.
  *
  * @author GuoGuibing and Keqiang Wang
  */
@@ -40,14 +35,12 @@ public class SVDPlusPlusRecommender extends BiasedMFRecommender {
     protected DenseMatrix impItemFactors;
 
     /**
-     * user items list
-     */
-    protected List<List<Integer>> userItemsList;
-
-    /**
      * implicit item regularization
      */
     private double regImpItem;
+
+    private DenseVector factorVector;
+
 
     /*
      * (non-Javadoc)
@@ -62,102 +55,94 @@ public class SVDPlusPlusRecommender extends BiasedMFRecommender {
 
         impItemFactors = new DenseMatrix(numItems, numFactors);
         impItemFactors.init(initMean, initStd);
-        userItemsList = getUserItemsList(trainMatrix);
+        factorVector = new VectorBasedDenseVector(numFactors);
     }
 
     @Override
     protected void trainModel() throws LibrecException {
-        for (int iter = 1; iter <= numIterations; iter++) {
-            loss = 0.0d;
-            for (MatrixEntry matrixEntry : trainMatrix) {
-
-                int userIdx = matrixEntry.row(); // user
-                int itemIdx = matrixEntry.column(); // item
-                double realRating = matrixEntry.get();
-
-                double predictRating = predict(userIdx, itemIdx);
-                double error = realRating - predictRating;
-
-                loss += error * error;
-
-                List<Integer> items = userItemsList.get(userIdx);
-
-                // update user and item bias
-                double userBiasValue = userBiases.get(userIdx);
-                userBiases.add(userIdx, learnRate * (error - regBias * userBiasValue));
-
-                loss += regBias * userBiasValue * userBiasValue;
-
-                double itemBiasValue = itemBiases.get(itemIdx);
-                itemBiases.add(itemIdx, learnRate * (error - regBias * itemBiasValue));
-
-                loss += regBias * itemBiasValue * itemBiasValue;
-
-                DenseVector sumImpItemsFactors = new DenseVector(numFactors);
-                for (int impItemIdx : items) {
-                    sumImpItemsFactors.addEqual(impItemFactors.row(impItemIdx, false));
+        for (int iterationStep = 1; iterationStep <= numIterations; iterationStep++) {
+            loss = 0D;
+            for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+                SequentialSparseVector userVector = trainMatrix.row(userIndex);
+                if (userVector.size() == 0) {
+                    continue;
                 }
-
-                double impNor = Math.sqrt(items.size());
-                if (impNor > 0) {
-                    sumImpItemsFactors.scaleEqual(1.0 / impNor);
+                double[] steps = new double[numFactors];
+                factorVector.assign((index, value) -> 0.0D);
+                for (Vector.VectorEntry vectorEntry : userVector) {
+                    factorVector.assign((index, value) -> impItemFactors.row(vectorEntry.index()).get(index) + value);
                 }
+                double scale = Math.pow(userVector.getNumEntries(), -0.5);
+                factorVector.assign((index, value) -> value * scale);
 
-                //update user and item factors
-                for (int factorIdx = 0; factorIdx < numFactors; ++factorIdx) {
-                    double userFactorValue = userFactors.get(userIdx, factorIdx);
-                    double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
+                for (Vector.VectorEntry vectorEntry : userVector) {
+                    int itemIndex = vectorEntry.index();
 
-                    userFactors.add(userIdx, factorIdx, learnRate * (error * itemFactorValue - regUser * userFactorValue));
-                    itemFactors.add(itemIdx, factorIdx, learnRate * (error * (userFactorValue + sumImpItemsFactors.get(factorIdx)) - regItem * itemFactorValue));
+                    double error = vectorEntry.get() - predict(userIndex, itemIndex, factorVector);
+                    loss += error * error;
+                    // update user and item bias
+                    double userBias = userBiases.get(userIndex);
+                    userBiases.plus(userIndex, learnRate * (error - regBias * userBias));
+                    loss += regBias * userBias * userBias;
+                    double itemBias = itemBiases.get(itemIndex);
+                    itemBiases.plus(itemIndex, learnRate * (error - regBias * itemBias));
+                    loss += regBias * itemBias * itemBias;
 
-                    loss += regUser * userFactorValue * userFactorValue + regItem * itemFactorValue * itemFactorValue;
+//                    // update user and item factors
+                    for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                        double userFactor = userFactors.get(userIndex, factorIndex);
+                        double itemFactor = itemFactors.get(itemIndex, factorIndex);
+                        userFactors.plus(userIndex, factorIndex, learnRate * (error * itemFactor - regUser * userFactor));
+                        itemFactors.plus(itemIndex, factorIndex, learnRate * (error * (userFactor + factorVector.get(factorIndex)) - regItem * itemFactor));
+                        loss += regUser * userFactor * userFactor + regItem * itemFactor * itemFactor;
 
-                    for (int impItemIdx : items) {
-                        double impItemFactor = impItemFactors.get(impItemIdx, factorIdx);
-                        impItemFactors.add(impItemIdx, factorIdx, learnRate * (error * itemFactorValue / impNor - regImpItem * impItemFactor));
-
-                        loss += regImpItem * impItemFactor * impItemFactor;
+                        steps[factorIndex] += error * itemFactor * scale;
+                    }
+                }
+                int size = userVector.getNumEntries();
+                for (Vector.VectorEntry vectorEntry : userVector) {
+                    int index = vectorEntry.index();
+                    for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                        double factor = impItemFactors.get(index, factorIndex);
+                        impItemFactors.plus(index, factorIndex, learnRate * (steps[factorIndex] - regImpItem * factor * size));
+                        loss += regImpItem * factor * factor * size;
                     }
                 }
             }
             loss *= 0.5d;
 
-            if (isConverged(iter) && earlyStop) {
+            if (isConverged(iterationStep) && earlyStop) {
                 break;
             }
-            updateLRate(iter);
+            updateLRate(iterationStep);
         }
     }
 
+
+    private double predict(int userIndex, int itemIndex, DenseVector factorVector) {
+        double value = userBiases.get(userIndex) + itemBiases.get(itemIndex) + globalMean;
+        DenseVector userFactorVector = userFactors.row(userIndex);
+        DenseVector itemFactorVector = itemFactors.row(itemIndex);
+        // sum with user factors
+        for (int index = 0; index < numFactors; index++) {
+            value += (factorVector.get(index) + userFactorVector.get(index)) * itemFactorVector.get(index);
+        }
+        return value;
+    }
 
     @Override
-    protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        double predictRating = userBiases.get(userIdx) + itemBiases.get(itemIdx) + globalMean;
-
-        List<Integer> items = userItemsList.get(userIdx);
-        DenseVector userImpFactor = new DenseVector(numFactors);
-
-        // sum of implicit feedback factors of userIdx with weight Math.sqrt(1.0 / userItemsList.get(userIdx).size())
-        for (int impItemIdx : items) {
-            userImpFactor.addEqual(impItemFactors.row(impItemIdx, false));
+    protected double predict(int userIndex, int itemIndex) {
+        SequentialSparseVector userVector = trainMatrix.row(userIndex);
+        factorVector.assign((index, value) -> 0.0D);
+        // sum of implicit feedback factors of userIdx with weight Math.sqrt(1.0
+        // / userItemsList.get(userIdx).cardinality())
+        for (Vector.VectorEntry vectorEntry : userVector) {
+            factorVector.assign((index, value) -> impItemFactors.row(vectorEntry.index()).get(index) + value);
         }
-
-        double impNor = Math.sqrt(items.size());
-        if (impNor > 0) {
-            userImpFactor.scaleEqual(1.0 / impNor);
+        double scale = Math.sqrt(userVector.getNumEntries());
+        if (scale > 0D) {
+            factorVector.assign((index, value) -> value / scale);
         }
-        // sum with user factors
-        userImpFactor.addEqual(userFactors.row(userIdx, false));
-
-        return predictRating + userImpFactor.inner(itemFactors.row(itemIdx, false));
-    }
-
-    private List<List<Integer>> getUserItemsList(SparseMatrix sparseMatrix) {
-        List<List<Integer>> userItemsList = new ArrayList<>();
-        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsList.add(sparseMatrix.getColumns(userIdx));
-        }
-        return userItemsList;
+        return predict(userIndex, itemIndex, factorVector);
     }
 }

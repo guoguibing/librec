@@ -30,7 +30,7 @@ public class URLReader {
     /**
      * Read from the given url
      *
-     * @param  url a given url
+     * @param url a given url
      * @return the content read
      * @throws Exception if error occurs
      */
@@ -53,9 +53,9 @@ public class URLReader {
     /**
      * Read from the given url, with specified proxyHost and proxyPort
      *
-     * @param url         the given url
-     * @param proxyHost   proxy host
-     * @param proxyPort   proxy port
+     * @param url       the given url
+     * @param proxyHost proxy host
+     * @param proxyPort proxy port
      * @return the content read
      * @throws Exception if error occurs
      */
@@ -84,8 +84,8 @@ public class URLReader {
     /**
      * Read from the given url, with specified proxy.
      *
-     * @param url     the given url
-     * @param proxy   proxy
+     * @param url   the given url
+     * @param proxy proxy
      * @return the content read
      * @throws Exception if error occurs
      */

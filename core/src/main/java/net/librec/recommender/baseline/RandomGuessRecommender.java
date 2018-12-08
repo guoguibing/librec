@@ -20,12 +20,12 @@ package net.librec.recommender.baseline;
 
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.recommender.MatrixRecommender;
 
 /**
  * Baseline: predict by a random value in (minRate, maxRate)
  */
-public class RandomGuessRecommender extends AbstractRecommender {
+public class RandomGuessRecommender extends MatrixRecommender {
 
     @Override
     protected void setup() throws LibrecException {

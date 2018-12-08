@@ -1,14 +1,15 @@
 package net.librec.recommender.cf.ranking;
 
+import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 
 /**
  * <h3>EALS: efficient Alternating Least Square for Weighted Regularized Matrix Factorization.</h3>
@@ -48,11 +49,6 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
      */
     private double[] confidences;
 
-    /**
-     * weights of all user-item pair (u,i)
-     */
-    private SparseMatrix weights;
-
     @Override
     protected void setup() throws LibrecException {
         super.setup();
@@ -62,8 +58,6 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
         WRMFJudge = conf.getInt("rec.eals.wrmf.judge", 1);
 
         confidences = new double[numItems];
-        weights = new SparseMatrix(trainMatrix);
-
         initConfidencesAndWeights();
     }
 
@@ -73,7 +67,7 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
             double sumPopularity = 0.0;
 
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-                double alphaPopularity = Math.pow(trainMatrix.columnSize(itemIdx) * 1.0 / numRates, ratio);
+                double alphaPopularity = Math.pow(trainMatrix.column(itemIdx).getNumEntries() * 1.0 / numRates, ratio);
                 confidences[itemIdx] = overallWeight * alphaPopularity;
                 sumPopularity += alphaPopularity;
             }
@@ -86,34 +80,44 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
             }
         }
 
-        // By default, the weight for positive instance is uniformly 1.
+        weightMatrix();
+    }
+
+    public double weight(double value) {
+        double weight;
+        if (WRMFJudge == 1 || WRMFJudge == 2) {
+            weight = 1.0 + weightCoefficient * value;
+            //        weight =  Math.log(1.0 + Math.pow(10, weightCoefficient) * value);
+
+        } else {
+            weight = 1.0;
+        }
+        return weight;
+    }
+
+    private void weightMatrix() {
+        Double2DoubleOpenHashMap ratingWeightMap = new Double2DoubleOpenHashMap();
+        for (double rating : ratingScale) {
+            ratingWeightMap.putIfAbsent(rating, weight(rating));
+        }
+
         for (MatrixEntry matrixEntry : trainMatrix) {
-            int userIdx = matrixEntry.row(); // user
-            int itemIdx = matrixEntry.column(); // item
-            if (WRMFJudge == 1 || WRMFJudge == 2) {
-                weights.set(userIdx, itemIdx, 1.0 + weightCoefficient * matrixEntry.get());
-//                w.set(u, i, 1.0 + Math.log(1.0 + Math.pow(10, alpha) * me.get())); maybe better for poi recommender
-            } else {
-                weights.set(userIdx, itemIdx, 1.0);
-            }
+            matrixEntry.set(ratingWeightMap.get(matrixEntry.get()));
         }
     }
 
     @Override
     protected void trainModel() throws LibrecException {
-        List<List<Integer>> userItemsList = getUserItemsList(trainMatrix);
-        List<List<Integer>> itemUsersList = getItemUsersList(trainMatrix);
-
         double[] usersPredictions = new double[numUsers];
         double[] itemsPredictions = new double[numItems];
-        double[] usersWeights = new double[numUsers];
-        double[] itemsWeights = new double[numItems];
+        double weight;
 
         // Init item factors cache Sq
         DenseMatrix itemFactorsCache = new DenseMatrix(numFactors, numFactors);
         //Init user factors cache Sp
         DenseMatrix userFactorsCache;
 
+        userFactors = new DenseMatrix(numUsers, numFactors);
         for (int iter = 1; iter <= numIterations; iter++) {
             // Update the Sq cache
             for (int factorIdx1 = 0; factorIdx1 < numFactors; factorIdx1++) {
@@ -128,9 +132,11 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
             }
             // Step 1: update user factors;
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-                for (int itemIdx : userItemsList.get(userIdx)) {
-                    itemsPredictions[itemIdx] = DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
-                    itemsWeights[itemIdx] = weights.get(userIdx, itemIdx);
+                SequentialSparseVector itemVector = trainMatrix.row(userIdx);
+                int itemIdx;
+                for (Vector.VectorEntry vectorEntry : itemVector) {
+                    itemIdx = vectorEntry.index();
+                    itemsPredictions[itemIdx] = userFactors.row(userIdx).dot(itemFactors.row(itemIdx));
                 }
 
                 for (int factorCacheIdx = 0; factorCacheIdx < numFactors; factorCacheIdx++) {
@@ -142,28 +148,33 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
                         }
                     }
 
-                    for (int itemIdx : userItemsList.get(userIdx)) {
+                    for (Vector.VectorEntry vectorEntry : itemVector) {
+                        itemIdx = vectorEntry.index();
+                        weight = vectorEntry.get();
                         itemsPredictions[itemIdx] -= userFactors.get(userIdx, factorCacheIdx) * itemFactors.get(itemIdx, factorCacheIdx);
-                        numer += (itemsWeights[itemIdx] - (itemsWeights[itemIdx] - confidences[itemIdx]) * itemsPredictions[itemIdx])
+                        numer += (weight - (weight - confidences[itemIdx]) * itemsPredictions[itemIdx])
                                 * itemFactors.get(itemIdx, factorCacheIdx);
-                        denom += (itemsWeights[itemIdx] - confidences[itemIdx]) * itemFactors.get(itemIdx, factorCacheIdx)
+                        denom += (weight - confidences[itemIdx]) * itemFactors.get(itemIdx, factorCacheIdx)
                                 * itemFactors.get(itemIdx, factorCacheIdx);
                     }
 
                     //update puf
                     userFactors.set(userIdx, factorCacheIdx, numer / denom);
-                    for (int itemIdx : userItemsList.get(userIdx)) {
+                    for (Vector.VectorEntry vectorEntry : itemVector) {
+                        itemIdx = vectorEntry.index();
                         itemsPredictions[itemIdx] += userFactors.get(userIdx, factorCacheIdx) * itemFactors.get(itemIdx, factorCacheIdx);
                     }
                 }
             }
             // Update the Sp cache
-            userFactorsCache = userFactors.transpose().mult(userFactors);
+            userFactorsCache = userFactors.transpose().times(userFactors);
             // Step 2: update item factors;
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-                for (int userIdx : itemUsersList.get(itemIdx)) {
-                    usersPredictions[userIdx] = DenseMatrix.rowMult(userFactors, userIdx, itemFactors, itemIdx);
-                    usersWeights[userIdx] = weights.get(userIdx, itemIdx);
+                SequentialSparseVector userVector = trainMatrix.viewColumn(itemIdx);
+                int userIdx;
+                for (Vector.VectorEntry vectorEntry : userVector) {
+                    userIdx = vectorEntry.index();
+                    usersPredictions[userIdx] = userFactors.row(userIdx).dot(itemFactors.row(itemIdx));
                 }
 
                 for (int factorCacheIdx = 0; factorCacheIdx < numFactors; factorCacheIdx++) {
@@ -176,38 +187,27 @@ public class EALSRecommender extends MatrixFactorizationRecommender {
                     }
                     numer *= confidences[itemIdx];
 
-                    for (int userIdx : itemUsersList.get(itemIdx)) {
+                    for (Vector.VectorEntry vectorEntry : userVector) {
+                        userIdx = vectorEntry.index();
+                        weight = vectorEntry.get();
                         usersPredictions[userIdx] -= userFactors.get(userIdx, factorCacheIdx) * itemFactors.get(itemIdx, factorCacheIdx);
-                        numer += (usersWeights[userIdx] - (usersWeights[userIdx] - confidences[itemIdx]) * usersPredictions[userIdx])
+                        numer += (weight - (weight - confidences[itemIdx]) * usersPredictions[userIdx])
                                 * userFactors.get(userIdx, factorCacheIdx);
-                        denom += (usersWeights[userIdx] - confidences[itemIdx]) * userFactors.get(userIdx, factorCacheIdx)
+                        denom += (weight - confidences[itemIdx]) * userFactors.get(userIdx, factorCacheIdx)
                                 * userFactors.get(userIdx, factorCacheIdx);
                     }
 
                     //update qif
                     itemFactors.set(itemIdx, factorCacheIdx, numer / denom);
-                    for (int userIdx : itemUsersList.get(itemIdx)) {
+                    for (Vector.VectorEntry vectorEntry : userVector) {
+                        userIdx = vectorEntry.index();
                         usersPredictions[userIdx] += userFactors.get(userIdx, factorCacheIdx) * itemFactors.get(itemIdx, factorCacheIdx);
                     }
                 }
             }
+            if (verbose) {
+                LOG.info(getClass() + " runs at iteration = " + iter + " " + new Date());
+            }
         }
-    }
-
-
-    private List<List<Integer>> getUserItemsList(SparseMatrix sparseMatrix) {
-        List<List<Integer>> userItemsList = new ArrayList<>();
-        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsList.add(sparseMatrix.getColumns(userIdx));
-        }
-        return userItemsList;
-    }
-
-    private List<List<Integer>> getItemUsersList(SparseMatrix sparseMatrix) {
-        List<List<Integer>> itemUsersList = new ArrayList<>();
-        for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
-            itemUsersList.add(sparseMatrix.getRows(itemIdx));
-        }
-        return itemUsersList;
     }
 }

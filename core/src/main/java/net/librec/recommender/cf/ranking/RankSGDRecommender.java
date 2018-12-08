@@ -21,9 +21,10 @@ import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.recommender.MatrixFactorizationRecommender;
 import net.librec.util.Lists;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.*;
 
@@ -44,7 +45,7 @@ public class RankSGDRecommender extends MatrixFactorizationRecommender {
         // compute item sampling probability
         Map<Integer, Double> itemProbsMap = new HashMap<>();
         for (int j = 0; j < numItems; j++) {
-            int users = trainMatrix.columnSize(j);
+            int users = trainMatrix.column(j).getIndices().length;
 
             // sample items based on popularity
             double prob = (users + 0.0) / numRates;
@@ -100,9 +101,9 @@ public class RankSGDRecommender extends MatrixFactorizationRecommender {
                     double posItemFactorValue = itemFactors.get(posItemIdx, factorIdx);
                     double negItemFactorValue = itemFactors.get(negItemIdx, factorIdx);
 
-                    userFactors.add(userIdx, factorIdx, -sgd * (posItemFactorValue - negItemFactorValue));
-                    itemFactors.add(posItemIdx, factorIdx, -sgd * userFactorValue);
-                    itemFactors.add(negItemIdx, factorIdx, sgd * userFactorValue);
+                    userFactors.plus(userIdx, factorIdx, -sgd * (posItemFactorValue - negItemFactorValue));
+                    itemFactors.plus(posItemIdx, factorIdx, -sgd * userFactorValue);
+                    itemFactors.plus(negItemIdx, factorIdx, sgd * userFactorValue);
                 }
 
             }
@@ -117,10 +118,13 @@ public class RankSGDRecommender extends MatrixFactorizationRecommender {
     }
 
 
-    private List<Set<Integer>> getUserItemsSet(SparseMatrix sparseMatrix) {
+    private List<Set<Integer>> getUserItemsSet(SequentialAccessSparseMatrix sparseMatrix) {
         List<Set<Integer>> userItemsSet = new ArrayList<>();
         for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
-            userItemsSet.add(new HashSet<>(sparseMatrix.getColumns(userIdx)));
+            int[] itemIndexes = sparseMatrix.row(userIdx).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> itemList = Arrays.asList(inputBoxed);
+            userItemsSet.add(new HashSet(itemList));
         }
         return userItemsSet;
     }

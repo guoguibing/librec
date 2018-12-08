@@ -20,15 +20,25 @@ package net.librec.util;
 import java.text.SimpleDateFormat;
 
 public class DateUtil {
-    /** pattern */
+    /**
+     * pattern
+     */
     public final static String PATTERN_yyyy_MM_dd = "yyyy-MM-dd";
-    /** pattern */
+    /**
+     * pattern
+     */
     public final static String PATTERN_dd_MM_yyyy = "dd/MM/yyyy";
-    /** pattern */
+    /**
+     * pattern
+     */
     public final static String PATTERN_MM_dd_yyyy = "MM/dd/yyyy";
-    /** pattern */
+    /**
+     * pattern
+     */
     public final static String PATTERN_yyyy_MM_dd_HH_mm_SS = "yyyy-MM-dd HH-mm-SS";
-    /** simple date pattern */
+    /**
+     * simple date pattern
+     */
     private static final SimpleDateFormat sdf = new SimpleDateFormat(PATTERN_yyyy_MM_dd_HH_mm_SS);
 
     /**
@@ -56,8 +66,8 @@ public class DateUtil {
      * Parse the string of data into {@code java.sql.Date} object
      * with specified pattern
      *
-     * @param date     the input data string
-     * @param pattern  the given pattern
+     * @param date    the input data string
+     * @param pattern the given pattern
      * @return {@code java.sql.Date} object
      * @throws Exception if error occurs
      */
@@ -69,8 +79,8 @@ public class DateUtil {
     /**
      * Parse the milliseconds date to string with simple date pattern.
      *
-     * @param mms      the milliseconds date
-     * @param pattern  a specified pattern
+     * @param mms     the milliseconds date
+     * @param pattern a specified pattern
      * @return string of date
      * @throws Exception if error occurs
      */
@@ -82,7 +92,7 @@ public class DateUtil {
     /**
      * Parse the milliseconds date to string with specified pattern.
      *
-     * @param mms      the milliseconds date
+     * @param mms the milliseconds date
      * @return string of date
      * @throws Exception if error occurs
      */

@@ -24,16 +24,17 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 /**
+ * LDCC: Bayesian Co-clustering (BCC) with Gibbs sampling
+ * Wang et al.,<strong>Latent Dirichlet Bayesian Co-Clustering</strong>,
+ * Machine Learning and Knowledge Discovery in Databases, 2009.
+ *
  * @author Guo Guibing and zhanghaidong
  */
-public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
+public class LDCCRecommender extends MatrixProbabilisticGraphicalRecommender {
 
     private Table<Integer, Integer, Integer> userTopics, itemTopics; // Zu, Zv
 
@@ -52,7 +53,6 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
     private double[][][] userItemRatingTopicProbs, userItemRatingTopicProbsSum;
 
     private int numRatingLevels;
-    private List<Double> ratingScale;
 
     private int numStats;  //size of statistics
     private double loss;
@@ -64,10 +64,8 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
 
         numUserTopics = conf.getInt("rec.pgm.number.users", 10);
         numItemTopics = conf.getInt("rec.pgm.number.items", 10);
-        burnIn = conf.getInt("rec.pgm.burn-in", 100);
+        burnIn = conf.getInt("rec.pgm.burnin", 100);
 
-        Set<Double> ratingScaleSet = trainMatrix.getValueSet();
-        ratingScale = new ArrayList<>(ratingScaleSet);
         numRatingLevels = ratingScale.size();
 
         userAlpha = conf.getDouble("rec.pgm.user.alpha", 1.0 / numUserTopics);
@@ -76,8 +74,8 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
 
         numEachUserTopics = new DenseMatrix(numUsers, numUserTopics);
         numEachItemTopics = new DenseMatrix(numItems, numItemTopics);
-        numEachUserRatings = new DenseVector(numUsers);
-        numEachItemRatings = new DenseVector(numItems);
+        numEachUserRatings = new VectorBasedDenseVector(numUsers);
+        numEachItemRatings = new VectorBasedDenseVector(numItems);
 
         numUserItemRatingTopics = new int[numUserTopics][numItemTopics][numRatingLevels];
         numUserItemTopics = new DenseMatrix(numUserTopics, numItemTopics);
@@ -94,18 +92,20 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
             int i = (int) (numUserTopics * Randoms.uniform());
             int j = (int) (numItemTopics * Randoms.uniform());
 
-            numEachUserTopics.add(u, i, 1);
-            numEachUserRatings.add(u, 1);
+            numEachUserTopics.plus(u, i, 1);
+            numEachUserRatings.plus(u, 1);
 
-            numEachItemTopics.add(v, j, 1);
-            numEachItemRatings.add(v, 1);
+            numEachItemTopics.plus(v, j, 1);
+            numEachItemRatings.plus(v, 1);
 
             numUserItemRatingTopics[i][j][r]++;
-            numUserItemTopics.add(i, j, 1);
+            numUserItemTopics.plus(i, j, 1);
 
             userTopics.put(u, v, i);
             itemTopics.put(u, v, j);
         }
+        userTopicProbs = new DenseMatrix(numUsers, numUserTopics);
+        itemTopicProbs = new DenseMatrix(numItems, numItemTopics);
 
         // parameters
         userTopicProbsSum = new DenseMatrix(numUsers, numUserTopics);
@@ -128,14 +128,14 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
             int j = itemTopics.get(u, v);
 
             // remove this observation
-            numEachUserTopics.add(u, i, -1);
-            numEachUserRatings.add(u, -1);
+            numEachUserTopics.plus(u, i, -1);
+            numEachUserRatings.plus(u, -1);
 
-            numEachItemTopics.add(v, j, -1);
-            numEachItemRatings.add(v, -1);
+            numEachItemTopics.plus(v, j, -1);
+            numEachItemRatings.plus(v, -1);
 
             numUserItemRatingTopics[i][j][r]--;
-            numUserItemTopics.add(i, j, -1);
+            numUserItemTopics.plus(i, j, -1);
 
             // Compute P(i, j)
             DenseMatrix probs = new DenseMatrix(numUserTopics, numItemTopics);
@@ -153,12 +153,13 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
                 }
             }
 
-            probs = probs.scale(1.0 / sum);
+            // probs = probs.scale(1.0 / sum);
+            probs.assign(probs.times(1.0 / sum));
 
             // Re-sample user factor
             double[] Pu = new double[numUserTopics];
             for (int m = 0; m < numUserTopics; m++) {
-                Pu[m] = probs.sumOfRow(m);
+                Pu[m] = probs.row(m).sum();
             }
             for (int m = 1; m < numUserTopics; m++) {
                 Pu[m] += Pu[m - 1];
@@ -174,7 +175,7 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
             // Re-sample item factor
             double[] Pv = new double[numItemTopics];
             for (int n = 0; n < numItemTopics; n++) {
-                Pv[n] = probs.sumOfColumn(n);
+                Pv[n] = probs.column(n).sum();
             }
             for (int n = 1; n < numItemTopics; n++) {
                 Pv[n] += Pv[n - 1];
@@ -188,14 +189,14 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
             }
 
             // Add statistics
-            numEachUserTopics.add(u, i, 1);
-            numEachUserRatings.add(u, 1);
+            numEachUserTopics.plus(u, i, 1);
+            numEachUserRatings.plus(u, 1);
 
-            numEachItemTopics.add(v, j, 1);
-            numEachItemRatings.add(v, 1);
+            numEachItemTopics.plus(v, j, 1);
+            numEachItemRatings.plus(v, 1);
 
             numUserItemRatingTopics[i][j][r]++;
-            numUserItemTopics.add(i, j, 1);
+            numUserItemTopics.plus(i, j, 1);
 
             userTopics.put(u, v, i);
             itemTopics.put(u, v, j);
@@ -212,13 +213,13 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
     protected void readoutParams() {
         for (int u = 0; u < numUsers; u++) {
             for (int i = 0; i < numUserTopics; i++) {
-                userTopicProbsSum.add(u, i, (numEachUserTopics.get(u, i) + userAlpha) / (numEachUserRatings.get(u) + numUserTopics * userAlpha));
+                userTopicProbsSum.plus(u, i, (numEachUserTopics.get(u, i) + userAlpha) / (numEachUserRatings.get(u) + numUserTopics * userAlpha));
             }
         }
 
         for (int v = 0; v < numItems; v++) {
             for (int j = 0; j < numItemTopics; j++) {
-                itemTopicProbsSum.add(v, j, (numEachItemTopics.get(v, j) + itemAlpha) / (numEachItemRatings.get(v) + numItemTopics * itemAlpha));
+                itemTopicProbsSum.plus(v, j, (numEachItemTopics.get(v, j) + itemAlpha) / (numEachItemRatings.get(v) + numItemTopics * itemAlpha));
             }
         }
 
@@ -237,8 +238,10 @@ public class LDCCRecommender extends ProbabilisticGraphicalRecommender {
      */
     @Override
     protected void estimateParams() {
-        userTopicProbs = userTopicProbsSum.scale(1.0 / numStats);
-        itemTopicProbs = itemTopicProbsSum.scale(1.0 / numStats);
+//        userTopicProbs = userTopicProbsSum.scale(1.0 / numStats);
+//        itemTopicProbs = itemTopicProbsSum.scale(1.0 / numStats);
+        userTopicProbs.assign(userTopicProbsSum.times(1.0 / numStats));
+        itemTopicProbs.assign(itemTopicProbsSum.times(1.0 / numStats));
 
         for (int i = 0; i < numUserTopics; i++) {
             for (int j = 0; j < numItemTopics; j++) {

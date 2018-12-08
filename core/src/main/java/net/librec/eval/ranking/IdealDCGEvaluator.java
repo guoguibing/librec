@@ -19,49 +19,43 @@ package net.librec.eval.ranking;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
 import net.librec.math.algorithm.Maths;
-import net.librec.math.structure.SparseMatrix;
 import net.librec.recommender.item.RecommendedList;
-
-import java.util.List;
 
 /**
  * IdealDCGEvaluator
- *
- * @author WangYuFeng
+ *<a href=https://en.wikipedia.org/wiki/Discounted_cumulative_gain>wikipedia, ideal dcg</a>
+ * @author WangYuFeng and Keqiang Wang
  */
 public class IdealDCGEvaluator extends AbstractRecommenderEvaluator {
 
     /**
      * Evaluate on the test set with the the list of recommended items.
      *
-     * @param testMatrix
-     *            the given test set
-     * @param recommendedList
-     *            the list of recommended items
+     * @param groundTruthList the given ground truth list
+     * @param recommendedList the list of recommended items
      * @return evaluate result
      */
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
 
         double iDCG = 0.0;
 
-        int numUsers = testMatrix.numRows();
-        int nonZeroNumUsers = 0;
-        for (int userID = 0; userID < numUsers; userID++) {
+        int numContext = groundTruthList.size();
+        int nonZeroContext = 0;
+        for (int contextIdx = 0; contextIdx < numContext; ++contextIdx) {
             double idcg = 0.0;
 
-            List<Integer> testListByUser = testMatrix.getColumns(userID);
-            if (testListByUser.size() > 0) {
+            int sizeByContext = groundTruthList.getKeyValueListByContext(contextIdx).size();
+            if (sizeByContext > 0) {
                 // calculate the IDCG
-                int numItemsInTestList = testListByUser.size();
-                for (int i = 0; i < numItemsInTestList; i++) {
+                for (int i = 0; i < sizeByContext; i++) {
                     idcg += 1 / Maths.log(i + 2.0, 2);
                 }
                 iDCG += idcg;
-                nonZeroNumUsers++;
+                ++nonZeroContext;
             }
         }
 
-        return nonZeroNumUsers > 0 ? iDCG / nonZeroNumUsers : 0.0d;
+        return nonZeroContext > 0 ? iDCG / nonZeroContext : 0.0d;
     }
 
 }

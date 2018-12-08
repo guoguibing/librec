@@ -18,8 +18,9 @@
 
 package net.librec.recommender.baseline;
 
+import com.google.common.collect.Maps;
 import net.librec.common.LibrecException;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.recommender.MatrixRecommender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +28,7 @@ import java.util.Map;
 /**
  * Baseline: items are weighted by the number of ratings they received.
  */
-public class MostPopularRecommender extends AbstractRecommender {
+public class MostPopularRecommender extends MatrixRecommender {
 
     /**
      * most popular items
@@ -37,7 +38,7 @@ public class MostPopularRecommender extends AbstractRecommender {
     @Override
     protected void setup() throws LibrecException {
         super.setup();
-        itemPops = new HashMap<>();
+        itemPops = Maps.newConcurrentMap();
     }
 
     @Override
@@ -55,8 +56,9 @@ public class MostPopularRecommender extends AbstractRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
+
         if (!itemPops.containsKey(itemIdx))
-            itemPops.put(itemIdx, trainMatrix.columnSize(itemIdx));
+            itemPops.put(itemIdx, trainMatrix.column(itemIdx).size());
 
         return itemPops.get(itemIdx);
     }

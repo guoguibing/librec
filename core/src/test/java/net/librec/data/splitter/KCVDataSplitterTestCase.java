@@ -41,13 +41,15 @@ public class KCVDataSplitterTestCase extends BaseTestCase {
 		super.setUp();
 
 		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4A.txt");
-		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
-		convertor = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT), conf.get("inputDataPath"));
-
-		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
+		convertor = new TextDataConvertor(
+				new String[]{"user","item","rating"},
+				new String[]{"STRING","STRING","NUMERIC"},
+				conf.get("inputDataPath"), " ");
 		conf.set("inputDataPath", conf.get("dfs.data.dir") + "/test/datamodeltest/matrix4by4A-date.txt");
-		convertorWithDate = new TextDataConvertor(conf.get(Configured.CONF_DATA_COLUMN_FORMAT),
-				conf.get("inputDataPath"));
+		convertorWithDate = new TextDataConvertor(
+				new String[]{"user","item","rating","datetime"},
+				new String[]{"STRING","STRING","NUMERIC","NUMERIC"},
+				conf.get("inputDataPath"), " ");
 		conf.set("data.splitter.cv.number", "6");
 	}
 
@@ -58,12 +60,11 @@ public class KCVDataSplitterTestCase extends BaseTestCase {
 	 */
 	@Test
 	public void testKCVWithoutDate() throws Exception {
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIR");
 		convertor.processData();
 		KCVDataSplitter splitter = new KCVDataSplitter(convertor, conf);
-
-		for (int i = 1; i <= 6; i++) {
-			splitter.splitFolds();
-			splitter.splitData(i);
+		splitter.splitData();
+		while (splitter.nextFold()){
 			assertEquals(splitter.getTrainData().size(), 10);
 			assertEquals(splitter.getTestData().size(), 2);
 		}
@@ -76,12 +77,11 @@ public class KCVDataSplitterTestCase extends BaseTestCase {
 	 */
 	@Test
 	public void testKCVWithDate() throws Exception {
+		conf.set(Configured.CONF_DATA_COLUMN_FORMAT, "UIRT");
 		convertorWithDate.processData();
 		KCVDataSplitter splitter = new KCVDataSplitter(convertorWithDate, conf);
-
-		for (int i = 1; i <= 6; i++) {
-			splitter.splitFolds();
-			splitter.splitData(i);
+		splitter.splitData();
+		while (splitter.nextFold()){
 			assertEquals(splitter.getTrainData().size(), 10);
 			assertEquals(splitter.getTestData().size(), 2);
 		}

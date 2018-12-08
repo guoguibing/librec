@@ -19,12 +19,11 @@ package net.librec.recommender.cf.ranking;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
+import net.librec.math.structure.*;
+import net.librec.math.structure.Vector.VectorEntry;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +40,7 @@ import java.util.Map;
 public class RankALSRecommender extends MatrixFactorizationRecommender {
     // whether support based weighting is used ($s_i=|U_i|$) or not ($s_i=1$)
     private boolean isSupportWeight;
-
-    private DenseVector supportVector;
+    private VectorBasedDenseVector supportVector;
 
     private double sumSupport;
 
@@ -50,12 +48,12 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
     protected void setup() throws LibrecException {
         super.setup();
 
-        isSupportWeight =conf.getBoolean("rec.rankals.support.weight", true);
+        isSupportWeight = conf.getBoolean("rec.rankals.support.weight", true);
 
-        supportVector = new DenseVector(numItems);
+        supportVector = new VectorBasedDenseVector(numItems);
         sumSupport = 0;
         for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-            double supportValue = isSupportWeight ? trainMatrix.columnSize(itemIdx) : 1;
+            double supportValue = isSupportWeight ? trainMatrix.column(itemIdx).getNumEntries() : 1;
             supportVector.set(itemIdx, supportValue);
             sumSupport += supportValue;
         }
@@ -66,27 +64,26 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
         for (int iter = 1; iter < numIterations; iter++) {
 
             // P step: update user vectors
-            DenseVector sum_sq = new DenseVector(numFactors);
+            DenseVector sum_sq = new VectorBasedDenseVector(numFactors);
             DenseMatrix sum_sqq = new DenseMatrix(numFactors, numFactors);
 
             for (int j = 0; j < numItems; j++) {
                 DenseVector qj = itemFactors.row(j);
                 double sj = supportVector.get(j);
-
-                sum_sq = sum_sq.add(qj.scale(sj));
-                sum_sqq = sum_sqq.add(qj.outer(qj).scale(sj));
+                sum_sq = sum_sq.plus(qj.times(sj));
+                sum_sqq = sum_sqq.plus(qj.outer(qj).times(sj));
             }
 
-            List<Integer> cus = trainMatrix.rows(); // list of users with$c_ui=1$
+            List<Integer> cus = nonEmptyRows(trainMatrix); // list of users with$c_ui=1$
             for (int u : cus) {
                 // for each user
                 DenseMatrix sum_cqq = new DenseMatrix(numFactors, numFactors);
-                DenseVector sum_cq = new DenseVector(numFactors);
-                DenseVector sum_cqr = new DenseVector(numFactors);
-                DenseVector sum_sqr = new DenseVector(numFactors);
+                DenseVector sum_cq = new VectorBasedDenseVector(numFactors);
+                DenseVector sum_cqr = new VectorBasedDenseVector(numFactors);
+                DenseVector sum_sqr = new VectorBasedDenseVector(numFactors);
 
-                SparseVector Ru = trainMatrix.row(u);
-                double sum_c = Ru.getCount();
+                SequentialSparseVector Ru = trainMatrix.row(u);
+                double sum_c = Ru.getNumEntries();
                 double sum_sr = 0, sum_cr = 0;
 
                 for (VectorEntry ve : Ru) {
@@ -95,25 +92,27 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
                     // double cui = 1;
                     DenseVector qi = itemFactors.row(i);
 
-                    sum_cqq = sum_cqq.add(qi.outer(qi));
-                    sum_cq = sum_cq.add(qi);
-                    sum_cqr = sum_cqr.add(qi.scale(rui));
+                    sum_cqq = sum_cqq.plus(qi.outer(qi));
+                    sum_cq = sum_cq.plus(qi);
+                    sum_cqr = sum_cqr.plus(qi.times(rui));
 
                     // ratings of unrated items will be 0
                     double si = supportVector.get(i);
                     sum_sr += si * rui;
                     sum_cr += rui;
-                    sum_sqr = sum_sqr.add(qi.scale(si * rui));
+                    sum_sqr = sum_sqr.plus(qi.times(si * rui));
                 }
 
-                DenseMatrix M = sum_cqq.scale(sumSupport).minus(sum_cq.outer(sum_sq)).minus(sum_sq.outer(sum_cq))
-                        .add(sum_sqq.scale(sum_c));
+                DenseMatrix M = sum_cqq.times(sumSupport).minus(sum_cq.outer(sum_sq)).minus(sum_sq.outer(sum_cq))
+                        .plus(sum_sqq.times(sum_c));
 
-                DenseVector y = sum_cqr.scale(sumSupport).minus(sum_cq.scale(sum_sr)).minus(sum_sq.scale(sum_cr))
-                        .add(sum_sqr.scale(sum_c));
+                DenseVector y = sum_cqr.times(sumSupport).minus(sum_cq.times(sum_sr)).minus(sum_sq.times(sum_cr))
+                        .plus(sum_sqr.times(sum_c));
 
-                DenseVector pu = M.inv().mult(y);
-                userFactors.setRow(u, pu);
+                DenseVector pu = M.inverse().times(y);
+                userFactors.row(u).assign((index, value) -> {
+                    return pu.get(index);
+                });
             }
 
             // Q step: update item vectors
@@ -123,10 +122,10 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
             Map<Integer, DenseVector> m_sum_cq = new HashMap<>();
 
             for (int u : cus) {
-                SparseVector Ru = trainMatrix.row(u);
+                SequentialSparseVector Ru = trainMatrix.row(u);
 
-                double sum_sr = 0, sum_cr = 0, sum_c = Ru.getCount();
-                DenseVector sum_cq = new DenseVector(numFactors);
+                double sum_sr = 0, sum_cr = 0, sum_c = Ru.getNumEntries();
+                DenseVector sum_cq = new VectorBasedDenseVector(numFactors);
 
                 for (VectorEntry ve : Ru) {
                     int j = ve.index();
@@ -135,7 +134,7 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
 
                     sum_sr += sj * ruj;
                     sum_cr += ruj;
-                    sum_cq = sum_cq.add(itemFactors.row(j));
+                    sum_cq = sum_cq.plus(itemFactors.row(j));
                 }
 
                 m_sum_sr.put(u, sum_sr);
@@ -148,37 +147,61 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
                 // for each item
                 DenseMatrix sum_cpp = new DenseMatrix(numFactors, numFactors);
                 DenseMatrix sum_p_p_c = new DenseMatrix(numFactors, numFactors);
-                DenseVector sum_p_p_cq = new DenseVector(numFactors);
-                DenseVector sum_cpr = new DenseVector(numFactors);
-                DenseVector sum_c_sr_p = new DenseVector(numFactors);
-                DenseVector sum_cr_p = new DenseVector(numFactors);
-                DenseVector sum_p_r_c = new DenseVector(numFactors);
+                DenseVector sum_p_p_cq = new VectorBasedDenseVector(numFactors);
+                DenseVector sum_cpr = new VectorBasedDenseVector(numFactors);
+                DenseVector sum_c_sr_p = new VectorBasedDenseVector(numFactors);
+                DenseVector sum_cr_p = new VectorBasedDenseVector(numFactors);
+                DenseVector sum_p_r_c = new VectorBasedDenseVector(numFactors);
 
                 double si = supportVector.get(i);
+                DenseVector itemVector = new VectorBasedDenseVector(trainMatrix.column(i));
 
                 for (int u : cus) {
                     DenseVector pu = userFactors.row(u);
-                    double rui = trainMatrix.get(u, i);
+                    // double rui = trainMatrix.get(u, i);
+                    double rui = itemVector.get(u);
 
                     DenseMatrix pp = pu.outer(pu);
-                    sum_cpp = sum_cpp.add(pp);
-                    sum_p_p_cq = sum_p_p_cq.add(pp.mult(m_sum_cq.get(u)));
-                    sum_p_p_c = sum_p_p_c.add(pp.scale(m_sum_c.get(u)));
-                    sum_cr_p = sum_cr_p.add(pu.scale(m_sum_cr.get(u)));
+                    sum_cpp = sum_cpp.plus(pp);
+                    sum_p_p_cq = sum_p_p_cq.plus(pp.times(m_sum_cq.get(u)));
+                    sum_p_p_c = sum_p_p_c.plus(pp.times(m_sum_c.get(u)));
+                    sum_cr_p = sum_cr_p.plus(pu.times(m_sum_cr.get(u)));
 
                     if (rui > 0) {
-                        sum_cpr = sum_cpr.add(pu.scale(rui));
-                        sum_c_sr_p = sum_c_sr_p.add(pu.scale(m_sum_sr.get(u)));
-                        sum_p_r_c = sum_p_r_c.add(pu.scale(rui * m_sum_c.get(u)));
+                        sum_cpr = sum_cpr.plus(pu.times(rui));
+                        sum_c_sr_p = sum_c_sr_p.plus(pu.times(m_sum_sr.get(u)));
+                        sum_p_r_c = sum_p_r_c.plus(pu.times(rui * m_sum_c.get(u)));
                     }
                 }
-
-                DenseMatrix M = sum_cpp.scale(sumSupport).add(sum_p_p_c.scale(si));
-                DenseVector y = sum_cpp.mult(sum_sq).add(sum_cpr.scale(sumSupport)).minus(sum_c_sr_p)
-                        .add(sum_p_p_cq.scale(si)).minus(sum_cr_p.scale(si)).add(sum_p_r_c.scale(si));
-                DenseVector qi = M.inv().mult(y);
-                itemFactors.setRow(i, qi);
+                DenseMatrix subtract = sum_cpp.times(si + 1);
+                DenseMatrix M = sum_cpp.times(sumSupport).plus(sum_p_p_c.times(si)).minus(subtract);
+                DenseVector y = sum_cpp.times(sum_sq).plus(sum_cpr.times(sumSupport)).minus(sum_c_sr_p)
+                        .plus(sum_p_p_cq.times(si)).minus(sum_cr_p.times(si)).plus(sum_p_r_c.times(si));
+                DenseVector qi = M.inverse().times(y.minus(subtract.times(itemFactors.row(i))));
+                itemFactors.row(i).assign((index, value) -> {
+                    return qi.get(index);
+                });
             }
         }
+    }
+
+    /**
+     * @return a list of rows which have at least one non-empty entry
+     */
+    public List<Integer> nonEmptyRows(SequentialAccessSparseMatrix matrix) {
+        if (matrix == null) {
+            LOG.error("The matrix passed in is null.");
+            return null;
+        }
+
+        List<Integer> list = new ArrayList<>(matrix.rowSize());
+
+        for (int userId = 0; userId < matrix.rowSize(); userId++) {
+            if (matrix.row(userId).getNumEntries() > 0) {
+                list.add(userId);
+            }
+        }
+
+        return list;
     }
 }

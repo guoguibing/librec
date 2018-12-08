@@ -52,36 +52,36 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
 
     private void buildRatingModel() throws LibrecException {
         double zW0 = 0;
-        DenseVector zW = new DenseVector(p);
+        VectorBasedDenseVector zW = new VectorBasedDenseVector(p);
         DenseMatrix zV = new DenseMatrix(p, k);
         zW.init(0);
         zV.init(0);
 
         double nW0 = 0;
-        DenseVector nW = new DenseVector(p);
+        VectorBasedDenseVector nW = new VectorBasedDenseVector(p);
         DenseMatrix nV = new DenseMatrix(p, k);
         nW.init(0);
         nV.init(0);
 
         double gW0, thetaW0;
 
-        DenseVector gW = new DenseVector(p);
-        DenseVector thetaW = new DenseVector(p);
+        VectorBasedDenseVector gW = new VectorBasedDenseVector(p);
+        VectorBasedDenseVector thetaW = new VectorBasedDenseVector(p);
 
         DenseMatrix gV = new DenseMatrix(p, k);
         DenseMatrix thetaV = new DenseMatrix(p, k);
 
         for (int iter=0; iter < numIterations; ++iter){
             loss = 0.0;
-            int userDimension = trainTensor.getUserDimension();
-            int itemDimension = trainTensor.getItemDimension();
+//            int userDimension = trainTensor.getUserDimension();
+//            int itemDimension = trainTensor.getItemDimension();
             for (TensorEntry me: trainTensor) {
                 int[] entryKeys = me.keys();
-                SparseVector x = tenserKeysToFeatureVector(entryKeys);
+                SequentialSparseVector x = tenserKeysToFeatureVector(entryKeys);
                 double rate = me.get();
 
                 // compute rating value
-                double pred = predict(entryKeys[userDimension], entryKeys[itemDimension], x);
+                double pred = predict(x);
 
                 double err = pred - rate;
                 loss += err * err;
@@ -103,14 +103,14 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                     w0 = -1 / ((beta + Math.sqrt(nW0)) / alpha + lambda2) * (zW0 - sgn(zW0) * lambda1);
                 }
 
-                for(VectorEntry ve: x){
+                for(Vector.VectorEntry ve: x){
                     int l = ve.index();
                     // compute W gradient
                     double hWl = ve.get();
                     gW.set(l, gradLoss * hWl);
                     thetaW.set(l, 1 / alpha * (Math.sqrt(nW.get(l) + Math.pow(gW.get(l), 2)) - Math.sqrt(nW.get(l))));
-                    zW.add(l, gW.get(l) - thetaW.get(l) * W.get(l));
-                    nW.add(l, Math.pow(gW.get(l), 2));
+                    zW.plus(l, gW.get(l) - thetaW.get(l) * W.get(l));
+                    nW.plus(l, Math.pow(gW.get(l), 2));
 
                     // update W
                     if (Math.abs(zW.get(l)) <= lambda1) {
@@ -123,7 +123,7 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
                     for (int f = 0; f < k; ++f) {
                         double hVlf = 0;
                         double xl =ve.get();
-                        for(VectorEntry ve2: x){
+                        for (Vector.VectorEntry ve2: x){
                             int j = ve2.index();
                             if(j!=l){
                                 hVlf += xl * V.get(j, f) * ve2.get();
@@ -135,8 +135,8 @@ public class FMFTRLRecommender extends FactorizationMachineRecommender {
 
                         gV.set(l, f, gradVlf);
                         thetaV.set(l, f, 1 / alpha * (Math.sqrt(nV.get(l, f) + Math.pow(gV.get(l, f), 2)) - Math.sqrt(nV.get(l, f))));
-                        zV.add(l, f, gV.get(l, f) - thetaV.get(l, f) * V.get(l, f));
-                        nV.add(l, f, Math.pow(gV.get(l, f), 2));
+                        zV.plus(l, f, gV.get(l, f) - thetaV.get(l, f) * V.get(l, f));
+                        nV.plus(l, f, Math.pow(gV.get(l, f), 2));
 
                         // update V
                         if (Math.abs(zV.get(l, f)) <= lambda1) {

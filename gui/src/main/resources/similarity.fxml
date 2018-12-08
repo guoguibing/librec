@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="459.0" prefWidth="800.0" style="-fx-background-color: #07042b;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.SimilarityController">
+    <children>
+        <ImageView fitHeight="80.0" fitWidth="400.0" layoutX="618.0" opacity="0.86" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@librec_2.png" />
+            </image>
+        </ImageView>
+        <Label layoutX="52.0" layoutY="40.0" prefHeight="32.0" prefWidth="317.0" text="%similarity.conf.label" textFill="#ddd9d9">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+        <JFXButton layoutX="468.0" layoutY="340.0" onAction="#goBack" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #FF4500;" text="%data.finish.button" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+      <Label layoutX="94.0" layoutY="132.0" prefHeight="19.0" prefWidth="68.0" text="%similarity.target" textFill="#d0caca">
+         <font>
+            <Font size="14.0" />
+         </font>
+      </Label>
+      <JFXRadioButton fx:id="userKeyButton" layoutX="172.0" layoutY="132.0" text="%similarity.target.user" textFill="#d0caca">
+         <toggleGroup>
+            <ToggleGroup fx:id="key" />
+         </toggleGroup></JFXRadioButton>
+      <JFXRadioButton fx:id="itemKeyButton" layoutX="258.0" layoutY="132.0" text="%simialrity.target.item" textFill="#d0caca" toggleGroup="$key" />
+          <Label layoutX="94.0" layoutY="178.0" prefHeight="19.0" prefWidth="99.0" text="%similarity.type" textFill="#d0caca">
+              <font>
+                  <Font size="14.0" />
+              </font>
+      </Label>
+      <ChoiceBox fx:id="simTypeBox" layoutX="211.0" layoutY="176.0" prefHeight="23.0" prefWidth="99.0" />
+        <JFXButton layoutX="652.0" layoutY="402.0" onAction="#returnToMain" prefHeight="50.0" prefWidth="141.0" style="-fx-background-color: #07042b;" text="%main.label.exit" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+    </children>
+</AnchorPane>

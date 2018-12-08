@@ -73,8 +73,8 @@ public class DriverClassUtil {
      * get Class by driver name.
      *
      * @param driver driver name
-     * @return  Class object
-     * @throws ClassNotFoundException  if can't find the Class
+     * @return Class object
+     * @throws ClassNotFoundException if can't find the Class
      */
     public static Class<?> getClass(String driver) throws ClassNotFoundException {
         if (StringUtils.isBlank(driver)) {
@@ -90,8 +90,8 @@ public class DriverClassUtil {
     /**
      * get Driver Name by clazz
      *
-     * @param clazz  clazz name
-     * @return  driver name
+     * @param clazz clazz name
+     * @return driver name
      * @throws ClassNotFoundException if can't find the Class
      */
     public static String getDriverName(String clazz) throws ClassNotFoundException {

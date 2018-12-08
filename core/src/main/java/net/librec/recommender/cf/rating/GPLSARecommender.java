@@ -24,8 +24,10 @@ import net.librec.math.algorithm.Gaussian;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.algorithm.Stats;
 import net.librec.math.structure.*;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
+import org.apache.commons.lang.ArrayUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ import java.util.Map;
  * <strong>Tempered EM:</strong> Thomas Hofmann, <strong>Unsupervised Learning by Probabilistic Latent Semantic
  * Analysis</strong>, Machine Learning, 42, 177�C196, 2001.
  */
-public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
+public class GPLSARecommender extends MatrixProbabilisticGraphicalRecommender {
     /*
      * number of latent topics
      */
@@ -57,7 +59,7 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
     /*
      * regularize ratings
      */
-    protected DenseVector userMu, userSigma;
+    protected VectorBasedDenseVector userMu, userSigma;
     /*
      * smoothing weight
      */
@@ -87,13 +89,13 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
         }
 
         double mean = trainMatrix.mean();
-        double sd = Stats.sd(trainMatrix.getData(), mean);
+        double sd = Stats.standardDeviation(trainMatrix.getDataTable().values(), mean);
 
-        userMu = new DenseVector(numUsers);
-        userSigma = new DenseVector(numUsers);
+        userMu = new VectorBasedDenseVector(numUsers);
+        userSigma = new VectorBasedDenseVector(numUsers);
         smoothWeight = conf.getInt("rec.recommender.smoothWeight");
         for (int u = 0; u < numUsers; u++) {
-            SparseVector userRow = trainMatrix.row(u);
+            SequentialSparseVector userRow = trainMatrix.row(u);
             int numRatings = userRow.size();
             if (numRatings < 1) {
                 continue;
@@ -105,14 +107,13 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
 
             // Compute sigma_u
             double sum = 0;
-            for (VectorEntry ve : userRow) {
+            for (Vector.VectorEntry ve : userRow) {
                 sum += Math.pow(ve.get() - mu_u, 2);
             }
             sum += smoothWeight * Math.pow(sd, 2);
             double sigma_u = Math.sqrt(sum / (numRatings + smoothWeight));
             userSigma.set(u, sigma_u);
         }
-
 
         // Initialize Q
         Q = HashBasedTable.create();
@@ -123,7 +124,8 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
             double rating = trainMatrixEntry.get();
 
             double r = (rating - userMu.get(userIdx)) / userSigma.get(userIdx);
-            trainMatrix.set(userIdx,itemIdx,r);
+            // trainMatrix.set(userIdx, itemIdx, r);
+            trainMatrixEntry.set(r);
 
             Q.put(userIdx, itemIdx, new HashMap<Integer, Double>());
         }
@@ -132,7 +134,7 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
         topicItemMu = new DenseMatrix(numItems, numTopics);
         topicItemSigma = new DenseMatrix(numItems, numTopics);
         for (int i = 0; i < numItems; i++) {
-            SparseVector itemColumn = trainMatrix.column(i);
+            SequentialSparseVector itemColumn = trainMatrix.column(i);
             int numRatings = itemColumn.size();
             if (numRatings < 1) {
                 continue;
@@ -141,7 +143,7 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
             double mu_i = itemColumn.mean();
 
             double sum = 0;
-            for (VectorEntry ve : itemColumn) {
+            for (Vector.VectorEntry ve : itemColumn) {
                 sum += Math.pow(ve.get() - mu_i, 2);
             }
 
@@ -189,7 +191,10 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
     protected void mStep() {
         // theta_u,z
         for (int u = 0; u < numUsers; u++) {
-            List<Integer> items = trainMatrix.getColumns(u);
+            // List<Integer> items = trainMatrix.getColumns(u);
+            int[] itemIndexes = trainMatrix.row(u).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> items = Arrays.asList(inputBoxed);
             if (items.size() < 1) {
                 continue;
             }
@@ -211,7 +216,10 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
 
         // topicItemMu, topicItemSigma
         for (int i = 0; i < numItems; i++) {
-            List<Integer> users = trainMatrix.getRows(i);
+            // List<Integer> users = trainMatrix.getRows(i);
+            int[] itemIndexes = trainMatrix.column(i).getIndices();
+            Integer[] inputBoxed = ArrayUtils.toObject(itemIndexes);
+            List<Integer> users = Arrays.asList(inputBoxed);
             if (users.size() < 1)
                 continue;
 
@@ -219,7 +227,9 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
                 double numerator = 0, denominator = 0;
 
                 for (int u : users) {
-                    double rating = trainMatrix.get(u, i);
+                    // double rating = trainMatrix.get(u, i);
+                    RandomAccessSparseVector userVector = new RandomAccessSparseVector(trainMatrix.row(u));
+                    double rating = userVector.get(i);
                     double prob = Q.get(u, i).get(z);
 
                     numerator += rating * prob;
@@ -232,7 +242,9 @@ public class GPLSARecommender extends ProbabilisticGraphicalRecommender {
                 numerator = 0;
                 denominator = 0;
                 for (int u : users) {
-                    double rating = trainMatrix.get(u, i);
+                    //double rating = trainMatrix.get(u, i);
+                    RandomAccessSparseVector userVector = new RandomAccessSparseVector(trainMatrix.row(u));
+                    double rating = userVector.get(i);
                     double prob = Q.get(u, i).get(z);
 
                     numerator += Math.pow(rating - mu, 2) * prob;

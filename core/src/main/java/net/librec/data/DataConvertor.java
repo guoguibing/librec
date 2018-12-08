@@ -17,10 +17,12 @@
  */
 package net.librec.data;
 
-import java.io.IOException;
-
-import net.librec.math.structure.SparseMatrix;
+import net.librec.conf.Configuration;
+import net.librec.math.structure.DataFrame;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.math.structure.SparseTensor;
+
+import java.io.IOException;
 
 /**
  * A <tt>DataConvertor</tt> is an interface to convert
@@ -33,29 +35,20 @@ public interface DataConvertor {
     /**
      * Process the input data.
      *
-     * @throws IOException
-     *         if the path is not valid
+     * @throws IOException if the path is not valid
      */
-    public void processData() throws IOException;
-    
+    void processData() throws IOException;
+
     /**
      * Returns a {@code SparseMatrix} object which stores rate data.
      *
      * @return a {@code SparseMatrix} object which stores rate data.
      */
-    public SparseMatrix getPreferenceMatrix();
-
-    /**
-     * Returns a {@code SparseMatrix} object which stores time data.
-     *
-     * @return a {@code SparseMatrix} object which stores time data.
-     */
-    public SparseMatrix getDatetimeMatrix();
-
-    /**
-     * Returns a {@code SparseTensor} object which stores rate data.
-     *
-     * @return a {@code SparseTensor} object which stores rate data.
-     */
-    public SparseTensor getSparseTensor();
+    DataFrame getMatrix();
+    SequentialAccessSparseMatrix getPreferenceMatrix();
+    //    SequentialAccessSparseMatrix getPreferenceMatrix(String[] columns);
+    SequentialAccessSparseMatrix getPreferenceMatrix(Configuration conf);
+    SequentialAccessSparseMatrix getDatetimeMatrix();
+    SparseTensor getSparseTensor();
+    SparseTensor getSparseTensor(String[] indicesColumn, String valueColumn);
 }

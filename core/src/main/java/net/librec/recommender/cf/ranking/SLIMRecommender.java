@@ -20,10 +20,10 @@ package net.librec.recommender.cf.ranking;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.SequentialSparseVector;
 import net.librec.math.structure.SymmMatrix;
-import net.librec.math.structure.VectorEntry;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.Vector;
+import net.librec.recommender.MatrixFactorizationRecommender;
 import net.librec.util.Lists;
 
 import java.util.*;
@@ -42,7 +42,7 @@ import java.util.*;
  * @author guoguibing and Keqiang Wang
  */
 @ModelData({"isRanking", "slim", "coefficientMatrix", "trainMatrix", "similarityMatrix", "knn"})
-public class SLIMRecommender extends AbstractRecommender {
+public class SLIMRecommender extends MatrixFactorizationRecommender {
     /**
      * the number of iterations
      */
@@ -121,10 +121,9 @@ public class SLIMRecommender extends AbstractRecommender {
 
                 double[] userRatingEntries = new double[numUsers];
 
-                Iterator<VectorEntry> userItr = trainMatrix.rowIterator(itemIdx);
-                while (userItr.hasNext()) {
-                    VectorEntry userRatingEntry = userItr.next();
-                    userRatingEntries[userRatingEntry.index()] = userRatingEntry.get();
+                SequentialSparseVector itemRatingVec = trainMatrix.column(itemIdx);
+                for (Vector.VectorEntry ve : itemRatingVec) {
+                    userRatingEntries[ve.index()] = ve.get();
                 }
 
                 // for each nearest neighbor nearestNeighborItemIdx, update coefficienMatrix by the coordinate
@@ -133,15 +132,14 @@ public class SLIMRecommender extends AbstractRecommender {
                     if (nearestNeighborItemIdx != itemIdx) {
                         double gradSum = 0.0d, rateSum = 0.0d, errors = 0.0d;
 
-                        Iterator<VectorEntry> nnUserRatingItr = trainMatrix.rowIterator(nearestNeighborItemIdx);
-                        if (!nnUserRatingItr.hasNext()) {
+                        SequentialSparseVector nnUserRatingVec = trainMatrix.column(nearestNeighborItemIdx);
+                        if (nnUserRatingVec.size() == 0) {
                             continue;
                         }
 
                         int nnCount = 0;
 
-                        while (nnUserRatingItr.hasNext()) {
-                            VectorEntry nnUserVectorEntry = nnUserRatingItr.next();
+                        for (Vector.VectorEntry nnUserVectorEntry : nnUserRatingVec) {
                             int nnUserIdx = nnUserVectorEntry.index();
                             double nnRating = nnUserVectorEntry.get();
                             double rating = userRatingEntries[nnUserIdx];
@@ -197,9 +195,8 @@ public class SLIMRecommender extends AbstractRecommender {
      */
     protected double predict(int userIdx, int itemIdx, int excludedItemIdx) {
         double predictRating = 0;
-        Iterator<VectorEntry> itemEntryIterator = trainMatrix.colIterator(userIdx);
-        while (itemEntryIterator.hasNext()) {
-            VectorEntry itemEntry = itemEntryIterator.next();
+        SequentialSparseVector userRatingVec = trainMatrix.row(userIdx);
+        for (Vector.VectorEntry itemEntry : userRatingVec) {
             int nearestNeighborItemIdx = itemEntry.index();
             double nearestNeighborPredictRating = itemEntry.get();
             if (itemNNs[itemIdx].contains(nearestNeighborItemIdx) && nearestNeighborItemIdx != excludedItemIdx) {
@@ -222,7 +219,7 @@ public class SLIMRecommender extends AbstractRecommender {
             LOG.info(info);
         }
 
-        return iter > 1 ? delta_loss < 1e-5 : false;
+        return iter > 1 && delta_loss < 1e-5;
     }
 
     /**
@@ -253,25 +250,30 @@ public class SLIMRecommender extends AbstractRecommender {
         List<Map.Entry<Integer, Double>> tempItemSimList;
         if (knn > 0) {
             for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
-                SparseVector similarityVector = similarityMatrix.row(itemIdx);
-                if (knn < similarityVector.size()) {
+                Map<Integer, Double> similarityVector = similarityMatrix.row(itemIdx);
+                int vecSize = similarityVector.size();
+                if (knn < vecSize) {
                     tempItemSimList = new ArrayList<>(similarityVector.size() + 1);
-                    Iterator<VectorEntry> simItr = similarityVector.iterator();
-                    while (simItr.hasNext()) {
-                        VectorEntry simVectorEntry = simItr.next();
-                        tempItemSimList.add(new AbstractMap.SimpleImmutableEntry<>(simVectorEntry.index(), simVectorEntry.get()));
+                    for (Map.Entry<Integer, Double> ve : similarityVector.entrySet()) {
+                        tempItemSimList.add(new AbstractMap.SimpleImmutableEntry<>(ve.getKey(), ve.getValue()));
                     }
+
                     tempItemSimList = Lists.sortListTopK(tempItemSimList, true, knn);
                     itemNNs[itemIdx] = new HashSet<>((int) (tempItemSimList.size() / 0.5));
                     for (Map.Entry<Integer, Double> tempItemSimEntry : tempItemSimList) {
                         itemNNs[itemIdx].add(tempItemSimEntry.getKey());
                     }
                 } else {
-                    itemNNs[itemIdx] = similarityVector.getIndexSet();
+                    if (vecSize > 0) {
+                        Set<Integer> simSet = similarityVector.keySet();
+                        itemNNs[itemIdx] = new HashSet<>(simSet);
+                    } else {
+                        itemNNs[itemIdx] = new HashSet<>();
+                    }
                 }
             }
         } else {
-            allItems = new HashSet<>(trainMatrix.columns());
+            allItems = userMappingData.values();
         }
     }
 }

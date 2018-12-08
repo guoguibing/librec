@@ -17,13 +17,11 @@
  */
 package net.librec.recommender.baseline;
 
+import com.google.common.collect.Sets;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
-import net.librec.math.structure.VectorEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.*;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,7 +35,7 @@ import java.util.Set;
  *
  * @author Guo Guibing and Zhang Haidong
  */
-public class UserClusterRecommender extends ProbabilisticGraphicalRecommender {
+public class UserClusterRecommender extends MatrixProbabilisticGraphicalRecommender {
     private DenseMatrix topicRatingProbs;   // Pkr
     private DenseVector topicInitialProbs;  // Pi
 
@@ -53,7 +51,7 @@ public class UserClusterRecommender extends ProbabilisticGraphicalRecommender {
     protected void setup() throws LibrecException {
         super.setup();
 
-        Set<Double> ratingScaleSet = trainMatrix.getValueSet();
+        Set<Double> ratingScaleSet = Sets.newTreeSet(trainMatrix.getDataTable().values());
         ratingScale = new ArrayList<>(ratingScaleSet);
         numRatingLevels = ratingScale.size();
         numTopics = conf.getInt("rec.factory.number", 10);
@@ -66,20 +64,20 @@ public class UserClusterRecommender extends ProbabilisticGraphicalRecommender {
             }
         }
 
-        topicInitialProbs = new DenseVector(Randoms.randProbs(numTopics));
+        topicInitialProbs = new VectorBasedDenseVector(Randoms.randProbs(numTopics));
 
         userTopicProbs = new DenseMatrix(numUsers, numTopics);
 
         userNumEachRating = new DenseMatrix(numUsers, numRatingLevels);
-        userNumRatings = new DenseVector(numUsers);
+        userNumRatings = new VectorBasedDenseVector(numUsers);
 
         for (int u = 0; u < numUsers; u++) {
-            SparseVector ru = trainMatrix.row(u);
+            SequentialSparseVector ru = trainMatrix.row(u);
 
-            for (VectorEntry ve : ru) {
+            for (Vector.VectorEntry ve : ru) {
                 double rui = ve.get();
                 int r = ratingScale.indexOf(rui);
-                userNumEachRating.add(u, r, 1);
+                userNumEachRating.plus(u, r, 1);
             }
 
             userNumRatings.set(u, ru.size());
@@ -92,13 +90,13 @@ public class UserClusterRecommender extends ProbabilisticGraphicalRecommender {
     protected void eStep() {
         for (int u = 0; u < numUsers; u++) {
             BigDecimal sum_u = BigDecimal.ZERO;
-            SparseVector ru = trainMatrix.row(u);
+            SequentialSparseVector ru = trainMatrix.row(u);
 
             BigDecimal[] sum_uk = new BigDecimal[numTopics];
             for (int k = 0; k < numTopics; k++) {
                 BigDecimal userTopicProb = new BigDecimal(topicInitialProbs.get(k));
 
-                for (VectorEntry ve : ru) {
+                for (Vector.VectorEntry ve : ru) {
                     double rui = ve.get();
                     int r = ratingScale.indexOf(rui);
                     BigDecimal topicRatingProb = new BigDecimal(topicRatingProbs.get(k, r));

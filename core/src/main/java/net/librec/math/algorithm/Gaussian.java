@@ -12,7 +12,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  * <p>
- * You should have received a copy of the GNU General Public License
+ * You should have received a clone of the GNU General Public License
  * along with LibRec. If not, see <http://www.gnu.org/licenses/>.
  */
 package net.librec.math.algorithm;
@@ -25,8 +25,9 @@ package net.librec.math.algorithm;
 public class Gaussian {
     /**
      * Standard Gaussian pdf.
-     * @param x  parameter of the gaussian function
-     * @return   Gaussian function of the given <code>x</code>
+     *
+     * @param x parameter of the gaussian function
+     * @return Gaussian function of the given <code>x</code>
      */
     public static double pdf(double x) {
         return Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI);
@@ -35,10 +36,10 @@ public class Gaussian {
     /**
      * Gaussian pdf with mean mu and stddev sigma
      *
-     * @param x      parameter of the gaussian function
-     * @param mu     mean of the gaussian function
-     * @param sigma  stddev sigma of the gaussian function
-     * @return       gaussian function value
+     * @param x     parameter of the gaussian function
+     * @param mu    mean of the gaussian function
+     * @param sigma stddev sigma of the gaussian function
+     * @return gaussian function value
      */
     public static double pdf(double x, double mu, double sigma) {
         return pdf((x - mu) / sigma) / sigma;
@@ -48,7 +49,7 @@ public class Gaussian {
      * standard Gaussian cdf using Taylor approximation;
      *
      * @param z parameter of the function
-     * @return  the probability that a random variable distributed according to the standard normal distribution (mean =
+     * @return the probability that a random variable distributed according to the standard normal distribution (mean =
      * 0 and stdev = 1) produces a value less than z
      */
     public static double cdf(double z) {
@@ -80,8 +81,8 @@ public class Gaussian {
     /**
      * Compute z for standard normal such that cdf(z) = y via bisection search
      *
-     * @param y  parameter of the function
-     * @return   z for standard normal such that cdf(z) = y
+     * @param y parameter of the function
+     * @return z for standard normal such that cdf(z) = y
      */
     public static double PhiInverse(double y) {
         return PhiInverse(y, .00000001, -8, 8);

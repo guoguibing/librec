@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2016 LibRec
- * 
+ *
  * This file is part of LibRec.
  * LibRec is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,29 +30,29 @@ import net.librec.job.RecommenderJob;
 /**
  * PMF TestCase corresponds to PMF Recommender
  * {@link net.librec.recommender.cf.rating.PMFRecommender}
- * 
+ *
  * @author WangYuFeng
  */
 public class PMFTestCase extends BaseTestCase {
 
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+    }
 
-	/**
-	 * Test the whole process of PMF Recommender
-	 * 
-	 * @throws ClassNotFoundException
-	 * @throws LibrecException
-	 * @throws IOException
-	 */
-	@Test
-	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
-		Resource resource = new Resource("rec/cf/rating/pmf-test.properties");
-		conf.addResource(resource);
-		RecommenderJob job = new RecommenderJob(conf);
-		job.runJob();
-	}
+    /**
+     * Test the whole process of PMF Recommender
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+        Resource resource = new Resource("rec/cf/rating/pmf-test.properties");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
 
 }

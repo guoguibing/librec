@@ -22,9 +22,14 @@ import com.google.common.collect.Table;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
+
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static net.librec.math.algorithm.Gamma.digamma;
 
@@ -37,7 +42,7 @@ import static net.librec.math.algorithm.Gamma.digamma;
  *
  * @author Guo Guibing and Haidong Zhang
  */
-public class URPRecommender extends ProbabilisticGraphicalRecommender {
+public class URPRecommender extends MatrixProbabilisticGraphicalRecommender {
     private double preRMSE;
 
     /**
@@ -48,7 +53,7 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
     /**
      * number of occurences of users
      */
-    private DenseVector userNum;
+    private VectorBasedDenseVector userNum;
 
     /**
      * number of occurrences of entry (topic, item)
@@ -63,12 +68,12 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
     /**
      * user parameters
      */
-    private DenseVector alpha;
+    private VectorBasedDenseVector alpha;
 
     /**
      * item parameters
      */
-    private DenseVector beta;
+    private VectorBasedDenseVector beta;
 
     /**
      *
@@ -103,7 +108,8 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
     protected void setup() throws LibrecException {
         super.setup();
         numTopics = conf.getInt("rec.pgm.number", 10);
-        numRatingLevels = trainMatrix.getValueSet().size();
+        // numRatingLevels = getRatingLevels(trainMatrix).size();
+        numRatingLevels = ratingScale.size();
 
         // cumulative parameters
         userTopicSumProbs = new DenseMatrix(numUsers, numTopics);
@@ -111,18 +117,18 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
 
         // initialize count variables
         userTopicNum = new DenseMatrix(numUsers, numTopics);
-        userNum = new DenseVector(numUsers);
+        userNum = new VectorBasedDenseVector(numUsers);
 
         topicItemRatingNum = new int[numTopics][numItems][numRatingLevels];
         topicItemNum = new DenseMatrix(numTopics, numItems);
 
-        alpha = new DenseVector(numTopics);
+        alpha = new VectorBasedDenseVector(numTopics);
         double initAlpha = conf.getDouble("rec.pgm.bucm.alpha", 1.0 / numTopics);
-        alpha.setAll(initAlpha);
+        alpha.assign((index, value) -> initAlpha);
 
-        beta = new DenseVector(numRatingLevels);
+        beta = new VectorBasedDenseVector(numRatingLevels);
         double initBeta = conf.getDouble("rec.pgm.bucm.beta", 1.0 / numTopics);
-        beta.setAll(initBeta);
+        beta.assign((index, value) -> initBeta);
 
         // initialize topics
         topics = HashBasedTable.create();
@@ -137,14 +143,14 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
             // Assign a topic t to pair (u, i)
             topics.put(u, i, t);
             // number of pairs (u, t) in (u, i, t)
-            userTopicNum.add(u, t, 1);
+            userTopicNum.plus(u, t, 1);
             // total number of items of user u
-            userNum.add(u, 1);
+            userNum.plus(u, 1);
 
             // number of pairs (t, i, r)
             topicItemRatingNum[t][i][r]++;
             // total number of words assigned to topic t
-            topicItemNum.add(t, i, 1);
+            topicItemNum.plus(t, i, 1);
         }
     }
 
@@ -163,10 +169,10 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
             int r = ratingScale.indexOf(rui);  // rating level 0 ~ numLevels
             int t = topics.get(u, i);
 
-            userTopicNum.add(u, t, -1);
-            userNum.add(u, -1);
+            userTopicNum.plus(u, t, -1);
+            userNum.plus(u, -1);
             topicItemRatingNum[t][i][r]--;
-            topicItemNum.add(t, i, -1);
+            topicItemNum.plus(t, i, -1);
 
             // do multinomial sampling via cumulative method:
             double[] p = new double[numTopics];
@@ -188,11 +194,11 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
             // new topic t
             topics.put(u, i, t);
 
-            // add newly estimated z_i to count variables
-            userTopicNum.add(u, t, 1);
-            userNum.add(u, 1);
+            // plus newly estimated z_i to count variables
+            userTopicNum.plus(u, t, 1);
+            userNum.plus(u, 1);
             topicItemRatingNum[t][i][r]++;
-            topicItemNum.add(t, i, 1);
+            topicItemNum.plus(t, i, 1);
         }
 
     }
@@ -241,7 +247,7 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
         for (int u = 0; u < numUsers; u++) {
             for (int k = 0; k < numTopics; k++) {
                 val = (userTopicNum.get(u, k) + alpha.get(k)) / (userNum.get(u) + sumAlpha);
-                userTopicSumProbs.add(u, k, val);
+                userTopicSumProbs.plus(u, k, val);
             }
         }
 
@@ -259,7 +265,7 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected void estimateParams() {
-        userTopicProbs = userTopicSumProbs.scale(1.0 / numStats);
+        userTopicProbs = userTopicSumProbs.times(1.0 / numStats);
 
         topicItemRatingProbs = new double[numTopics][numItems][numRatingLevels];
         for (int k = 0; k < numTopics; k++) {
@@ -330,5 +336,15 @@ public class URPRecommender extends ProbabilisticGraphicalRecommender {
         }
 
         return pred;
+    }
+
+    private Set<Double> getRatingLevels(SequentialAccessSparseMatrix matrix) {
+        Iterator<MatrixEntry> matrixEntryIterator = matrix.iterator();
+        Set<Double> valueSet = new TreeSet<>();
+        while (matrixEntryIterator.hasNext()) {
+            valueSet.add(matrixEntryIterator.next().get());
+        }
+
+        return valueSet;
     }
 }

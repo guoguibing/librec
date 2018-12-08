@@ -25,7 +25,8 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 import static net.librec.math.algorithm.Gamma.digamma;
 
@@ -37,7 +38,7 @@ import static net.librec.math.algorithm.Gamma.digamma;
  *
  * @author Guo Guibing and Haidong Zhang
  */
-public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
+public class BUCMRecommender extends MatrixProbabilisticGraphicalRecommender {
     /**
      * number of occurrences of entry (t, i, r)
      */
@@ -119,7 +120,7 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
         super.setup();
 
         numTopics = conf.getInt("rec.pgm.topic.number", 10);
-        numRatingLevels = trainMatrix.getValueSet().size();
+        numRatingLevels = ratingScale.size();
 
         // cumulative parameters
         userTopicSumProbs = new DenseMatrix(numUsers, numTopics);
@@ -128,24 +129,24 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
 
         // initialize count varialbes
         userTopicNum = new DenseMatrix(numUsers, numTopics);
-        userNum = new DenseVector(numUsers);
+        userNum = new VectorBasedDenseVector(numUsers);
 
         topicItemNum = new DenseMatrix(numTopics, numItems);
-        topicNum = new DenseVector(numTopics);
+        topicNum = new VectorBasedDenseVector(numTopics);
 
         topicItemRatingNum = new int[numTopics][numItems][numRatingLevels];
 
         double initAlpha = conf.getDouble("rec.bucm.alpha", 1.0 / numTopics);
-        alpha = new DenseVector(numTopics);
-        alpha.setAll(initAlpha);
+        alpha = new VectorBasedDenseVector(numTopics);
+        alpha.assign((index, value) -> initAlpha);
 
         double initBeta = conf.getDouble("re.bucm.beta", 1.0 / numItems);
-        beta = new DenseVector(numItems);
-        beta.setAll(initBeta);
+        beta = new VectorBasedDenseVector(numItems);
+        beta.assign((index, value) -> initBeta);
 
         double initGamma = conf.getDouble("rec.bucm.gamma", 1.0 / numTopics);
-        gamma = new DenseVector(numRatingLevels);
-        gamma.setAll(initGamma);
+        gamma = new VectorBasedDenseVector(numRatingLevels);
+        gamma.assign((index, value) -> initGamma);
 
         // initialize topics
         topics = HashBasedTable.create();
@@ -160,12 +161,12 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
             // Assign a topic t to pair (u, i)
             topics.put(u, i, t);
             // for users
-            userTopicNum.add(u, t, 1);
-            userNum.add(u, 1);
+            userTopicNum.plus(u, t, 1);
+            userNum.plus(u, 1);
 
             // for items
-            topicItemNum.add(t, i, 1);
-            topicNum.add(t, 1);
+            topicItemNum.plus(t, i, 1);
+            topicNum.plus(t, 1);
 
             // for ratings
             topicItemRatingNum[t][i][r]++;
@@ -189,12 +190,12 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
             int t = topics.get(u, i);
 
             // for user
-            userTopicNum.add(u, t, -1);
-            userNum.add(u, -1);
+            userTopicNum.plus(u, t, -1);
+            userNum.plus(u, -1);
 
             // for item
-            topicItemNum.add(t, i, -1);
-            topicNum.add(t, -1);
+            topicItemNum.plus(t, i, -1);
+            topicNum.plus(t, -1);
 
             // for rating
             topicItemRatingNum[t][i][r]--;
@@ -228,11 +229,11 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
             topics.put(u, i, t);
 
             // add newly estimated z_i to count variables
-            userTopicNum.add(u, t, 1);
-            userNum.add(u, 1);
+            userTopicNum.plus(u, t, 1);
+            userNum.plus(u, 1);
 
-            topicItemNum.add(t, i, 1);
-            topicNum.add(t, 1);
+            topicItemNum.plus(t, i, 1);
+            topicNum.plus(t, 1);
 
             topicItemRatingNum[t][i][r]++;
         }
@@ -335,14 +336,14 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
         for (int u = 0; u < numUsers; u++) {
             for (int k = 0; k < numTopics; k++) {
                 val = (userTopicNum.get(u, k) + alpha.get(k)) / (userNum.get(u) + sumAlpha);
-                userTopicSumProbs.add(u, k, val);
+                userTopicSumProbs.plus(u, k, val);
             }
         }
 
         for (int k = 0; k < numTopics; k++) {
             for (int i = 0; i < numItems; i++) {
                 val = (topicItemNum.get(k, i) + beta.get(i)) / (topicNum.get(k) + sumBeta);
-                topicItemSumProbs.add(k, i, val);
+                topicItemSumProbs.plus(k, i, val);
             }
         }
 
@@ -359,8 +360,10 @@ public class BUCMRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected void estimateParams() {
-        userTopicProbs = userTopicSumProbs.scale(1.0 / numStats);
-        topicItemProbs = topicItemSumProbs.scale(1.0 / numStats);
+        userTopicSumProbs.assign((row, column, value) -> value * (1.0 / numStats));
+        topicItemSumProbs.assign((row, column, value) -> value * (1.0 / numStats));
+        userTopicProbs = userTopicSumProbs.clone();
+        topicItemProbs = topicItemSumProbs.clone();
 
         topicItemRatingProbs = new double[numTopics][numItems][numRatingLevels];
         for (int k = 0; k < numTopics; k++) {

@@ -4,7 +4,7 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 
 /**
  * <h3> Local Low-Rank Matrix Approximation</h3>
@@ -85,28 +85,28 @@ public class LLORMAUpdater extends Thread {
     /**
      * The rating matrix used for learning.
      */
-    private SparseMatrix trainMatrix;
+    private SequentialAccessSparseMatrix trainMatrix;
 
     /**
      * Construct a local model for singleton LLORMA.
      *
-     * @param threadIDParam    A unique thread ID.
-     * @param numFactorsParam  The rank which will be used in this local model.
-     * @param numUsersParam    The number of users.
-     * @param numItemsParam    The number of items.
-     * @param anchorUserParam  The anchor user used to learn this local model.
-     * @param anchorItemParam  The anchor item used to learn this local model.
-     * @param learnRateParam   Learning rate parameter.
-     * @param userWeightsParam Initial vector containing each user's weight.
-     * @param itemWeightsParam Initial vector containing each item's weight.
-     * @param trainMatrixParam The rating matrix used for learning.
-     * @param localIterationParam  localIterationParam
-     * @param localRegItemParam  localRegItemParam
-     * @param localRegUserParam  localRegUserParam
+     * @param threadIDParam       A unique thread ID.
+     * @param numFactorsParam     The rank which will be used in this local model.
+     * @param numUsersParam       The number of users.
+     * @param numItemsParam       The number of items.
+     * @param anchorUserParam     The anchor user used to learn this local model.
+     * @param anchorItemParam     The anchor item used to learn this local model.
+     * @param learnRateParam      Learning rate parameter.
+     * @param userWeightsParam    Initial vector containing each user's weight.
+     * @param itemWeightsParam    Initial vector containing each item's weight.
+     * @param trainMatrixParam    The rating matrix used for learning.
+     * @param localIterationParam localIterationParam
+     * @param localRegItemParam   localRegItemParam
+     * @param localRegUserParam   localRegUserParam
      */
     public LLORMAUpdater(int threadIDParam, int numFactorsParam, int numUsersParam, int numItemsParam, int anchorUserParam,
                          int anchorItemParam, double learnRateParam, double localRegUserParam, double localRegItemParam,
-                         int localIterationParam, DenseVector userWeightsParam, DenseVector itemWeightsParam, SparseMatrix trainMatrixParam) {
+                         int localIterationParam, DenseVector userWeightsParam, DenseVector itemWeightsParam, SequentialAccessSparseMatrix trainMatrixParam) {
         threadId = threadIDParam;
         numFactors = numFactorsParam;
         numUsers = numUsersParam;
@@ -214,14 +214,14 @@ public class LLORMAUpdater extends Thread {
                     double userFactorValue = localUserFactors.get(userIdx, factorIdx);
                     double itemFactorValue = localItemFactors.get(itemIdx, factorIdx);
 
-                    localUserFactors.add(userIdx, factorIdx, learnRate * (error * itemFactorValue * weight - localRegUser * userFactorValue));
-                    localItemFactors.add(itemIdx, factorIdx, learnRate * (error * userFactorValue * weight - localRegItem * itemFactorValue));
+                    localUserFactors.plus(userIdx, factorIdx, learnRate * (error * itemFactorValue * weight - localRegUser * userFactorValue));
+                    localItemFactors.plus(itemIdx, factorIdx, learnRate * (error * userFactorValue * weight - localRegItem * itemFactorValue));
                 }
             }
         }
     }
 
     protected double predict(int userIdx, int itemIdx) {
-        return DenseMatrix.rowMult(localUserFactors, userIdx, localItemFactors, itemIdx);
+        return localUserFactors.row(userIdx).dot(localItemFactors.row(itemIdx));
     }
 }

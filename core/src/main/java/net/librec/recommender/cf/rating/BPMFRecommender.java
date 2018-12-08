@@ -44,7 +44,9 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
     private double userWishartNu, itemWishartNu;
     private double ratingSigma;
 
-    private SparseMatrix predictMatrix;
+    private int gibbsIterations;
+
+    private RowSequentialAccessSparseMatrix predictMatrix;
 
     public class HyperParameters {
         public DenseVector mu;
@@ -69,6 +71,7 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
         itemWishartScale0 = conf.getDouble("rec.recommender.item.wishart.scale", 1.0);
 
         ratingSigma = conf.getDouble("rec.recommender.rating.sigma", 2.0);
+        gibbsIterations = conf.getInt("rec.recommender.gibbs.iterations",1);
 
     }
 
@@ -79,10 +82,10 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
      */
     protected void initModel() throws LibrecException {
 
-        userMu = new DenseVector(numFactors);
-        userMu.setAll(userMu0);
-        itemMu = new DenseVector(numFactors);
-        itemMu.setAll(itemMu0);
+        userMu = new VectorBasedDenseVector(numFactors);
+        userMu.assign((index, value) -> userMu0);
+        itemMu = new VectorBasedDenseVector(numFactors);
+        itemMu.assign((index, value) -> itemMu0);
 
         userBeta = userBeta0;
         itemBeta = itemBeta0;
@@ -93,13 +96,13 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
             userWishartScale.set(i, i, userWishartScale0);
             itemWishartScale.set(i, i, itemWishartScale0);
         }
-        userWishartScale.inv();
-        itemWishartScale.inv();
+        userWishartScale.inverse();
+        itemWishartScale.inverse();
 
         userWishartNu = numFactors;
         itemWishartNu = numFactors;
 
-        predictMatrix = new SparseMatrix(testMatrix);
+        predictMatrix = new RowSequentialAccessSparseMatrix(testMatrix);
     }
 
     /**
@@ -110,8 +113,8 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
         initModel();
 
         // Speed up getting user or item vector in Gibbs sampling
-        List<SparseVector> userTrainVectors = new ArrayList<SparseVector>(numUsers);
-        List<SparseVector> itemTrainVectors = new ArrayList<SparseVector>(numItems);
+        List<SequentialSparseVector> userTrainVectors = new ArrayList<SequentialSparseVector>(numUsers);
+        List<SequentialSparseVector> itemTrainVectors = new ArrayList<SequentialSparseVector>(numItems);
         for (int u = 0; u < numUsers; u++) {
             userTrainVectors.add(trainMatrix.row(u));
         }
@@ -119,14 +122,14 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
             itemTrainVectors.add(trainMatrix.column(i));
         }
 
-        DenseVector mu_u = new DenseVector(numFactors);
-        DenseVector mu_m = new DenseVector(numFactors);
+        DenseVector mu_u = new VectorBasedDenseVector(numFactors);
+        DenseVector mu_m = new VectorBasedDenseVector(numFactors);
         for (int f = 0; f < numFactors; f++) {
-            mu_u.set(f, userFactors.columnMean(f));
-            mu_m.set(f, itemFactors.columnMean(f));
+            mu_u.set(f, userFactors.column(f).mean());
+            mu_m.set(f, itemFactors.column(f).mean());
         }
-        DenseMatrix variance_u = userFactors.cov().inv();
-        DenseMatrix variance_m = itemFactors.cov().inv();
+        DenseMatrix variance_u = userFactors.covariance().inverse();
+        DenseMatrix variance_m = itemFactors.covariance().inverse();
 
         HyperParameters userHyperParameters = new HyperParameters(mu_u, variance_u);
         HyperParameters itemHyperParameters = new HyperParameters(mu_m, variance_m);
@@ -134,26 +137,28 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
             userHyperParameters = samplingHyperParameters(userHyperParameters, userFactors, userMu, userBeta, userWishartScale, userWishartNu);
             itemHyperParameters = samplingHyperParameters(itemHyperParameters, itemFactors, itemMu, itemBeta, itemWishartScale, itemWishartNu);
 
-            for (int gibbsIteration = 0; gibbsIteration < 1; gibbsIteration++) {
+            for (int gibbsIteration = 0; gibbsIteration < gibbsIterations; gibbsIteration++) {
 
                 for (int u = 0; u < numUsers; u++) {
-                    SparseVector ratings = userTrainVectors.get(u);
-                    int count = ratings.getCount();
+                    SequentialSparseVector ratings = userTrainVectors.get(u);
+                    int count = ratings.getNumEntries();
                     if (count == 0) {
                         continue;
                     }
 
-                    userFactors.setRow(u, updateParameters(itemFactors, ratings, userHyperParameters));
+                    DenseVector updatedParameters = updateParameters(itemFactors, ratings, userHyperParameters);
+                    userFactors.row(u).assign((index, value) -> updatedParameters.get(index));
                 }
 
                 for (int i = 0; i < numItems; i++) {
-                    SparseVector ratings = itemTrainVectors.get(i);
-                    int count = ratings.getCount();
+                    SequentialSparseVector ratings = itemTrainVectors.get(i);
+                    int count = ratings.getNumEntries();
                     if (count == 0) {
                         continue;
                     }
 
-                    itemFactors.setRow(i, updateParameters(userFactors, ratings, itemHyperParameters));
+                    DenseVector updatedParameters = updateParameters(userFactors, ratings, itemHyperParameters);
+                    itemFactors.row(i).assign((index, value) -> updatedParameters.get(index));
                 }
 
             }
@@ -171,8 +176,7 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
                     int userIdx = me.row();
                     int itemIdx = me.column();
                     double predictValue = (predictMatrix.get(userIdx, itemIdx) * (iter - 1 -
-                            startnum) + globalMean + DenseMatrix.rowMult(userFactors,
-                            userIdx, itemFactors, itemIdx)) / (iter - startnum);
+                            startnum) + globalMean +userFactors.row(userIdx).dot(itemFactors.row(itemIdx))) / (iter - startnum);
                     predictMatrix.set(userIdx, itemIdx, predictValue);
                 }
             }
@@ -180,60 +184,60 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
     }
 
     protected HyperParameters samplingHyperParameters(HyperParameters hyperParameters, DenseMatrix factors, DenseVector normalMu0, double normalBeta0, DenseMatrix WishartScale0, double WishartNu0) throws LibrecException {
-        int numRows = factors.numRows();
-        int numColumns = factors.numColumns();
-        DenseVector mean = new DenseVector(numFactors);
+        int numRows = factors.rowSize();
+        int numColumns = factors.columnSize();
+        DenseVector mean = new VectorBasedDenseVector(numFactors);
         for (int i = 0; i < numColumns; i++) {
-            mean.set(i, factors.columnMean(i));
+            mean.set(i, factors.column(i).mean());
         }
 
-        DenseMatrix populationVariance = factors.cov();
+        DenseMatrix populationVariance = factors.covariance();
 
         double betaPost = normalBeta0 + numRows;
-        double nuPost = WishartNu0 + 1.0;
-        DenseVector muPost = normalMu0.scale(normalBeta0).add(mean.scale(numRows)).scale(1.0 / betaPost);
+        DenseVector muPost = normalMu0.times(normalBeta0).plus(mean.times(numRows)).times(1.0 / betaPost);
 
-        DenseMatrix WishartScalePost = WishartScale0.add(populationVariance.scale(numRows));
+        DenseMatrix WishartScalePost = WishartScale0.plus(populationVariance.times(numRows));
         DenseVector muError = normalMu0.minus(mean);
-        WishartScalePost = WishartScalePost.add(muError.outer(muError).scale(normalBeta0 * numRows / betaPost));
-        WishartScalePost = WishartScalePost.inv();
-        WishartScalePost = WishartScalePost.add(WishartScalePost.transpose()).scale(0.5);
+        WishartScalePost = WishartScalePost.plus(muError.outer(muError).times(normalBeta0 * numRows / betaPost));
+        WishartScalePost = WishartScalePost.inverse();
+        WishartScalePost = WishartScalePost.plus(WishartScalePost.transpose()).times(0.5);
         DenseMatrix variance = Randoms.wishart(WishartScalePost, numRows + numColumns);
         if (variance != null) {
             hyperParameters.variance = variance;
         }
 
-        DenseMatrix normalVariance = hyperParameters.variance.scale(normalBeta0).inv().cholesky();
+        DenseMatrix normalVariance = hyperParameters.variance.times(normalBeta0).inverse().cholesky();
         if (normalVariance != null) {
             normalVariance = normalVariance.transpose();
 
-            DenseVector normalRdn = new DenseVector(numColumns);
+            DenseVector normalRdn = new VectorBasedDenseVector(numColumns);
             for (int f = 0; f < numFactors; f++)
                 normalRdn.set(f, Randoms.gaussian(0, 1));
 
-            hyperParameters.mu = normalVariance.mult(normalRdn).add(muPost);
+            hyperParameters.mu = normalVariance.times(normalRdn).plus(muPost);
         }
         return hyperParameters;
     }
 
-    protected DenseVector updateParameters(DenseMatrix factors, SparseVector ratings, HyperParameters hyperParameters) throws LibrecException {
-        int num = ratings.getCount();
+    protected DenseVector updateParameters(DenseMatrix factors, SequentialSparseVector ratings, HyperParameters hyperParameters) throws LibrecException {
+        int num = ratings.getNumEntries();
         DenseMatrix XX = new DenseMatrix(num, numFactors);
-        DenseVector ratingsReg = new DenseVector(num);
+        DenseVector ratingsReg = new VectorBasedDenseVector(num);
 
         int index = 0;
-        for (int j : ratings.getIndex()) {
+        for (int j : ratings.getIndices()) {
             ratingsReg.set(index, ratings.get(j) - globalMean);
-            XX.setRow(index, factors.row(j));
+            XX.row(index).assign((index1, value) -> factors.row(j).get(index1));
             index++;
         }
 
-        DenseMatrix covar = hyperParameters.variance.add((XX.transpose().mult(XX)).scale(ratingSigma)).inv();
-        DenseVector mu = XX.transpose().mult(ratingsReg).scale(ratingSigma);
-        mu.addEqual(hyperParameters.variance.mult(hyperParameters.mu));
-        mu = covar.mult(mu);
+        DenseMatrix covar = hyperParameters.variance.plus((XX.transpose().times(XX)).times(ratingSigma)).inverse();
+        DenseVector mu = XX.transpose().times(ratingsReg).times(ratingSigma);
+        DenseVector result = mu.plus(hyperParameters.variance.times(hyperParameters.mu));
+        mu.assign((index1, value) -> result.get(index1));
+        mu = covar.times(mu);
 
-        DenseVector factorVector = new DenseVector(numFactors);
+        DenseVector factorVector = new VectorBasedDenseVector(numFactors);
 
         DenseMatrix lam = covar.cholesky();
         if (lam != null) {
@@ -241,7 +245,7 @@ public class BPMFRecommender extends MatrixFactorizationRecommender {
             for (int f = 0; f < numFactors; f++)
                 factorVector.set(f, Randoms.gaussian(0, 1));
 
-            DenseVector w1_P1_u = lam.mult(factorVector).add(mu);
+            DenseVector w1_P1_u = lam.times(factorVector).plus(mu);
 
             for (int f = 0; f < numFactors; f++) {
                 factorVector.set(f, w1_P1_u.get(f));

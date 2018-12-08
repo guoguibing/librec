@@ -77,7 +77,7 @@ public class FileUtil {
     }
 
     /**
-     * Returns a human-readable version of the file size, where the input represents a specific number of bytes.
+     * Returns a human-readable version of the file cardinality, where the input represents a specific number of bytes.
      *
      * @param size the number of bytes
      * @return a human-readable display value (includes units)
@@ -98,9 +98,9 @@ public class FileUtil {
     }
 
     /**
-     * Returns a human-readable version of the file size.
+     * Returns a human-readable version of the file cardinality.
      *
-     * @param size the size of a file in units (not in bytes)
+     * @param size the cardinality of a file in units (not in bytes)
      * @return a human-readable display value
      */
     public static String formatSize(long size) {
@@ -121,14 +121,14 @@ public class FileUtil {
     /**
      * Get resource path, supporting file and url io path
      *
-     * @param filePath  file path
+     * @param filePath file path
      * @return path to the file
      */
     public static String getResource(String filePath) {
         if (FileUtil.exist(filePath))
             return filePath;
 
-        String path = makeDirPath(new String[]{"src", "main", "resources"}) + filePath;
+        String path = makeDirPath("src", "main", "resources") + filePath;
         if (FileUtil.exist(path))
             return path;
 
@@ -149,8 +149,8 @@ public class FileUtil {
      * @param path The path of the specified directory or file.
      *             Relative and absolute paths are both supported.
      * @return the BufferedReader List of files.
-     * @throws IOException         if I/O error occurs
-     * @throws URISyntaxException  if URI Syntax error occurs
+     * @throws IOException        if I/O error occurs
+     * @throws URISyntaxException if URI Syntax error occurs
      */
     public static List<BufferedReader> getReader(String path) throws IOException, URISyntaxException {
         File file = new File(path);
@@ -234,7 +234,7 @@ public class FileUtil {
     /**
      * Make directory path: make sure the path is ended with file separator
      *
-     * @param dirPath  raw directory path
+     * @param dirPath raw directory path
      * @return corrected directory path with file separator in the end
      */
     public static String makeDirPath(String dirPath) {
@@ -256,8 +256,8 @@ public class FileUtil {
     /**
      * Make directory path using the names of directories.
      *
-     * @param dirs  names of directories
-     * @return  directory path
+     * @param dirs names of directories
+     * @return directory path
      */
     public static String makeDirPath(String... dirs) {
         String dirPath = "";
@@ -270,7 +270,7 @@ public class FileUtil {
     /**
      * Make directory if it does not exist
      *
-     * @param dirPath  a given directory path
+     * @param dirPath a given directory path
      * @return Directory path with file separator in the end
      */
     public static String makeDirectory(String dirPath) {
@@ -284,7 +284,7 @@ public class FileUtil {
     /**
      * Construct directory and return directory path
      *
-     * @param dirs  names of directories
+     * @param dirs names of directories
      * @return constructed directory path
      */
     public static String makeDirectory(String... dirs) {
@@ -297,7 +297,7 @@ public class FileUtil {
      *
      * @param filePath : the name of file to be written
      * @param content  : the content of a string to be written
-     * @throws Exception  if error occurs
+     * @throws Exception if error occurs
      */
     public static void writeString(String filePath, String content) throws Exception {
         writeString(filePath, content, false);
@@ -463,10 +463,10 @@ public class FileUtil {
      * 1. Note that line numbers must be ordered from min to max; hence before invoke this method, use ordering method
      * first
      *
-     * @param filePath  file path
-     * @param lines     specified line numbers
-     * @return  read string
-     * @throws Exception  if error occurs during reading
+     * @param filePath file path
+     * @param lines    specified line numbers
+     * @return read string
+     * @throws Exception if error occurs during reading
      */
     public static String readAsString(String filePath, int... lines) throws Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
@@ -500,14 +500,14 @@ public class FileUtil {
      *
      * @param filePath : the file to be read
      * @return the content of a file in {@code java.util.List<String>}
-     * @throws Exception  if error occurs during reading
+     * @throws Exception if error occurs during reading
      */
     public static List<String> readAsList(String filePath) throws Exception {
         return readAsList(filePath, null);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> List<T> readAsList(String filePath, Converter<String, T> rh) throws FileNotFoundException,
+    public static <T> List<T> readAsList(String filePath, Converter<String, T> rh) throws
             Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
         List<T> contents = new ArrayList<>();
@@ -526,12 +526,12 @@ public class FileUtil {
         return contents;
     }
 
-    public static Set<String> readAsSet(String filePath) throws FileNotFoundException, Exception {
+    public static Set<String> readAsSet(String filePath) throws Exception {
         return readAsSet(filePath, null);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> Set<T> readAsSet(String filePath, Converter<String, T> rh) throws FileNotFoundException,
+    public static <T> Set<T> readAsSet(String filePath, Converter<String, T> rh) throws
             Exception {
         BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "UTF-8"));
         Set<T> contents = new HashSet<>();
@@ -550,7 +550,7 @@ public class FileUtil {
         return contents;
     }
 
-    public static Map<String, String> readAsMap(String filePath) throws FileNotFoundException, Exception {
+    public static Map<String, String> readAsMap(String filePath) throws Exception {
         return readAsMap(filePath, ",");
     }
 
@@ -585,9 +585,9 @@ public class FileUtil {
     /**
      * read a map in the form of {@code Map<String, Double>}.
      *
-     * @param filePath  path of the file
-     * @return          {@code Map<String, Double>}
-     * @throws Exception  if error occurs during reading
+     * @param filePath path of the file
+     * @return {@code Map<String, Double>}
+     * @throws Exception if error occurs during reading
      */
     public static Map<String, Double> readAsIDMap(String filePath) throws Exception {
         return readAsIDMap(filePath, ",");
@@ -596,9 +596,9 @@ public class FileUtil {
     /**
      * read a map in the form of {@code Map<String, Double>}
      *
-     * @param filePath  path of the file
-     * @param sep       sep
-     * @return          {@code Map<String, Double>}
+     * @param filePath path of the file
+     * @param sep      sep
+     * @return {@code Map<String, Double>}
      * @throws Exception if error occurs during reading
      */
     public static Map<String, Double> readAsIDMap(String filePath, String sep) throws Exception {
@@ -639,7 +639,7 @@ public class FileUtil {
      * @param dirPath     the directory of files
      * @param regex       the old string needed to be replaced, supporting regular expression
      * @param replacement the new string used to replace old string
-     * @throws Exception  if error occurs
+     * @throws Exception if error occurs
      */
     public static void renameFiles(String dirPath, String regex, String replacement) throws Exception {
         File dir = new File(dirPath);
@@ -679,7 +679,7 @@ public class FileUtil {
         FileChannel inChannel = fis.getChannel();
         FileChannel outChannel = fos.getChannel();
 
-        // inChannel.transferTo(0, inChannel.size(), outChannel);
+        // inChannel.transferTo(0, inChannel.cardinality(), outChannel);
         // original -- apparently has trouble copying large files on Windows
 
         // magic number for Windows, 64Mb - 32Kb
@@ -777,8 +777,8 @@ public class FileUtil {
     /**
      * check whether a file exists
      *
-     * @param   filePath file path
-     * @return  true if the file exists
+     * @param filePath file path
+     * @return true if the file exists
      */
     public static boolean exist(String filePath) {
         return new File(filePath).exists();
@@ -801,8 +801,8 @@ public class FileUtil {
     /**
      * Zip a given folder
      *
-     * @param dirPath    a given folder: must be all files (not sub-folders)
-     * @param filePath   zipped file
+     * @param dirPath  a given folder: must be all files (not sub-folders)
+     * @param filePath zipped file
      * @throws Exception if error occurs
      */
     public static void zipFolder(String dirPath, String filePath) throws Exception {

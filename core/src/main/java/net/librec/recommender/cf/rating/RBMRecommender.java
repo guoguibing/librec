@@ -21,7 +21,9 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
+import net.librec.recommender.MatrixRecommender;
 import net.librec.util.Lists;
 import net.librec.util.ZeroSetter;
 
@@ -40,7 +42,7 @@ import java.util.Random;
  *
  * @author bin wu(Email:wubin@gs.zzu.edu.cn)
  */
-public class RBMRecommender extends AbstractRecommender {
+public class RBMRecommender extends MatrixRecommender {
     int featureNumber;
     int softmax;
     int maxIter;
@@ -126,10 +128,10 @@ public class RBMRecommender extends AbstractRecommender {
 
         int[][] moviecount = new int[numItems][softmax];
         for (int u = 0; u < numUsers; u++) {
-            int num = trainMatrix.rowSize(u);
-            for (int j = 0; j < num; j++) {
-                int m = trainMatrix.row(u).getIndex()[j];
-                int r = ratingToIndex.get(trainMatrix.get(u, m));
+            SequentialSparseVector userVec = trainMatrix.row(u);
+            for (Vector.VectorEntry ve : userVec) {
+                int m = ve.index();
+                int r = ratingToIndex.get(ve.get());
                 moviecount[m][r]++;
             }
         }
@@ -170,15 +172,15 @@ public class RBMRecommender extends AbstractRecommender {
             Lists.shaffle(visitingSeq);
             for (int p = 0; p < visitingSeq.length; p++) {
                 int u = visitingSeq[p];
-                int num = trainMatrix.rowSize(u);
+                SequentialSparseVector userVec = trainMatrix.row(u);
+                int num = trainMatrix.row(u).getNumEntries();
                 double[] sumW = new double[featureNumber];
                 negvisprobs = new double[numItems][softmax];
-                for (int i = 0; i < num; i++) {
-                    int m = trainMatrix.row(u).getIndex()[i];
-                    int r = ratingToIndex.get(trainMatrix.get(u, m));
+                for (Vector.VectorEntry ve : userVec) {
+                    int m = ve.index();
+                    int r = ratingToIndex.get(ve.get());
                     moviecount[m]++;
                     posvisact[m][r] += 1.0;
-
                     for (int h = 0; h < featureNumber; h++) {
                         sumW[h] += weights[m][r][h];
                     }
@@ -199,8 +201,8 @@ public class RBMRecommender extends AbstractRecommender {
                 do {
                     boolean finalTStep = (stepT + 1 >= tSteps);
 
-                    for (int i = 0; i < num; i++) {
-                        int m = trainMatrix.row(u).getIndex()[i];
+                    for (Vector.VectorEntry ve : userVec) {
+                        int m = ve.index();
 
                         for (int h = 0; h < featureNumber; h++) {
                             if (curposhidstates[h] == 1) {
@@ -237,8 +239,8 @@ public class RBMRecommender extends AbstractRecommender {
                     }
 
                     ZeroSetter.zero(sumW, featureNumber);
-                    for (int i = 0; i < num; i++) {
-                        int m = trainMatrix.row(u).getIndex()[i];
+                    for (Vector.VectorEntry ve : userVec) {
+                        int m = ve.index();
 
                         for (int h = 0; h < featureNumber; h++) {
                             sumW[h] += weights[m][negvissoftmax[m]][h];
@@ -265,9 +267,9 @@ public class RBMRecommender extends AbstractRecommender {
 
                 } while (++stepT < tSteps);
 
-                for (int i = 0; i < num; i++) {
-                    int m = trainMatrix.row(u).getIndex()[i];
-                    int r = ratingToIndex.get(trainMatrix.get(u, m));
+                for (Vector.VectorEntry ve : userVec) {
+                    int m = ve.index();
+                    int r = ratingToIndex.get(ve.get());
 
                     for (int h = 0; h < featureNumber; h++) {
                         if (poshidstates[h] == 1) {
@@ -342,11 +344,11 @@ public class RBMRecommender extends AbstractRecommender {
     protected double predict(int u, int m) throws LibrecException {
         double[] scoreProbs = new double[softmax];
         double[] factorProbs = new double[featureNumber];
-        int trainNumber = trainMatrix.rowSize(u);
+        SequentialSparseVector userVec = trainMatrix.row(u);
         double[] sumW = new double[featureNumber];
-        for (int i = 0; i < trainNumber; i++) {
-            int item = trainMatrix.row(u).getIndex()[i];
-            int rateIdx = ratingToIndex.get(trainMatrix.get(u, item));
+        for (Vector.VectorEntry ve : userVec) {
+            int item = ve.index();
+            int rateIdx = ratingToIndex.get(ve.get());
 
             for (int h = 0; h < featureNumber; h++) {
                 sumW[h] += weights[item][rateIdx][h];

@@ -31,7 +31,7 @@ public interface RecommendedFilter {
      * Filter the recommended list.
      *
      * @param recommendedList recommendedItem list to be filtered
-     * @return  filtered recommendedItem list
+     * @return filtered recommendedItem list
      */
-    public List<RecommendedItem> filter(List<RecommendedItem> recommendedList);
+    List<RecommendedItem> filter(List<RecommendedItem> recommendedList);
 }

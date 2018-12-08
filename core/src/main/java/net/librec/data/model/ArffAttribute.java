@@ -29,33 +29,40 @@ import java.util.Set;
  */
 public class ArffAttribute {
 
-    /** valid types of attribute */
+    /**
+     * valid types of attribute
+     */
     private static final Set<String> VALID_TYPES = new HashSet<>(Arrays.asList(
             new String[]{"NUMERIC", "REAL", "INTEGER", "STRING", "NOMINAL"}
     ));
 
-    /** attribute name */
+    /**
+     * attribute name
+     */
     private String name;
 
-    /** attribute type */
+    /**
+     * attribute type
+     */
     private String type;
 
-    /** attribute index */
+    /**
+     * attribute index
+     */
     private int idx;
 
-    /** attribute column set */
+    /**
+     * attribute column set
+     */
     private Set<String> columnSet;
 
     /**
      * Initializes a newly created {@code ArffAttribute} object
      * with the name type and index of a attribute.
      *
-     * @param name
-     *          attribute name
-     * @param type
-     *          attribute type
-     * @param idx
-     *          attribute index
+     * @param name attribute name
+     * @param type attribute type
+     * @param idx  attribute index
      */
     public ArffAttribute(String name, String type, int idx) {
         // check if type is valid
@@ -70,7 +77,8 @@ public class ArffAttribute {
 
     /**
      * Return attribute name.
-     * @return  attribute name
+     *
+     * @return attribute name
      */
     public String getName() {
         return name;
@@ -78,7 +86,8 @@ public class ArffAttribute {
 
     /**
      * Return attribute type.
-     * @return  attribute type
+     *
+     * @return attribute type
      */
     public String getType() {
         return type;
@@ -86,7 +95,8 @@ public class ArffAttribute {
 
     /**
      * Return attribute index.
-     * @return  attribute index
+     *
+     * @return attribute index
      */
     public int getIndex() {
         return idx;
@@ -94,7 +104,8 @@ public class ArffAttribute {
 
     /**
      * Return attribute column set.
-     * @return  attribute column set
+     *
+     * @return attribute column set
      */
     public Set<String> getColumnSet() {
         return columnSet;
@@ -103,8 +114,7 @@ public class ArffAttribute {
     /**
      * Set attribute column set.
      *
-     * @param columnSet
-     *              attribute column set
+     * @param columnSet attribute column set
      */
     public void setColumnSet(Set<String> columnSet) {
         this.columnSet = columnSet;

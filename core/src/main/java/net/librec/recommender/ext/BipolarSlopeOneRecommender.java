@@ -2,8 +2,9 @@ package net.librec.recommender.ext;
 
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
+import net.librec.recommender.MatrixRecommender;
 
 /**
  * Biploar Slope One: Lemire and Maclachlan,
@@ -12,9 +13,8 @@ import net.librec.recommender.AbstractRecommender;
  * </strong>, SDM 2005.
  *
  * @author Qian Shaofeng
- *
  */
-public class BipolarSlopeOneRecommender extends AbstractRecommender{
+public class BipolarSlopeOneRecommender extends MatrixRecommender {
     /**
      * matrices for item-item differences with number of occurrences/cardinality
      */
@@ -24,6 +24,7 @@ public class BipolarSlopeOneRecommender extends AbstractRecommender{
      * the user rating average, use int value can get high accuracy
      */
     private int[] averageRating;
+
     /**
      * initialization
      *
@@ -52,28 +53,26 @@ public class BipolarSlopeOneRecommender extends AbstractRecommender{
 
         // compute items' differences
         for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-            SparseVector itemRatingsVector = trainMatrix.row(userIdx);
+            SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
             averageRating[userIdx] = (int) itemRatingsVector.mean();
-            int[] items = itemRatingsVector.getIndex();
 
-            for (int itemIdx : items) {
-                double userItemRating = itemRatingsVector.get(itemIdx);
-                for (int comparedItemIdx : items) {
+            for (Vector.VectorEntry itemIdxRating : itemRatingsVector) {
+                int itemIdx = itemIdxRating.index();
+                double userItemRating = itemIdxRating.get();
+                for (Vector.VectorEntry comparedItemIdxRating : itemRatingsVector) {
+                    int comparedItemIdx = comparedItemIdxRating.index();
                     if (itemIdx != comparedItemIdx) {
-
-                        double comparedRating = itemRatingsVector.get(comparedItemIdx);
+                        double comparedRating = comparedItemIdxRating.get();
                         if (userItemRating >= averageRating[userIdx] && comparedRating >= averageRating[userIdx]) {
-                            likeDevMatrix.add(itemIdx, comparedItemIdx, userItemRating - comparedRating);
-                            likeCardMatrix.add(itemIdx, comparedItemIdx, 1);
-                        }
-                        else if (userItemRating < averageRating[userIdx] && comparedRating < averageRating[userIdx]){
-                            dislikeDevMatrix.add(itemIdx, comparedItemIdx, userItemRating - comparedRating);
-                            dislikeCardMatrix.add(itemIdx, comparedItemIdx, 1);
+                            likeDevMatrix.set(itemIdx, comparedItemIdx, userItemRating - comparedRating);
+                            likeCardMatrix.set(itemIdx, comparedItemIdx, 1);
+                        } else if (userItemRating < averageRating[userIdx] && comparedRating < averageRating[userIdx]) {
+                            dislikeDevMatrix.set(itemIdx, comparedItemIdx, userItemRating - comparedRating);
+                            dislikeCardMatrix.set(itemIdx, comparedItemIdx, 1);
                         }
                     }
                 }
             }
-
         }
 
         // normalize differences
@@ -105,18 +104,24 @@ public class BipolarSlopeOneRecommender extends AbstractRecommender{
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        SparseVector itemRatingsVector = trainMatrix.row(userIdx, itemIdx);
+        SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
         double predictRatings = 0, cardinaryValues = 0;
-        for (int comparedItemIdx : itemRatingsVector.getIndex()) {
+
+        for (Vector.VectorEntry comparedItemIdxRating : itemRatingsVector) {
+            int comparedItemIdx = comparedItemIdxRating.index();
+            if (comparedItemIdx == itemIdx) {
+                continue;
+            }
+            double comparedRating = comparedItemIdxRating.get();
             double cardinaryValue = likeCardMatrix.get(itemIdx, comparedItemIdx);
             if (cardinaryValue > 0) {
-                predictRatings += (likeDevMatrix.get(itemIdx, comparedItemIdx) + itemRatingsVector.get(comparedItemIdx)) * cardinaryValue;
+                predictRatings += (likeDevMatrix.get(itemIdx, comparedItemIdx) + comparedRating) * cardinaryValue;
                 cardinaryValues += cardinaryValue;
             }
 
             cardinaryValue = dislikeCardMatrix.get(itemIdx, comparedItemIdx);
             if (cardinaryValue > 0) {
-                predictRatings += (dislikeDevMatrix.get(itemIdx, comparedItemIdx) + itemRatingsVector.get(comparedItemIdx)) * cardinaryValue;
+                predictRatings += (dislikeDevMatrix.get(itemIdx, comparedItemIdx) + comparedRating) * cardinaryValue;
                 cardinaryValues += cardinaryValue;
             }
 

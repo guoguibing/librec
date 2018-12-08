@@ -22,14 +22,8 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Table;
 import net.librec.common.LibrecException;
-import net.librec.eval.Measure;
-import net.librec.eval.RecommenderEvaluator;
 import net.librec.math.structure.*;
 import net.librec.recommender.TensorRecommender;
-import net.librec.recommender.item.GenericRecommendedItem;
-import net.librec.recommender.item.RecommendedItem;
-import net.librec.recommender.item.UserItemRatingEntry;
-import net.librec.util.ReflectionUtil;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
@@ -43,7 +37,6 @@ import java.util.*;
  */
 public class EFMRecommender extends TensorRecommender {
 
-    public BiMap<Integer, String> featureSentimemtPairsMappingData;
     protected int numberOfFeatures;
     protected int explicitFeatureNum;
     protected int hiddenFeatureNum;
@@ -53,42 +46,20 @@ public class EFMRecommender extends TensorRecommender {
     protected DenseMatrix userHiddenMatrix;
     protected DenseMatrix itemFeatureMatrix;
     protected DenseMatrix itemHiddenMatrix;
-    protected SparseMatrix userFeatureAttention;
-    protected SparseMatrix itemFeatureQuality;
+    protected SequentialAccessSparseMatrix userFeatureAttention;
+    protected SequentialAccessSparseMatrix itemFeatureQuality;
     protected double lambdaX;
     protected double lambdaY;
     protected double lambdaU;
     protected double lambdaH;
     protected double lambdaV;
     protected BiMap<String, Integer> featureDict;
-    protected SparseMatrix trainMatrix;
+
+    protected SequentialAccessSparseMatrix trainMatrix;
+
+    public BiMap<Integer, String> featureSentimemtPairsMappingData;
+
     boolean doExplain;
-
-    /**
-     * Sort a map by value.
-     *
-     * @param map the map to sort
-     * @param <K> key type
-     * @param <V> value type
-     * @return a sorted map of the input
-     */
-    protected static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
-        List<Map.Entry<K, V>> list = new LinkedList<>( map.entrySet() );
-        Collections.sort(list, new Comparator<Map.Entry<K, V>>()
-        {
-            public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
-            {
-                return (o1.getValue()).compareTo( o2.getValue() );
-            }
-        } );
-
-        Map<K, V> result = new LinkedHashMap<K, V>();
-        for (Map.Entry<K, V> entry : list)
-        {
-            result.put( entry.getKey(), entry.getValue() );
-        }
-        return result;
-    }
 
     /*
      * (non-Javadoc)
@@ -107,7 +78,7 @@ public class EFMRecommender extends TensorRecommender {
         lambdaH = conf.getDouble("rec.regularization.lambdah", 0.001);
         lambdaV = conf.getDouble("rec.regularization.lambdav", 0.001);
 
-        featureSentimemtPairsMappingData = allFeaturesMappingData.get(2).inverse();
+        featureSentimemtPairsMappingData = DataFrame.getInnerMapping("sentiment").inverse();
         trainMatrix = trainTensor.rateMatrix();
 
         featureDict = HashBiMap.create();
@@ -173,7 +144,7 @@ public class EFMRecommender extends TensorRecommender {
                 }
             }
         }
-        userFeatureAttention = new SparseMatrix(numUsers, numberOfFeatures, userFeatureAttentionTable);
+        userFeatureAttention = new SequentialAccessSparseMatrix(numUsers, numberOfFeatures, userFeatureAttentionTable);
 
         // Compute ItemFeatureQuality
         Table<Integer, Integer, Double> itemFeatureQualityTable = HashBasedTable.create();
@@ -193,7 +164,7 @@ public class EFMRecommender extends TensorRecommender {
                 }
             }
         }
-        itemFeatureQuality = new SparseMatrix(numItems, numberOfFeatures, itemFeatureQualityTable);
+        itemFeatureQuality = new SequentialAccessSparseMatrix(numItems, numberOfFeatures, itemFeatureQualityTable);
 
         doExplain = conf.getBoolean("rec.explain.flag");
         LOG.info("numUsers:" + numUsers);
@@ -205,28 +176,29 @@ public class EFMRecommender extends TensorRecommender {
     protected void trainModel() throws LibrecException {
         for (int iter = 1; iter <= conf.getInt("rec.iterator.maximum"); iter++) {
             loss = 0.0;
+            updateProgress(0);
             // Update featureMatrix by fixing the others
             // LOG.info("iter:" + iter + ", Update featureMatrix");
             for(int featureIdx=0; featureIdx<numberOfFeatures; featureIdx++) {
-                SparseVector attentionVec = userFeatureAttention.column(featureIdx);
-                SparseVector qualityVec = itemFeatureQuality.column(featureIdx);
-                if (attentionVec.getCount() > 0 && qualityVec.getCount() > 0) {
-                    SparseVector attentionPredVec = new SparseVector(numUsers, attentionVec.size());
-                    SparseVector qualityPredVec = new SparseVector(numItems, qualityVec.size());
+                SequentialSparseVector attentionVec = userFeatureAttention.column(featureIdx);
+                SequentialSparseVector qualityVec = itemFeatureQuality.column(featureIdx);
+                if (attentionVec.getNumEntries() > 0 && qualityVec.getNumEntries() > 0) {
+                    RandomAccessSparseVector attentionPredVec = new RandomAccessSparseVector(numUsers);
+                    RandomAccessSparseVector qualityPredVec = new RandomAccessSparseVector(numItems);
 
-                    for (int userIdx: attentionVec.getIndex()) {
-                        attentionPredVec.append(userIdx, predUserAttention(userIdx, featureIdx));
+                    for (int userIdx: attentionVec.getIndices()) {
+                        attentionPredVec.set(userIdx, predUserAttention(userIdx, featureIdx));
                     }
-                    for (int itemIdx: qualityVec.getIndex()) {
-                        qualityPredVec.append(itemIdx, predItemQuality(itemIdx, featureIdx));
+                    for (int itemIdx: qualityVec.getIndices()) {
+                        qualityPredVec.set(itemIdx, predItemQuality(itemIdx, featureIdx));
                     }
 
                     for (int factorIdx=0; factorIdx<explicitFeatureNum; factorIdx++) {
                         DenseVector factorUsersVector = userFeatureMatrix.column(factorIdx);
                         DenseVector factorItemsVector = itemFeatureMatrix.column(factorIdx);
 
-                        double numerator = lambdaX * factorUsersVector.inner(attentionVec) + lambdaY * factorItemsVector.inner(qualityVec);
-                        double denominator = lambdaX * factorUsersVector.inner(attentionPredVec) + lambdaY * factorItemsVector.inner(qualityPredVec)
+                        double numerator = lambdaX * factorUsersVector.dot(attentionVec) + lambdaY * factorItemsVector.dot(qualityVec);
+                        double denominator = lambdaX * factorUsersVector.dot(attentionPredVec) + lambdaY * factorItemsVector.dot(qualityPredVec)
                                 + lambdaV * featureMatrix.get(featureIdx, factorIdx) + 1e-9;
 
                         featureMatrix.set(featureIdx, factorIdx, featureMatrix.get(featureIdx, factorIdx) * Math.sqrt(numerator/denominator));
@@ -234,115 +206,120 @@ public class EFMRecommender extends TensorRecommender {
                     }
                 }
             }
+            updateProgress(20);
+
 
             // Update UserFeatureMatrix by fixing the others
             for (int userIdx=0; userIdx<numUsers; userIdx++) {
-                SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-                SparseVector attentionVec = userFeatureAttention.row(userIdx);
+                SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+                SequentialSparseVector attentionVec = userFeatureAttention.row(userIdx);
 
-                if (itemRatingsVector.getCount() > 0 && attentionVec.getCount() > 0) {
-                    SparseVector itemPredictsVector = new SparseVector(numItems, itemRatingsVector.size());
-                    SparseVector attentionPredVec = new SparseVector(numberOfFeatures, attentionVec.size());
+                if (itemRatingsVector.getNumEntries() > 0 && attentionVec.getNumEntries() > 0) {
+                    RandomAccessSparseVector itemPredictsVector = new RandomAccessSparseVector(numItems);
+                    RandomAccessSparseVector attentionPredVec = new RandomAccessSparseVector(numberOfFeatures);
 
-                    for (int itemIdx : itemRatingsVector.getIndex()) {
-                        itemPredictsVector.append(itemIdx, predictWithoutBound(userIdx, itemIdx));
+                    for (int itemIdx : itemRatingsVector.getIndices()) {
+                        itemPredictsVector.set(itemIdx, predictWithoutBound(userIdx, itemIdx));
                     }
 
-                    for (int featureIdx: attentionVec.getIndex()) {
-                        attentionPredVec.append(featureIdx, predUserAttention(userIdx, featureIdx));
+                    for (int featureIdx: attentionVec.getIndices()) {
+                        attentionPredVec.set(featureIdx, predUserAttention(userIdx, featureIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < explicitFeatureNum; factorIdx++) {
                         DenseVector factorItemsVector = itemFeatureMatrix.column(factorIdx);
                         DenseVector featureVector = featureMatrix.column(factorIdx);
 
-                        double numerator = factorItemsVector.inner(itemRatingsVector) + lambdaX * featureVector.inner(attentionVec);
-                        double denominator = factorItemsVector.inner(itemPredictsVector) + lambdaX * featureVector.inner(attentionPredVec)
+                        double numerator = factorItemsVector.dot(itemRatingsVector) + lambdaX * featureVector.dot(attentionVec);
+                        double denominator = factorItemsVector.dot(itemPredictsVector) + lambdaX * featureVector.dot(attentionPredVec)
                                 + lambdaU * userFeatureMatrix.get(userIdx, factorIdx) + 1e-9;
 
                         userFeatureMatrix.set(userIdx, factorIdx, userFeatureMatrix.get(userIdx, factorIdx) * Math.sqrt(numerator/denominator));
                     }
                 }
             }
+            updateProgress(40);
 
             // Update ItemFeatureMatrix by fixing the others
             // LOG.info("iter:" + iter + ", Update ItemFeatureMatrix");
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-                SparseVector userRatingsVector = trainMatrix.column(itemIdx);
-                SparseVector qualityVector = itemFeatureQuality.row(itemIdx);
+                SequentialSparseVector userRatingsVector = trainMatrix.column(itemIdx);
+                SequentialSparseVector qualityVector = itemFeatureQuality.row(itemIdx);
 
-                if (userRatingsVector.getCount() > 0 && qualityVector.getCount() > 0) {
-                    SparseVector userPredictsVector = new SparseVector(numUsers, userRatingsVector.size());
-                    SparseVector qualityPredVec = new SparseVector(numberOfFeatures, qualityVector.size());
+                if (userRatingsVector.getNumEntries() > 0 && qualityVector.getNumEntries() > 0) {
+                    RandomAccessSparseVector userPredictsVector = new RandomAccessSparseVector(numUsers);
+                    RandomAccessSparseVector qualityPredVec = new RandomAccessSparseVector(numberOfFeatures);
 
-                    for (int userIdx : userRatingsVector.getIndex()) {
-                        userPredictsVector.append(userIdx, predictWithoutBound(userIdx, itemIdx));
+                    for (int userIdx : userRatingsVector.getIndices()) {
+                        userPredictsVector.set(userIdx, predictWithoutBound(userIdx, itemIdx));
                     }
 
-                    for (int featureIdx : qualityVector.getIndex()) {
-                        qualityPredVec.append(featureIdx, predItemQuality(itemIdx, featureIdx));
+                    for (int featureIdx : qualityVector.getIndices()) {
+                        qualityPredVec.set(featureIdx, predItemQuality(itemIdx, featureIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < explicitFeatureNum; factorIdx++) {
                         DenseVector factorUsersVector = userFeatureMatrix.column(factorIdx);
                         DenseVector featureVector = featureMatrix.column(factorIdx);
 
-                        double numerator = factorUsersVector.inner(userRatingsVector) + lambdaY * featureVector.inner(qualityVector);
-                        double denominator = factorUsersVector.inner(userPredictsVector) + lambdaY * featureVector.inner(qualityPredVec)
+                        double numerator = factorUsersVector.dot(userRatingsVector) + lambdaY * featureVector.dot(qualityVector);
+                        double denominator = factorUsersVector.dot(userPredictsVector) + lambdaY * featureVector.dot(qualityPredVec)
                                 + lambdaU * itemFeatureMatrix.get(itemIdx, factorIdx) + 1e-9;
 
                         itemFeatureMatrix.set(itemIdx, factorIdx, itemFeatureMatrix.get(itemIdx, factorIdx) * Math.sqrt(numerator/denominator));
                     }
                 }
             }
+            updateProgress(60);
 
             // Update UserHiddenMatrix by fixing the others
             // LOG.info("iter:" + iter + ", Update UserHiddenMatrix");
             for (int userIdx=0; userIdx<numUsers; userIdx++) {
-                SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-                if (itemRatingsVector.getCount() > 0) {
-                    SparseVector itemPredictsVector = new SparseVector(numItems, itemRatingsVector.size());
+                SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+                if (itemRatingsVector.getNumEntries() > 0) {
+                    RandomAccessSparseVector itemPredictsVector = new RandomAccessSparseVector(numItems);
 
-                    for (int itemIdx : itemRatingsVector.getIndex()) {
-                        itemPredictsVector.append(itemIdx, predictWithoutBound(userIdx, itemIdx));
+                    for (int itemIdx : itemRatingsVector.getIndices()) {
+                        itemPredictsVector.set(itemIdx, predictWithoutBound(userIdx, itemIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < hiddenFeatureNum; factorIdx++) {
                         DenseVector hiddenItemsVector = itemHiddenMatrix.column(factorIdx);
-                        double numerator = hiddenItemsVector.inner(itemRatingsVector);
-                        double denominator = hiddenItemsVector.inner(itemPredictsVector) + lambdaH * userHiddenMatrix.get(userIdx, factorIdx) + 1e-9;
+                        double numerator = hiddenItemsVector.dot(itemRatingsVector);
+                        double denominator = hiddenItemsVector.dot(itemPredictsVector) + lambdaH * userHiddenMatrix.get(userIdx, factorIdx) + 1e-9;
                         userHiddenMatrix.set(userIdx, factorIdx, userHiddenMatrix.get(userIdx, factorIdx) * Math.sqrt(numerator/denominator));
                     }
                 }
             }
+            updateProgress(90);
 
             // Update ItemHiddenMatrix by fixing the others
             // LOG.info("iter:" + iter + ", Update ItemHiddenMatrix");
             for (int itemIdx=0; itemIdx<numItems; itemIdx++) {
-                SparseVector userRatingsVector = trainMatrix.column(itemIdx);
-                if (userRatingsVector.getCount() > 0) {
-                    SparseVector userPredictsVector = new SparseVector(numUsers, userRatingsVector.size());
+                SequentialSparseVector userRatingsVector = trainMatrix.column(itemIdx);
+                if (userRatingsVector.getNumEntries() > 0) {
+                    RandomAccessSparseVector userPredictsVector = new RandomAccessSparseVector(numUsers);
 
-                    for (int userIdx : userRatingsVector.getIndex()) {
-                        userPredictsVector.append(userIdx, predictWithoutBound(userIdx, itemIdx));
+                    for (int userIdx : userRatingsVector.getIndices()) {
+                        userPredictsVector.set(userIdx, predictWithoutBound(userIdx, itemIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < hiddenFeatureNum; factorIdx++) {
                         DenseVector hiddenUsersVector = userHiddenMatrix.column(factorIdx);
-                        double numerator = hiddenUsersVector.inner(userRatingsVector);
-                        double denominator = hiddenUsersVector.inner(userPredictsVector) + lambdaH * itemHiddenMatrix.get(itemIdx, factorIdx) + 1e-9;
+                        double numerator = hiddenUsersVector.dot(userRatingsVector);
+                        double denominator = hiddenUsersVector.dot(userPredictsVector) + lambdaH * itemHiddenMatrix.get(itemIdx, factorIdx) + 1e-9;
                         itemHiddenMatrix.set(itemIdx, factorIdx, itemHiddenMatrix.get(itemIdx, factorIdx) * Math.sqrt(numerator/denominator));
                     }
                 }
             }
+            updateProgress(100);
 
             // Compute loss value
             for (MatrixEntry me: trainMatrix) {
                 int userIdx = me.row();
                 int itemIdx = me.column();
                 double rating = me.get();
-                double predRating = DenseMatrix.rowMult(userFeatureMatrix, userIdx, itemFeatureMatrix, itemIdx)
-                        + DenseMatrix.rowMult(userHiddenMatrix, userIdx, itemHiddenMatrix, itemIdx);
+                double predRating = predictWithoutBound(userIdx, itemIdx);
                 loss += (rating - predRating) * (rating - predRating);
             }
 
@@ -382,8 +359,7 @@ public class EFMRecommender extends TensorRecommender {
         double[] predRatings = new double[numItems];
 
         for (int itemIdx=0; itemIdx<numItems; itemIdx++) {
-            predRatings[itemIdx] = DenseMatrix.rowMult(userFeatureMatrix, userIdx, itemFeatureMatrix, itemIdx)
-                    + DenseMatrix.rowMult(userHiddenMatrix, userIdx, itemHiddenMatrix, itemIdx);
+            predRatings[itemIdx] = predictWithoutBound(userIdx, itemIdx);
         }
 
         // get the max\min predRating's index
@@ -405,9 +381,9 @@ public class EFMRecommender extends TensorRecommender {
         String disRecommendedItemId = itemMappingData.inverse().get(disRecommendedItemIdx);
 
         // get feature and values
-        double[] userFeatureValues = featureMatrix.mult(userFeatureMatrix.row(userIdx)).getData();
-        double [] recItemFeatureValues = featureMatrix.mult(itemFeatureMatrix.row(recommendedItemIdx)).getData();
-        double [] disRecItemFeatureValues = featureMatrix.mult(itemFeatureMatrix.row(disRecommendedItemIdx)).getData();
+        double[] userFeatureValues = featureMatrix.times(userFeatureMatrix.row(userIdx)).getValues();
+        double [] recItemFeatureValues = featureMatrix.times(itemFeatureMatrix.row(recommendedItemIdx)).getValues();
+        double [] disRecItemFeatureValues = featureMatrix.times(itemFeatureMatrix.row(disRecommendedItemIdx)).getValues();
         Map<Integer, Double> userFeatureValueMap = new HashMap<>();
         for (int i=0; i<numberOfFeatures; i++) {
             userFeatureValueMap.put(i, userFeatureValues[i]);
@@ -451,7 +427,7 @@ public class EFMRecommender extends TensorRecommender {
     }
 
     protected double predict(int u, int j) {
-        double pred = DenseMatrix.rowMult(userFeatureMatrix, u, itemFeatureMatrix, j) + DenseMatrix.rowMult(userHiddenMatrix, u, itemHiddenMatrix, j);
+        double pred = userFeatureMatrix.row(u).dot(itemFeatureMatrix.row(j)) + userHiddenMatrix.row(u).dot(itemHiddenMatrix.row(j));
         if (pred < minRate)
             return minRate;
         if (pred > maxRate)
@@ -460,16 +436,41 @@ public class EFMRecommender extends TensorRecommender {
     }
 
     protected double predictWithoutBound(int u, int j) {
-        return DenseMatrix.rowMult(userFeatureMatrix, u, itemFeatureMatrix, j)
-                + DenseMatrix.rowMult(userHiddenMatrix, u, itemHiddenMatrix, j);
+        return userFeatureMatrix.row(u).dot(itemFeatureMatrix.row(j)) + userHiddenMatrix.row(u).dot(itemHiddenMatrix.row(j));
     }
 
     protected double predUserAttention(int userIdx, int featureIdx) {
-        return DenseMatrix.rowMult(userFeatureMatrix, userIdx, featureMatrix, featureIdx);
+        return userFeatureMatrix.row(userIdx).dot(featureMatrix.row(featureIdx));
     }
 
     protected double predItemQuality(int itemIdx, int featureIdx) {
-        return DenseMatrix.rowMult(itemFeatureMatrix, itemIdx, featureMatrix, featureIdx);
+        return itemFeatureMatrix.row(itemIdx).dot(featureMatrix.row(featureIdx));
+    }
+
+    /**
+     * Sort a map by value.
+     *
+     * @param map the map to sort
+     * @param <K> key type
+     * @param <V> value type
+     * @return a sorted map of the input
+     */
+    protected static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
+        List<Map.Entry<K, V>> list = new LinkedList<>( map.entrySet() );
+        Collections.sort(list, new Comparator<Map.Entry<K, V>>()
+        {
+            public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
+            {
+                return (o1.getValue()).compareTo( o2.getValue() );
+            }
+        } );
+
+        Map<K, V> result = new LinkedHashMap<K, V>();
+        for (Map.Entry<K, V> entry : list)
+        {
+            result.put( entry.getKey(), entry.getValue() );
+        }
+        return result;
     }
 
     /**
@@ -480,47 +481,5 @@ public class EFMRecommender extends TensorRecommender {
      */
     protected double normalize(double rating) {
         return  (rating - minRate) / (maxRate - minRate);
-    }
-
-    @Override
-    public Map<Measure.MeasureValue, Double> evaluateMap() throws LibrecException {
-        Map<Measure.MeasureValue, Double> evaluatedMap = new HashMap<>();
-        List<Measure.MeasureValue> measureValueList = Measure.getMeasureEnumList(isRanking, topN);
-        if (measureValueList != null) {
-            for (Measure.MeasureValue measureValue : measureValueList) {
-                RecommenderEvaluator evaluator = ReflectionUtil
-                        .newInstance(measureValue.getMeasure().getEvaluatorClass());
-                if (isRanking && measureValue.getTopN() != null && measureValue.getTopN() > 0) {
-                    evaluator.setTopN(measureValue.getTopN());
-                }
-                double evaluatedValue = evaluator.evaluate(context, recommendedList);
-                evaluatedMap.put(measureValue, evaluatedValue);
-            }
-        }
-        return evaluatedMap;
-    }
-
-    @Override
-    public List<RecommendedItem> getRecommendedList() {
-        if (recommendedList != null && recommendedList.size() > 0) {
-            List<RecommendedItem> userItemList = new ArrayList<>();
-            Iterator<UserItemRatingEntry> recommendedEntryIter = recommendedList.entryIterator();
-            if (userMappingData != null && userMappingData.size() > 0 && itemMappingData != null && itemMappingData.size() > 0) {
-                BiMap<Integer, String> userMappingInverse = userMappingData.inverse();
-                BiMap<Integer, String> itemMappingInverse = itemMappingData.inverse();
-                while (recommendedEntryIter.hasNext()) {
-                    UserItemRatingEntry userItemRatingEntry = recommendedEntryIter.next();
-                    if (userItemRatingEntry != null) {
-                        String userId = userMappingInverse.get(userItemRatingEntry.getUserIdx());
-                        String itemId = itemMappingInverse.get(userItemRatingEntry.getItemIdx());
-                        if (StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(itemId)) {
-                            userItemList.add(new GenericRecommendedItem(userId, itemId, userItemRatingEntry.getValue()));
-                        }
-                    }
-                }
-                return userItemList;
-            }
-        }
-        return null;
     }
 }

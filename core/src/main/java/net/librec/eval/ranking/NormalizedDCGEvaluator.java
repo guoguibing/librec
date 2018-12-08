@@ -19,67 +19,120 @@ package net.librec.eval.ranking;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
 import net.librec.math.algorithm.Maths;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.recommender.item.ItemEntry;
+import net.librec.recommender.item.KeyValue;
 import net.librec.recommender.item.RecommendedList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 /**
  * NormalizedDCGEvaluator @topN
+ * <a href=https://en.wikipedia.org/wiki/Discounted_cumulative_gain>wikipedia, ideal dcg</a>
  *
- * @author WangYuFeng
+ * @author Shilin Qu
  */
 public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
 
     /**
      * Evaluate on the test set with the the list of recommended items.
      *
-     * @param testMatrix
-     *            the given test set
-     * @param recommendedList
-     *            the list of recommended items
+     * @param groundTruthList the given ground truth list
+     * @param recommendedList the list of recommended items
      * @return evaluate result
      */
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
 
         double nDCG = 0.0;
-        int maxNumTestItemsByUser = conf.getInt("rec.eval.item.test.maxnum", testMatrix.numColumns());
-        int idcgsSize = Math.min(maxNumTestItemsByUser, topN);
-        List<Double> idcgs = new ArrayList<>(idcgsSize + 1);
-        idcgs.add(0.0d);
-        for (int index = 0; index < idcgsSize; index++) {
-            idcgs.add(1.0d / Maths.log(index + 2, 2) + idcgs.get(index));
-        }
-        int numUsers = testMatrix.numRows();
-        int nonZeroNumUsers = 0;
-        for (int userID = 0; userID < numUsers; userID++) {
-            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userID);
-            if (testSetByUser.size() > 0) {
+        int numContext = groundTruthList.size();
+        int nonZeroContext = 0;
+        for (int contextIdx = 0; contextIdx < numContext; ++contextIdx) {
+            Set<Integer> testSetByContext = groundTruthList.getKeySetByContext(contextIdx);
+            if (testSetByContext.size() > 0) {
 
-                double dcg = 0.0;
-                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userID);
+                List<KeyValue<Integer, Double>> groundTruthTestSetByContext = groundTruthList.getKeyValueListByContext(contextIdx);
+                List<KeyValue<Integer, Double>> recommendListByContext = recommendedList.getKeyValueListByContext(contextIdx);
+                boolean hasdcgsValue = false;
 
+                List<RankRate> groundTruthTestSet = new ArrayList<>();
+                for(int i=0; i<groundTruthTestSetByContext.size(); i++) {
+                    groundTruthTestSet.add(new RankRate(groundTruthTestSetByContext.get(i).getKey(), groundTruthTestSetByContext.get(i).getValue()));
+                }
                 // calculate DCG
-                int topK = this.topN <= recommendListByUser.size() ? this.topN : recommendListByUser.size();
-                for (int indexOfItem = 0; indexOfItem < topK; indexOfItem++) {
-                    int itemID = recommendListByUser.get(indexOfItem).getKey();
-                    if (!testSetByUser.contains(itemID)) {
+                double dcg = 0.0;
+                int topK = this.topN <= recommendListByContext.size() ? this.topN : recommendListByContext.size();
+                for (int indexOfKey = 0; indexOfKey < topK; ++indexOfKey) {
+                    int itemID = recommendListByContext.get(indexOfKey).getKey();
+                    if (!testSetByContext.contains(itemID)) {
                         continue;
                     }
-
-                    int rank = indexOfItem + 1;
-                    dcg += 1 / Maths.log(rank + 1, 2);
+                    double rankvalue = getValueByKey(groundTruthTestSet, itemID);
+                    hasdcgsValue = true;
+                    dcg += rankvalue / Maths.log(indexOfKey + 2, 2);
                 }
 
-                nDCG += dcg / idcgs.get(testSetByUser.size() < topK ? testSetByUser.size(): topK);
-                nonZeroNumUsers++;
+                if(!hasdcgsValue||dcg == 0) {
+                    ++nonZeroContext;
+                    continue;
+                }
+
+                // calculate iDCG
+                double idcg = 0.0d;
+                ArrayList idcgsValue = new ArrayList();
+                for(int i=0; i<groundTruthTestSet.size(); i++){
+                    if(groundTruthTestSet.get(i).getIndexId() == -1) {
+                        idcgsValue.add(groundTruthTestSet.get(i).getValue());
+                    }
+                }
+
+                Collections.sort(idcgsValue, Collections.reverseOrder());
+
+                for(int i=0; i<idcgsValue.size(); i++) {
+                    idcg += (double)idcgsValue.get(i) / Maths.log(i + 2, 2);
+                }
+
+                if(idcg==0){
+                    ++nonZeroContext;
+                    continue;
+                }
+                nDCG += dcg / idcg;
+                ++nonZeroContext;
             }
         }
 
-        return nonZeroNumUsers > 0 ? nDCG / nonZeroNumUsers : 0.0d;
+        return nonZeroContext > 0 ? nDCG / nonZeroContext : 0.0d;
+    }
+
+    public double getValueByKey(List<RankRate> list,int key){
+        for(RankRate keyValue: list ){
+            if(key==keyValue.getIndexId()){
+                keyValue.setIndexId(-1);
+                return keyValue.getValue();
+            }
+        }
+        return 0.0d;
+    }
+
+    public class RankRate{
+        int indexId;
+        double value;
+        public int getIndexId() {
+            return indexId;
+        }
+        public void setIndexId(int indexId) {
+            this.indexId = indexId;
+        }
+        public double getValue() {
+            return value;
+        }
+        public void setValue(double value) {
+            this.value = value;
+        }
+        public RankRate(int indexId,double value){
+            setIndexId(indexId);
+            setValue(value);
+        }
     }
 
 }

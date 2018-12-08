@@ -17,11 +17,13 @@
  */
 package net.librec.recommender.cf.ranking;
 
+import it.unimi.dsi.fastutil.doubles.Double2DoubleOpenHashMap;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.*;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -34,7 +36,7 @@ import java.util.List;
  * <li><strong>Real ratings:</strong> Hu et al., Collaborative filtering for implicit feedback datasets, ICDM 2008.</li>
  * </ul>
  *
- * @author guoguibing and Keqiang Wang
+ * @author Keqiang Wang
  */
 @ModelData({"isRanking", "wrmf", "userFactors", "itemFactors", "trainMatrix"})
 public class WRMFRecommender extends MatrixFactorizationRecommender {
@@ -43,133 +45,132 @@ public class WRMFRecommender extends MatrixFactorizationRecommender {
      */
     protected float weightCoefficient;
 
-    /**
-     * confindence Minus Identity Matrix{ui} = confidenceMatrix_{ui} - 1 =alpha * r_{ui} or log(1+10^alpha * r_{ui})
-     */
-    protected SparseMatrix confindenceMinusIdentityMatrix;
-
-    /**
-     * preferenceMatrix_{ui} = 1 if {@code r_{ui}>0 or preferenceMatrix_{ui} = 0}
-     */
-    protected SparseMatrix preferenceMatrix;
 
     @Override
-    protected void setup() throws LibrecException {
+    public void setup() throws LibrecException {
         super.setup();
         weightCoefficient = conf.getFloat("rec.wrmf.weight.coefficient", 4.0f);
 
-        confindenceMinusIdentityMatrix = new SparseMatrix(trainMatrix);
-        preferenceMatrix = new SparseMatrix(trainMatrix);
+        // weighted the train rating matrix as confidence matrix
+        weightMatrix();
+    }
+
+    public double weight(double value) {
+//        return  weightCoefficient * value;
+        return Math.log(1.0 + Math.pow(10, weightCoefficient) * value);
+    }
+
+    public void weightMatrix() {
+        Double2DoubleOpenHashMap ratingWeightMap = new Double2DoubleOpenHashMap();
+        for (double rating : ratingScale) {
+            ratingWeightMap.putIfAbsent(rating, weight(rating));
+        }
+
         for (MatrixEntry matrixEntry : trainMatrix) {
-            int userIdx = matrixEntry.row();
-            int itemIdx = matrixEntry.column();
-//            confindenceMinusIdentityMatrix.set(userIdx, itemIdx, weightCoefficient * matrixEntry.get());
-            confindenceMinusIdentityMatrix.set(userIdx, itemIdx, Math.log(1.0 + Math.pow(10, weightCoefficient) * matrixEntry.get())); //maybe better for poi recommender
-            preferenceMatrix.set(userIdx, itemIdx, 1.0d);
+            matrixEntry.set(ratingWeightMap.get(matrixEntry.get()));
         }
     }
 
     @Override
     protected void trainModel() throws LibrecException {
-
-        SparseMatrix userIdentityMatrix = DiagMatrix.eye(numFactors).scale(regUser);
-        SparseMatrix itemIdentityMatrix = DiagMatrix.eye(numFactors).scale(regItem);
-
         // To be consistent with the symbols in the paper
         DenseMatrix X = userFactors, Y = itemFactors;
-        // Updating by using alternative least square (ALS)
-        // due to large amount of entries to be processed (SGD will be too slow)
+
+//        DenseMatrix factorMatrix = new DenseMatrix(numFactors, numFactors);
+//        DenseVector userFactorVector;
+//        DenseVector itemFactorVector;
+
+        List<Integer> userList = new ArrayList<>(numUsers);
+        List<Integer> itemList = new ArrayList<>(numItems);
+        for (int userIndex=0; userIndex <  numUsers; userIndex++){
+            userList.add(userIndex);
+        }
+
+        for (int itemIndex=0; itemIndex <  numItems; itemIndex++){
+            itemList.add(itemIndex);
+        }
+
         for (int iter = 1; iter <= numIterations; iter++) {
             // Step 1: update user factors;
-            DenseMatrix Yt = Y.transpose();
-            DenseMatrix YtY = Yt.mult(Y);
-            for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+            DenseMatrix YtY = Y.transpose().times(Y);
+            userList.parallelStream().forEach(userIndex->{
+//            for (int userIndex = 0; userIndex < numUsers; userIndex++) {
+                DenseVector itemFactorVector;
+                SequentialSparseVector itemRatingVector = trainMatrix.row(userIndex);
+                DenseMatrix factorMatrix = new DenseMatrix(numFactors, numFactors);
 
-                DenseMatrix YtCuI = new DenseMatrix(numFactors, numItems);//actually YtCuI is a sparse matrix
-                //Yt * (Cu-itemIdx)
-                List<Integer> itemList = trainMatrix.getColumns(userIdx);
-                for (int itemIdx : itemList) {
-                    for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                        YtCuI.set(factorIdx, itemIdx, Y.get(itemIdx, factorIdx) * confindenceMinusIdentityMatrix.get(userIdx, itemIdx));
+                DenseVector YtCuPu = new VectorBasedDenseVector(numFactors);
+                for (Vector.VectorEntry vectorEntry : itemRatingVector) {
+                    int itemIndex = vectorEntry.index();
+                    double weight = vectorEntry.get() + 1.0D;
+                    itemFactorVector = itemFactors.row(itemIndex);
+                    for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                        YtCuPu.plus(factorIndex, itemFactorVector.get(factorIndex) * weight);
                     }
                 }
 
-                // YtY + Yt * (Cu - itemIdx) * Y
-                DenseMatrix YtCuY = new DenseMatrix(numFactors, numFactors);
-                for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int factorIdxIn = 0; factorIdxIn < numFactors; factorIdxIn++) {
-                        double value = 0.0;
-                        for (int itemIdx : itemList) {
-                            value += YtCuI.get(factorIdx, itemIdx) * Y.get(itemIdx, factorIdxIn);
+                factorMatrix.assign((rowIndex, columnIndex, value) -> YtY.get(rowIndex, columnIndex) + regUser);
+
+                for (Vector.VectorEntry vectorEntry : itemRatingVector) {
+                    int itemIndex = vectorEntry.index();
+                    double weight = vectorEntry.get();
+                    itemFactorVector = itemFactors.row(itemIndex);
+                    for (int rowIndex = 0; rowIndex < numFactors; rowIndex++) {
+                        double temp = itemFactorVector.get(rowIndex) * weight;
+                        for (int columnIndex = 0; columnIndex < numFactors; columnIndex++) {
+                            factorMatrix.plus(rowIndex, columnIndex, temp * itemFactorVector.get(columnIndex));
                         }
-                        YtCuY.set(factorIdx, factorIdxIn, value);
-                    }
-                }
-                YtCuY.addEqual(YtY);
-                // (YtCuY + lambda * itemIdx)^-1
-                //lambda * itemIdx can be pre-difined because every time is the same.
-                DenseMatrix Wu = (YtCuY.add(userIdentityMatrix)).inv();
-                // Yt * (Cu - itemIdx) * Pu + Yt * Pu
-                DenseVector YtCuPu = new DenseVector(numFactors);
-                for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int itemIdx : itemList) {
-                        YtCuPu.add(factorIdx, preferenceMatrix.get(userIdx, itemIdx) * (YtCuI.get(factorIdx, itemIdx) + Yt.get(factorIdx, itemIdx)));
                     }
                 }
 
-                DenseVector xu = Wu.mult(YtCuPu);
+                DenseMatrix Wu = factorMatrix.inverse();
+                DenseVector xu = Wu.times(YtCuPu);
                 // udpate user factors
-                X.setRow(userIdx, xu);
-            }
+                X.set(userIndex, xu);
+            });
 
             // Step 2: update item factors;
-            DenseMatrix Xt = X.transpose();
-            DenseMatrix XtX = Xt.mult(X);
+            DenseMatrix XtX = X.transpose().times(X);
 
-            for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+            itemList.parallelStream().forEach(itemIndex->{
+//            for (int itemIndex = 0; itemIndex < numItems; itemIndex++) {
 
-
-                DenseMatrix XtCiI = new DenseMatrix(numFactors, numUsers);
-                //actually XtCiI is a sparse matrix
-                //Xt * (Ci-itemIdx)
-                List<Integer> userList = trainMatrix.getRows(itemIdx);
-                for (int userIdx : userList) {
-                    for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                        XtCiI.set(factorIdx, userIdx, X.get(userIdx, factorIdx) * confindenceMinusIdentityMatrix.get(userIdx, itemIdx));
+                SequentialSparseVector userRatingVector = trainMatrix.viewColumn(itemIndex);
+                DenseVector XtCiPu = new VectorBasedDenseVector(numFactors);
+                DenseMatrix factorMatrix = new DenseMatrix(numFactors, numFactors);
+                DenseVector userFactorVector;
+                for (Vector.VectorEntry vectorEntry : userRatingVector) {
+                    int userIndex = vectorEntry.index();
+                    double weight = vectorEntry.get() + 1.0D;
+                    userFactorVector = userFactors.row(userIndex);
+                    for (int factorIndex = 0; factorIndex < numFactors; factorIndex++) {
+                        XtCiPu.plus(factorIndex, userFactorVector.get(factorIndex) * weight);
                     }
                 }
 
-                // XtX + Xt * (Ci - itemIdx) * X
-                DenseMatrix XtCiX = new DenseMatrix(numFactors, numFactors);
-                for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int factorIdxIn = 0; factorIdxIn < numFactors; factorIdxIn++) {
-                        double value = 0.0;
-                        for (int userIdx : userList) {
-                            value += XtCiI.get(factorIdx, userIdx) * X.get(userIdx, factorIdxIn);
+                factorMatrix.assign((rowIndex, columnIndex, value) -> XtX.get(rowIndex, columnIndex) + regItem);
+
+                for (Vector.VectorEntry vectorEntry : userRatingVector) {
+                    int userIndex = vectorEntry.index();
+                    double weight = vectorEntry.get();
+                    userFactorVector = userFactors.row(userIndex);
+                    for (int rowIndex = 0; rowIndex < numFactors; rowIndex++) {
+                        double temp = userFactorVector.get(rowIndex) * weight;
+                        for (int columnIndex = 0; columnIndex < numFactors; columnIndex++) {
+                            factorMatrix.plus(rowIndex, columnIndex, temp * userFactorVector.get(columnIndex));
                         }
-                        XtCiX.set(factorIdx, factorIdxIn, value);
-                    }
-                }
-                XtCiX.addEqual(XtX);
-
-                // (XtCuX + lambda * itemIdx)^-1
-                //lambda * itemIdx can be pre-difined because every time is the same.
-                DenseMatrix Wi = (XtCiX.add(itemIdentityMatrix)).inv();
-                // Xt * (Ci - itemIdx) * Pu + Xt * Pu
-                DenseVector XtCiPu = new DenseVector(numFactors);
-                for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                    for (int userIdx : userList) {
-                        XtCiPu.add(factorIdx, preferenceMatrix.get(userIdx, itemIdx) * (XtCiI.get(factorIdx, userIdx) + Xt.get(factorIdx, userIdx)));
                     }
                 }
 
-                DenseVector yi = Wi.mult(XtCiPu);
+                DenseMatrix Wi = factorMatrix.inverse();
+
+                DenseVector yi = Wi.times(XtCiPu);
                 // udpate item factors
-                Y.setRow(itemIdx, yi);
-            }
+                Y.set(itemIndex, yi);
+            });
 
             if (verbose) {
-                LOG.info(getClass()+" runs at iteration = "+iter+" "+new Date());
+                LOG.info(getClass() + " runs at iteration = " + iter + " " + new Date());
             }
         }
     }

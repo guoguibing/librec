@@ -115,7 +115,7 @@ public class Systems {
     /**
      * Capture screen with the input string as file name
      *
-     * @param fileName  a given file name
+     * @param fileName a given file name
      * @throws Exception if error occurs
      */
     public static void captureScreen(String fileName) throws Exception {

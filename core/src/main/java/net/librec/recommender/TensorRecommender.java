@@ -17,56 +17,25 @@
  */
 package net.librec.recommender;
 
-import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
-import net.librec.conf.Configuration;
-import net.librec.data.DataModel;
-import net.librec.data.model.ArffDataModel;
-import net.librec.eval.Measure.MeasureValue;
-import net.librec.eval.RecommenderEvaluator;
+import net.librec.data.structure.*;
+import net.librec.job.progress.ProgressBar;
+import net.librec.math.structure.DataSet;
+import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.math.structure.SparseTensor;
 import net.librec.math.structure.TensorEntry;
-import net.librec.recommender.item.RecommendedItem;
-import net.librec.recommender.item.RecommendedItemList;
+import net.librec.recommender.item.KeyValue;
 import net.librec.recommender.item.RecommendedList;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Tensor Recommender
  *
- * @author WangYuFeng
+ * @author WangYuFeng and Keqiang Wang
  */
-public abstract class TensorRecommender implements Recommender {
-    /**
-     * LOG
-     */
-    protected final Log LOG = LogFactory.getLog(this.getClass());
-
-    /**
-     * is ranking or rating
-     */
-    protected boolean isRanking;
-
-    /**
-     * topN
-     */
-    protected int topN;
-
-    /**
-     * conf
-     */
-    protected Configuration conf;
-
-    /**
-     * RecommenderContext
-     */
-    protected RecommenderContext context;
-
+public abstract class TensorRecommender extends AbstractRecommender {
     /**
      * train Tensor
      */
@@ -83,27 +52,6 @@ public abstract class TensorRecommender implements Recommender {
     protected SparseTensor validTensor;
 
     /**
-     * Recommended Item List
-     */
-    protected RecommendedList recommendedList;
-
-    /**
-     * user Mapping Data
-     */
-    public BiMap<String, Integer> userMappingData;
-
-    /**
-     * item Mapping Data
-     */
-    public BiMap<String, Integer> itemMappingData;
-
-    public ArrayList<BiMap<String, Integer>> allFeaturesMappingData;
-    /**
-     * early-stop criteria
-     */
-    protected boolean earlyStop;
-
-    /**
      * dimensions
      */
     protected int numDimensions;
@@ -117,26 +65,6 @@ public abstract class TensorRecommender implements Recommender {
      * number of factors
      */
     protected int numFactors;
-
-    /**
-     * objective loss
-     */
-    protected double loss, lastLoss = 0.0d;
-
-    /**
-     * whether to adjust learning rate automatically
-     */
-    protected boolean isBoldDriver;
-
-    /**
-     * decay of learning rate
-     */
-    protected float decay;
-
-    /**
-     * verbose
-     */
-    protected boolean verbose = true;
 
     /**
      * learn rate, maximum learning rate
@@ -184,30 +112,40 @@ public abstract class TensorRecommender implements Recommender {
     protected double globalMean;
 
     /**
+     * report the training progress
+     */
+    protected ProgressBar progressBar;
+
+    /**
+     * trainMatrix
+     */
+    protected SequentialAccessSparseMatrix trainMatrix;
+
+    /**
+     * testMatrix
+     */
+    protected SequentialAccessSparseMatrix testMatrix;
+
+    /**
      * setup
      *
      * @throws LibrecException if error occurs during setting up
      */
     protected void setup() throws LibrecException {
-        conf = context.getConf();
-        isRanking = conf.getBoolean("rec.recommender.isranking");
-        if (isRanking) {
-            topN = conf.getInt("rec.recommender.ranking.topn", 5);
-        }
-
-        earlyStop = conf.getBoolean("rec.recommender.earlyStop");
-        verbose = conf.getBoolean("rec.recommender.verbose", true);
-
+        super.setup();
         learnRate = conf.getFloat("rec.iterator.learnrate", 0.01f);
         maxLearnRate = conf.getFloat("rec.iterator.learnrate.maximum", 1000.0f);
 
         numFactors = conf.getInt("rec.factor.number", 10);
         reg = conf.getFloat("rec.tensor.regularization", 0.01f);
+        numIterations = conf.getInt("rec.iterator.maximum", 100);
 
         trainTensor = (SparseTensor) getDataModel().getTrainDataSet();
         testTensor = (SparseTensor) getDataModel().getTestDataSet();
         validTensor = (SparseTensor) getDataModel().getValidDataSet();
 
+        trainMatrix = trainTensor.rateMatrix();
+        testMatrix = testTensor.rateMatrix();
 
         int size = 0;
         double sum = 0.0d;
@@ -223,33 +161,40 @@ public abstract class TensorRecommender implements Recommender {
         numDimensions = trainTensor.numDimensions();
         dimensions = trainTensor.dimensions();
 
-        userMappingData = getDataModel().getUserMappingData();
-        itemMappingData = getDataModel().getItemMappingData();
-        numUsers = userMappingData.size();
-        numItems = itemMappingData.size();
-        allFeaturesMappingData = ((ArffDataModel)getDataModel()).getAllFeaturesMappingData();
-
         userDimension = trainTensor.getUserDimension();
         itemDimension = trainTensor.getItemDimension();
 
-    }
+        numUsers = trainTensor.dimensions()[userDimension];
+        numItems = trainTensor.dimensions()[itemDimension];
 
-    /**
-     * recommend
-     *
-     * @param context  recommender context
-     * @throws LibrecException if error occurs during recommending
-     */
-    @Override
-    public void recommend(RecommenderContext context) throws LibrecException {
-        this.context = context;
-        setup();
-        LOG.info("Job Setup completed.");
-        trainModel();
-        LOG.info("Job Train completed.");
-        this.recommendedList = recommend();
-        LOG.info("Job End.");
-        cleanup();
+        if (verbose) {
+            progressBar = new ProgressBar(100, 100);
+        }
+
+
+
+        int[] numDroppedItemsArray = new int[numUsers]; // for AUCEvaluator
+        int maxNumTestItemsByUser = 0; //for idcg
+        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
+            numDroppedItemsArray[userIdx] = numItems - trainMatrix.row(userIdx).getNumEntries();
+            int numTestItemsByUser = testMatrix.row(userIdx).getNumEntries();
+            maxNumTestItemsByUser = maxNumTestItemsByUser < numTestItemsByUser ? numTestItemsByUser : maxNumTestItemsByUser;
+        }
+
+        int[] itemPurchasedCount = new int[numItems]; // for NoveltyEvaluator
+        for (int itemIdx = 0; itemIdx < numItems; ++itemIdx) {
+            itemPurchasedCount[itemIdx] = trainMatrix.column(itemIdx).getNumEntries()
+                    + testMatrix.column(itemIdx).getNumEntries();
+        }
+
+        conf.setInts("rec.eval.auc.dropped.num", numDroppedItemsArray);
+        conf.setInt("rec.eval.key.test.max.num", maxNumTestItemsByUser); //for nDCGEvaluator
+        conf.setInt("rec.eval.item.num", testMatrix.columnSize()); // for EntropyEvaluator
+        conf.setInts("rec.eval.item.purchase.num", itemPurchasedCount); // for NoveltyEvaluator
+
+        /**
+         * if you want to use and AUCEvaluator and nDCGEvaluator, please set rec.eval.auc.dropped.num arrays and rec.eval.key.test.max.num value like as AbstractRecommender.
+         */
     }
 
     /**
@@ -259,20 +204,21 @@ public abstract class TensorRecommender implements Recommender {
      */
     protected abstract void trainModel() throws LibrecException;
 
+
     /**
      * recommend
-     * * predict the ranking scores or ratings in the test data
+     * * predict the ranking scores in the test data
      *
-     * @return predictive ranking score or rating matrix
+     * @return predictive rating matrix
      * @throws LibrecException if error occurs during recommending
      */
-    protected RecommendedList recommend() throws LibrecException {
-        if (isRanking && topN > 0) {
-            recommendedList = recommendRank();
-        } else {
-            recommendedList = recommendRating();
+    public RecommendedList recommendRank() throws LibrecException {
+        LibrecDataList<AbstractBaseDataEntry> librecDataList = new BaseDataList<>();
+        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
+            BaseRankingDataEntry baseRankingDataEntry = new BaseRankingDataEntry(userIdx);
+            librecDataList.addDataEntry(baseRankingDataEntry);
         }
-        return recommendedList;
+        return recommendRank(librecDataList);
     }
 
     /**
@@ -282,9 +228,46 @@ public abstract class TensorRecommender implements Recommender {
      * @return predictive rating matrix
      * @throws LibrecException if error occurs during recommending
      */
-    protected RecommendedList recommendRank() throws LibrecException {
-        recommendedList = new RecommendedItemList(numUsers - 1, numUsers);
-        //TODO
+    public RecommendedList recommendRank(LibrecDataList<AbstractBaseDataEntry> dataList) throws LibrecException {
+        int numDataEntries = dataList.size();
+        RecommendedList recommendedList = new RecommendedList(numUsers);
+        List<Integer> contextList = new ArrayList<>();
+        for (int contextIdx = 0; contextIdx < numDataEntries; ++contextIdx) {
+            contextList.add(contextIdx);
+            recommendedList.addList(new ArrayList<>());
+        }
+
+        contextList.parallelStream().forEach((Integer contextIdx) -> {
+            BaseRankingDataEntry baseRankingDataEntry = (BaseRankingDataEntry) dataList.getDataEntry(contextIdx);
+            int userIdx = baseRankingDataEntry.getUserId();
+
+            int[] items = trainMatrix.row(userIdx).getIndices();
+            List<KeyValue<Integer, Double>> itemValueList = new ArrayList<>();
+            for (int itemIdx = 0, trainItemIndex = 0; itemIdx < numItems; ++itemIdx) {
+                if (trainItemIndex < items.length && items[trainItemIndex] == itemIdx) {
+                    trainItemIndex++;
+                    continue;
+                }
+
+                double predictRating = 0;
+                try {
+                    predictRating = predict(userIdx, itemIdx);
+                } catch (LibrecException e) {
+                    e.printStackTrace();
+                }
+                if (Double.isNaN(predictRating)) {
+                    continue;
+                }
+                itemValueList.add(new KeyValue<>(itemIdx, predictRating));
+            }
+            recommendedList.setList(contextIdx, itemValueList);
+            recommendedList.topNRankByIndex(contextIdx, topN);
+        });
+
+        if (recommendedList.size() == 0) {
+            throw new IndexOutOfBoundsException("No item is recommended, " +
+                    "there is something error in the recommendation algorithm! Please check it!");
+        }
         return recommendedList;
     }
 
@@ -295,8 +278,13 @@ public abstract class TensorRecommender implements Recommender {
      * @return predictive rating matrix
      * @throws LibrecException if error occurs during recommending
      */
-    protected RecommendedList recommendRating() throws LibrecException {
-        recommendedList = new RecommendedItemList(numUsers - 1, numUsers);
+    public RecommendedList recommendRating(DataSet predictDataSet) throws LibrecException {
+        testTensor = (SparseTensor) predictDataSet;
+
+        RecommendedList recommendedList = new RecommendedList(numUsers);
+        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
+            recommendedList.addList(new ArrayList<>());
+        }
         for (TensorEntry testTensorEntry : testTensor) {
             int[] keys = testTensorEntry.keys();
             int userIdx = testTensorEntry.key(userDimension);
@@ -305,10 +293,80 @@ public abstract class TensorRecommender implements Recommender {
             if (Double.isNaN(predictRating)) {
                 predictRating = globalMean;
             }
-            recommendedList.addUserItemIdx(userIdx, itemIdx, predictRating);
+            recommendedList.add(userIdx, itemIdx, predictRating);
         }
         return recommendedList;
     }
+
+    /**
+     * recommend
+     * * predict the ratings in the test data
+     *
+     * @return predictive rating matrix
+     * @throws LibrecException if error occurs during recommending
+     */
+    public RecommendedList recommendRating(LibrecDataList<AbstractBaseDataEntry> dataList) throws LibrecException {
+        int numDataEntries = dataList.size();
+        RecommendedList recommendedList = new RecommendedList(numDataEntries);
+
+        for (int userIdx = 0; userIdx < numUsers; ++userIdx) {
+            recommendedList.addList(new ArrayList<>());
+        }
+
+        for (int contextIdx = 0; contextIdx < numDataEntries; ++contextIdx) {
+            recommendedList.addList(new ArrayList<>());
+            BaseContextRatingDataEntry baseContextRatingDataEntry = (BaseContextRatingDataEntry) dataList.getDataEntry(contextIdx);
+            int userIdx = baseContextRatingDataEntry.getUserId();
+            int[] itemIdsArray = baseContextRatingDataEntry.getItemIdsArray();
+            int[][] contexts = baseContextRatingDataEntry.getContexts();
+
+            for (int index = 0; index < itemIdsArray.length; index++) {
+                int itemIdx = itemIdsArray[index];
+                int[] keys = new int[contexts[index].length + 2];
+                keys[0] = userIdx;
+                keys[1] = itemIdx;
+                System.arraycopy(contexts[index], 0, keys, 2, contexts[index].length);
+                double predictRating = predict(keys, true);
+                if (Double.isNaN(predictRating)) {
+                    predictRating = globalMean;
+                }
+                recommendedList.add(contextIdx, itemIdx, predictRating);
+            }
+        }
+
+        return recommendedList;
+    }
+
+//    /**
+//     * get Recommended List
+//     *
+//     * @return Recommended List
+//     */
+//    public List<RecommendedItem> getRecommendedList(RecommendedList recommendedList) {
+//        if (recommendedList != null && recommendedList.cardinality() > 0) {
+//            RecommendedContextList<AbstractContext> contextList = this.getContextList();
+//            List<RecommendedItem> userItemList = new ArrayList<>();
+//            Iterator<ContextKeyValueEntry> recommendedEntryIter = recommendedList.iterator();
+//            if (userMappingData != null && userMappingData.cardinality() > 0 && itemMappingData != null && itemMappingData.cardinality() > 0) {
+//                BiMap<Integer, String> userMappingInverse = userMappingData.inverse();
+//                BiMap<Integer, String> itemMappingInverse = itemMappingData.inverse();
+//                while (recommendedEntryIter.hasNext()) {
+//                    ContextKeyValueEntry contextKecyValueEntry = recommendedEntryIter.next();
+//                    if (contextKecyValueEntry != null) {
+//                        AbstractContext context = contextList.getContext(contextKecyValueEntry.getContextIdx());
+//                        int userIdx = context.getUserIdx();
+//                        String userId = userMappingInverse.get(userIdx);
+//                        String itemId = itemMappingInverse.get(contextKecyValueEntry.getKey());
+//                        if (StringUtils.isNotBlank(userId) && StringUtils.isNotBlank(itemId)) {
+//                            userItemList.plus(new GenericRecommendedItem(userId, itemId, contextKecyValueEntry.getValue()));
+//                        }
+//                    }
+//                }
+//                return userItemList;
+//            }
+//        }
+//        return null;
+//    }
 
 
     /**
@@ -323,11 +381,16 @@ public abstract class TensorRecommender implements Recommender {
     protected abstract double predict(int[] keys) throws LibrecException;
 
 
+    protected double predict(int userIdx, int itemIdx) throws LibrecException {
+        return 0.0;
+    }
+
+
     /**
      * predict a specific rating for user userIdx on item itemIdx with some other contexts indices. Tt is useful for
      * evalution which requires predictions are bounded.
      *
-     * @param keys user index, item index and context indices
+     * @param keys  user index, item index and context indices
      * @param bound whether there is a bound
      * @return predictive rating for user userIdx on item itemIdx with some other contexts indices with bound
      * @throws LibrecException if error occurs during predicting
@@ -353,6 +416,7 @@ public abstract class TensorRecommender implements Recommender {
      * <li>check if converged</li>
      * <li>if not, adjust learning rate</li>
      * </ol>
+     *
      * @param iter current iteration
      * @return boolean: true if it is converged; false otherwise
      * @throws LibrecException if error occurs
@@ -362,7 +426,7 @@ public abstract class TensorRecommender implements Recommender {
 
         // print out debug info
         if (verbose) {
-            String recName = getClass().getSimpleName().toString();
+            String recName = getClass().getSimpleName();
             String info = recName + " iter " + iter + ": loss = " + loss + ", delta_loss = " + delta_loss;
             LOG.info(info);
         }
@@ -373,9 +437,8 @@ public abstract class TensorRecommender implements Recommender {
         }
 
         // check if converged
-        boolean converged = Math.abs(delta_loss) < 1e-5;
 
-        return converged;
+        return Math.abs(delta_loss) < 1e-5;
     }
 
     /**
@@ -388,7 +451,7 @@ public abstract class TensorRecommender implements Recommender {
      * <li>Leon Bottou, Stochastic Gradient Descent Tricks</li>
      * <li>more ways to adapt learning rate can refer to: http://www.willamette.edu/~gorr/classes/cs449/momrate.html</li>
      * </ol>
-     * 
+     *
      * @param iter the current iteration
      */
     protected void updateLRate(int iter) {
@@ -407,54 +470,5 @@ public abstract class TensorRecommender implements Recommender {
             learnRate = maxLearnRate;
         }
         lastLoss = loss;
-
     }
-
-    /**
-     * cleanup
-     *
-     * @throws LibrecException if error occurs during cleaning up
-     */
-    protected void cleanup() throws LibrecException {
-
-    }
-
-    @Override
-    public double evaluate(RecommenderEvaluator evaluator) throws LibrecException {
-        return 0;
-    }
-
-    @Override
-    public Map<MeasureValue, Double> evaluateMap() throws LibrecException {
-        return null;
-    }
-
-    @Override
-    public DataModel getDataModel() {
-        return context.getDataModel();
-    }
-
-    @Override
-    public void loadModel(String filePath) {
-
-    }
-
-    @Override
-    public void saveModel(String filePath) {
-
-    }
-
-    @Override
-    public List<RecommendedItem> getRecommendedList() {
-        return null;
-    }
-
-    /**
-     * @param context the context to set
-     */
-    @Override
-    public void setContext(RecommenderContext context) {
-        this.context = context;
-    }
-
 }

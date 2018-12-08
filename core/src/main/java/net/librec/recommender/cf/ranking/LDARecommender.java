@@ -19,16 +19,13 @@ package net.librec.recommender.cf.ranking;
 
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Gamma;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static net.librec.math.algorithm.Gamma.digamma;
 
 /**
  * Latent Dirichlet Allocation for implicit feedback: Tom Griffiths, <strong>Gibbs sampling in the generative model of
@@ -43,7 +40,7 @@ import static net.librec.math.algorithm.Gamma.digamma;
  * @author guoguibing and Keqiang Wang
  */
 @ModelData({"isRanking", "lda", "userTopicProbs", "topicItemProbs", "trainMatrix"})
-public class LDARecommender extends ProbabilisticGraphicalRecommender {
+public class LDARecommender extends MatrixProbabilisticGraphicalRecommender {
 
     /**
      * Dirichlet hyper-parameters of user-topic distribution: typical value is 50/K
@@ -67,17 +64,17 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
     /**
      * topic assignment as list from the iterator of trainMatrix
      */
-    protected List<Integer> topicAssignments;
+    protected int[] topicAssignments;
 
     /**
      * entry[u]: number of tokens rated by user u.
      */
-    protected DenseVector userTokenNumbers;
+    protected VectorBasedDenseVector userTokenNumbers;
 
     /**
      * entry[k]: number of tokens assigned to topic t.
      */
-    protected DenseVector topicTokenNumbers;
+    protected VectorBasedDenseVector topicTokenNumbers;
 
     /**
      * number of topics
@@ -87,7 +84,7 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
     /**
      * vector of hyperparameters for alpha and beta
      */
-    protected DenseVector alpha, beta;
+    protected VectorBasedDenseVector alpha, beta;
 
     /**
      * cumulative statistics of theta, phi
@@ -119,10 +116,10 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
 
         // initialize count variables.
         userTopicNumbers = new DenseMatrix(numUsers, numTopics);
-        userTokenNumbers = new DenseVector(numUsers);
+        userTokenNumbers = new VectorBasedDenseVector(numUsers);
 
         topicItemNumbers = new DenseMatrix(numTopics, numItems);
-        topicTokenNumbers = new DenseVector(numTopics);
+        topicTokenNumbers = new VectorBasedDenseVector(numTopics);
 
         // default value:
         // homas L Griffiths and Mark Steyvers. Finding scientific topics.
@@ -130,32 +127,33 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
         initAlpha = conf.getFloat("rec.user.dirichlet.prior", 50.0f / numTopics);
         initBeta = conf.getFloat("rec.topic.dirichlet.prior", 0.01f);
 
-        alpha = new DenseVector(numTopics);
-        alpha.setAll(initAlpha);
+        alpha = new VectorBasedDenseVector(numTopics);
+        alpha.assign((index, value) -> initAlpha);
 
-        beta = new DenseVector(numItems);
-        beta.setAll(initBeta);
+        beta = new VectorBasedDenseVector(numItems);
+        beta.assign((index, value) -> initBeta);
 
         // The z_u,i are initialized to values in [0, K-1] to determine the initial state of the Markov chain.
-        topicAssignments = new ArrayList<>(trainMatrix.size());
+        topicAssignments = new int[trainMatrix.size()];
+        int topicAssignmentsIndex = 0;
         for (MatrixEntry matrixEntry : trainMatrix) {
             int userIdx = matrixEntry.row();
             int itemIdx = matrixEntry.column();
             int num = (int) (matrixEntry.get());
-            for(int numIdx = 0; numIdx < num; numIdx++) {
+            for (int numIdx = 0; numIdx < num; numIdx++) {
                 int topicIdx = Randoms.uniform(numTopics); // 0 ~ k-1
 
                 // assign a topic t to pair (u, i)
-                topicAssignments.add(topicIdx);
+                topicAssignments[topicAssignmentsIndex++] = topicIdx;
 
                 // number of items of user u assigned to topic t.
-                userTopicNumbers.add(userIdx, topicIdx, 1);
+                userTopicNumbers.plus(userIdx, topicIdx, 1);
                 // total number of items of user u
-                userTokenNumbers.add(userIdx, 1);
+                userTokenNumbers.plus(userIdx, 1);
                 // number of instances of item i assigned to topic t
-                topicItemNumbers.add(topicIdx, itemIdx, 1);
+                topicItemNumbers.plus(topicIdx, itemIdx, 1);
                 // total number of words assigned to topic t.
-                topicTokenNumbers.add(topicIdx, 1);
+                topicTokenNumbers.plus(topicIdx, 1);
             }
         }
     }
@@ -173,12 +171,12 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
 
             int num = (int) (matrixEntry.get());
             for (int numIdx = 0; numIdx < num; numIdx++) {
-                int topicIdx = topicAssignments.get(topicAssignmentsIdx); // topic
+                int topicIdx = topicAssignments[topicAssignmentsIdx]; // topic
 
-                userTopicNumbers.add(userIdx, topicIdx, -1);
-                userTokenNumbers.add(userIdx, -1);
-                topicItemNumbers.add(topicIdx, itemIdx, -1);
-                topicTokenNumbers.add(topicIdx, -1);
+                userTopicNumbers.plus(userIdx, topicIdx, -1);
+                userTokenNumbers.plus(userIdx, -1);
+                topicItemNumbers.plus(topicIdx, itemIdx, -1);
+                topicTokenNumbers.plus(topicIdx, -1);
 
                 // do multinomial sampling via cumulative method:
                 double[] p = new double[numTopics];
@@ -198,14 +196,14 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
                         break;
                 }
 
-                // add newly estimated z_i to count variables
-                userTopicNumbers.add(userIdx, topicIdx, 1);
-                userTokenNumbers.add(userIdx, 1);
-                topicItemNumbers.add(topicIdx, itemIdx, 1);
-                topicTokenNumbers.add(topicIdx, 1);
+                // plus newly estimated z_i to count variables
+                userTopicNumbers.plus(userIdx, topicIdx, 1);
+                userTokenNumbers.plus(userIdx, 1);
+                topicItemNumbers.plus(topicIdx, itemIdx, 1);
+                topicTokenNumbers.plus(topicIdx, 1);
 
-                topicAssignments.set(topicAssignmentsIdx, topicIdx);
-                topicAssignmentsIdx ++;
+                topicAssignments[topicAssignmentsIdx] = topicIdx;
+                topicAssignmentsIdx++;
             }
         }
     }
@@ -214,29 +212,39 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
     protected void mStep() {
         double sumAlpha = alpha.sum();
         double sumBeta = beta.sum();
-        double topicAlpha, itemBeta;
+        double digammaTopicAlpha, digammaItemBeta, topicAlpha, itemBeta;
+        double digammaAlphaSum = Gamma.digamma(sumAlpha);
+
+        double denominator = 0.0d;
+        for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+            denominator += Gamma.digamma(userTokenNumbers.get(userIdx) + sumAlpha) - digammaAlphaSum;
+        }
 
         // update alpha vector
         for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
-
             topicAlpha = alpha.get(topicIdx);
-            double numerator = 0, denominator = 0;
-            for (int itemIdx = 0; itemIdx < numUsers; itemIdx++) {
-                numerator += digamma(userTopicNumbers.get(itemIdx, topicIdx) + topicAlpha) - digamma(topicAlpha);
-                denominator += digamma(userTokenNumbers.get(itemIdx) + sumAlpha) - digamma(sumAlpha);
+            digammaTopicAlpha = Gamma.digamma(topicAlpha);
+            double numerator = 0.0;
+            for (int userIdx = 0; userIdx < numUsers; userIdx++) {
+                numerator += Gamma.digamma(userTopicNumbers.get(userIdx, topicIdx) + topicAlpha) - digammaTopicAlpha;
             }
             if (numerator != 0)
                 alpha.set(topicIdx, topicAlpha * (numerator / denominator));
         }
 
         // update beta_k
-        for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
+        denominator = 0.0d;
+        double digammaBetaSum = Gamma.digamma(sumBeta);
+        for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
+            denominator += Gamma.digamma(topicTokenNumbers.get(topicIdx) + sumBeta) - digammaBetaSum;
+        }
 
+        for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
             itemBeta = beta.get(itemIdx);
-            double numerator = 0, denominator = 0;
+            digammaItemBeta = Gamma.digamma(itemBeta);
+            double numerator = 0;
             for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
-                numerator += digamma(topicItemNumbers.get(topicIdx, itemIdx) + itemBeta) - digamma(itemBeta);
-                denominator += digamma(topicTokenNumbers.get(topicIdx) + sumBeta) - digamma(sumBeta);
+                numerator += Gamma.digamma(topicItemNumbers.get(topicIdx, itemIdx) + itemBeta) - digammaItemBeta;
             }
             if (numerator != 0)
                 beta.set(itemIdx, itemBeta * (numerator / denominator));
@@ -254,14 +262,14 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
         for (int userIdx = 0; userIdx < numUsers; userIdx++) {
             for (int factorIdx = 0; factorIdx < numTopics; factorIdx++) {
                 val = (userTopicNumbers.get(userIdx, factorIdx) + alpha.get(factorIdx)) / (userTokenNumbers.get(userIdx) + sumAlpha);
-                userTopicProbsSum.add(userIdx, factorIdx, val);
+                userTopicProbsSum.plus(userIdx, factorIdx, val);
             }
         }
 
         for (int factorIdx = 0; factorIdx < numTopics; factorIdx++) {
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
                 val = (topicItemNumbers.get(factorIdx, itemIdx) + beta.get(itemIdx)) / (topicTokenNumbers.get(factorIdx) + sumBeta);
-                topicItemProbsSum.add(factorIdx, itemIdx, val);
+                topicItemProbsSum.plus(factorIdx, itemIdx, val);
             }
         }
         numStats++;
@@ -269,13 +277,13 @@ public class LDARecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected void estimateParams() {
-        userTopicProbs = userTopicProbsSum.scale(1.0 / numStats);
-        topicItemProbs = topicItemProbsSum.scale(1.0 / numStats);
+        userTopicProbs = userTopicProbsSum.times(1.0 / numStats);
+        topicItemProbs = topicItemProbsSum.times(1.0 / numStats);
     }
 
 
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return DenseMatrix.product(userTopicProbs, userIdx, topicItemProbs, itemIdx);
+        return userTopicProbs.row(userIdx).dot(topicItemProbs.column(itemIdx));
     }
 }

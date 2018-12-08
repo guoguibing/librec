@@ -19,7 +19,7 @@
 package net.librec.util;
 
 import net.librec.math.algorithm.Randoms;
-import net.librec.recommender.item.ItemEntry;
+import net.librec.recommender.item.KeyValue;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -196,10 +196,8 @@ public class Lists {
      * @return whether list is empty: null or no elements insides
      */
     public static <T> boolean isEmpty(List<T> ts) {
-        if (ts == null || ts.size() < 1)
-            return true;
+        return ts == null || ts.size() < 1;
 
-        return false;
     }
 
     /**
@@ -309,6 +307,28 @@ public class Lists {
         });
     }
 
+
+    /**
+     * sort a list of objects: {@code List<Map.Entry<K, V extends Comparable<? extends V>>}
+     *
+     * @param <K>     type parameter
+     * @param <V>     type parameter
+     * @param data    map data
+     * @param inverse descending if true; otherwise ascending
+     */
+    public static <K extends Comparable<? super K>, V extends Comparable<? super V>> void sortListByKey(List<Map.Entry<K, V>> data, final boolean inverse) {
+
+        data.sort(new Comparator<Entry<K, V>>() {
+
+            public int compare(Entry<K, V> a, Entry<K, V> b) {
+
+                int res = (a.getKey()).compareTo(b.getKey());
+
+                return inverse ? -res : res;
+            }
+        });
+    }
+
     /**
      * sort a map object: {@code List<Map.Entry<K, V extends Comparable<? extends V>>}
      *
@@ -378,8 +398,9 @@ public class Lists {
         return sortListTopK(data, false, k);
     }
 
+
     /**
-     * sort a list of objects: {@code List<ItemEntry<K, V extends Comparable<? extends V>>}
+     * sort a list of objects: {@code List<KeyValue<K, V extends Comparable<? extends V>>}
      *
      * @param <K>     type parameter
      * @param <V>     type parameter
@@ -392,59 +413,47 @@ public class Lists {
      * 10000 users, 100000 items, top 30, 10.4s vs 323s
      * 10000 users, 100000 items, top 100, 10.8s vs 323s
      */
-    public static <K, V extends Comparable<? super V>> List<ItemEntry<K, V>> sortItemEntryListTopK(List<ItemEntry<K, V>> data, final boolean inverse, int k) {
+    public static <K, V extends Comparable<? super V>> List<KeyValue<K, V>> sortKeyValueListTopK(List<KeyValue<K, V>> data, final boolean inverse, int k) {
         k = data.size() > k ? k : data.size();
 
         if (k == 0) {
             return new ArrayList<>();
         }
 
-        PriorityQueue<ItemEntry<K, V>> topKDataQueue = new PriorityQueue<>(k, new Comparator<ItemEntry<K, V>>() {
-            public int compare(ItemEntry<K, V> a, ItemEntry<K, V> b) {
+        PriorityQueue<KeyValue<K, V>> topKDataQueue = new PriorityQueue<>(k, new Comparator<KeyValue<K, V>>() {
+            public int compare(KeyValue<K, V> a, KeyValue<K, V> b) {
                 int res = (a.getValue()).compareTo(b.getValue());
                 return inverse ? res : -res;
             }
         });
 
-        Iterator<ItemEntry<K, V>> iterator = data.iterator();
+        Iterator<KeyValue<K, V>> iterator = data.iterator();
         for (int i = 0; i < k; i++) {
             topKDataQueue.add(iterator.next());
         }
         while (iterator.hasNext()) {
-            ItemEntry<K, V> entry = iterator.next();
+            KeyValue<K, V> entry = iterator.next();
             int res = entry.getValue().compareTo(topKDataQueue.peek().getValue());
             if ((inverse ? -res : res) < 0) {
                 topKDataQueue.poll();
                 topKDataQueue.add(entry);
             }
         }
-        List<ItemEntry<K, V>> topKDataList = new ArrayList<>(topKDataQueue);
-        sortItemEntryList(topKDataList, inverse);
+        List<KeyValue<K, V>> topKDataList = new ArrayList<>(topKDataQueue);
+        sortKeyValueList(topKDataList, inverse);
         return topKDataList;
     }
 
-    /**
-     * sort a list object: {@code List<ItemEntry<K, V extends Comparable<? extends V>>}
-     *
-     * @param <K>     type parameter
-     * @param <V>     type parameter
-     * @param data    list data
-     * @param k       k
-     * @return an top k ascending sorted list
-     */
-    public static <K, V extends Comparable<? super V>> List<ItemEntry<K, V>> sortItemEntryListTopK(List<ItemEntry<K, V>> data, int k) {
-        return sortItemEntryListTopK(data, false, k);
-    }
 
     /**
-     * sort a list of objects: {@code List<ItemEntry<K, V extends Comparable<? extends V>>}
+     * sort a list of objects: {@code List<KeyValue<K, V extends Comparable<? extends V>>}
      *
      * @param <K>     type parameter
      * @param <V>     type parameter
      * @param data    map data
      * @param inverse descending if true; otherwise ascending
      */
-    public static <K, V extends Comparable<? super V>> void sortItemEntryList(List<ItemEntry<K, V>> data, final boolean inverse) {
+    public static <K, V extends Comparable<? super V>> void sortKeyValueList(List<KeyValue<K, V>> data, final boolean inverse) {
 
         Collections.sort(data, new Comparator<Map.Entry<K, V>>() {
 
@@ -459,14 +468,28 @@ public class Lists {
     }
 
     /**
-     * sort a map object: {@code List<ItemEntry<K, V extends Comparable<? extends V>>}
+     * sort a map object: {@code List<KeyValue<K, V extends Comparable<? extends V>>}
      *
      * @param <K>     type parameter
      * @param <V>     type parameter
      * @param data map data
      */
-    public static <K, V extends Comparable<? super V>> void sortItemEntryList(List<ItemEntry<K, V>> data) {
+    public static <K, V extends Comparable<? super V>> void sortKeyValueList(List<KeyValue<K, V>> data) {
 
-        sortItemEntryList(data, false);
+        sortKeyValueList(data, false);
+    }
+
+
+    /**
+     * sort a list object: {@code List<ItemEntry<K, V extends Comparable<? extends V>>}
+     *
+     * @param <K>     type parameter
+     * @param <V>     type parameter
+     * @param data    list data
+     * @param k       k
+     * @return an top k ascending sorted list
+     */
+    public static <K, V extends Comparable<? super V>> List<KeyValue<K, V>> sortKeyValueListTopK(List<KeyValue<K, V>> data, int k) {
+        return sortKeyValueListTopK(data, false, k);
     }
 }

@@ -59,8 +59,8 @@ public class SoRecRecommender extends SocialRecommender {
         outDegrees = new ArrayList<>();
 
         for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-            int in = socialMatrix.columnSize(userIdx);
-            int out = socialMatrix.rowSize(userIdx);
+            int in = socialMatrix.column(userIdx).size();
+            int out = socialMatrix.row(userIdx).size();
 
             inDegrees.add(in);
             outDegrees.add(out);
@@ -92,8 +92,8 @@ public class SoRecRecommender extends SocialRecommender {
                     double userFactorValue = userFactors.get(userIdx, factorIdx);
                     double itemFactorValue = itemFactors.get(itemIdx, factorIdx);
 
-                    tempUserFactors.add(userIdx, factorIdx, Maths.logisticGradientValue(predictRating) * error * itemFactorValue + regUser * userFactorValue);
-                    tempItemFactors.add(itemIdx, factorIdx, Maths.logisticGradientValue(predictRating) * error * userFactorValue + regItem * itemFactorValue);
+                    tempUserFactors.plus(userIdx, factorIdx, Maths.logisticGradientValue(predictRating) * error * itemFactorValue + regUser * userFactorValue);
+                    tempItemFactors.plus(itemIdx, factorIdx, Maths.logisticGradientValue(predictRating) * error * userFactorValue + regItem * itemFactorValue);
 
                     loss += regUser * userFactorValue * userFactorValue + regItem * itemFactorValue * itemFactorValue;
                 }
@@ -107,7 +107,7 @@ public class SoRecRecommender extends SocialRecommender {
                 if (socialValue <= 0)
                     continue;
 
-                double socialPredictRating = DenseMatrix.rowMult(userFactors, userIdx, userSocialFactors, userSocialIdx);
+                double socialPredictRating = userFactors.row(userIdx).dot(userSocialFactors.row(userSocialIdx));
 
                 int userSocialInDegree = inDegrees.get(userSocialIdx); // ~ d-(k)
                 int userOutDegree = outDegrees.get(userIdx); // ~ d+(i)
@@ -121,17 +121,16 @@ public class SoRecRecommender extends SocialRecommender {
                     double userFactorValue = userFactors.get(userIdx, factorIdx);
                     double userSocialFactorValue = userSocialFactors.get(userSocialIdx, factorIdx);
 
-                    tempUserFactors.add(userIdx, factorIdx, regRateSocial * Maths.logisticGradientValue(socialPredictRating) * socialError * userSocialFactorValue);
-                    userSocialTempFactors.add(userSocialIdx, factorIdx, regRateSocial * Maths.logisticGradientValue(socialPredictRating) * socialError * userFactorValue + regUserSocial * userSocialFactorValue);
+                    tempUserFactors.plus(userIdx, factorIdx, regRateSocial * Maths.logisticGradientValue(socialPredictRating) * socialError * userSocialFactorValue);
+                    userSocialTempFactors.plus(userSocialIdx, factorIdx, regRateSocial * Maths.logisticGradientValue(socialPredictRating) * socialError * userFactorValue + regUserSocial * userSocialFactorValue);
 
                     loss += regUserSocial * userSocialFactorValue * userSocialFactorValue;
                 }
             }
 
-            userFactors = userFactors.add(tempUserFactors.scale(-learnRate));
-            itemFactors = itemFactors.add(tempItemFactors.scale(-learnRate));
-            userSocialFactors = userSocialFactors.add(userSocialTempFactors.scale(-learnRate));
-
+            userFactors = userFactors.plus(tempUserFactors.times(-learnRate));
+            itemFactors = itemFactors.plus(tempItemFactors.times(-learnRate));
+            userSocialFactors = userSocialFactors.plus(userSocialTempFactors.times(-learnRate));
 
             loss *= 0.5d;
 

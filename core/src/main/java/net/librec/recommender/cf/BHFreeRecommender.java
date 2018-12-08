@@ -24,7 +24,8 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 /**
  * Barbieri et al., <strong>Balancing Prediction and Recommendation Accuracy: Hierarchical Latent Factors for Preference
@@ -34,7 +35,7 @@ import net.librec.recommender.ProbabilisticGraphicalRecommender;
  *
  * @author Guo Guibing and haidong zhang
  */
-public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
+public class BHFreeRecommender extends MatrixProbabilisticGraphicalRecommender {
 
     private float initGamma, initSigma, initAlpha, initBeta;
 
@@ -98,13 +99,14 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
         initBeta = conf.getFloat("rec.bhfree.beta", 1.0f / numItemTopics);
         initGamma = conf.getFloat("rec.bhfree.gamma", 1.0f / numRatingLevels);
         initSigma = conf.getFloat("rec.sigma", 1.0f / numItems);
-        numRatingLevels = trainMatrix.getValueSet().size();
+        // numRatingLevels = trainMatrix.getValueSet().size();
+        numRatingLevels = ratingScale.size();
 
         userTopicNum = new DenseMatrix(numUsers, numUserTopics);
-        userNum = new DenseVector(numUsers);
+        userNum = new VectorBasedDenseVector(numUsers);
 
         userTopicItemTopicNum = new DenseMatrix(numUserTopics, numItemTopics);
-        uTopicNum = new DenseVector(numUserTopics);
+        uTopicNum = new VectorBasedDenseVector(numUserTopics);
 
         userTopicItemTopicRatingNum = new int[numUserTopics][numItemTopics][numRatingLevels];
         userTopicItemTopicItemNum = new int[numUserTopics][numItemTopics][numItems];
@@ -121,11 +123,11 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
             int k = (int) (numUserTopics * Randoms.uniform()); // user's topic k
             int l = (int) (numItemTopics * Randoms.uniform()); // item's topic l
 
-            userTopicNum.add(u, k, 1);
-            userNum.add(u, 1);
+            userTopicNum.plus(u, k, 1);
+            userNum.plus(u, 1);
 
-            userTopicItemTopicNum.add(k, l, 1);
-            uTopicNum.add(k, 1);
+            userTopicItemTopicNum.plus(k, l, 1);
+            uTopicNum.plus(k, 1);
 
             userTopicItemTopicRatingNum[k][l][r]++;
             userTopicItemTopicItemNum[k][l][i]++;
@@ -154,10 +156,10 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
             int k = userTopics.get(u, i);
             int l = itemTopics.get(u, i);
 
-            userTopicNum.add(u, k, -1);
-            userNum.add(u, -1);
-            userTopicItemTopicNum.add(k, l, -1);
-            uTopicNum.add(k, -1);
+            userTopicNum.plus(u, k, -1);
+            userNum.plus(u, -1);
+            userTopicItemTopicNum.plus(k, l, -1);
+            uTopicNum.plus(k, -1);
             userTopicItemTopicRatingNum[k][l][r]--;
             userTopicItemTopicItemNum[k][l][i]--;
 
@@ -177,12 +179,13 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
             }
 
             // normalization
-            userTopicItemTopicProbs = userTopicItemTopicProbs.scale(1.0 / sum);
+            final double tmpSum = sum;
+            userTopicItemTopicProbs.assign(((row, column, value) -> value * (1.0 / tmpSum)));
 
             // resample k
             double[] userTopicProbs = new double[numUserTopics];
             for (int z = 0; z < numUserTopics; z++) {
-                userTopicProbs[z] = userTopicItemTopicProbs.sumOfRow(z);
+                userTopicProbs[z] = userTopicItemTopicProbs.row(z).sum();
             }
             for (int z = 1; z < numUserTopics; z++) {
                 userTopicProbs[z] += userTopicProbs[z - 1];
@@ -197,7 +200,7 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
             // resample item topic
             double[] itemTopicProbs = new double[numItemTopics];
             for (int w = 0; w < numItemTopics; w++) {
-                itemTopicProbs[w] = userTopicItemTopicProbs.sumOfColumn(w);
+                itemTopicProbs[w] = userTopicItemTopicProbs.column(w).sum();
             }
 
             for (int w = 1; w < numItemTopics; w++) {
@@ -211,10 +214,10 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
             }
 
             // add statistic
-            userTopicNum.add(u, k, 1);
-            userNum.add(u, 1);
-            userTopicItemTopicNum.add(k, l, 1);
-            uTopicNum.add(k, 1);
+            userTopicNum.plus(u, k, 1);
+            userNum.plus(u, 1);
+            userTopicItemTopicNum.plus(k, l, 1);
+            uTopicNum.plus(k, 1);
             userTopicItemTopicRatingNum[k][l][r]++;
             userTopicItemTopicItemNum[k][l][i]++;
 
@@ -233,13 +236,13 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
     protected void readoutParams() {
         for (int u = 0; u < numUsers; u++) {
             for (int k = 0; k < numUserTopics; k++) {
-                userTopicSumProbs.add(u, k, (userTopicNum.get(u, k) + initAlpha) / (userNum.get(u) + numUserTopics * initAlpha));
+                userTopicSumProbs.plus(u, k, (userTopicNum.get(u, k) + initAlpha) / (userNum.get(u) + numUserTopics * initAlpha));
             }
         }
 
         for (int k = 0; k < numUserTopics; k++) {
             for (int l = 0; l < numItemTopics; l++) {
-                userTopicItemTopicSumProbs.add(k, l, (userTopicItemTopicNum.get(k, l) + initBeta) / (uTopicNum.get(k) + numItemTopics * initBeta));
+                userTopicItemTopicSumProbs.plus(k, l, (userTopicItemTopicNum.get(k, l) + initBeta) / (uTopicNum.get(k) + numItemTopics * initBeta));
             }
         }
 
@@ -266,8 +269,10 @@ public class BHFreeRecommender extends ProbabilisticGraphicalRecommender {
     protected void estimateParams() {
 
         double scale = 1.0 / numStats;
-        userTopicProbs = userTopicSumProbs.scale(scale);
-        userTopicItemTopicProbs = userTopicItemTopicSumProbs.scale(scale);
+        userTopicSumProbs.assign((row, column, value) -> value * scale);
+        userTopicItemTopicSumProbs.assign((row, column, value) -> value * scale);
+        userTopicProbs = userTopicSumProbs.clone();
+        userTopicItemTopicProbs = userTopicItemTopicSumProbs.clone();
 
         for (int k = 0; k < numUserTopics; k++) {
             for (int l = 0; l < numItemTopics; l++) {

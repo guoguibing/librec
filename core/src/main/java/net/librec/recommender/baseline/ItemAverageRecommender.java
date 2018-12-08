@@ -19,8 +19,8 @@
 package net.librec.recommender.baseline;
 
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.recommender.MatrixRecommender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Baseline: predict by the average of target item's ratings
  */
-public class ItemAverageRecommender extends AbstractRecommender {
+public class ItemAverageRecommender extends MatrixRecommender {
 
     /**
      * the item ratings average
@@ -56,8 +56,8 @@ public class ItemAverageRecommender extends AbstractRecommender {
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
         if (!itemMeans.containsKey(itemIdx)) {
-            SparseVector itemRatingsVector = trainMatrix.column(itemIdx);
-            double mean = itemRatingsVector.getCount() > 0 ? itemRatingsVector.mean() : globalMean;
+            SequentialSparseVector itemRatingsVector = trainMatrix.column(itemIdx);
+            double mean = itemRatingsVector.getNumEntries() > 0 ? itemRatingsVector.mean() : globalMean;
             itemMeans.put(itemIdx, mean);
         }
 

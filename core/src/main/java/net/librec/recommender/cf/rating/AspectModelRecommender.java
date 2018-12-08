@@ -25,7 +25,8 @@ import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
 import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +41,7 @@ import java.util.Map;
  *
  * @author guoguibin and Haidong Zhang
  */
-public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
+public class AspectModelRecommender extends MatrixProbabilisticGraphicalRecommender {
     /*
      * Conditional distribution: P(u|z)
      */
@@ -82,8 +83,8 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
         numTopics = conf.getInt("rec.factory.number", 10);
 
         // Initialize topic distribution
-        topicProbs = new DenseVector(numTopics);
-        topicProbsSum = new DenseVector(numTopics);
+        topicProbs = new VectorBasedDenseVector(numTopics);
+        topicProbsSum = new VectorBasedDenseVector(numTopics);
         double[] probs = Randoms.randProbs(numTopics);
         for (int z = 0; z < numTopics; z++) {
             topicProbs.set(z, probs[z]);
@@ -117,12 +118,12 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
             Q.put(u, i, new HashMap<Integer, Double>());
         }
 
-        // 
+        //
         double globalMean = trainMatrix.mean();
-        topicProbsMean = new DenseVector(numTopics);
-        topicProbsVariance = new DenseVector(numTopics);
-        topicProbsMeanSum = new DenseVector(numTopics);
-        topicProbsVarianceSum = new DenseVector(numTopics);
+        topicProbsMean = new VectorBasedDenseVector(numTopics);
+        topicProbsVariance = new VectorBasedDenseVector(numTopics);
+        topicProbsMeanSum = new VectorBasedDenseVector(numTopics);
+        topicProbsVarianceSum = new VectorBasedDenseVector(numTopics);
         for (int z = 0; z < numTopics; z++) {
             topicProbsMean.set(z, globalMean);
             topicProbsVariance.set(z, 2);
@@ -163,11 +164,11 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected void mStep() {
-        topicProbsSum.setAll(0.0);
-        topicUserProbsSum.setAll(0.0);
-        topicItemProbsSum.setAll(0.0);
-        topicProbsMeanSum.setAll(0.0);
-        topicProbsVarianceSum.setAll(0.0);
+        topicProbsSum.assign((index, value) -> 0.0);
+        topicUserProbsSum.assign((row, column, value) -> 0.0);
+        topicItemProbsSum.assign((row, column, value) -> 0.0);
+        topicProbsMeanSum.assign((index, value) -> 0.0);
+        topicProbsVarianceSum.assign((index, value) -> 0.0);
 
         for (int z = 0; z < numTopics; z++) {
             for (MatrixEntry me : trainMatrix) {
@@ -176,13 +177,13 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
                 double r = me.get();
 
                 double val = Q.get(u, i).get(z);
-                topicProbsSum.add(z, val);
-                topicUserProbsSum.add(z, u, val);
-                topicItemProbsSum.add(z, i, val);
-                topicProbsMeanSum.add(z, r * val);
+                topicProbsSum.plus(z, val);
+                topicUserProbsSum.plus(z, u, val);
+                topicItemProbsSum.plus(z, i, val);
+                topicProbsMeanSum.plus(z, r * val);
             }
 
-            topicProbsSum.add(z, smallValue);
+            topicProbsSum.plus(z, smallValue);
             topicProbs.set(z, topicProbsSum.get(z) / numRates);
             for (int u = 0; u < numUsers; u++) {
                 topicUserProbs.set(z, u, topicUserProbsSum.get(z, u) / topicProbsSum.get(z));
@@ -196,7 +197,7 @@ public class AspectModelRecommender extends ProbabilisticGraphicalRecommender {
                 int i = me.column();
                 double r = me.get();
                 double val = Q.get(u, i).get(z);
-                topicProbsVarianceSum.add(z, (r - mean) * (r - mean) * val);
+                topicProbsVarianceSum.plus(z, (r - mean) * (r - mean) * val);
             }
             topicProbsMean.set(z, mean);
             topicProbsVariance.set(z, (topicProbsVarianceSum.get(z) + smallValue) / topicProbsSum.get(z));

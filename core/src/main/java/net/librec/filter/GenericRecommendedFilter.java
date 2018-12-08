@@ -44,7 +44,7 @@ public class GenericRecommendedFilter implements RecommendedFilter {
      * Filter the recommended list.
      *
      * @param recommendedList recommendedItem list to be filtered
-     * @return  filtered recommendedItem list
+     * @return filtered recommendedItem list
      */
     @Override
     public List<RecommendedItem> filter(List<RecommendedItem> recommendedList) {
@@ -62,10 +62,10 @@ public class GenericRecommendedFilter implements RecommendedFilter {
     /**
      * filter the recommended list by specified type of the filter.
      *
-     * @param filterIdList          filter id list
-     * @param recommendedList       recommended item list
-     * @param filterRecommendedSet  filter recommended set
-     * @param filterType            type of the filter
+     * @param filterIdList         filter id list
+     * @param recommendedList      recommended item list
+     * @param filterRecommendedSet filter recommended set
+     * @param filterType           type of the filter
      */
     private void filter(List<String> filterIdList, List<RecommendedItem> recommendedList, Set<RecommendedItem> filterRecommendedSet, String filterType) {
         if (filterIdList != null && filterIdList.size() > 0) {

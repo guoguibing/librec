@@ -34,36 +34,24 @@ import java.io.IOException;
  */
 public class FMALSTestCase extends BaseTestCase {
 
-	@Override
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+    }
 
-	/**
-	 * test the whole process of FMALS Recommendation
-	 *
-	 * @throws ClassNotFoundException
-	 * @throws LibrecException
-	 * @throws IOException
-	 */
-	@Test
-	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
-		Resource resource = new Resource("rec/cf/rating/fmals-test.properties");
-		conf.addResource(resource);
-		RecommenderJob job = new RecommenderJob(conf);
-		job.runJob();
-	}
-
-	@Test
-	public void testRecommenderWithGivenTestSet() throws ClassNotFoundException, LibrecException, IOException {
-		Resource resource = new Resource("rec/cf/rating/fmals-test.properties");
-		conf.addResource(resource);
-		conf.set("data.model.splitter", "testset");
-		conf.set("data.input.path", "test/arfftest");
-		conf.set("data.testset.path", "test/arfftest/testset/test.arff");
-		RecommenderJob job = new RecommenderJob(conf);
-		job.runJob();
-	}
-
+    /**
+     * test the whole process of FMALS Recommendation
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+        Resource resource = new Resource("rec/cf/rating/fmals-test.properties");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
 }

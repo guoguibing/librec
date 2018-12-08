@@ -20,8 +20,8 @@ package net.librec.recommender.cf.ranking;
 
 import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.recommender.MatrixFactorizationRecommender;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -106,7 +106,7 @@ import java.util.concurrent.*;
  *
  * @author Daniel Velten, Karlsruhe, Germany
  */
-public class NMFItemItemRecommender extends AbstractRecommender {
+public class NMFItemItemRecommender extends MatrixFactorizationRecommender{
 
 
     private double[][] w_reconstruct;
@@ -229,11 +229,11 @@ public class NMFItemItemRecommender extends AbstractRecommender {
             int[] countUsersBoughtItem = new int[numItems]; // Used in denominator
 
             for (int userIdx = fromUser; userIdx < toUser; userIdx++) {
-                SparseVector itemRatingsVector = trainMatrix.row(userIdx);
+                SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
                 int minCount = doNotEstimateYourself ? 2 : 1;
-                if (itemRatingsVector.getCount() >= minCount) {
+                if (itemRatingsVector.getNumEntries() >= minCount) {
 
-                    int[] itemIndices = itemRatingsVector.getIndex();
+                    int[] itemIndices = itemRatingsVector.getIndices();
                     double[] allUserLatentFactors = predictFactors(itemIndices);
 
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
@@ -453,7 +453,7 @@ public class NMFItemItemRecommender extends AbstractRecommender {
         return divergence;
     }
 
-    private double predict(SparseVector itemRatingsVector, int itemIdx) {
+    private double predict(SequentialSparseVector itemRatingsVector, int itemIdx) {
         double sum = 0;
         for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
 
@@ -464,9 +464,9 @@ public class NMFItemItemRecommender extends AbstractRecommender {
         return sum;
     }
 
-    private double predictFactor(SparseVector itemRatingsVector, int factorIdx) {
+    private double predictFactor(SequentialSparseVector itemRatingsVector, int factorIdx) {
         double sum = 0;
-        for (int itemIdx : itemRatingsVector.getIndex()) {
+        for (int itemIdx : itemRatingsVector.getIndices()) {
             sum += w_reconstruct[factorIdx][itemIdx];
         }
         return sum;
@@ -488,7 +488,7 @@ public class NMFItemItemRecommender extends AbstractRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        SparseVector itemRatingsVector = trainMatrix.row(userIdx);
+        SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
 
         return predict(itemRatingsVector, itemIdx);
     }

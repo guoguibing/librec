@@ -18,10 +18,13 @@
 package net.librec.recommender.hybrid;
 
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.google.common.collect.Tables;
 import net.librec.common.LibrecException;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
+import net.librec.math.structure.Vector;
+import net.librec.recommender.MatrixRecommender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +36,7 @@ import java.util.Set;
  *
  * @author guoguibing and Keqiang Wang
  */
-public class HybridRecommender extends AbstractRecommender {
+public class HybridRecommender extends MatrixRecommender {
     Table<Integer, Integer, Double> userItemRanks = HashBasedTable.create();
     protected float lambda;
 
@@ -51,7 +54,7 @@ public class HybridRecommender extends AbstractRecommender {
         lambda = conf.getFloat("rec.hybrid.lambda");
 
         for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-            itemDegrees.put(itemIdx, trainMatrix.columnSize(itemIdx));
+            itemDegrees.put(itemIdx, trainMatrix.column(itemIdx).size());
         }
     }
 
@@ -67,23 +70,28 @@ public class HybridRecommender extends AbstractRecommender {
 
 
     @Override
-    protected double predict(int userIdx, int itemIdx) throws LibrecException {
+    protected synchronized double predict(int userIdx, int itemIdx) throws LibrecException {
         // Note that in ranking, we first check a user u, and then check the
         // ranking score of each candidate items
         if (!userItemRanks.containsRow(userIdx)) {
             // new user
             userItemRanks.clear();
 
-            SparseVector itemRatingsVector = trainMatrix.row(userIdx);
-            Set<Integer> itemsSet = itemRatingsVector.getIndexSet();
+            SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
+            Set<Integer> itemsSet = Sets.newHashSetWithExpectedSize((int) (itemRatingsVector.size() * 1.5));
+            for (Vector.VectorEntry vectorEntry : itemRatingsVector) {
+                if (vectorEntry.get() != 0.0) {
+                    itemsSet.add(vectorEntry.index());
+                }
+            }
 
             // distribute resources to users, including user u
             Map<Integer, Double> userResources = new HashMap<>();
             for (int tempUserIdx = 0; tempUserIdx < numUsers; tempUserIdx++) {
-                SparseVector tempItemRatingsVector = trainMatrix.row(tempUserIdx);
+                SequentialSparseVector tempItemRatingsVector = trainMatrix.row(tempUserIdx);
                 double sum = 0;
-                int tempItemsCount = tempItemRatingsVector.getCount();
-                for (int tempItemIdx : tempItemRatingsVector.getIndex()) {
+                int tempItemsCount = tempItemRatingsVector.size();
+                for (int tempItemIdx : tempItemRatingsVector.getIndices()) {
                     if (itemsSet.contains(tempItemIdx))
                         sum += 1.0 / Math.pow(itemDegrees.get(tempItemIdx), lambda);
                 }
@@ -97,9 +105,9 @@ public class HybridRecommender extends AbstractRecommender {
                 if (itemsSet.contains(tempItemIdx))
                     continue;
 
-                SparseVector tempUserRatingsVector = trainMatrix.column(tempItemIdx);
+                SequentialSparseVector tempUserRatingsVector = trainMatrix.column(tempItemIdx);
                 double sum = 0;
-                for (int tempUserIdx : tempUserRatingsVector.getIndex())
+                for (int tempUserIdx : tempUserRatingsVector.getIndices())
                     sum += userResources.containsKey(tempUserIdx) ? userResources.get(tempUserIdx) : 0.0;
 
                 double score = sum / Math.pow(itemDegrees.get(tempItemIdx), 1 - lambda);

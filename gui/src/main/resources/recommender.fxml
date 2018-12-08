@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import com.jfoenix.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="459.0" prefWidth="800.0" style="-fx-background-color: #07042b;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.RecommenderController">
+    <children>
+        <ImageView fitHeight="80.0" fitWidth="400.0" layoutX="618.0" opacity="0.86" pickOnBounds="true" preserveRatio="true">
+            <image>
+                <Image url="@librec_2.png" />
+            </image>
+        </ImageView>
+        <Label layoutX="52.0" layoutY="40.0" prefHeight="32.0" prefWidth="368.0" text="%recommender.conf.label" textFill="#ddd9d9">
+            <font>
+                <Font size="24.0" />
+            </font>
+        </Label>
+        <JFXButton layoutX="468.0" layoutY="340.0" onAction="#goBack" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #FF4500;" text="%data.finish.button" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+        <GridPane layoutX="53.0" layoutY="119.0" prefHeight="44.0" prefWidth="346.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="168.0" minWidth="10.0" prefWidth="161.0" />
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="240.0" minWidth="10.0" prefWidth="185.0" />
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            </rowConstraints>
+            <children>
+                <Label prefHeight="19.0" prefWidth="157.0" text="%recommender.name" textFill="#d0caca">
+                    <font>
+                        <Font size="14.0" />
+                    </font></Label>
+                <ChoiceBox fx:id="recommenderTypeBox" prefHeight="23.0" prefWidth="103.0" GridPane.columnIndex="1" />
+            </children>
+        </GridPane>
+      <TitledPane animated="false" layoutX="53.0" layoutY="175.0" prefHeight="204.0" prefWidth="266.0" text="%recommender.detail.conf">
+        <content>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <JFXTextArea fx:id="recConfArea" layoutY="-1.0" prefHeight="174.0" prefWidth="260.0" />
+               </children></AnchorPane>
+        </content>
+      </TitledPane>
+        <JFXButton layoutX="652.0" layoutY="402.0" onAction="#returnToMain" prefHeight="50.0" prefWidth="141.0" style="-fx-background-color: #07042b;" text="%main.label.exit" textFill="WHITE">
+            <font>
+                <Font size="18.0" />
+            </font>
+        </JFXButton>
+    </children>
+</AnchorPane>

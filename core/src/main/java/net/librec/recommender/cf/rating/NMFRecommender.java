@@ -20,10 +20,9 @@ package net.librec.recommender.cf.rating;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
+import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseVector;
-import net.librec.recommender.AbstractRecommender;
+import net.librec.math.structure.SequentialSparseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 /**
@@ -32,12 +31,12 @@ import net.librec.recommender.MatrixFactorizationRecommender;
  * @author guoguibing and Keqiang Wang
  */
 @ModelData({"isRating", "nmf", "transUserFactors", "transItemFactors"})
-public class NMFRecommender extends AbstractRecommender {
+public class NMFRecommender extends MatrixFactorizationRecommender {
     /**
      * userFactors and itemFactors matrix transpose
      */
-    DenseMatrix transUserFactors;
-    DenseMatrix transItemFactors;
+    private DenseMatrix transUserFactors;
+    private DenseMatrix transItemFactors;
 
     /**
      * the number of latent factors;
@@ -54,7 +53,7 @@ public class NMFRecommender extends AbstractRecommender {
         super.setup();
 
         numFactors = conf.getInt("rec.factor.number", 10);
-        numIterations = conf.getInt("rec.iterator.maximum",100);
+        numIterations = conf.getInt("rec.iterator.maximum", 100);
 
 
         transUserFactors = new DenseMatrix(numFactors, numUsers);
@@ -68,19 +67,20 @@ public class NMFRecommender extends AbstractRecommender {
         for (int iter = 0; iter <= numIterations; ++iter) {
             // update userFactors by fixing itemFactors
             for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-                SparseVector itemRatingsVector = trainMatrix.row(userIdx);
+                SequentialSparseVector itemRatingsVector = trainMatrix.row(userIdx);
 
-                if (itemRatingsVector.getCount() > 0) {
-                    SparseVector itemPredictsVector = new SparseVector(numItems, itemRatingsVector.size());
+                if (itemRatingsVector.getNumEntries() > 0) {
+                    VectorBasedDenseVector itemPredictsVector = new VectorBasedDenseVector(numItems);
 
-                    for (int itemIdx : itemRatingsVector.getIndex()) {
-                        itemPredictsVector.append(itemIdx, predict(userIdx, itemIdx));
+                    for (int i = 0; i < itemRatingsVector.getNumEntries(); i++) {
+                        int itemIdx = itemRatingsVector.getIndexAtPosition(i);
+                        itemPredictsVector.set(itemIdx, predict(userIdx, itemIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                        DenseVector factorItemsVector = transItemFactors.row(factorIdx, false);
-                        double realValue = factorItemsVector.inner(itemRatingsVector);
-                        double estmValue = factorItemsVector.inner(itemPredictsVector) + 1e-9;
+                        VectorBasedDenseVector factorItemsVector = (VectorBasedDenseVector) transItemFactors.row(factorIdx);
+                        double realValue = factorItemsVector.dot(itemRatingsVector);
+                        double estmValue = factorItemsVector.dot(itemPredictsVector) + 1e-9;
 
                         transUserFactors.set(factorIdx, userIdx, transUserFactors.get(factorIdx, userIdx)
                                 * (realValue / estmValue));
@@ -90,19 +90,20 @@ public class NMFRecommender extends AbstractRecommender {
 
             // update itemFactors by fixing userFactors
             for (int itemIdx = 0; itemIdx < numItems; itemIdx++) {
-                SparseVector userRatingsVector = trainMatrix.column(itemIdx);
+                SequentialSparseVector userRatingsVector = trainMatrix.column(itemIdx);
 
-                if (userRatingsVector.getCount() > 0) {
-                    SparseVector userPredictsVector = new SparseVector(numUsers, userRatingsVector.size());
+                if (userRatingsVector.getNumEntries() > 0) {
+                    VectorBasedDenseVector userPredictsVector = new VectorBasedDenseVector(numUsers);
 
-                    for (int userIdx : userRatingsVector.getIndex()) {
-                        userPredictsVector.append(userIdx, predict(userIdx, itemIdx));
+                    for (int i = 0; i < userRatingsVector.getNumEntries(); i++) {
+                        int userIdx = userRatingsVector.getIndexAtPosition(i);
+                        userPredictsVector.set(userIdx, predict(userIdx, itemIdx));
                     }
 
                     for (int factorIdx = 0; factorIdx < numFactors; factorIdx++) {
-                        DenseVector factorUsersVector = transUserFactors.row(factorIdx, false);
-                        double realValue = factorUsersVector.inner(userRatingsVector);
-                        double estmValue = factorUsersVector.inner(userPredictsVector) + 1e-9;
+                        VectorBasedDenseVector factorUsersVector = (VectorBasedDenseVector) transUserFactors.row(factorIdx);
+                        double realValue = factorUsersVector.dot(userRatingsVector);
+                        double estmValue = factorUsersVector.dot(userPredictsVector) + 1e-9;
 
                         transItemFactors.set(factorIdx, itemIdx, transItemFactors.get(factorIdx, itemIdx)
                                 * (realValue / estmValue));
@@ -128,6 +129,7 @@ public class NMFRecommender extends AbstractRecommender {
             if (isConverged(iter) && earlyStop) {
                 break;
             }
+            lastLoss = loss;
         }
     }
 
@@ -141,6 +143,6 @@ public class NMFRecommender extends AbstractRecommender {
      */
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return DenseMatrix.colMult(transUserFactors, userIdx, transItemFactors, itemIdx);
+        return transUserFactors.column(userIdx).dot(transItemFactors.column(itemIdx));
     }
 }

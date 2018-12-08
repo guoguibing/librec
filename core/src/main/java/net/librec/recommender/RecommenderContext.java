@@ -17,13 +17,13 @@
  */
 package net.librec.recommender;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.librec.common.AbstractContext;
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
 import net.librec.similarity.RecommenderSimilarity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * RecommenderContext
@@ -65,6 +65,10 @@ public class RecommenderContext extends AbstractContext {
         this.similarity = similarity;
     }
 
+    public void setDataModel(DataModel dataModel){
+        this.dataModel = dataModel;
+    }
+
     /**
      * @return the similarities
      */
@@ -73,15 +77,14 @@ public class RecommenderContext extends AbstractContext {
     }
 
     /**
-     * @param similarityKey
-     *            the similarities to add
-     * @param similarity
-     *            the similarities to add
+     * @param similarityKey the similarities to plus
+     * @param similarity    the similarities to plus
      */
     public void addSimilarities(String similarityKey, RecommenderSimilarity similarity) {
-        if(this.similarities == null){
+        if (this.similarities == null) {
             this.similarities = new HashMap<String, RecommenderSimilarity>();
         }
         this.similarities.put(similarityKey, similarity);
     }
+
 }

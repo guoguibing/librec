@@ -17,12 +17,11 @@
  */
 package net.librec.similarity;
 
-import net.librec.math.structure.SparseVector;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import net.librec.math.structure.Vector;
+import net.librec.math.structure.VectorBasedSequentialSparseVector;
+
+import java.util.*;
 
 /**
  * J. I. Marden, Analyzing and modeling rank data. Boca Raton, Florida: CRC Press, 1996.
@@ -38,26 +37,43 @@ public class KRCCSimilarity extends AbstractRecommenderSimilarity {
      * Find the common rated items by this user and that user, or the common
      * users have rated this item or that item. And then return the similarity.
      *
-     * @param thisVector:
-     *            the rated items by this user, or users that have rated this
-     *            item .
-     * @param thatVector:
-     *            the rated items by that user, or users that have rated that
-     *            item.
+     * @param thisVector: the rated items by this user, or users that have rated this
+     *                    item .
+     * @param thatVector: the rated items by that user, or users that have rated that
+     *                    item.
      * @return similarity
      */
-    public double getCorrelation(SparseVector thisVector, SparseVector thatVector) {
+    public double getCorrelation(VectorBasedSequentialSparseVector thisVector, VectorBasedSequentialSparseVector thatVector) {
 
         if (thisVector == null || thatVector == null || thisVector.size() != thatVector.size()) {
             return Double.NaN;
         }
         // compute similarity
-        List<Double> thisList = new ArrayList<Double>();
-        List<Double> thatList = new ArrayList<Double>();
+        List<Double> thisList = new ArrayList<>();
+        List<Double> thatList = new ArrayList<>();
 
-        for (Integer idx : thatVector.getIndex()) {
-            thisList.add(thisVector.get(idx));
-            thatList.add(thatVector.get(idx));
+        Iterator<Vector.VectorEntry> thisIterator = thisVector.iterator();
+        Iterator<Vector.VectorEntry> thatIterator = thatVector.iterator();
+
+        while (thatIterator.hasNext()) {
+            Vector.VectorEntry thatVectorEntry = thatIterator.next();
+            int thatIndex = thatVectorEntry.index();
+            thatList.add(thatVectorEntry.get());
+            if (thisIterator.hasNext()) {
+                while (thisIterator.hasNext()) {
+                    Vector.VectorEntry thisVectorEntry = thatIterator.next();
+                    int thisIndex = thisVectorEntry.index();
+                    if (thisIndex == thatIndex) {
+                        thisList.add(thisVectorEntry.get());
+                        break;
+                    } else if (thisIndex > thatIndex) {
+                        thisList.add(0.0D);
+                        break;
+                    }
+                }
+            } else {
+                thisList.add(0.0D);
+            }
         }
 
         return getSimilarity(thisList, thatList);
@@ -66,10 +82,8 @@ public class KRCCSimilarity extends AbstractRecommenderSimilarity {
     /**
      * Calculate the similarity between thisList and thatList.
      *
-     * @param thisList
-     *            this list
-     * @param thatList
-     *            that list
+     * @param thisList this list
+     * @param thatList that list
      * @return similarity
      */
     protected double getSimilarity(List<? extends Number> thisList, List<? extends Number> thatList) {

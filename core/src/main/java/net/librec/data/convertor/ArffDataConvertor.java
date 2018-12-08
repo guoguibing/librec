@@ -17,30 +17,36 @@
  */
 package net.librec.data.convertor;
 
-import com.google.common.collect.*;
+import com.google.common.collect.BiMap;
 import net.librec.data.model.ArffAttribute;
 import net.librec.data.model.ArffInstance;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.math.structure.SparseTensor;
+import net.librec.math.structure.DataFrame;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * A <tt>ArffDataConvertor</tt> is a class to convert
  * a data file from ARFF format to a target format.
  *
- * @author Tang Jiaxi and Ma Chen
+ * @author Tang Jiaxi, Ma Chen, and Liuxz
  */
 public class ArffDataConvertor extends AbstractDataConvertor {
 
-    /** The path of the input file */
-    private String dataPath;
+    /**
+     * Log
+     */
+    private static final Log LOG = LogFactory.getLog(ArffDataConvertor.class);
+    /**
+     * The path of the input file
+     */
+    private String[] inputDataPath;
 
     /** The relation name of input data */
     private String relationName;
@@ -66,9 +72,6 @@ public class ArffDataConvertor extends AbstractDataConvertor {
     /** The rating column index */
     private int ratingCol;
 
-    public SparseMatrix oneHotFeatureMatrix;
-    public DenseVector oneHotRatingVector;
-
     // user, item, appender {raw id, inner id} mapping
     private ArrayList<BiMap<String, Integer>> featuresInnerMapping;
 
@@ -78,8 +81,8 @@ public class ArffDataConvertor extends AbstractDataConvertor {
      *
      * @param path  path of the input data file.
      */
-    public ArffDataConvertor(String path) {
-        dataPath = path;
+    public ArffDataConvertor(String... path) {
+        inputDataPath = path;
         instances = new ArrayList<>();
         attributes = new ArrayList<>();
         columnIds = new ArrayList<>();
@@ -95,13 +98,20 @@ public class ArffDataConvertor extends AbstractDataConvertor {
         this.featuresInnerMapping = featureMapping;
     }
 
+    public void readData() throws IOException {
+        this.readData(inputDataPath);
+    }
+
     /**
      * Read data from the data file.
      *
      * @throws IOException
      *         if the path is not valid
      */
-    public void readData() throws IOException {
+    public void readData(String... inputDataPath) throws IOException {
+        LOG.info(String.format("Dataset: %s", Arrays.toString(inputDataPath)));
+        matrix = new DataFrame();
+        List<String> attrTypeList = new ArrayList<>();
         final List<File> files = new ArrayList<File>();
         SimpleFileVisitor<Path> finder = new SimpleFileVisitor<Path>() {
             @Override
@@ -110,7 +120,9 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                 return super.visitFile(file, attrs);
             }
         };
-        Files.walkFileTree(Paths.get(dataPath), finder);
+        for (String path: inputDataPath){
+            Files.walkFileTree(Paths.get(path.trim()), finder);
+        }
         for (int i = 0; i < files.size(); i++) {
             if (0 == i) { //read the first file
                 BufferedReader br = new BufferedReader(new FileReader(files.get(i)));
@@ -130,6 +142,7 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                         for (ArffAttribute attr : attributes) {
                             attrTypes.add(attr.getType());
                         }
+                        matrix.setAttrType(attrTypes);
                         // let data reader control the bufferedReader
                         dataReader(br);
                     }
@@ -147,6 +160,7 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                     // parse RELATION
                     if (data[0].toUpperCase().equals("@RELATION")) {
                         relationName = data[1];
+                        matrix.setName(data[1]);
                     }
 
                     // parse ATTRIBUTE
@@ -164,18 +178,23 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                         if (attrType.startsWith("{") && attrType.endsWith("}")) {
                             isNominal = true;
                         }
-                        BiMap<String, Integer> colId = HashBiMap.create();
+                        BiMap<String, Integer> colId = DataFrame.getInnerMapping(attrName);
+
                         // if nominal type, set columnIds
                         if (isNominal) {
                             String nominalAttrs = attrType.substring(1, attrType.length() - 1);
                             int val = 0;
                             for (String attr : nominalAttrs.split(",")) {
-                                colId.put(attr.trim(), val++);
+//                                System.out.println(attr.trim()+colId.size());
+                                if (!colId.keySet().contains(attr.trim()))
+                                    colId.put(attr.trim(), colId.size());
                             }
                             attrType = "NOMINAL";
                         }
+                        matrix.addHeader(attrName);
                         columnIds.add(colId);
                         attributes.add(new ArffAttribute(attrName, attrType.toUpperCase(), attrIdx++));
+                        attrTypeList.add(attrType.toUpperCase());
                     }
                     // set DATA flag (finish reading ATTRIBUTES)
                     else if (data[0].toUpperCase().equals("@DATA")) {
@@ -213,16 +232,11 @@ public class ArffDataConvertor extends AbstractDataConvertor {
         }
         // initialize attributes
         for (int i = 0; i < attributes.size(); i++) {
-            attributes.get(i).setColumnSet(columnIds.get(i).keySet());
+            attributes.get(i).setColumnSet(DataFrame.getInnerMapping(attributes.get(i).getName()).keySet());
         }
         // initialize instance attributes
         ArffInstance.attrs = attributes;
-
-        // generate sparse tensor
-        sparseTensor = generateFeatureTensor();
-        sparseTensor.setUserDimension(userCol);
-        sparseTensor.setItemDimension(itemCol);
-        preferenceMatrix = sparseTensor.rateMatrix();
+//        matrix.setAttrType(attrTypeList);
     }
 
     /**
@@ -255,17 +269,16 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                         for (int i = 0; i < dataLine.size(); i++) {
                             String col = dataLine.get(i).trim();
                             String type = attrTypes.get(i);
-                            BiMap<String, Integer> colId = columnIds.get(i);
                             switch (type) {
                                 case "NUMERIC":
                                 case "REAL":
                                 case "INTEGER":
                                     break;
                                 case "STRING":
-                                    int val = colId.containsKey(col) ? colId.get(col) : colId.size();
-                                    colId.put(col, val);
+                                    DataFrame.setId(col, attributes.get(i).getName());
                                     break;
                                 case "NOMINAL":
+                                    BiMap<String, Integer> colId = DataFrame.getInnerMapping(attributes.get(i).getName());
                                     StringBuilder sb = new StringBuilder();
                                     String[] ss = col.split(",");
                                     for (int ns = 0; ns < ss.length; ns++) {
@@ -279,12 +292,13 @@ public class ArffDataConvertor extends AbstractDataConvertor {
                                     }
                                     col = sb.toString();
                                     break;
+                                default:
+                                    break;
                             }
                             dataLine.set(i, col);
                         }
-
                         instances.add(new ArffInstance(dataLine));
-
+                        matrix.add(dataLine.toArray(new String[dataLine.size()]));
                         subString = new StringBuilder();
                         dataLine = new ArrayList<>();
                     }
@@ -320,170 +334,13 @@ public class ArffDataConvertor extends AbstractDataConvertor {
         // getJobStatus().setProgress(loadAllFileRate);
     }
 
-    /**
-     * Build the {@link #oneHotFeatureMatrix}
-     * and {@link #oneHotRatingVector}
-     */
-    public void oneHotEncoding() {
-        Table<Integer, Integer, Double> dataTable = HashBasedTable.create();
-        Multimap<Integer, Integer> colMap = HashMultimap.create();
-
-        int numRows = instances.size();
-        int numCols = 0;
-        int numAttrs = attributes.size();
-
-        double[] ratings = new double[numRows];
-
-        // set numCols
-        for (int i = 0; i < attributes.size(); i++) {
-            // skip rating column
-            if (i == ratingCol)
-                continue;
-
-            ArffAttribute attr = attributes.get(i);
-            numCols += attr.getColumnSet().size() == 0 ? 1 : attr.getColumnSet().size();
-        }
-
-        // build one-hot encoding matrix
-        for (int row = 0; row < numRows; row++) {
-            ArffInstance instance = instances.get(row);
-            int colPrefix = 0;
-            int col = 0;
-            for (int i = 0; i < numAttrs; i++) {
-                String type = attrTypes.get(i);
-                Object val = instance.getValueByIndex(i);
-
-                // rating column
-                if (i == ratingCol) {
-                    ratings[row] = (double) val;
-                    continue;
-                }
-
-                // appender column
-                switch (type) {
-                    case "NUMERIC":
-                    case "REAL":
-                    case "INTEGER":
-                        col = colPrefix;
-                        dataTable.put(row, col, (double) val);
-                        colMap.put(col, row);
-                        colPrefix += 1;
-                        break;
-                    case "STRING":
-                        col = colPrefix + columnIds.get(i).get(val);
-                        dataTable.put(row, col, 1d);
-                        colMap.put(col, row);
-                        colPrefix += columnIds.get(i).size();
-                        break;
-                    case "NOMINAL":
-                        for (String v : (ArrayList<String>) val) {
-                            col = colPrefix + columnIds.get(i).get(v);
-                            colMap.put(col, row);
-                            dataTable.put(row, col, 1d);
-                        }
-                        colPrefix += columnIds.get(i).size();
-                        break;
-                }
-            }
-        }
-        oneHotFeatureMatrix = new SparseMatrix(numRows, numCols, dataTable, colMap);
-        oneHotRatingVector = new DenseVector(ratings);
-
-        // release memory
-        dataTable = null;
-        colMap = null;
-    }
-
-    /**
-     * Generate appender tensor.
-     *
-     * @return  appender tensor
-     */
-    private SparseTensor generateFeatureTensor() {
-
-        int numRows = instances.size();
-        int numAttrs = attributes.size();
-
-        List<Double> ratings = new ArrayList<Double>();
-
-        // n-dimensional keys
-        List<Integer>[] nDKeys = (List<Integer>[]) new List<?>[numAttrs];
-
-        for (int d = 0; d < numAttrs; d++) {
-            nDKeys[d] = new ArrayList<Integer>();
-        }
-
-        // each set stores a series of values of an attribute
-        ArrayList<HashSet<Integer>> setOfAttrs = new ArrayList<HashSet<Integer>>();
-        for (int i = 0; i < numAttrs - 1; i++) {
-            setOfAttrs.add(new HashSet<Integer>());
-        }
-
-        if (featuresInnerMapping == null) {
-            featuresInnerMapping = new ArrayList<>();
-            for (int i = 0; i < numAttrs - 1; i++) {
-                BiMap<String, Integer> featureInnerId = HashBiMap.create();
-                featuresInnerMapping.add(featureInnerId);
-            }
-        }
-
-        // set keys for each dimension
-        for (int row = 0; row < numRows; row++) {
-            ArffInstance instance = instances.get(row);
-            for (int i = 0; i < numAttrs; i++) {
-                if (i == userCol) {
-                    int j = i > ratingCol? i - 1: i;
-                    double userId = (double) instance.getValueByIndex(userCol);
-                    String strUserId = String.valueOf((int) userId);
-                    int userInnerId = featuresInnerMapping.get(j).containsKey(strUserId) ? featuresInnerMapping.get(j).get(strUserId) : featuresInnerMapping.get(j).size();
-                    featuresInnerMapping.get(j).put(strUserId, userInnerId);
-                    nDKeys[j].add(userInnerId);
-                    setOfAttrs.get(j).add(userInnerId);
-                } else if (i == itemCol) {
-                    int j = i > ratingCol? i - 1: i;
-                    double itemId = (double) instance.getValueByIndex(itemCol);
-                    String strItemId = String.valueOf((int) itemId);
-                    int itemInnerId = featuresInnerMapping.get(j).containsKey(strItemId) ? featuresInnerMapping.get(j).get(strItemId) : featuresInnerMapping.get(j).size();
-                    featuresInnerMapping.get(j).put(strItemId, itemInnerId);
-                    nDKeys[j].add(itemInnerId);
-                    setOfAttrs.get(j).add(itemInnerId);
-                } else if (i == ratingCol) {
-                    double rating = (double) instance.getValueByIndex(ratingCol);
-                    ratings.add(rating);
-                } else {
-                    int j;
-                    if (i > ratingCol) {
-                        j = i - 1;
-                    } else {
-                        j = i;
-                    }
-                    String attrType = attrTypes.get(i);
-                    if (attrType.equals("STRING")) {
-                        String strAttr = (String) instance.getValueByIndex(i);
-                        int featureInnerId = featuresInnerMapping.get(j).containsKey(strAttr) ? featuresInnerMapping.get(j).get(strAttr) : featuresInnerMapping.get(j).size();
-                        featuresInnerMapping.get(j).put(strAttr, featureInnerId);
-                        nDKeys[j].add(featureInnerId);
-                        setOfAttrs.get(j).add(featureInnerId);
-                    } else {
-                        double val = (double) instance.getValueByIndex(i);
-                        String strFeatureId = String.valueOf((int) val);
-                        int featureInnerId = featuresInnerMapping.get(j).containsKey(strFeatureId) ? featuresInnerMapping.get(j).get(strFeatureId) : featuresInnerMapping.get(j).size();
-                        featuresInnerMapping.get(j).put(strFeatureId, featureInnerId);
-                        nDKeys[j].add(featureInnerId);
-                        setOfAttrs.get(j).add(featureInnerId);
-                    }
-                }
-            }
-        }
-
-        // set dimension of tensor
-        int[] dims = new int[numAttrs - 1];
-        for (int i = 0; i < numAttrs - 1; i++) {
-            dims[i] = setOfAttrs.get(i).size();
-        }
-
-        return new SparseTensor(dims, nDKeys, ratings);
-    }
+//    @Override
+//    public SparseTensor getSparseTensor() {
+//        if (null == sparseTensor){
+//            sparseTensor = getMatrix().toSparseTensor();
+//        }
+//        return sparseTensor;
+//    }
 
     /**
      * Return the relation name of input data.
@@ -518,7 +375,8 @@ public class ArffDataConvertor extends AbstractDataConvertor {
      * @return the mapping between row id and inner id of users
      */
     public BiMap<String, Integer> getUserIds() {
-        return featuresInnerMapping.get(userCol);
+        return DataFrame.getInnerMapping("user");
+        //        return featuresInnerMapping.get(userCol);
     }
 
     /**
@@ -527,7 +385,8 @@ public class ArffDataConvertor extends AbstractDataConvertor {
      * @return the mapping between row id and inner id of items
      */
     public BiMap<String, Integer> getItemIds() {
-        return featuresInnerMapping.get(itemCol);
+        return DataFrame.getInnerMapping("item");
+//        return featuresInnerMapping.get(itemCol);
     }
 
     /**

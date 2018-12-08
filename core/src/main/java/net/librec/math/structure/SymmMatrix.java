@@ -20,6 +20,9 @@ package net.librec.math.structure;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *
  */
@@ -37,7 +40,7 @@ public class SymmMatrix {
      */
     public SymmMatrix(int dim) {
         this.dim = dim;
-        data = HashBasedTable.create(); // do not specify the size here as a
+        data = HashBasedTable.create(); // do not specify the cardinality here as a
         // sparse matrix
     }
 
@@ -83,11 +86,7 @@ public class SymmMatrix {
      * @return value at entry (row, col)
      */
     public boolean contains(int row, int col) {
-
-        if (data.contains(row, col)||data.contains(col, row))
-            return true;
-        else
-            return false;
+        return data.contains(row, col) || data.contains(col, row);
     }
 
     /**
@@ -105,11 +104,11 @@ public class SymmMatrix {
     }
 
     /**
-     * add a value to entry (row, col)
+     * plus a value to entry (row, col)
      *
      * @param row row index
      * @param col column index
-     * @param val value to add
+     * @param val value to plus
      */
     public void add(int row, int col, double val) {
         if (row >= col)
@@ -124,15 +123,15 @@ public class SymmMatrix {
      * @param row row index
      * @return a complete row of similar items
      */
-    public SparseVector row(int row) {
-        SparseVector res = new SparseVector(dim);
+    public Map<Integer, Double> row(int row) {
+        Map<Integer, Double> map = new HashMap<>();
         for (int col = 0; col < dim; col++) {
             double val = get(row, col);
             if (val != 0)
-                res.set(col, val);
+                map.put(col, val);
         }
 
-        return res;
+        return map;
     }
 
     /**
@@ -152,6 +151,15 @@ public class SymmMatrix {
     @Override
     public String toString() {
         return "Dimension: " + dim + " x " + dim + "\n" + data.toString();
+    }
+
+    public SequentialAccessSparseMatrix toSparseMatrix(){
+        Table<Integer, Integer, Double> tempData = HashBasedTable.create();
+        for(Table.Cell<Integer, Integer, Double> cell: this.data.cellSet()){
+            tempData.put(cell.getRowKey(),cell.getColumnKey(), cell.getValue());
+            tempData.put(cell.getColumnKey(), cell.getRowKey(), cell.getValue());
+        }
+        return new SequentialAccessSparseMatrix(this.dim, this.dim, tempData);
     }
 
 }

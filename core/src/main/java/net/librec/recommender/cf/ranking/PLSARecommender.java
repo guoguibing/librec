@@ -22,9 +22,9 @@ import com.google.common.collect.Table;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
-import net.librec.recommender.ProbabilisticGraphicalRecommender;
+import net.librec.math.structure.VectorBasedDenseVector;
+import net.librec.recommender.MatrixProbabilisticGraphicalRecommender;
 
 /**
  * Thomas Hofmann, <strong>Latent semantic models for collaborative filtering</strong>,
@@ -34,7 +34,7 @@ import net.librec.recommender.ProbabilisticGraphicalRecommender;
  * @author Haidong Zhang and Keqiang Wang
  */
 
-public class PLSARecommender extends ProbabilisticGraphicalRecommender {
+public class PLSARecommender extends MatrixProbabilisticGraphicalRecommender {
 
     /**
      * number of latent topics
@@ -59,12 +59,12 @@ public class PLSARecommender extends ProbabilisticGraphicalRecommender {
     /**
      * topic probability sum value
      */
-    private DenseVector topicProbsSum;
+    private VectorBasedDenseVector topicProbsSum;
 
     /**
      * entry[u]: number of tokens rated by user u.
      */
-    protected DenseVector numItemsRateByUser;
+    protected VectorBasedDenseVector numItemsRateByUser;
 
 
     @Override
@@ -99,10 +99,10 @@ public class PLSARecommender extends ProbabilisticGraphicalRecommender {
             Q.put(userIdx, itemIdx, new double[numTopics]);
         }
 
-        numItemsRateByUser = new DenseVector(numUsers);
+        numItemsRateByUser = new VectorBasedDenseVector(numUsers);
         for (MatrixEntry matrixEntry : trainMatrix) {
             int userIdx = matrixEntry.row();
-            numItemsRateByUser.add(userIdx, matrixEntry.get());
+            numItemsRateByUser.plus(userIdx, matrixEntry.get());
         }
     }
 
@@ -132,7 +132,7 @@ public class PLSARecommender extends ProbabilisticGraphicalRecommender {
     protected void mStep() {
         userTopicProbsSum = new DenseMatrix(numUsers, numTopics);
         topicItemProbsSum = new DenseMatrix(numTopics, numItems);
-        topicProbsSum = new DenseVector(numTopics);
+        topicProbsSum = new VectorBasedDenseVector(numTopics);
 
         for (MatrixEntry matrixEntry : trainMatrix) {
             int userIdx = matrixEntry.row();
@@ -141,9 +141,9 @@ public class PLSARecommender extends ProbabilisticGraphicalRecommender {
             double[] topicDistr = Q.get(userIdx, itemIdx);
             for (int topicIdx = 0; topicIdx < numTopics; topicIdx++) {
                 double val = topicDistr[topicIdx] * num;
-                userTopicProbsSum.add(userIdx, topicIdx, val);
-                topicItemProbsSum.add(topicIdx, itemIdx, val);
-                topicProbsSum.add(topicIdx, val);
+                userTopicProbsSum.plus(userIdx, topicIdx, val);
+                topicItemProbsSum.plus(topicIdx, itemIdx, val);
+                topicProbsSum.plus(topicIdx, val);
             }
         }
 
@@ -166,6 +166,6 @@ public class PLSARecommender extends ProbabilisticGraphicalRecommender {
 
     @Override
     protected double predict(int userIdx, int itemIdx) throws LibrecException {
-        return DenseMatrix.product(userTopicProbs, userIdx, topicItemProbs, itemIdx);
+        return userTopicProbs.row(userIdx).dot(topicItemProbs.column(itemIdx));
     }
 }

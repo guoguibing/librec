@@ -23,10 +23,9 @@ import com.google.common.collect.Table.Cell;
 import net.librec.annotation.ModelData;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
-import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.*;
 import net.librec.recommender.MatrixFactorizationRecommender;
+
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -39,33 +38,39 @@ import java.util.concurrent.ExecutionException;
 public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 
 	/**
-	 * Guava cache configuration
-	 */
-	protected static String cacheSpec;
-	/**
-	 * user-items cache, item-users cache
-	 */
-	protected LoadingCache<Integer, List<Integer>> userItemsCache;
-	/**
 	 * train matrix size
 	 */
 	private int nnz;
+
 	/**
 	 * hyper-parameters
 	 */
 	private float rho, alpha, beta, itemBiasReg, userBiasReg;
+
 	/**
 	 * learning rate
 	 */
 	private double lRate;
+
 	/**
 	 * items and users biases vector
 	 */
-	private DenseVector itemBiases, userBiases;
+	private VectorBasedDenseVector itemBiases, userBiases;
+
 	/**
 	 * two low-rank item matrices, an item-item similarity was learned as a product of these two matrices
 	 */
 	private DenseMatrix P, Q;
+
+	/**
+	 * user-items cache, item-users cache
+	 */
+	protected LoadingCache<Integer, List<Integer>> userItemsCache;
+
+	/**
+	 * Guava cache configuration
+	 */
+	protected static String cacheSpec;
 
 	@Override
 	protected void setup() throws LibrecException {
@@ -76,8 +81,8 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 		Q = new DenseMatrix(numItems, numFactors);
 		P.init(0,0.01);
 		Q.init(0,0.01);
-		userBiases = new DenseVector(numUsers);
-		itemBiases = new DenseVector(numItems);
+		userBiases = new VectorBasedDenseVector(numUsers);
+		itemBiases = new VectorBasedDenseVector(numItems);
 		userBiases.init(0,0.01);
 		itemBiases.init(0,0.01);
 		nnz = trainMatrix.size();
@@ -92,7 +97,7 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 	}
 
 	@Override
-	protected void trainModel() throws LibrecException{
+	protected void trainModel() throws LibrecException {
 
 		int sampleSize = (int) (rho * nnz);
 		int totalSize = numUsers * numItems;
@@ -108,23 +113,19 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 				e.printStackTrace();
 			}
 			int index = 0, count = 0;
-			boolean isDone = false;
-			for (int u = 0; u < numUsers; u++) {
-				for (int j = 0; j < numItems; j++) {
-					double ruj = trainMatrix.get(u, j);
-					if (ruj != 0)
-						continue; // rated items
-					if (count++ == indices.get(index)) {
-						R.put(u, j, 0.0);
-						index++;
-						if (index >= indices.size()) {
-							isDone = true;
-							break;
-						}
+			for (MatrixEntry me : trainMatrix) {
+				int u = me.row();
+				int j = me.column();
+				double ruj = me.get();
+				if (ruj != 0)
+					continue; // rated items
+				if (count++ == indices.get(index)) {
+					R.put(u, j, 0.0);
+					index++;
+					if (index >= indices.size()) {
+						break;
 					}
 				}
-				if (isDone)
-					break;
 			}
 
 			// update throughout each user-item-rating (u, i, rui) cell
@@ -133,44 +134,44 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 				int i = cell.getColumnKey();
 				double rui = cell.getValue();
 				// get n_u (n_u = |Ru| - 1)
-				SparseVector Ru = trainMatrix.row(u);
+				SequentialSparseVector Ru = trainMatrix.row(u);
 				int n_u = Ru.size() - 1;
 				if (n_u == 0 || n_u == -1) {
 					n_u = 1;
 				}
 				// get summation of P_j into X
-				DenseVector X = new DenseVector(numFactors);
-				for (int j : Ru.getIndex()) {
+				DenseVector X = new VectorBasedDenseVector(numFactors);
+				for (int j : Ru.getIndices()) {
 					if (i != j) {
-						X = X.add(P.row(j));
+						X = X.plus(P.row(j));
 					}
 				}
-				X = X.scale(Math.pow(n_u, -alpha));
+				X = X.times(Math.pow(n_u, -alpha));
 				// for efficiency, use the below code to predict rui instead of
 				// using "predict(u,j)"
 				double bi = itemBiases.get(i);
 				double bu = userBiases.get(u);
-				double pui = bu + bi + Q.row(i).inner(X);
+				double pui = bu + bi + Q.row(i).dot(X);
 
 				double eui = rui - pui;
 				loss += eui * eui;
 
 				// update bi
-				itemBiases.add(i, lRate * (eui - itemBiasReg * bi));
+				itemBiases.plus(i, lRate * (eui - itemBiasReg * bi));
 				loss += itemBiasReg * bi * bi;
 				// update bu
-				userBiases.add(u, lRate * (eui - userBiasReg * bu));
+				userBiases.plus(u, lRate * (eui - userBiasReg * bu));
 				loss += itemBiasReg * bu * bu;
 				// update Qi
-				DenseVector deltaq = X.scale(eui).minus(Q.row(i).scale(beta));
-				loss += beta * Q.row(i).inner(Q.row(i));
-				Q.setRow(i, Q.row(i).add(deltaq.scale(lRate)));
+				DenseVector deltaq = X.times(eui).minus(Q.row(i).times(beta));
+				loss += beta * Q.row(i).dot(Q.row(i));
+				Q.set(i, Q.row(i).plus(deltaq.times(lRate)));
 				// update Pj
-				for (int j : Ru.getIndex()) {
+				for (int j : Ru.getIndices()) {
 					if (i != j) {
-						DenseVector deltap = Q.row(i).scale(eui*Math.pow(n_u, -alpha)).minus(P.row(j).scale(beta));
-						loss += beta * P.row(j).inner(P.row(j));
-						P.setRow(j, P.row(j).add(deltap.scale(lRate)));
+						DenseVector deltap = Q.row(i).times(eui*Math.pow(n_u, -alpha)).minus(P.row(j).times(beta));
+						loss += beta * P.row(j).dot(P.row(j));
+						P.set(j, P.row(j).plus(deltap.times(lRate)));
 					}
 				}
 			}
@@ -198,7 +199,7 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 		for (int i : ratedItems) {
 			// for test, i and j will be always unequal as j is unrated
 			if (i != j) {
-				sum += DenseMatrix.rowMult(P, i, Q, j);
+				sum += P.row(i).dot(Q.row(j));
 				count++;
 			}
 		}

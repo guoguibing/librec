@@ -23,10 +23,14 @@ import net.librec.data.DataModel;
 import net.librec.data.DataSplitter;
 import net.librec.data.splitter.KCVDataSplitter;
 import net.librec.data.splitter.LOOCVDataSplitter;
+import net.librec.eval.EvalContext;
+import net.librec.eval.Measure;
 import net.librec.eval.Measure.MeasureValue;
 import net.librec.eval.RecommenderEvaluator;
 import net.librec.filter.RecommendedFilter;
 import net.librec.math.algorithm.Randoms;
+import net.librec.math.structure.DataSet;
+import net.librec.math.structure.SymmMatrix;
 import net.librec.recommender.Recommender;
 import net.librec.recommender.RecommenderContext;
 import net.librec.recommender.item.RecommendedItem;
@@ -35,7 +39,6 @@ import net.librec.util.DriverClassUtil;
 import net.librec.util.FileUtil;
 import net.librec.util.JobUtil;
 import net.librec.util.ReflectionUtil;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -62,6 +65,10 @@ public class RecommenderJob {
 
     private Map<String, List<Double>> cvEvalResults;
 
+    private Map<MeasureValue, Double> evaluatedMap;
+
+    private Recommender recommender;
+
     public RecommenderJob(Configuration conf) {
         this.conf = conf;
         Long seed = conf.getLong("rec.random.seed");
@@ -74,76 +81,63 @@ public class RecommenderJob {
     /**
      * run Job
      *
-     * @throws LibrecException
-     *             If an LibrecException error occurs.
-     * @throws ClassNotFoundException
-     *             if can't find the class of filter
-     * @throws IOException
-     *             If an I/O error occurs.
+     * @throws LibrecException        If an LibrecException error occurs.
+     * @throws ClassNotFoundException if can't find the class of filter
+     * @throws IOException            If an I/O error occurs.
      */
     public void runJob() throws LibrecException, ClassNotFoundException, IOException {
-        String modelSplit = conf.get("data.model.splitter");
-        switch (modelSplit) {
-            case "kcv": {
-                int cvNumber = conf.getInt("data.splitter.cv.number", 1);
-                cvEvalResults = new HashMap<>();
-                for (int i = 1; i <= cvNumber; i++) {
-                    LOG.info("Splitter info: the index of " + modelSplit + " splitter times is " + i);
-                    conf.set("data.splitter.cv.index", String.valueOf(i));
-                    executeRecommenderJob();
-                }
-                printCVAverageResult();
-                break;
-            }
-            case "loocv": {
-                String loocvType = conf.get("data.splitter.loocv");
-                if (StringUtils.equals("userdate", loocvType) || StringUtils.equals("itemdate", loocvType)) {
-                    executeRecommenderJob();
-                } else {
-                    cvEvalResults = new HashMap<>();
-                    for (int i = 1; i <= conf.getInt("data.splitter.cv.number", 1); i++) {
-                        LOG.info("Splitter info: the index of " + modelSplit + " splitter times is " + i);
-                        conf.set("data.splitter.cv.index", String.valueOf(i));
-                        executeRecommenderJob();
-                    }
-                    printCVAverageResult();
-                }
-                break;
-            }
-            case "testset":{
-                executeRecommenderJob();
-                break;
-            }
-            case "givenn": {
-                executeRecommenderJob();
-                break;
-            }
-            case "ratio": {
-                executeRecommenderJob();
-                break;
-            }
-        }
+        executeRecommenderJob();
     }
+
+//    /**
+//     * execute Recommender Job
+//     *
+//     * @throws LibrecException        If an LibrecException error occurs.
+//     * @throws ClassNotFoundException if can't find the class of filter
+//     * @throws IOException            If an I/O error occurs.
+//     */
+//    @SuppressWarnings("unchecked")
+//    private void executeRecommenderJob() throws ClassNotFoundException, LibrecException, IOException {
+//        generateDataModel();
+//        RecommenderContext context = new RecommenderContext(conf, dataModel);
+//        generateSimilarity(context);
+//        Recommender recommender = ReflectionUtil.newInstance((Class<Recommender>) getRecommenderClass(), conf);
+//        recommender.train(context);
+//
+//        executeEvaluator(recommender, context);
+////        List<RecommendedItem> recommendedItemsList = recommender.getRecommendedList(recommendedList);
+////        recommendedItemsList = filterResult(recommendedItemsList);
+////        saveResult(recommendedItemsList);
+//    }
 
     /**
      * execute Recommender Job
      *
-     * @throws LibrecException
-     *             If an LibrecException error occurs.
-     * @throws ClassNotFoundException
-     *             if can't find the class of filter
-     * @throws IOException
-     *             If an I/O error occurs.
+     * @throws LibrecException        If an LibrecException error occurs.
+     * @throws ClassNotFoundException if can't find the class of filter
+     * @throws IOException            If an I/O error occurs.
      */
     @SuppressWarnings("unchecked")
     private void executeRecommenderJob() throws ClassNotFoundException, LibrecException, IOException {
         generateDataModel();
-        RecommenderContext context = new RecommenderContext(conf, dataModel);
-        generateSimilarity(context);
-        Recommender recommender = (Recommender) ReflectionUtil.newInstance((Class<Recommender>) getRecommenderClass(), conf);
-        recommender.recommend(context);
-        executeEvaluator(recommender);
-        List<RecommendedItem> recommendedList = recommender.getRecommendedList();
+        recommender = ReflectionUtil.newInstance((Class<Recommender>) getRecommenderClass(), conf);
+        RecommenderContext context = new RecommenderContext(conf);
+        cvEvalResults = new HashMap<>();
+        while(dataModel.hasNextFold()) {
+            dataModel.nextFold();
+            context.setDataModel(dataModel);
+            generateSimilarity(context);
+            recommender.train(context);
+            executeEvaluator(recommender, context);
+        }
+        printCVAverageResult();
+        boolean isRanking = conf.getBoolean("rec.recommender.isranking");
+        List<RecommendedItem> recommendedList = null;
+        if (isRanking){
+            recommendedList = recommender.getRecommendedList(recommender.recommendRank());
+        } else {
+            recommendedList = recommender.getRecommendedList(recommender.recommendRating(context.getDataModel().getTestDataSet()));
+        }
         recommendedList = filterResult(recommendedList);
         saveResult(recommendedList);
     }
@@ -161,7 +155,6 @@ public class RecommenderJob {
             dataModel = ReflectionUtil.newInstance((Class<DataModel>) this.getDataModelClass(), conf);
         }
         dataModel.buildDataModel();
-
     }
 
     /**
@@ -172,12 +165,12 @@ public class RecommenderJob {
     private void generateSimilarity(RecommenderContext context) {
         String[] similarityKeys = conf.getStrings("rec.recommender.similarities");
         if (similarityKeys != null && similarityKeys.length > 0) {
-            for(int i = 0; i< similarityKeys.length; i++){
+            for (int i = 0; i < similarityKeys.length; i++) {
                 if (getSimilarityClass() != null) {
-                    RecommenderSimilarity similarity = (RecommenderSimilarity) ReflectionUtil.newInstance(getSimilarityClass(), conf);
+                    RecommenderSimilarity similarity = ReflectionUtil.newInstance(getSimilarityClass(), conf);
                     conf.set("rec.recommender.similarity.key", similarityKeys[i]);
                     similarity.buildSimilarityMatrix(dataModel);
-                    if(i == 0){
+                    if (i == 0) {
                         context.setSimilarity(similarity);
                     }
                     context.addSimilarities(similarityKeys[i], similarity);
@@ -189,14 +182,14 @@ public class RecommenderJob {
     /**
      * Filter the results.
      *
-     * @param recommendedList  list of recommended items
+     * @param recommendedList list of recommended items
      * @return recommended List
      * @throws ClassNotFoundException
      * @throws IOException
      */
     private List<RecommendedItem> filterResult(List<RecommendedItem> recommendedList) throws ClassNotFoundException, IOException {
         if (getFilterClass() != null) {
-            RecommendedFilter filter = (RecommendedFilter) ReflectionUtil.newInstance(getFilterClass(), null);
+            RecommendedFilter filter = ReflectionUtil.newInstance(getFilterClass(), null);
             recommendedList = filter.filter(recommendedList);
         }
         return recommendedList;
@@ -205,27 +198,59 @@ public class RecommenderJob {
     /**
      * Execute evaluator.
      *
-     * @param recommender  recommender algorithm
      * @throws LibrecException        if error occurs
      * @throws IOException            if I/O error occurs
      * @throws ClassNotFoundException if class not found error occurs
      */
-    private void executeEvaluator(Recommender recommender) throws ClassNotFoundException, IOException, LibrecException {
+    private void executeEvaluator(Recommender recommender, RecommenderContext context) throws ClassNotFoundException, IOException, LibrecException {
         if (conf.getBoolean("rec.eval.enable")) {
+            DataSet dataSet =  dataModel.getTestDataSet();
+            String[] similarityKeys = conf.getStrings("rec.recommender.similarities");
+            EvalContext evalContext = null;
+            if (similarityKeys != null && similarityKeys.length > 0) {
+                SymmMatrix similarityMatrix = context.getSimilarity().getSimilarityMatrix();
+                Map<String, RecommenderSimilarity> similarities = context.getSimilarities();
+                evalContext = new EvalContext(conf, recommender, dataSet, similarityMatrix, similarities);
+            } else {
+                evalContext = new EvalContext(conf, recommender, dataSet);
+            }
+
+
             String[] evalClassKeys = conf.getStrings("rec.eval.classes");
-            if (evalClassKeys!= null && evalClassKeys.length > 0) {// Run the evaluator which is
+            if (evalClassKeys != null && evalClassKeys.length > 0) {// Run the evaluator which is
                 // designated.
-                for(int classIdx = 0; classIdx < evalClassKeys.length; ++classIdx) {
-                    RecommenderEvaluator evaluator = (RecommenderEvaluator) ReflectionUtil.newInstance(getEvaluatorClass(evalClassKeys[classIdx]), null);
+                for (int classIdx = 0; classIdx < evalClassKeys.length; ++classIdx) {
+                    RecommenderEvaluator evaluator = ReflectionUtil.newInstance(getEvaluatorClass(evalClassKeys[classIdx]), null);
                     evaluator.setTopN(conf.getInt("rec.recommender.ranking.topn", 10));
-                    double evalValue = recommender.evaluate(evaluator);
+
+                    double evalValue = evaluator.evaluate(evalContext);
                     LOG.info("Evaluator info:" + evaluator.getClass().getSimpleName() + " is " + evalValue);
                     collectCVResults(evaluator.getClass().getSimpleName(), evalValue);
                 }
             } else {// Run all evaluators
-                Map<MeasureValue, Double> evalValueMap = recommender.evaluateMap();
-                if (evalValueMap != null && evalValueMap.size() > 0) {
-                    for (Map.Entry<MeasureValue, Double> entry : evalValueMap.entrySet()) {
+                evaluatedMap = new HashMap<>();
+                boolean isRanking = conf.getBoolean("rec.recommender.isranking");
+                int topN = 10;
+                if (isRanking) {
+                    topN = conf.getInt("rec.recommender.ranking.topn", 10);
+                    if (topN <= 0) {
+                        throw new IndexOutOfBoundsException("rec.recommender.ranking.topn should be more than 0!");
+                    }
+                }
+                List<MeasureValue> measureValueList = Measure.getMeasureEnumList(isRanking, topN);
+                if (measureValueList != null) {
+                    for (MeasureValue measureValue : measureValueList) {
+                        RecommenderEvaluator evaluator = ReflectionUtil
+                                .newInstance(measureValue.getMeasure().getEvaluatorClass());
+                        if (isRanking && measureValue.getTopN() != null && measureValue.getTopN() > 0) {
+                            evaluator.setTopN(measureValue.getTopN());
+                        }
+                        double evaluatedValue = evaluator.evaluate(evalContext);
+                        evaluatedMap.put(measureValue, evaluatedValue);
+                    }
+                }
+                if (evaluatedMap.size() > 0) {
+                    for (Map.Entry<MeasureValue, Double> entry : evaluatedMap.entrySet()) {
                         String evalName = null;
                         if (entry != null && entry.getKey() != null) {
                             if (entry.getKey().getTopN() != null && entry.getKey().getTopN() > 0) {
@@ -248,7 +273,7 @@ public class RecommenderJob {
     /**
      * Save result.
      *
-     * @param recommendedList         list of recommended items
+     * @param recommendedList list of recommended items
      * @throws LibrecException        if error occurs
      * @throws IOException            if I/O error occurs
      * @throws ClassNotFoundException if class not found error occurs
@@ -284,24 +309,27 @@ public class RecommenderJob {
      * Print the average evaluate results when using cross validation.
      */
     private void printCVAverageResult() {
-        LOG.info("Average Evaluation Result of Cross Validation:");
-        for (Map.Entry<String, List<Double>> entry : cvEvalResults.entrySet()) {
-            String evalName = entry.getKey();
-            List<Double> evalList = entry.getValue();
-            double sum = 0.0;
-            for (double value : evalList) {
-                sum += value;
+        DataSplitter splitter = dataModel.getDataSplitter();
+        if (splitter != null && (splitter instanceof KCVDataSplitter || splitter instanceof LOOCVDataSplitter)) {
+            LOG.info("Average Evaluation Result of Cross Validation:");
+            for (Map.Entry<String, List<Double>> entry : cvEvalResults.entrySet()) {
+                String evalName = entry.getKey();
+                List<Double> evalList = entry.getValue();
+                double sum = 0.0;
+                for (double value : evalList) {
+                    sum += value;
+                }
+                double avgEvalResult = sum / evalList.size();
+                LOG.info("Evaluator value:" + evalName + " is " + avgEvalResult);
             }
-            double avgEvalResult = sum / evalList.size();
-            LOG.info("Evaluator value:" + evalName + " is " + avgEvalResult);
         }
     }
 
     /**
      * Collect the evaluate results when using cross validation.
      *
-     * @param evalName   name of the evaluator
-     * @param evalValue  value of the evaluate result
+     * @param evalName  name of the evaluator
+     * @param evalValue value of the evaluate result
      */
     private void collectCVResults(String evalName, Double evalValue) {
         DataSplitter splitter = dataModel.getDataSplitter();
@@ -332,10 +360,8 @@ public class RecommenderJob {
      * Get data model class.
      *
      * @return {@code Class<? extends DataModel>} object
-     * @throws ClassNotFoundException
-     *             if the class is not found
-     * @throws IOException
-     *             If an I/O error occurs.
+     * @throws ClassNotFoundException if the class is not found
+     * @throws IOException            If an I/O error occurs.
      */
     @SuppressWarnings("unchecked")
     public Class<? extends DataModel> getDataModelClass() throws ClassNotFoundException, IOException {
@@ -360,10 +386,8 @@ public class RecommenderJob {
      * Get recommender class. {@code Recommender}.
      *
      * @return recommender class object
-     * @throws ClassNotFoundException
-     *             if can't find the class of recommender
-     * @throws IOException
-     *             If an I/O error occurs.
+     * @throws ClassNotFoundException if can't find the class of recommender
+     * @throws IOException            If an I/O error occurs.
      */
     @SuppressWarnings("unchecked")
     public Class<? extends Recommender> getRecommenderClass() throws ClassNotFoundException, IOException {
@@ -373,13 +397,10 @@ public class RecommenderJob {
     /**
      * Get evaluator class. {@code RecommenderEvaluator}.
      *
-     * @param evalClassKey
-     *             class key of the evaluator
+     * @param evalClassKey class key of the evaluator
      * @return evaluator class object
-     * @throws ClassNotFoundException
-     *             if can't find the class of evaluator
-     * @throws IOException
-     *             If an I/O error occurs.
+     * @throws ClassNotFoundException if can't find the class of evaluator
+     * @throws IOException            If an I/O error occurs.
      */
     @SuppressWarnings("unchecked")
     public Class<? extends RecommenderEvaluator> getEvaluatorClass(String evalClassKey) throws ClassNotFoundException, IOException {
@@ -390,14 +411,15 @@ public class RecommenderJob {
      * Get filter class. {@code RecommendedFilter}.
      *
      * @return evaluator class object
-     * @throws ClassNotFoundException
-     *             if can't find the class of filter
-     * @throws IOException
-     *             If an I/O error occurs.
+     * @throws ClassNotFoundException if can't find the class of filter
+     * @throws IOException            If an I/O error occurs.
      */
     @SuppressWarnings("unchecked")
     public Class<? extends RecommendedFilter> getFilterClass() throws ClassNotFoundException, IOException {
         return (Class<? extends RecommendedFilter>) DriverClassUtil.getClass(conf.get("rec.filter.class"));
     }
 
+    public Map<MeasureValue, Double> getEvaluatedMap() {
+        return evaluatedMap;
+    }
 }

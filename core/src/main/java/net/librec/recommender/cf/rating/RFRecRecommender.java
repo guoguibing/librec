@@ -21,8 +21,8 @@ package net.librec.recommender.cf.rating;
 import net.librec.common.LibrecException;
 import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.DenseMatrix;
-import net.librec.math.structure.DenseVector;
 import net.librec.math.structure.MatrixEntry;
+import net.librec.math.structure.VectorBasedDenseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
 /**
@@ -32,18 +32,19 @@ import net.librec.recommender.MatrixFactorizationRecommender;
  * <p>
  * <strong>Remark:</strong> This implementation does not support half-star
  * ratings.
+ *
  * @author bin wu(Email:wubin@gs.zzu.edu.cn)
  */
 public class RFRecRecommender extends MatrixFactorizationRecommender {
     /**
      * The average ratings of users
      */
-    private DenseVector userAverages;
+    private VectorBasedDenseVector userAverages;
 
     /**
      * The average ratings of items
      */
-    private DenseVector itemAverages;
+    private VectorBasedDenseVector itemAverages;
 
     /**
      * The number of ratings per rating value per user
@@ -58,20 +59,20 @@ public class RFRecRecommender extends MatrixFactorizationRecommender {
     /**
      * User weights learned by the gradient solver
      */
-    private DenseVector userWeights;
+    private VectorBasedDenseVector userWeights;
 
     /**
      * Item weights learned by the gradient solver.
      */
-    private DenseVector itemWeights;
+    private VectorBasedDenseVector itemWeights;
 
     protected void setup() throws LibrecException {
         super.setup();
         // Calculate the average ratings
-        userAverages = new DenseVector(numUsers);
-        itemAverages = new DenseVector(numItems);
-        userWeights = new DenseVector(numUsers);
-        itemWeights = new DenseVector(numItems);
+        userAverages = new VectorBasedDenseVector(numUsers);
+        itemAverages = new VectorBasedDenseVector(numItems);
+        userWeights = new VectorBasedDenseVector(numUsers);
+        itemWeights = new VectorBasedDenseVector(numItems);
 
         for (int u = 0; u < numUsers; u++) {
             userAverages.set(u, trainMatrix.row(u).mean());
@@ -89,11 +90,11 @@ public class RFRecRecommender extends MatrixFactorizationRecommender {
             int userIdx = matrixEntry.row();
             int itemIdx = matrixEntry.column();
             int realRating = (int) matrixEntry.get();
-            userRatingFrequencies.add(userIdx, realRating, 1);
-            itemRatingFrequencies.add(itemIdx, realRating, 1);
+            userRatingFrequencies.plus(userIdx, realRating, 1);
+            itemRatingFrequencies.plus(itemIdx, realRating, 1);
         }
-        userWeights = new DenseVector(numUsers);
-        itemWeights = new DenseVector(numItems);
+        userWeights = new VectorBasedDenseVector(numUsers);
+        itemWeights = new VectorBasedDenseVector(numItems);
     }
 
     @Override

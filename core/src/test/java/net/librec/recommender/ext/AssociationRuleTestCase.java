@@ -17,15 +17,14 @@
  */
 package net.librec.recommender.ext;
 
-import java.io.IOException;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import net.librec.BaseTestCase;
 import net.librec.common.LibrecException;
 import net.librec.conf.Configuration.Resource;
 import net.librec.job.RecommenderJob;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * AssociationRule Test Case corresponds to AssociationRuleRecommender

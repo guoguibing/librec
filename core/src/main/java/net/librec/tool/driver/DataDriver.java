@@ -101,9 +101,7 @@ public class DataDriver implements LibrecTool {
         if (cmd.hasOption("build")) {
             tool.run(args);
         } else if (cmd.hasOption("load")) {
-            ;
         } else if (cmd.hasOption("save")) {
-            ;
         }
     }
 

@@ -26,5 +26,5 @@ public interface Progressable {
     /**
      * Report progress to the Librec framework.
      */
-    public void progress();
+    void progress();
 }

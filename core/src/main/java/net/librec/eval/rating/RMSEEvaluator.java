@@ -18,41 +18,40 @@
 package net.librec.eval.rating;
 
 import net.librec.eval.AbstractRecommenderEvaluator;
-import net.librec.math.structure.MatrixEntry;
-import net.librec.math.structure.SparseMatrix;
+import net.librec.recommender.item.ContextKeyValueEntry;
 import net.librec.recommender.item.RecommendedList;
-import net.librec.recommender.item.UserItemRatingEntry;
 
 import java.util.Iterator;
 
 /**
  * RMSE: root mean square error
  *
- * @author WangYuFeng, zhanghaidong and Keqiang Wang
+ * @author Keqiang Wang
  */
 public class RMSEEvaluator extends AbstractRecommenderEvaluator {
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
-        if (testMatrix == null) {
+    @Override
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
+        if(groundTruthList.size()==0){
             return 0.0;
         }
         double rmse = 0.0;
         int testSize = 0;
 
-        Iterator<MatrixEntry> testMatrixIter = testMatrix.iterator();
-        Iterator<UserItemRatingEntry> recommendedEntryIter = recommendedList.entryIterator();
+        Iterator<ContextKeyValueEntry> groundTruthIter = groundTruthList.iterator();
+        Iterator<ContextKeyValueEntry> recommendedEntryIter = recommendedList.iterator();
 
-        while (testMatrixIter.hasNext()) {
+        while (groundTruthIter.hasNext()) {
 
             if (recommendedEntryIter.hasNext()) {
 
-                MatrixEntry testMatrixEntry = testMatrixIter.next();
-                UserItemRatingEntry userItemRatingEntry = recommendedEntryIter.next();
+                ContextKeyValueEntry groundEntry = groundTruthIter.next();
+                ContextKeyValueEntry recommendedEntry = recommendedEntryIter.next();
 
-                if (testMatrixEntry.row() == userItemRatingEntry.getUserIdx()
-                        && testMatrixEntry.column() == userItemRatingEntry.getItemIdx()) {
+                if (groundEntry.getContextIdx() == recommendedEntry.getContextIdx()
+                        && groundEntry.getKey() == recommendedEntry.getKey()) {
 
-                    double realRating = testMatrixEntry.get();
-                    double predictRating = userItemRatingEntry.getValue();
+                    double realRating = groundEntry.getValue();
+                    double predictRating = recommendedEntry.getValue();
                     rmse += Math.pow(realRating - predictRating, 2);
 
                     testSize++;
@@ -62,11 +61,10 @@ public class RMSEEvaluator extends AbstractRecommenderEvaluator {
                 }
 
             } else {
-                throw new IndexOutOfBoundsException("index size of recommendedList does not equal testMatrix index size");
+                throw new IndexOutOfBoundsException("index cardinality of recommendedList does not equal testMatrix index cardinality");
             }
         }
 
         return testSize > 0 ? Math.sqrt(rmse / testSize) : 0.0d;
     }
-
 }

@@ -34,25 +34,25 @@ import java.io.IOException;
  */
 public class RfRecTestCase extends BaseTestCase {
 
-	@Override
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+    }
 
-	/**
-	 * test the whole process of RfRec Recommendation
-	 *
-	 * @throws ClassNotFoundException
-	 * @throws LibrecException
-	 * @throws IOException
-	 */
-	@Test
-	public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
-		Resource resource = new Resource("rec/cf/rating/rfrec-test.properties");
-		conf.addResource(resource);
-		RecommenderJob job = new RecommenderJob(conf);
-		job.runJob();
-	}
+    /**
+     * test the whole process of RfRec Recommendation
+     *
+     * @throws ClassNotFoundException
+     * @throws LibrecException
+     * @throws IOException
+     */
+    @Test
+    public void testRecommender() throws ClassNotFoundException, LibrecException, IOException {
+        Resource resource = new Resource("rec/cf/rating/rfrec-test.properties");
+        conf.addResource(resource);
+        RecommenderJob job = new RecommenderJob(conf);
+        job.runJob();
+    }
 
 }

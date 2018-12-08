@@ -18,7 +18,8 @@
 package net.librec.similarity;
 
 
-import net.librec.math.structure.SparseVector;
+import net.librec.math.structure.Vector;
+import net.librec.math.structure.VectorBasedSequentialSparseVector;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,22 +36,26 @@ public class JaccardSimilarity extends AbstractRecommenderSimilarity {
      * Find the common rated items by this user and that user, or the common
      * users have rated this item or that item. And then return the similarity.
      *
-     * @param thisVector:
-     *            the rated items by this user, or users that have rated this
-     *            item .
-     * @param thatVector:
-     *            the rated items by that user, or users that have rated that
-     *            item.
+     * @param thisVector: the rated items by this user, or users that have rated this
+     *                    item .
+     * @param thatVector: the rated items by that user, or users that have rated that
+     *                    item.
      * @return similarity
      */
-    public double getCorrelation(SparseVector thisVector, SparseVector thatVector) {
+    public double getCorrelation(VectorBasedSequentialSparseVector thisVector, VectorBasedSequentialSparseVector thatVector) {
         // compute similarity
-        Set<Integer> elements = new HashSet<Integer>();
-        elements.addAll(thisVector.getIndexList());
-        elements.addAll(thatVector.getIndexList());
+        Set<Integer> elements = new HashSet<>();
+
+        for(Vector.VectorEntry vectorEntry: thisVector){
+            elements.add(vectorEntry.index());
+        }
+
+        for(Vector.VectorEntry vectorEntry: thatVector){
+            elements.add(vectorEntry.index());
+        }
 
         int numAllElements = elements.size();
-        int numCommonElements = thisVector.size() + thatVector.size() - numAllElements;
+        int numCommonElements = thisVector.getNumEntries() + thatVector.getNumEntries() - numAllElements;
 
         return (numCommonElements + 0.0) / numAllElements;
     }

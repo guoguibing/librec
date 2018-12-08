@@ -17,9 +17,10 @@
  */
 package net.librec.eval.ranking;
 
+import net.librec.common.LibrecException;
+import net.librec.common.LibrecRuntimeException;
 import net.librec.eval.AbstractRecommenderEvaluator;
-import net.librec.math.structure.SparseMatrix;
-import net.librec.recommender.item.ItemEntry;
+import net.librec.recommender.item.KeyValue;
 import net.librec.recommender.item.RecommendedList;
 
 import java.util.HashSet;
@@ -27,51 +28,54 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * AUCEvaluator
+ * AUCEvaluator@n
+ * <a href=https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>wikipedia, AUC</a>
  *
- * @author WangYuFeng and Keqiang Wang
+ * @author Keqiang Wang
  */
 public class AUCEvaluator extends AbstractRecommenderEvaluator {
 
     /**
      * Evaluate on the test set with the the list of recommended items.
      *
-     * @param testMatrix
-     *            the given test set
-     * @param recommendedList
-     *            the list of recommended items
+     * @param groundTruthList the given  ground truth list
+     * @param recommendedList the list of recommended items
      * @return evaluate result
      */
-    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+    public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
         double auc = 0.0d;
 
-        int numUsers = testMatrix.numRows();
-        int nonZeroNumUsers = 0;
-        int[] numDroppedItemsArray = getConf().getInts("rec.eval.auc.dropped.num");
+        int numContext = groundTruthList.size();
+        int nonZeroContext = 0;
+        int[] numDroppedArray = getConf().getInts("rec.eval.auc.dropped.num");
 
-        for (int userIdx = 0; userIdx < numUsers; userIdx++) {
-            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userIdx);
-            if (testSetByUser.size() > 0) {
-                nonZeroNumUsers++;
-                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userIdx);
-                int numDroppedItems = numDroppedItemsArray[userIdx] - recommendListByUser.size();
-                Set<Integer> recommendSetByUser = new HashSet<>();
-                int topK = this.topN <= recommendListByUser.size() ? this.topN : recommendListByUser.size();
-                for (int indexOfItem = 0; indexOfItem < topK; ++indexOfItem) {
-                    recommendSetByUser.add(recommendListByUser.get(indexOfItem).getKey());
+        if (numDroppedArray == null || numDroppedArray.length != numContext){
+            throw new LibrecRuntimeException("please set rec.eval.auc.dropped.num arrays, length of numDroppedArray must be cardinality of groundTruthList.");
+        }
+
+        for (int contextIdx = 0; contextIdx < numContext; ++contextIdx) {
+            Set<Integer> groudTruthSetByContext = groundTruthList.getKeySetByContext(contextIdx);
+            if (groudTruthSetByContext.size() > 0) {
+                nonZeroContext++;
+                List<KeyValue<Integer, Double>> recommendListByContext = recommendedList.getKeyValueListByContext(contextIdx);
+                int topK = this.topN <= recommendListByContext.size() ? this.topN : recommendListByContext.size();
+                int numDroppedItems = numDroppedArray[contextIdx] - topK;
+                Set<Integer> recommendSetByContext = new HashSet<>();
+                for (int indexOfKey = 0; indexOfKey < topK; ++indexOfKey) {
+                    recommendSetByContext.add(recommendListByContext.get(indexOfKey).getKey());
                 }
 
-                int numRelevantItems = 0, numMissItems = 0;
-                for (Integer testItemIdx : testSetByUser) {
-                    if (recommendSetByUser.contains(testItemIdx)) {
-                        numRelevantItems++;
+                int numRelevantKeys = 0, numMissKeys = 0;
+                for (Integer testKey : recommendSetByContext) {
+                    if (groudTruthSetByContext.contains(testKey)) {
+                        numRelevantKeys++;
                     } else {
-                        numMissItems++;
+                        numMissKeys++;
                     }
                 }
 
-                int numEvaluatingItems = recommendSetByUser.size() + numDroppedItems;
-                int numEvaluatingPairs = (numEvaluatingItems - numRelevantItems) * numRelevantItems;
+                int numEvaluatingItems =  numDroppedItems + topK;
+                int numEvaluatingPairs = (numEvaluatingItems - numRelevantKeys) * numRelevantKeys;
 
                 if (numEvaluatingPairs < 0) {
                     throw new IndexOutOfBoundsException("numEvaluatingPairs cannot be less than 0.");
@@ -84,20 +88,20 @@ public class AUCEvaluator extends AbstractRecommenderEvaluator {
 
                 int numCorrectPairs = 0;
                 int hits = 0;
-                for (Integer itemIdx : recommendSetByUser) {
-                    if (!testSetByUser.contains(itemIdx)) {
+                for (Integer itemIdx : groudTruthSetByContext) {
+                    if (!recommendSetByContext.contains(itemIdx)) {
                         numCorrectPairs += hits;
                     } else {
-                        hits ++;
+                        hits++;
                     }
                 }
 
-                numCorrectPairs += hits * (numDroppedItems - numMissItems);
+                numCorrectPairs += hits * (numDroppedItems - numMissKeys);
 
                 auc += (numCorrectPairs + 0.0) / numEvaluatingPairs;
             }
         }
 
-        return nonZeroNumUsers > 0 ? auc / nonZeroNumUsers : 0.0d;
+        return nonZeroContext > 0 ? auc / nonZeroContext : 0.0d;
     }
 }
