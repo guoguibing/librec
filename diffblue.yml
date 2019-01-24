@@ -1,26 +1,26 @@
-# Tested on Deeptest release 1.10.0
+buildCmd: cd librec; mvn compile
+testCmd: cd librec; mvn test
 cbmcArguments:
-  cover-function-only: false
-  depth: false
-  do-not-test-methods-with-access: [ private ]
-  java-generate-no-comments: true
+ depth: false
 phases:
 -
-  timeout: 300
-  cbmcArguments:
-    classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
-    java-assume-inputs-non-null: true
-    max-nondet-array-length: 10
-    string-non-empty: true
-    unwind: 1
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+   max-nondet-array-length: 100
+   java-max-vla-length: false
+   unwind: 1
 -
-  timeout: 300
-  cbmcArguments:
-    max-nondet-array-length: 20
-    unwind: 2
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+   max-nondet-array-length: 100
+   java-max-vla-length: false
+   unwind: 2
 -
-  timeout: 300
-  cbmcArguments:
-    max-nondet-array-length: 30
-    max-nondet-string-length: 10
-    unwind: 3
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models.jar:.'
+   max-nondet-array-length: 100
+   java-max-vla-length: false
+   unwind: 3
