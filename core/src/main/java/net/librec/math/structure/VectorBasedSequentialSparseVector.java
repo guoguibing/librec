@@ -17,16 +17,19 @@
 
 package net.librec.math.structure;
 
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.librec.common.IndexException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.librec.common.IndexException;
 
 /**
  * sequential access sparse vector
@@ -51,24 +54,64 @@ public class VectorBasedSequentialSparseVector extends SequentialSparseVector {
         values = new OrderedIntDoubleMapping(numActivesElement);
     }
 
-    public VectorBasedSequentialSparseVector(Vector other) {
-        this(other.cardinality(), other.getNumEntries());
+	public VectorBasedSequentialSparseVector(Vector other) {
+		super(other.cardinality());
 
-        if (other.isSequentialAccess()) {
-            int position = 0;
-            for (VectorEntry e : other) {
-                values.setIndexAt(position, e.index());
-                values.setValueAt(position, e.get());
-                position++;
-            }
-        } else {
-            // If the incoming Vector to clone is random, then adding items
+		if (other.isSequentialAccess()) {
+			// get nonZero values
+			List<Double> nonZeros = new ArrayList<Double>();
+			for (VectorEntry e : other) {
+				double value = e.get();
+				if (value != 0d && value != Double.NaN) {
+					nonZeros.add(value);
+				}
+			}
+
+			int[] indices = new int[nonZeros.size()];
+			double[] doubleValues = new double[nonZeros.size()];
+			for (int i = 0; i < nonZeros.size(); i++) {
+        		indices[i] = i;
+        		doubleValues[i] = nonZeros.get(i);
+			}
+			// this constructor could set 'numMappings' field value correctly. 
+        	values = new OrderedIntDoubleMapping(indices, doubleValues);
+		} else {
+			// If the incoming Vector to clone is random, then adding items
             // from the Iterator can degrade performance dramatically if
             // the number of elements is large as this Vector tries to stay
             // in order as items are added, so it's better to sort the other
             // Vector's elements by index and then plus them to this
-            copySortedRandomAccessSparseVector(other);
+			values = copySortedRandomAccessSparseVector(other);
         }
+    }
+
+    // Sorts a RandomAccessSparseVectors Elements before adding them to this
+    private OrderedIntDoubleMapping copySortedRandomAccessSparseVector(Vector other) {
+		int entryCount = other.getNumEntries();
+		OrderedVectorElement[] sortableEntries = new OrderedVectorElement[entryCount];
+		int elementIndex = 0;
+		// get nonZero values
+		for (VectorEntry vectorEntry : other) {
+			double value = vectorEntry.get();
+			if (value != 0d && value != Double.NaN) {
+				sortableEntries[elementIndex++] = new OrderedVectorElement(vectorEntry.index(), value);
+			}
+		}
+
+		if (!other.isSequentialAccess()) {
+			Arrays.sort(sortableEntries);
+		}
+
+		int[] indices = new int[sortableEntries.length];
+		double[] doubleValues = new double[sortableEntries.length];
+		// this constructor could set 'numMappings' field value correctly.
+		OrderedIntDoubleMapping values = new OrderedIntDoubleMapping(indices ,doubleValues);
+		for (int sortIndex = 0; sortIndex < sortableEntries.length; sortIndex++) {
+			values.setIndexAt(sortIndex, sortableEntries[sortIndex].getIndex());
+			values.setValueAt(sortIndex, sortableEntries[sortIndex].getValue());
+		}
+
+		return values;
     }
 
     public VectorBasedSequentialSparseVector(int cardinality, Map<Integer, ? extends Number> mapVector) {
@@ -138,25 +181,6 @@ public class VectorBasedSequentialSparseVector extends SequentialSparseVector {
     public VectorBasedSequentialSparseVector(int cardinality, int[] indices, double[] values) {
         this(cardinality);
         this.values = new OrderedIntDoubleMapping(indices, values);
-    }
-
-    // Sorts a RandomAccessSparseVectors Elements before adding them to this
-    private void copySortedRandomAccessSparseVector(Vector other) {
-        int entryCount = other.getNumEntries();
-        OrderedVectorElement[] sortableEntries = new OrderedVectorElement[entryCount];
-        int elementIndex = 0;
-        for (VectorEntry vectorEntry : other) {
-            sortableEntries[elementIndex++] = new OrderedVectorElement(vectorEntry.index(), vectorEntry.get());
-        }
-
-        if (!other.isSequentialAccess()) {
-            Arrays.sort(sortableEntries);
-        }
-
-        for (int sortIndex = 0; sortIndex < sortableEntries.length; sortIndex++) {
-            values.setIndexAt(sortIndex, sortableEntries[sortIndex].getIndex());
-            values.setValueAt(sortIndex, sortableEntries[sortIndex].getValue());
-        }
     }
 
     @Override

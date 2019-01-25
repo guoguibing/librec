@@ -23,6 +23,7 @@ import net.librec.BaseTestCase;
 import net.librec.common.LibrecException;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Random;
@@ -69,4 +70,13 @@ public class SparseVectorTestCase {
 
         System.out.println(elapsedTime);
     }
+
+	@Test
+	public void testFromDenseVector() {
+		double[] values = { 1, 2, 0 };
+		Vector v2 = new VectorBasedDenseVector(values);
+		VectorBasedSequentialSparseVector sv = new VectorBasedSequentialSparseVector(v2);
+		System.out.println("非零元个数：" + sv.getNumEntries());
+		assertEquals(2, sv.getNumEntries());
+	}
 }
