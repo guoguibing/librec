@@ -21,7 +21,7 @@ import java.util.List;
 public class AverageReciprocalHitRankEvaluator extends AbstractRecommenderEvaluator {
 
     /**
-     * Evaluate on the test set with the the list of recommended items.
+     * Evaluate on the test set with the list of recommended items.
      *
      * @param groundTruthList the given ground truth list
      * @param recommendedList the list of recommended items
