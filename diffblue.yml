@@ -1,26 +1,104 @@
 buildCmd: cd librec; mvn compile
 testCmd: cd librec; mvn test
 cbmcArguments:
- depth: false
 phases:
 -
+#0
  timeout: 300
  cbmcArguments:
    classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
-   max-nondet-array-length: 100
-   java-max-vla-length: false
+   depth: 1500
+   java-assume-inputs-non-null: true
+   java-max-vla-length: 48
+   max-nondet-array-length: 10
+   max-nondet-string-length: 10
+   string-printable: true
+   throw-runtime-exceptions: false
    unwind: 1
+ nextPhase:
+   not_analyzed: null
+   time_out: 3
 -
+#1
  timeout: 300
  cbmcArguments:
    classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
-   max-nondet-array-length: 100
-   java-max-vla-length: false
+   depth: 1500
+   java-assume-inputs-non-null: false
+   java-max-vla-length:  96
+   max-nondet-array-length: 20
+   max-nondet-string-length: 50
+   string-printable: true
+   throw-runtime-exceptions: false
    unwind: 2
+ nextPhase:
+   time_out: 3
 -
+#2
  timeout: 300
  cbmcArguments:
    classpath: '/tools/cbmc/models.jar:.'
-   max-nondet-array-length: 100
-   java-max-vla-length: false
+   depth: 3000
+   java-assume-inputs-non-null: false
+   java-max-vla-length:  192
+   max-nondet-array-length: 30
+   max-nondet-string-length: 100
+   string-printable: false
+   throw-runtime-exceptions: true
+   unwind: 3
+-
+#3
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+   depth: 1500
+   java-assume-inputs-non-null: true
+   java-max-vla-length: 48
+   load-containing-class-only: true
+   max-nondet-array-length: 10
+   max-nondet-string-length: 10
+   string-printable: true
+   throw-runtime-exceptions: false
+   unwind: 1
+-
+#4
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models.jar:.'
+   depth: 3000
+   java-assume-inputs-non-null: false
+   java-max-vla-length:  192
+   load-containing-class-only: true
+   max-nondet-array-length: 30
+   max-nondet-string-length: 100
+   string-printable: false
+   throw-runtime-exceptions: true
+   unwind: 3
+-
+#5
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+   depth: 1500
+   java-assume-inputs-non-null: true
+   java-max-vla-length: 48
+   max-nondet-array-length: 10
+   max-nondet-string-length: 10
+   single-function-only: true
+   string-printable: true
+   throw-runtime-exceptions: false
+   unwind: 1
+-
+#6
+ timeout: 300
+ cbmcArguments:
+   classpath: '/tools/cbmc/models.jar:.'
+   depth: 3000
+   java-assume-inputs-non-null: false
+   java-max-vla-length:  192
+   max-nondet-array-length: 30
+   max-nondet-string-length: 100
+   single-function-only: true
+   string-printable: false
+   throw-runtime-exceptions: true
    unwind: 3
