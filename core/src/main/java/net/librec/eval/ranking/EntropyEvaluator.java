@@ -48,7 +48,7 @@ import java.util.List;
 public class EntropyEvaluator extends AbstractRecommenderEvaluator {
 
     /**
-     * Evaluate on the test set with the the list of recommended items.
+     * Evaluate on the test set with the list of recommended items.
      *
      * @param groundTruthList
      *            the given test set
