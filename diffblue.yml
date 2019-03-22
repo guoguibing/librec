@@ -1,6 +1,6 @@
 buildCmd: cd librec; mvn compile
 testCmd: cd librec; mvn test
-cbmcArguments:
+skipVerification: true
 phases:
 -
 #0
