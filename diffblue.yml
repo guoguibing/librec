@@ -89,6 +89,17 @@ phases:
       unwind: 3
   - timeout: 150
     cbmcArguments:
+      classpath: '/tools/cbmc/models.jar:.'
+      depth: 3000
+      java-assume-inputs-non-null: false
+      load-containing-class-only: true
+      max-nondet-array-length: 30
+      max-nondet-string-length: 100
+      string-printable: false
+      throw-runtime-exceptions: false
+      unwind: 15
+  - timeout: 150
+    cbmcArguments:
       classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
       depth: 1500
       java-assume-inputs-non-null: true
