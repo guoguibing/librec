@@ -4,6 +4,7 @@
 buildCmd: cd librec; mvn compile
 testCmd: cd librec; mvn test
 skipVerification: true
+staticValuesJson: true
 cbmcArguments:
   java-max-vla-length: 100000
   depth: false
