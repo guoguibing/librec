@@ -7,7 +7,10 @@ skipVerification: true
 staticValuesJson: true
 cbmcArguments:
   java-max-vla-length: 100000
-  depth: false
+  depth: 'false,'
+  java-test-input-factory: 'false,'
+  java-test-input-factory-bmc-max-mutators: 'false,'
+  java-test-input-factory-bmc-recursion-limit: false
 phases:
   - timeout: 150
     cbmcArguments:
