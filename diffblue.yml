@@ -1,7 +1,7 @@
 # This file was automatically generated using script in dashboard/scripts/update-diffblue-yml
 # It is a combination of the local diffblue-base.yml and the yml file in dashboard/scripts/update-diffblue-yml
 # Do not change any of the values manually to keep options uniform across all benchmarks
-buildCmd: cd librec; mvn compile
+buildCmd: cd librec; mvn -e -X -Dmaven.test.skip=true compile
 testCmd: cd librec; mvn test
 skipVerification: true
 staticValuesJson: true
