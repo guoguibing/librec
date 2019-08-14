@@ -11,6 +11,10 @@ cbmcArguments:
   java-test-input-factory: false
   java-test-input-factory-bmc-max-mutators: false
   java-test-input-factory-bmc-recursion-limit: false
+  do-not-test-methods-with-access:
+    - private
+  cover-function-only: false
+  cover-only: file
 phases:
   - timeout: 150
     cbmcArguments:
