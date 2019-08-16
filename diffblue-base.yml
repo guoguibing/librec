@@ -1,5 +1,5 @@
 # This file contains configuration for Diffblue Cover that is specific for
-# this project, typically a custom buildCmd, testCmd, classpathCmd and
+# this project, typically a custom buildCmd, classpathCmd and
 # java-version (as a CBMC argument).
 #
 # Other general options such as skipVerification, ignoreExistingCoverage, CBMC
@@ -9,4 +9,3 @@
 # in dashboard/scripts/update-diffblue-yml. Any options specified here would
 # be overriden to keep consistency with other benchmarks.
 buildCmd: cd librec; mvn -e -X -Dmaven.test.skip=true compile
-testCmd: cd librec; mvn test
