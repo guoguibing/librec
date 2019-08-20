@@ -36,7 +36,7 @@ import java.util.Set;
 public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
 
     /**
-     * Evaluate on the test set with the list of recommended items.
+     * Evaluate on the test set with the the list of recommended items.
      *
      * @param groundTruthList the given ground truth list
      * @param recommendedList the list of recommended items
@@ -81,14 +81,13 @@ public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
                 double idcg = 0.0d;
                 ArrayList idcgsValue = new ArrayList();
                 for(int i=0; i<groundTruthTestSet.size(); i++){
-                    if(groundTruthTestSet.get(i).getIndexId() == -1) {
-                        idcgsValue.add(groundTruthTestSet.get(i).getValue());
-                    }
+                    idcgsValue.add(groundTruthTestSet.get(i).getValue());
                 }
 
                 Collections.sort(idcgsValue, Collections.reverseOrder());
 
-                for(int i=0; i<idcgsValue.size(); i++) {
+                int validIdxNum = topK < idcgsValue.size() ? topK : idcgsValue.size();
+                for(int i=0; i<validIdxNum; i++) {
                     idcg += (double)idcgsValue.get(i) / Maths.log(i + 2, 2);
                 }
 
@@ -107,7 +106,6 @@ public class NormalizedDCGEvaluator extends AbstractRecommenderEvaluator {
     public double getValueByKey(List<RankRate> list,int key){
         for(RankRate keyValue: list ){
             if(key==keyValue.getIndexId()){
-                keyValue.setIndexId(-1);
                 return keyValue.getValue();
             }
         }
