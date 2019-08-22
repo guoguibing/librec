@@ -18,6 +18,7 @@ cbmcArguments:
   cover-only: file
   inline-into-assertion: true
   inline-function-arguments: true
+  no-reflective-asserts: true
 phases:
   - timeout: 150
     cbmcArguments:
