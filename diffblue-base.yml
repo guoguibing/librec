@@ -9,3 +9,5 @@
 # in dashboard/scripts/update-diffblue-yml. Any options specified here would
 # be overriden to keep consistency with other benchmarks.
 buildCmd: cd librec; mvn -e -X -Dmaven.test.skip=true compile
+cbmcArguments:
+  java-version: 7
