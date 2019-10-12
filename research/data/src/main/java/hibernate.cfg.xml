@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+ "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <!-- 配置访问Oracle数据库参数信息 -->
+        <property name="dialect">
+            org.hibernate.dialect.H2Dialect
+        </property>
+        <property name="connection.driver_class">
+            org.h2.Driver
+        </property>
+        <property name="connection.url">
+            <![CDATA[jdbc:h2:test://testdb?useUnicode=true&useOldAliasMetadataBehavior=true&characterEncoding=utf8]]>
+        </property>
+        <property name="connection.username">librec</property>
+        <property name="connection.password">librec</property>
+        <!-- 在控制台显示SQL语句 -->
+        <property name="show_sql">true</property>
+        <!--根据需要自动生成、更新数据表 -->
+        <property name="hbm2ddl.auto">update</property>
+        <!-- 注册所有ORM映射文件 -->
+        <mapping resource="research/data/reader/db/Test.hbm.xml" />
+    </session-factory>
+</hibernate-configuration>
+

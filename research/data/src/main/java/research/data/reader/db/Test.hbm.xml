@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+    "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+    "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping>
+    <class name="research.data.reader.db.UserItem" table="useritem">
+        <!-- 主键 -->
+        <id name="id" column="ID">
+        </id>
+        <!-- 用户标识 -->
+        <property name="userId" column="USERID" type="java.lang.Integer" not-null="true"/>
+        <!-- 商品标识 -->
+        <property name="itemId" column="ITEMID" type="java.lang.Integer" not-null="true"/>
+        <!-- 用户对商品的行为类型，包括浏览、收藏、加购物车、购买，对应取值分别为1、2、3、4 -->
+        <property name="behaviorType" column="BEHAVIORTYPE" type="java.lang.Integer" not-null="true"/>
+        <!-- 用户位置的空间标识 -->
+        <property name="userGeohash" column="USERGEOHASH" type="string"/>
+        <!-- 商品分类标识 -->
+        <property name="itemCategory" column="ITEMCATEGORY" type="string"/>
+        <!-- 创建时间 -->
+        <property name="createTime" column="createtime" type="java.util.Date" not-null="true"/>
+    </class>
+</hibernate-mapping>
+

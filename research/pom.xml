@@ -1,0 +1,49 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>research</groupId>
+	<artifactId>base</artifactId>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<plugins>
+			<!--<plugin>-->
+				<!--<artifactId>maven-compiler-plugin</artifactId>-->
+				<!--<version>3.5.2</version>-->
+				<!--<configuration>-->
+					<!--<source>1.8</source>-->
+					<!--<target>1.8</target>-->
+				<!--</configuration>-->
+			<!--</plugin>-->
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.16</version>
+				<configuration>
+					<skipTests>true</skipTests>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<modules>
+		<module>core</module>
+		<module>data</module>
+		<module>model</module>
+		<module>sample</module>
+		<module>service_interface</module>
+		<module>service_provider</module>
+		<module>service_consumer</module>
+		<module>service_web</module>
+	</modules>
+</project>

@@ -1,0 +1,117 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>research</groupId>
+	<artifactId>model</artifactId>
+	<version>1.0.0</version>
+
+	<repositories>
+		<repository>
+			<id>snapshots-repo</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>daily</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<nd4j.backend>nd4j-native</nd4j.backend>
+		<dl4j.version>1.0.0-beta5</dl4j.version>
+		<mkl.version>2019.2</mkl.version>
+		<javacpp-presets.version>1.5-SNAPSHOT</javacpp-presets.version>
+		<dl4j.spark.version>1.0.0_spark_2-SNAPSHOT</dl4j.spark.version>
+		<scala.binary.version>2.11</scala.binary.version>
+	</properties>
+
+	<dependencies>
+		<!-- logger -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.26</version>
+		</dependency>
+
+		<dependency>
+			<groupId>research</groupId>
+			<artifactId>data</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<!-- dl4j start -->
+		<dependency>
+			<groupId>org.nd4j</groupId>
+			<artifactId>nd4j-native-platform</artifactId>
+			<version>${dl4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.deeplearning4j</groupId>
+			<artifactId>deeplearning4j-core</artifactId>
+			<version>${dl4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.deeplearning4j</groupId>
+			<artifactId>deeplearning4j-nn</artifactId>
+			<version>${dl4j.version}</version>
+		</dependency>
+
+		<!--<dependency> -->
+		<!--<groupId>org.bytedeco</groupId> -->
+		<!--<artifactId>javacpp</artifactId> -->
+		<!--<version>${javacpp-presets.version}</version> -->
+		<!--</dependency> -->
+		<!--<dependency> -->
+		<!--<groupId>org.bytedeco.javacpp-presets</groupId> -->
+		<!--<artifactId>mkl-platform</artifactId> -->
+		<!--<version>${mkl.version}-${javacpp-presets.version}</version> -->
+		<!--</dependency> -->
+		<!--<dependency> -->
+		<!--<groupId>org.bytedeco.javacpp-presets</groupId> -->
+		<!--<artifactId>openblas-platform</artifactId> -->
+		<!--<version>0.3.3-1.4.3</version> -->
+		<!--</dependency> -->
+
+<!-- 避免跟spark的包冲突 -->
+<!--  -->
+		<dependency>
+			<groupId>org.deeplearning4j</groupId>
+			<artifactId>deeplearning4j-ui_2.11</artifactId>
+			<version>${dl4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.deeplearning4j</groupId>
+			<artifactId>deeplearning4j-ui-model</artifactId>
+			<version>${dl4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.deeplearning4j</groupId>
+			<artifactId>dl4j-spark_${scala.binary.version}</artifactId>
+			<version>${dl4j.spark.version}</version>
+			
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- dl4j end -->
+	</dependencies>
+</project>

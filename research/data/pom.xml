@@ -1,0 +1,127 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>research</groupId>
+	<artifactId>data</artifactId>
+	<version>1.0.0</version>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<es.rest-client.version>7.2.0</es.rest-client.version>
+		<es.rest-high-client.version>7.2.0</es.rest-high-client.version>
+		<es.version>7.2.0</es.version>
+	</properties>
+
+	<dependencies>
+		<!-- LibRec core -->
+		<dependency>
+			<groupId>research</groupId>
+			<artifactId>core</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.2.58</version>
+		</dependency>
+		<!-- excel -->
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>3.16</version>
+		</dependency>
+		<!-- kafka -->
+		<!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka_2.12</artifactId>
+			<version>2.2.1</version>
+			<!-- 避免跟spark的包冲突 -->
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-clients</artifactId>
+			<version>2.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-streams</artifactId>
+			<version>2.2.1</version>
+		</dependency>
+		<!-- hibernate -->
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-core</artifactId>
+			<version>3.6.10.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.25</version>
+		</dependency>
+		<dependency>
+			<groupId>javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<version>3.12.0.GA</version>
+		</dependency>
+		<!-- mongodb -->
+		<dependency>
+			<groupId>org.hibernate.ogm</groupId>
+			<artifactId>hibernate-ogm-mongodb</artifactId>
+			<version>5.4.1.Final</version>
+		</dependency>
+		<!-- elasticsearch -->
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch</artifactId>
+			<version>${es.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.elasticsearch.client</groupId>
+			<artifactId>elasticsearch-rest-client</artifactId>
+			<version>${es.rest-client.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.elasticsearch.client</groupId>
+			<artifactId>elasticsearch-rest-high-level-client</artifactId>
+			<version>${es.rest-high-client.version}</version>
+		</dependency>
+
+		<!-- h2 -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.192</version>
+		</dependency>
+		<!-- python -->
+		<dependency>
+			<groupId>org.python</groupId>
+			<artifactId>jython-standalone</artifactId>
+			<version>2.7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.squareup.okio</groupId>
+			<artifactId>okio</artifactId>
+			<version>1.14.0</version>
+		</dependency>
+	</dependencies>
+</project>
