@@ -151,7 +151,7 @@ public class RBMRecommender extends MatrixRecommender {
             }
             for (int k = 0; k < softmax; k++) {
                 if (mtot == 0) {
-                    visbiases[i][k] = new Random().nextDouble() * 0.001;
+                    visbiases[i][k] = Randoms.uniform() * 0.001;
                 } else {
                     visbiases[i][k] = Math.log(((double) moviecount[i][k]) / ((double) mtot));
                 }
