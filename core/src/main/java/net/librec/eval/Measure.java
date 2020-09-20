@@ -17,6 +17,7 @@
  */
 package net.librec.eval;
 
+import net.librec.eval.fairness.MiscalibrationEvaluator;
 import net.librec.eval.fairness.StatisticalParityEvaluator;
 import net.librec.eval.ranking.*;
 import net.librec.eval.rating.MAEEvaluator;
@@ -48,7 +49,8 @@ public enum Measure {
     MSE(MSEEvaluator.class),
     MAE(MAEEvaluator.class),
     MPE(MPEEvaluator.class),
-    SP(StatisticalParityEvaluator.class);
+    SP(StatisticalParityEvaluator.class),
+    MISCALIB(MiscalibrationEvaluator.class);
 
     private Class<? extends RecommenderEvaluator> evaluatorClass;
 
@@ -85,6 +87,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(Entropy, 10));
             rankingEnumList.add(new MeasureValue(ICOV, 10));
             rankingEnumList.add(new MeasureValue(SP, 10));
+            rankingEnumList.add(new MeasureValue(MISCALIB, 10));
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -96,6 +99,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(Entropy, topN));
             rankingEnumList.add(new MeasureValue(ICOV, topN));
             rankingEnumList.add(new MeasureValue(SP, topN));
+            rankingEnumList.add(new MeasureValue(MISCALIB, topN));
         }
         return rankingEnumList;
     }
