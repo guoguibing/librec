@@ -17,6 +17,8 @@
  */
 package net.librec.eval;
 
+import net.librec.conf.Configuration;
+import net.librec.data.DataModel;
 import net.librec.recommender.RecommenderContext;
 import net.librec.recommender.item.RecommendedList;
 
@@ -52,4 +54,8 @@ public interface RecommenderEvaluator {
      * @param topN the number of recommended items
      */
     void setTopN(int topN);
+
+    void setDataModel(DataModel dataModel);
+    Configuration getConf();
+    DataModel getDataModel();
 }

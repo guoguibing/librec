@@ -222,6 +222,7 @@ public class RecommenderJob {
                 for (int classIdx = 0; classIdx < evalClassKeys.length; ++classIdx) {
                     RecommenderEvaluator evaluator = ReflectionUtil.newInstance(getEvaluatorClass(evalClassKeys[classIdx]), null);
                     evaluator.setTopN(conf.getInt("rec.recommender.ranking.topn", 10));
+                    evaluator.setDataModel(dataModel); //nasim
 
                     double evalValue = evaluator.evaluate(evalContext);
                     LOG.info("Evaluator info:" + evaluator.getClass().getSimpleName() + " is " + evalValue);

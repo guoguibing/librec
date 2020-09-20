@@ -105,6 +105,14 @@ public interface DataModel {
      */
     DataAppender getDataAppender();
 
+    /**
+     * Get feature appender.
+     *
+     * @return  the feature appender of data model
+     */
+//    public FeatureAppender getFeatureAppender();
+    FeatureAppender getFeatureAppender();
+
 
     /**
      * Get data Context.

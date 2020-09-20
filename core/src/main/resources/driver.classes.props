@@ -126,6 +126,7 @@ recall=net.librec.eval.ranking.RecallEvaluator
 rr=net.librec.eval.ranking.ReciprocalRankEvaluator
 novelty=net.librec.eval.ranking.NoveltyEvaluator
 entropy=net.librec.eval.ranking.EntropyEvaluator
+icov=net.librec.eval.ranking.ItemCoverageEvaluator
 mae=net.librec.eval.rating.MAEEvaluator
 mpe=net.librec.eval.rating.MPEEvaluator
 mse=net.librec.eval.rating.MSEEvaluator

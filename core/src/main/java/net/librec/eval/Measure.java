@@ -42,6 +42,7 @@ public enum Measure {
     RR(ReciprocalRankEvaluator.class),
     Novelty(NoveltyEvaluator.class),
     Entropy(EntropyEvaluator.class),
+    ICOV(ItemCoverageEvaluator.class),
     RMSE(RMSEEvaluator.class),
     MSE(MSEEvaluator.class),
     MAE(MAEEvaluator.class),
@@ -80,6 +81,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(RR, 10));
             rankingEnumList.add(new MeasureValue(Novelty, 10));
             rankingEnumList.add(new MeasureValue(Entropy, 10));
+            rankingEnumList.add(new MeasureValue(ICOV, 10));
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -89,6 +91,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(RR, topN));
             rankingEnumList.add(new MeasureValue(Novelty, topN));
             rankingEnumList.add(new MeasureValue(Entropy, topN));
+            rankingEnumList.add(new MeasureValue(ICOV, topN));
         }
         return rankingEnumList;
     }
