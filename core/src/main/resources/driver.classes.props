@@ -136,5 +136,7 @@ sp=net.librec.eval.fairness.StatisticalParityEvaluator
 miscalib=net.librec.eval.fairness.MiscalibrationEvaluator
 dppf=net.librec.eval.fairness.DiscountedProportionalPFairnessEvaluator
 dpcf=net.librec.eval.fairness.DiscountedProportionalCFairnessEvaluator
+nonpar=net.librec.eval.fairness.NonParityUnfairnessEvaluator
+valunfairness=net.librec.eval.fairness.ValueUnfairnessEvaluator
 #Filter(-filter)
 generic=net.librec.filter.GenericRecommendedFilter
