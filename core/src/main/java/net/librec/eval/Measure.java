@@ -17,6 +17,8 @@
  */
 package net.librec.eval;
 
+import net.librec.eval.fairness.DiscountedProportionalCFairnessEvaluator;
+import net.librec.eval.fairness.DiscountedProportionalPFairnessEvaluator;
 import net.librec.eval.fairness.MiscalibrationEvaluator;
 import net.librec.eval.fairness.StatisticalParityEvaluator;
 import net.librec.eval.ranking.*;
@@ -50,7 +52,9 @@ public enum Measure {
     MAE(MAEEvaluator.class),
     MPE(MPEEvaluator.class),
     SP(StatisticalParityEvaluator.class),
-    MISCALIB(MiscalibrationEvaluator.class);
+    MISCALIB(MiscalibrationEvaluator.class),
+    DPCF(DiscountedProportionalCFairnessEvaluator.class),
+    DPPF(DiscountedProportionalPFairnessEvaluator.class);
 
     private Class<? extends RecommenderEvaluator> evaluatorClass;
 
@@ -88,6 +92,8 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(ICOV, 10));
             rankingEnumList.add(new MeasureValue(SP, 10));
             rankingEnumList.add(new MeasureValue(MISCALIB, 10));
+            rankingEnumList.add(new MeasureValue(DPCF, 10));
+            rankingEnumList.add(new MeasureValue(DPPF, 10));
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -100,6 +106,8 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(ICOV, topN));
             rankingEnumList.add(new MeasureValue(SP, topN));
             rankingEnumList.add(new MeasureValue(MISCALIB, topN));
+            rankingEnumList.add(new MeasureValue(DPCF, topN));
+            rankingEnumList.add(new MeasureValue(DPPF, topN));
         }
         return rankingEnumList;
     }
