@@ -138,5 +138,8 @@ dppf=net.librec.eval.fairness.DiscountedProportionalPFairnessEvaluator
 dpcf=net.librec.eval.fairness.DiscountedProportionalCFairnessEvaluator
 nonpar=net.librec.eval.fairness.NonParityUnfairnessEvaluator
 valunfairness=net.librec.eval.fairness.ValueUnfairnessEvaluator
+absunfairness=net.librec.eval.fairness.AbsoluteUnfairnessEvaluator
+overestimate=net.librec.eval.fairness.OverestimationUnfairnessEvaluator
+underestimate=net.librec.eval.fairness.UnderestimationUnfairnessEvaluator
 #Filter(-filter)
 generic=net.librec.filter.GenericRecommendedFilter

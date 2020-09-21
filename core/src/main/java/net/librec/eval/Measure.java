@@ -53,7 +53,10 @@ public enum Measure {
     DPCF(DiscountedProportionalCFairnessEvaluator.class),
     DPPF(DiscountedProportionalPFairnessEvaluator.class),
     NONPAR(NonParityUnfairnessEvaluator.class),
-    VALUNFAIRNESS(ValueUnfairnessEvaluator.class);
+    VALUNFAIRNESS(ValueUnfairnessEvaluator.class),
+    ABSUNFAIRNESS(ValueUnfairnessEvaluator.class),
+    OVERESTIMATE(OverestimationUnfairnessEvaluator.class),
+    UNDERESTIMATE(UnderestimationUnfairnessEvaluator.class);
 
     private Class<? extends RecommenderEvaluator> evaluatorClass;
 
@@ -94,7 +97,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(DPCF, 10));
             rankingEnumList.add(new MeasureValue(DPPF, 10));
             rankingEnumList.add(new MeasureValue(NONPAR, 10));
-            rankingEnumList.add(new MeasureValue(VALUNFAIRNESS, 10));
+
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -110,7 +113,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(DPCF, topN));
             rankingEnumList.add(new MeasureValue(DPPF, topN));
             rankingEnumList.add(new MeasureValue(NONPAR, topN));
-            rankingEnumList.add(new MeasureValue(VALUNFAIRNESS, topN));
+
         }
         return rankingEnumList;
     }
@@ -126,6 +129,12 @@ public enum Measure {
         ratingEnumList.add(new MeasureValue(MSE));
         ratingEnumList.add(new MeasureValue(MAE));
         ratingEnumList.add(new MeasureValue(MPE));
+        // fairness metrics
+        ratingEnumList.add(new MeasureValue(VALUNFAIRNESS));
+        ratingEnumList.add(new MeasureValue(ABSUNFAIRNESS));
+        ratingEnumList.add(new MeasureValue(OVERESTIMATE));
+        ratingEnumList.add(new MeasureValue(UNDERESTIMATE));
+
         return ratingEnumList;
     }
 
