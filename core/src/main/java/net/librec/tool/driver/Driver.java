@@ -15,7 +15,8 @@ public class Driver {
 
     // needs to point to the configuration file
 //    public static String CONFIG_FILE = "./Users/naso1989/Downloads/librec-3.0.0 (1)/librec-3.0.0/conf/biased_mf.properties";
-    public static String CONFIG_FILE = "./conf/biased_mf.properties";
+//    public static String CONFIG_FILE = "./conf/biased_mf.properties";
+    public static String CONFIG_FILE = "/Users/naso1989/Downloads/librec/conf/biased_mf.properties";
 
     public static void writeFile(String outlog, String mystr) throws IOException {
         PrintWriter pw = new PrintWriter(new FileWriter(outlog, true));
