@@ -16,14 +16,15 @@ public class Driver {
     // needs to point to the configuration file
 //    public static String CONFIG_FILE = "./Users/naso1989/Downloads/librec-3.0.0 (1)/librec-3.0.0/conf/biased_mf.properties";
 //    public static String CONFIG_FILE = "./conf/biased_mf.properties";
-    public static String CONFIG_FILE = "/Users/naso1989/Downloads/librec/conf/biased_mf.properties";
+//    public static String CONFIG_FILE = "/Users/naso1989/Downloads/librec/conf/biased_mf.properties";
+    public static String CONFIG_FILE = "/Users/naso1989/Downloads/librec/conf/config-fair.properties";
 
-    public static void writeFile(String outlog, String mystr) throws IOException {
-        PrintWriter pw = new PrintWriter(new FileWriter(outlog, true));
-        pw.write(mystr + "\n");
-        pw.close();
-        System.out.println("Saved Config setting into file" + outlog);
-    }
+//    public static void writeFile(String outlog, String mystr) throws IOException {
+//        PrintWriter pw = new PrintWriter(new FileWriter(outlog, true));
+//        pw.write(mystr + "\n");
+//        pw.close();
+//        System.out.println("Saved Config setting into file" + outlog);
+//    }
 
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
@@ -50,7 +51,7 @@ public class Driver {
         outlog = conf.get("data.log.out.path");
 
         //save it to file
-        writeFile(outlog, all);
+//        writeFile(outlog, all);
 
 //        System.out.print("Finished");
     }
