@@ -43,6 +43,8 @@ public enum Measure {
     RR(ReciprocalRankEvaluator.class),
     Novelty(NoveltyEvaluator.class),
     Entropy(EntropyEvaluator.class),
+    Diversity(DiversityEvaluator.class),
+    FeatureDiversity(DiversityByFeaturesEvaluator.class),
     ICOV(ItemCoverageEvaluator.class),
     RMSE(RMSEEvaluator.class),
     MSE(MSEEvaluator.class),
@@ -56,7 +58,8 @@ public enum Measure {
     VALUNFAIRNESS(ValueUnfairnessEvaluator.class),
     ABSUNFAIRNESS(ValueUnfairnessEvaluator.class),
     OVERESTIMATE(OverestimationUnfairnessEvaluator.class),
-    UNDERESTIMATE(UnderestimationUnfairnessEvaluator.class);
+    UNDERESTIMATE(UnderestimationUnfairnessEvaluator.class)
+    ;
 
     private Class<? extends RecommenderEvaluator> evaluatorClass;
 
@@ -89,6 +92,9 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(AP, 10));
             rankingEnumList.add(new MeasureValue(NDCG, 10));
             rankingEnumList.add(new MeasureValue(RR, 10));
+            rankingEnumList.add(new MeasureValue(Diversity, 10));
+            rankingEnumList.add(new MeasureValue(FeatureDiversity, 10));
+            rankingEnumList.add(new MeasureValue(RR, 10));
             rankingEnumList.add(new MeasureValue(Novelty, 10));
             rankingEnumList.add(new MeasureValue(Entropy, 10));
             rankingEnumList.add(new MeasureValue(ICOV, 10));
@@ -97,7 +103,6 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(DPCF, 10));
             rankingEnumList.add(new MeasureValue(DPPF, 10));
             rankingEnumList.add(new MeasureValue(NONPAR, 10));
-
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -105,6 +110,8 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(AP, topN));
             rankingEnumList.add(new MeasureValue(NDCG, topN));
             rankingEnumList.add(new MeasureValue(RR, topN));
+            rankingEnumList.add(new MeasureValue(Diversity, topN));
+            rankingEnumList.add(new MeasureValue(FeatureDiversity, topN));
             rankingEnumList.add(new MeasureValue(Novelty, topN));
             rankingEnumList.add(new MeasureValue(Entropy, topN));
             rankingEnumList.add(new MeasureValue(ICOV, topN));
@@ -113,7 +120,6 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(DPCF, topN));
             rankingEnumList.add(new MeasureValue(DPPF, topN));
             rankingEnumList.add(new MeasureValue(NONPAR, topN));
-
         }
         return rankingEnumList;
     }

@@ -162,22 +162,51 @@ public class RecommenderJob {
      *
      * @param context recommender context
      */
+//    private void generateSimilarity(RecommenderContext context) {
+//        String[] similarityKeys = conf.getStrings("rec.recommender.similarities");
+//        if (similarityKeys != null && similarityKeys.length > 0) {
+//            for (int i = 0; i < similarityKeys.length; i++) {
+//                if (getSimilarityClass() != null) {
+//                    RecommenderSimilarity similarity = ReflectionUtil.newInstance(getSimilarityClass(), conf);
+//                    conf.set("rec.recommender.similarity.key", similarityKeys[i]);
+//                    similarity.buildSimilarityMatrix(dataModel);
+//                    if (i == 0) {
+//                        context.setSimilarity(similarity);
+//                    }
+//                    context.addSimilarities(similarityKeys[i], similarity);
+//                }
+//            }
+//        }
+//    }
+
+    /**
+     * Generate similarity.
+     * handle cases when more than one similarity class is passed.
+     *
+     * @param context recommender context
+     *
+     * @author edited by Nasim
+     */
+
     private void generateSimilarity(RecommenderContext context) {
         String[] similarityKeys = conf.getStrings("rec.recommender.similarities");
         if (similarityKeys != null && similarityKeys.length > 0) {
-            for (int i = 0; i < similarityKeys.length; i++) {
-                if (getSimilarityClass() != null) {
-                    RecommenderSimilarity similarity = ReflectionUtil.newInstance(getSimilarityClass(), conf);
+            for(int i = 0; i < similarityKeys.length; i++){
+                if (getSimilarityClass(i) != null) { // Nasim, we pass a parameter to this
+                    RecommenderSimilarity similarity = ReflectionUtil.newInstance(getSimilarityClass(i), conf);
+
                     conf.set("rec.recommender.similarity.key", similarityKeys[i]);
                     similarity.buildSimilarityMatrix(dataModel);
-                    if (i == 0) {
-                        context.setSimilarity(similarity);
+
+                    if (similarityKeys[i].equals("item") || similarityKeys[i].equals("user")) {
+                        context.setSimilarity(similarity); // setting the default similarity to either item or user.
                     }
-                    context.addSimilarities(similarityKeys[i], similarity);
+                    context.addSimilarities(similarityKeys[i], similarity); // a list of similarity objects (key and matrix and conf)
                 }
             }
         }
     }
+
 
     /**
      * Filter the results.
@@ -374,14 +403,45 @@ public class RecommenderJob {
      *
      * @return similarity class object
      */
+//    @SuppressWarnings("unchecked")
+//    public Class<? extends RecommenderSimilarity> getSimilarityClass() {
+//        try {
+//            return (Class<? extends RecommenderSimilarity>) DriverClassUtil.getClass(conf.get("rec.similarity.class"));
+//        } catch (ClassNotFoundException e) {
+//            return null;
+//        }
+//    }
+
+    /**
+     * Get similarity class
+     * Accepts more than one similarity class
+     * if there is only one similarity class and two similarity keys, calculate both based on this class
+     *
+     * @param i the index of the item in the SimilarityClassKeys array
+     * @return similarity class object
+     * @throws ClassNotFoundException
+     *              if can't find the similarity class
+     *
+     * @author edited by Nasim
+     */
     @SuppressWarnings("unchecked")
-    public Class<? extends RecommenderSimilarity> getSimilarityClass() {
+    public Class<? extends RecommenderSimilarity> getSimilarityClass(int i) {
+
+        String[] similarityClassKeys = conf.getStrings("rec.similarity.class");
+
         try {
-            return (Class<? extends RecommenderSimilarity>) DriverClassUtil.getClass(conf.get("rec.similarity.class"));
+            if (similarityClassKeys.length >= 2) {
+                return (Class<? extends RecommenderSimilarity>) DriverClassUtil.getClass(similarityClassKeys[i]);
+            } else {
+                return (Class<? extends RecommenderSimilarity>) DriverClassUtil.getClass(similarityClassKeys[0]);
+            }
+
+
         } catch (ClassNotFoundException e) {
             return null;
         }
     }
+
 
     /**
      * Get recommender class. {@code Recommender}.
