@@ -98,22 +98,21 @@ public class StatisticalParityEvaluator extends AbstractRecommenderEvaluator {
                             unprotectedNum++;
                         }
                 }
-                totalProtected += ((double)protectedNum/topK);
-                totalUnprotected += ((double)unprotectedNum/topK);
+                totalProtected += ((double)protectedNum)/topK;
+                totalUnprotected += ((double)unprotectedNum)/topK;
                 nonZeroUsers ++;
             }
         }
 
 
         // SP = (# protected items / protected group size) / (# unprotected items / unprotected group size)
-	    
-        double protectedRatio =  (totalProtected / nonZeroUsers / protectedSize);
-        double unprotectedRatio = (totalUnprotected / nonZeroUsers / unprotectedSize);
+
+        double protectedRatio =  totalProtected / nonZeroUsers;
+        double unprotectedRatio = totalUnprotected / nonZeroUsers;
 
 //        double relativeChance = protectedRatio / unprotectedRatio;
 //        return relativeChance;
 
-        return (protectedRatio - unprotectedRatio) * 1.0;
-
+        return (protectedRatio - unprotectedRatio);
     }
 }
