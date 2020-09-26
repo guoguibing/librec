@@ -24,6 +24,7 @@ import net.librec.data.convertor.TextDataConvertor;
 import net.librec.math.structure.DataSet;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * A <tt>TextDataModel</tt> represents a data access class to the CSV format
@@ -67,6 +68,8 @@ public class TextDataModel extends AbstractDataModel {
             dataConvertor.processData();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
     }
 

@@ -23,6 +23,7 @@ import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.math.structure.SparseTensor;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * A <tt>DataConvertor</tt> is an interface to convert
@@ -37,7 +38,7 @@ public interface DataConvertor {
      *
      * @throws IOException if the path is not valid
      */
-    void processData() throws IOException;
+    void processData() throws IOException, SQLException;
 
     /**
      * Returns a {@code SparseMatrix} object which stores rate data.

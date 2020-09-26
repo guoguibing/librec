@@ -19,35 +19,85 @@ package net.librec.data.model;
 
 import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
+import net.librec.conf.Configuration;
+import net.librec.data.convertor.JDBCDataConvertor;
 import net.librec.math.structure.DataSet;
 
+import java.io.IOException;
+import java.sql.SQLException;
+
 /**
- * JDBC Data Model
+ * A <tt>JDBCDataModel</tt> represents a data access class to the database format
+ * input.
+ *
+ * @author Jiajingzhe
  */
 public class JDBCDataModel extends AbstractDataModel {
 
+    /**
+     * Empty constructor.
+     */
+    public JDBCDataModel() {
+    }
+    /**
+     * Initializes a newly created {@code JDBCDataModel} object with
+     * configuration.
+     *
+     * @param conf the configuration for the model.
+     */
+    public JDBCDataModel(Configuration conf) {
+        this.conf = conf;
+    }
+
+    /**
+     * Build Convert.
+     *
+     * @throws LibrecException if error occurs during building
+     */
     @Override
     protected void buildConvert() throws LibrecException {
-        // TODO Auto-generated method stub
+        String driverName = conf.get("data.convert.jbdc.driverName","com.mysql.jdbc.Driver"); // The default is mysql
+        String URL = conf.get("data.convert.jbdc.URL");
+        String user = conf.get("data.convert.jbdc.user");
+        String password = conf.get("data.convert.jbdc.password");
+        String tableName = conf.get("data.convert.jbdc.tableName");
+        String userColName = conf.get("data.convert.jbdc.userColName");
+        String itemColName = conf.get("data.convert.jbdc.itemColName");
+        String ratingColName =conf.get("data.convert.jbdc.ratingColName");
+        String datetimeColName = conf.get("data.convert.jbdc.datetimeColName"," ");
+
+        dataConvertor = new JDBCDataConvertor(driverName,URL,user,password,tableName,userColName,itemColName,ratingColName,datetimeColName);
+        try{
+            dataConvertor.processData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
 
     }
 
+    /**
+     * Load data model.
+     *
+     * @throws LibrecException if error occurs during loading
+     */
     @Override
-    public BiMap<String, Integer> getUserMappingData() {
-        // TODO Auto-generated method stub
-        return null;
+    public void loadDataModel() throws LibrecException {
+
     }
 
+    /**
+     * Save data model.
+     *
+     * @throws LibrecException if error occurs during saving
+     */
     @Override
-    public BiMap<String, Integer> getItemMappingData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    public void saveDataModel() throws LibrecException {
 
+    }
     @Override
     public DataSet getDatetimeDataSet() {
-        // TODO Auto-generated method stub
-        return null;
+        return dataConvertor.getDatetimeMatrix();
     }
-
 }
