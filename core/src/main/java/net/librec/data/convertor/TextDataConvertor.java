@@ -98,7 +98,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     }
 
     public TextDataConvertor(String dataColumnFormat, String inputDataPath) {
-        this(dataColumnFormat, inputDataPath, " ");
+        this(dataColumnFormat, inputDataPath, ",");
     }
 
     public TextDataConvertor(String[] header, String[] attr, String inputDataPath, String sep) {
