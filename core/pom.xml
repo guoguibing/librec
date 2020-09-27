@@ -15,6 +15,9 @@
 
 	<properties>
 		<jar.commons-logging.version>1.2</jar.commons-logging.version>
+		<mysql-jdbc.version>5.1.47</mysql-jdbc.version>
+		<hadoop.version>3.3.0</hadoop.version>
+		<hive-jdbc.version>3.1.2</hive-jdbc.version>
 	</properties>
 
 	<dependencies>
@@ -76,5 +79,25 @@
 			<artifactId>nd4j-native-platform</artifactId>
 			<version>${nd4j.version}</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>${mysql-jdbc.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.hive/hive-jdbc -->
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-jdbc</artifactId>
+			<version>${hive-jdbc.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common -->
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-common</artifactId>
+			<version>${hadoop.version}</version>
+		</dependency>
+
+
 	</dependencies>
 </project>
