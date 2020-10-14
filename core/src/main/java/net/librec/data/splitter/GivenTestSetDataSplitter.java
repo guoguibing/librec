@@ -27,6 +27,7 @@ import net.librec.math.structure.MatrixEntry;
 import net.librec.math.structure.SequentialAccessSparseMatrix;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * Given Test Set Data Splitter<br>
@@ -87,6 +88,8 @@ public class GivenTestSetDataSplitter extends AbstractDataSplitter {
             testConvertor.processData();
         }catch (IOException e) {
             e.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
 
         testMatrix = testConvertor.getPreferenceMatrix(conf);

@@ -89,7 +89,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
 
     /**
      * Initializes a newly created {@code TextDataConvertor} object with the
-     * path of the input data file.
+     * path of the input data file.The delimiter of this file defaults to ","
      *
      * @param inputDataPath the path of the input data file
      */
@@ -98,7 +98,7 @@ public class TextDataConvertor extends AbstractDataConvertor {
     }
 
     public TextDataConvertor(String dataColumnFormat, String inputDataPath) {
-        this(dataColumnFormat, inputDataPath, " ");
+        this(dataColumnFormat, inputDataPath, ",");
     }
 
     public TextDataConvertor(String[] header, String[] attr, String inputDataPath, String sep) {
