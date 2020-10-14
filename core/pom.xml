@@ -15,7 +15,7 @@
 
 	<properties>
 		<jar.commons-logging.version>1.2</jar.commons-logging.version>
-		<mysql-jdbc.version>5.1.47</mysql-jdbc.version>
+		<mysql-jdbc.version>8.0.16</mysql-jdbc.version>
 		<hadoop.version>3.3.0</hadoop.version>
 		<hive-jdbc.version>3.1.2</hive-jdbc.version>
 	</properties>
