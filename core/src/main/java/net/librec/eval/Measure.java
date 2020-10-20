@@ -51,6 +51,7 @@ public enum Measure {
     MAE(MAEEvaluator.class),
     MPE(MPEEvaluator.class),
     SP(StatisticalParityEvaluator.class),
+    PPR(PPercentRuleEvaluator.class),
     MISCALIB(MiscalibrationEvaluator.class),
     DPCF(DiscountedProportionalCFairnessEvaluator.class),
     DPPF(DiscountedProportionalPFairnessEvaluator.class),
@@ -99,6 +100,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(Entropy, 10));
             rankingEnumList.add(new MeasureValue(ICOV, 10));
             rankingEnumList.add(new MeasureValue(SP, 10));
+            rankingEnumList.add(new MeasureValue(PPR, 10));
             rankingEnumList.add(new MeasureValue(MISCALIB, 10));
             rankingEnumList.add(new MeasureValue(DPCF, 10));
             rankingEnumList.add(new MeasureValue(DPPF, 10));
@@ -116,6 +118,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(Entropy, topN));
             rankingEnumList.add(new MeasureValue(ICOV, topN));
             rankingEnumList.add(new MeasureValue(SP, topN));
+            rankingEnumList.add(new MeasureValue(PPR, topN));
             rankingEnumList.add(new MeasureValue(MISCALIB, topN));
             rankingEnumList.add(new MeasureValue(DPCF, topN));
             rankingEnumList.add(new MeasureValue(DPPF, topN));
