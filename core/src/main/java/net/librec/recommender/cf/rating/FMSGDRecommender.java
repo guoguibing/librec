@@ -95,11 +95,11 @@ public class FMSGDRecommender extends FactorizationMachineRecommender {
                         double xl = ve.get();
                         for (VectorEntry ve2 : vector) {
                             int j = ve2.index();
-                            if (j != l) {
-                                hVlf += xl * V.get(j, f) * ve2.get();
-                            }
+                            hVlf += xl * V.get(j, f) * ve2.get();
                         }
 
+                        hVlf -= V.get(l,f)*xl*xl;
+                        
                         double gradVlf = gradLoss * hVlf + regF * oldVlf;
                         V.plus(l, f, -learnRate * gradVlf);
                         loss += regF * oldVlf * oldVlf;
