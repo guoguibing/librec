@@ -131,9 +131,7 @@ public class PPercentRuleEvaluator extends AbstractRecommenderEvaluator {
         double unprotectedRatio = (totalUnprotected / unprotectedSize);
 
         // We could only use the number of pro/unpro and unpro/pro without considering the group sizes of + and - groups.
-        System.out.println(protectedRatio/unprotectedRatio*100.0);
-        System.out.println(unprotectedRatio/protectedRatio*100.0);
-        double ppr = Math.min(protectedRatio/unprotectedRatio, unprotectedRatio/protectedRatio) * 100.0;
+        double ppr = Math.min(protectedRatio/unprotectedRatio, unprotectedRatio/protectedRatio);
         return ppr;
 
     }
