@@ -133,6 +133,5 @@ public class PPercentRuleEvaluator extends AbstractRecommenderEvaluator {
         // We could only use the number of pro/unpro and unpro/pro without considering the group sizes of + and - groups.
         double ppr = Math.min(protectedRatio/unprotectedRatio, unprotectedRatio/protectedRatio);
         return ppr;
-
     }
 }

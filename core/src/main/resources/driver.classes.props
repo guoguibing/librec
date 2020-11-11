@@ -128,6 +128,7 @@ diversity=net.librec.ranking.DiversityEvaluator
 featurediversity=net.librec.ranking.DiversityByFeaturesEvaluator
 novelty=net.librec.eval.ranking.NoveltyEvaluator
 entropy=net.librec.eval.ranking.EntropyEvaluator
+giniindex=net.librec.eval.ranking.GiniIndexEvaluator
 icov=net.librec.eval.ranking.ItemCoverageEvaluator
 mae=net.librec.eval.rating.MAEEvaluator
 mpe=net.librec.eval.rating.MPEEvaluator

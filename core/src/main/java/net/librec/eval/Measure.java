@@ -43,6 +43,7 @@ public enum Measure {
     RR(ReciprocalRankEvaluator.class),
     Novelty(NoveltyEvaluator.class),
     Entropy(EntropyEvaluator.class),
+    GiniIndex(GiniIndexEvaluator.class),
     Diversity(DiversityEvaluator.class),
     FeatureDiversity(DiversityByFeaturesEvaluator.class),
     ICOV(ItemCoverageEvaluator.class),
@@ -98,6 +99,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(RR, 10));
             rankingEnumList.add(new MeasureValue(Novelty, 10));
             rankingEnumList.add(new MeasureValue(Entropy, 10));
+            rankingEnumList.add(new MeasureValue(GiniIndex, 10));
             rankingEnumList.add(new MeasureValue(ICOV, 10));
             rankingEnumList.add(new MeasureValue(SP, 10));
             rankingEnumList.add(new MeasureValue(PPR, 10));
@@ -116,6 +118,7 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(FeatureDiversity, topN));
             rankingEnumList.add(new MeasureValue(Novelty, topN));
             rankingEnumList.add(new MeasureValue(Entropy, topN));
+            rankingEnumList.add(new MeasureValue(GiniIndex, topN));
             rankingEnumList.add(new MeasureValue(ICOV, topN));
             rankingEnumList.add(new MeasureValue(SP, topN));
             rankingEnumList.add(new MeasureValue(PPR, topN));
