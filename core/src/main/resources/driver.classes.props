@@ -55,6 +55,7 @@ rankals=net.librec.recommender.cf.ranking.RankALSRecommender
 rankpmf=net.librec.recommender.cf.ranking.RankPMFRecommender
 ranksgd=net.librec.recommender.cf.ranking.RankSGDRecommender
 slim=net.librec.recommender.cf.ranking.SLIMRecommender
+blnslim=net.librec.recommender.cf.ranking.BLNSLIMFastRecommender
 wbpr=net.librec.recommender.cf.ranking.WBPRRecommender
 wrmf=net.librec.recommender.cf.ranking.WRMFRecommender
 asvdpp=net.librec.recommender.cf.rating.ASVDPlusPlusRecommender
