@@ -67,7 +67,7 @@ public class DiscountedProportionalPFairnessEvaluator extends AbstractRecommende
 
         itemFeatureMatrix = getDataModel().getFeatureAppender().getItemFeatures();
         BiMap<String, Integer> featureIdMapping = getDataModel().getFeatureAppender().getItemFeatureMap();
-
+        double minUtility = 1 / Maths.log(this.topN + 1, 2);
 
 
 
@@ -121,8 +121,12 @@ public class DiscountedProportionalPFairnessEvaluator extends AbstractRecommende
         }
 
         // sum DCG over all the groups/features
+        // for zero utility, set a tiny smoothing value to avoid log(0)
         double sumDCG = 0.0;
         for (int fId = 0; fId < numFeatures; fId ++)  {
+            if (itemFeatureDCGs.get(fId) == 0.0) {
+                itemFeatureDCGs.set(fId, minUtility);
+            }
             sumDCG += itemFeatureDCGs.get(fId);
         }
 

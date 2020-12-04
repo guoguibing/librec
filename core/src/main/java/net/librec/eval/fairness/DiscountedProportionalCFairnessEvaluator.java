@@ -65,6 +65,7 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
     public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
         userFeatureMatrix = getDataModel().getFeatureAppender().getUserFeatures();
         BiMap<String, Integer> featureIdMapping = getDataModel().getFeatureAppender().getUserFeatureMap();
+        double minUtility = 1 / Maths.log(this.topN + 1, 2);
 
 //        int numUsers = userFeatureMatrix.numRows();
         int numUsers = groundTruthList.size();
@@ -118,6 +119,9 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
 
         double sumDCG = 0.0;
         for (int fId = 0; fId < numFeatures; fId ++)  {
+            if (userFeatureDCGs.get(fId) == 0.0) {
+                userFeatureDCGs.set(fId, minUtility);
+            }
             sumDCG += userFeatureDCGs.get(fId);
         }
 
@@ -131,3 +135,12 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
         return dpf;
     }
 }
+
+// log(1/2) + log(1/2) = -1 + -1 = -2
+// log(1/4) + log(3/4) = -2 + log(3/4) = -2 + (negative)
+
+// log(0) + log(1) = -Inf + 0 =
+
+// log(1/k / SUM) + log((sum - 1/k)/sum) = worst possible non-infinite result
+
+// if utility = 0, then let utility for 0 group = 1/(k+1).
