@@ -71,17 +71,22 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
         int numUsers = groundTruthList.size();
 //        int numFeatures = userFeatureMatrix.numColumns();
         int numFeatures = userFeatureMatrix.columnSize();
+        int protectedId = 0;
 
         // initialize with zeros.
-        List<Double> userFeatureDCGs = new ArrayList<>(Collections.nCopies(numFeatures + 1,0.0));
+//        List<Double> userFeatureDCGs = new ArrayList<>(Collections.nCopies(numFeatures + 1,0.0));
 
         //protected users
         String protectedAttribute = "";
         if (conf != null && StringUtils.isNotBlank(conf.get("data.protected.feature"))) {
             protectedAttribute = conf.get("data.protected.feature");
+            protectedId = featureIdMapping.get(protectedAttribute);
+        } else {
+            return 0;
         }
 
-
+        double proDCG = 0.0;
+        double unproDCG = 0.0;
         for (int userID = 0; userID < numUsers; userID++) {
 //            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userID);
             Set<Integer> testSetByUser = groundTruthList.getKeySetByContext(userID);
@@ -105,33 +110,48 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
 
 
                 // Does user belongs to the protected group or not
-                for (int featureId = 0; featureId < numFeatures; featureId ++) {
-                    if (userFeatureMatrix.get(userID, featureId) == 1) {
-                        if (featureId == featureIdMapping.get(protectedAttribute)) {
-                            userFeatureDCGs.set(featureId, userFeatureDCGs.get(featureId) + dcg);
-                        } else {
-                            userFeatureDCGs.set(featureId, userFeatureDCGs.get(featureId) + dcg);
-                        }
-                    }
+//                for (int featureId = 0; featureId < numFeatures; featureId ++) {
+//                    if (userFeatureMatrix.get(userID, featureId) == 1) {
+//                        if (featureId == featureIdMapping.get(protectedAttribute)) {
+//                            userFeatureDCGs.set(featureId, userFeatureDCGs.get(featureId) + dcg);
+//                        } else {
+//                            userFeatureDCGs.set(featureId, userFeatureDCGs.get(featureId) + dcg);
+//                        }
+//                    }
+//                }
+
+                if (userFeatureMatrix.get(userID, protectedId) == 1) {
+                    proDCG += dcg;
+                } else {
+                    unproDCG += dcg;
                 }
             }
         }
 
         double sumDCG = 0.0;
-        for (int fId = 0; fId < numFeatures; fId ++)  {
-            if (userFeatureDCGs.get(fId) == 0.0) {
-                userFeatureDCGs.set(fId, minUtility);
-            }
-            sumDCG += userFeatureDCGs.get(fId);
+//        for (int fId = 0; fId < numFeatures; fId ++)  {
+//            if (userFeatureDCGs.get(fId) == 0.0) {
+//                userFeatureDCGs.set(fId, minUtility);
+//            }
+//            sumDCG += userFeatureDCGs.get(fId);
+//        }
+        if (proDCG == 0.0) {
+            proDCG = minUtility;
         }
+        if (unproDCG == 0) {
+            unproDCG = minUtility;
+        }
+        sumDCG = proDCG + unproDCG;
+
 
         double dpf = 0.0;
-        for (int featureId = 0; featureId < numFeatures; featureId ++) {
-//            String f = featureIdMapping.inverse().get(featureId);
-            double fDCG = userFeatureDCGs.get(featureId);
-
-            dpf += Maths.log((fDCG/sumDCG), 2);
-        }
+        dpf = Maths.log((proDCG/sumDCG),2) + Maths.log((unproDCG/sumDCG),2);
+//        for (int featureId = 0; featureId < numFeatures; featureId ++) {
+////            String f = featureIdMapping.inverse().get(featureId);
+//            double fDCG = userFeatureDCGs.get(featureId);
+//
+//            dpf += Maths.log((fDCG/sumDCG), 2);
+//        }
         return dpf;
     }
 }
