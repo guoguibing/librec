@@ -60,21 +60,16 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
      * @return evaluate result
      */
 
-
-//    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
     public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
         userFeatureMatrix = getDataModel().getFeatureAppender().getUserFeatures();
         BiMap<String, Integer> featureIdMapping = getDataModel().getFeatureAppender().getUserFeatureMap();
         double minUtility = 1 / Maths.log(this.topN + 1, 2);
 
-//        int numUsers = userFeatureMatrix.numRows();
+
         int numUsers = groundTruthList.size();
-//        int numFeatures = userFeatureMatrix.numColumns();
         int numFeatures = userFeatureMatrix.columnSize();
         int protectedId = 0;
 
-        // initialize with zeros.
-//        List<Double> userFeatureDCGs = new ArrayList<>(Collections.nCopies(numFeatures + 1,0.0));
 
         //protected users
         String protectedAttribute = "";
@@ -88,13 +83,11 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
         double proDCG = 0.0;
         double unproDCG = 0.0;
         for (int userID = 0; userID < numUsers; userID++) {
-//            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userID);
             Set<Integer> testSetByUser = groundTruthList.getKeySetByContext(userID);
 
             if (testSetByUser.size() > 0) {
 
                 double dcg = 0.0;
-//                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userID);
                 List<KeyValue<Integer, Double>> recommendListByUser = recommendedList.getKeyValueListByContext(userID);
 
                 // calculate DCG
@@ -108,18 +101,6 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
                     dcg += 1 / Maths.log(rank + 1, 2);
                 }
 
-
-                // Does user belongs to the protected group or not
-//                for (int featureId = 0; featureId < numFeatures; featureId ++) {
-//                    if (userFeatureMatrix.get(userID, featureId) == 1) {
-//                        if (featureId == featureIdMapping.get(protectedAttribute)) {
-//                            userFeatureDCGs.set(featureId, userFeatureDCGs.get(featureId) + dcg);
-//                        } else {
-//                            userFeatureDCGs.set(featureId, userFeatureDCGs.get(featureId) + dcg);
-//                        }
-//                    }
-//                }
-
                 if (userFeatureMatrix.get(userID, protectedId) == 1) {
                     proDCG += dcg;
                 } else {
@@ -129,12 +110,6 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
         }
 
         double sumDCG = 0.0;
-//        for (int fId = 0; fId < numFeatures; fId ++)  {
-//            if (userFeatureDCGs.get(fId) == 0.0) {
-//                userFeatureDCGs.set(fId, minUtility);
-//            }
-//            sumDCG += userFeatureDCGs.get(fId);
-//        }
         if (proDCG == 0.0) {
             proDCG = minUtility;
         }
@@ -146,12 +121,6 @@ public class DiscountedProportionalCFairnessEvaluator extends AbstractRecommende
 
         double dpf = 0.0;
         dpf = Maths.log((proDCG/sumDCG),2) + Maths.log((unproDCG/sumDCG),2);
-//        for (int featureId = 0; featureId < numFeatures; featureId ++) {
-////            String f = featureIdMapping.inverse().get(featureId);
-//            double fDCG = userFeatureDCGs.get(featureId);
-//
-//            dpf += Maths.log((fDCG/sumDCG), 2);
-//        }
         return dpf;
     }
 }

@@ -23,6 +23,7 @@ import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.recommender.item.KeyValue;
 import net.librec.recommender.item.RecommendedList;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,9 +61,8 @@ public class DiscountedProportionalPFairnessEvaluator extends AbstractRecommende
     /*
     I have to return the dpf for each group.
     How do I know how many groups I have?
-
      */
-//    public double evaluate(SparseMatrix testMatrix, RecommendedList recommendedList) {
+
     public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
 
         itemFeatureMatrix = getDataModel().getFeatureAppender().getItemFeatures();
@@ -70,33 +70,29 @@ public class DiscountedProportionalPFairnessEvaluator extends AbstractRecommende
         double minUtility = 1 / Maths.log(this.topN + 1, 2);
 
 
-
-//        int numUsers = testMatrix.numRows();
         int numUsers = groundTruthList.size();
-//        int numFeatures = itemFeatureMatrix.numColumns();
         int numFeatures = itemFeatureMatrix.columnSize();
-//        int numItems = itemFeatureMatrix.numRows();
         int numItems = itemFeatureMatrix.rowSize();
+        int protectedId = 0;
 
 
-        // initialize with zeros.
-        List<Double> itemFeatureDCGs = new ArrayList<>(Collections.nCopies(numFeatures + 1,0.0));
+        String protectedAttribute = "";
+        if (conf != null && StringUtils.isNotBlank(conf.get("data.protected.feature"))) {
+            protectedAttribute = conf.get("data.protected.feature");
+            protectedId = featureIdMapping.get(protectedAttribute);
+        } else {
+            return 0;
+        }
 
-//        String protectedAttribute = "";
-//        if (conf != null && StringUtils.isNotBlank(conf.get("data.protected.feature"))) {
-//            protectedAttribute = conf.get("data.protected.feature");
-//        }
-
-
+        double proDCG = 0.0;
+        double unproDCG = 0.0;
         // we calcualte the dcg for all the items in a specific group that has been gained from all the users.
         for (int userID = 0; userID < numUsers; userID++) {
-//            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userID);
             Set<Integer> testSetByUser = groundTruthList.getKeySetByContext(userID);
 
             if (testSetByUser.size() > 0) {
 
                 double dcg = 0.0;
-//                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userID);
                 List<KeyValue<Integer, Double>> recommendListByUser = recommendedList.getKeyValueListByContext(userID);
 
                 // calculate DCG
@@ -107,14 +103,13 @@ public class DiscountedProportionalPFairnessEvaluator extends AbstractRecommende
                         continue;
                     }
                     int rank = indexOfItem + 1;
+                    //remove the += since we need the dcg value for every item not for the whole list
                     dcg = 1 / Maths.log(rank + 1, 2);
 
-                    // check to see which group our item belongs to
-                    for (int featureId = 0; featureId < numFeatures; featureId ++) {
-                        if (itemFeatureMatrix.get(itemID, featureId) == 1) {
-                            // itemId or item index? important!
-                            itemFeatureDCGs.set(featureId, itemFeatureDCGs.get(featureId) + dcg); // check to see if this is correct? item id/item index
-                        }
+                    if (itemFeatureMatrix.get(itemID, protectedId) == 1) {
+                        proDCG += dcg;
+                    } else {
+                        unproDCG += dcg;
                     }
                 }
             }
@@ -123,23 +118,17 @@ public class DiscountedProportionalPFairnessEvaluator extends AbstractRecommende
         // sum DCG over all the groups/features
         // for zero utility, set a tiny smoothing value to avoid log(0)
         double sumDCG = 0.0;
-        for (int fId = 0; fId < numFeatures; fId ++)  {
-            if (itemFeatureDCGs.get(fId) == 0.0) {
-                itemFeatureDCGs.set(fId, minUtility);
-            }
-            sumDCG += itemFeatureDCGs.get(fId);
+        if (proDCG == 0.0) {
+            proDCG = minUtility;
         }
+        if (unproDCG == 0) {
+            unproDCG = minUtility;
+        }
+        sumDCG = proDCG + unproDCG;
 
         // after iterating over all the users we calculate average dcg of one group over all the others
         double dpf = 0.0;
-        for (int featureId = 0; featureId < numFeatures; featureId ++) {
-            String f = featureIdMapping.inverse().get(featureId);
-            double fDCG = itemFeatureDCGs.get(featureId);
-//            System.out.println(f);
-//            System.out.println(fDCG);
-
-            dpf += Maths.log((fDCG/sumDCG), 2);
-        }
+        dpf = Maths.log((proDCG/sumDCG),2) + Maths.log((unproDCG/sumDCG),2);
 
         return dpf;
         // NOTE: we can also divide it by the number of items belonging to each feature/category.
