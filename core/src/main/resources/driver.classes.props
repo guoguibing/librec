@@ -136,7 +136,8 @@ mpe=net.librec.eval.rating.MPEEvaluator
 mse=net.librec.eval.rating.MSEEvaluator
 rmse=net.librec.eval.rating.RMSEEvaluator
 #Fairness
-sp=net.librec.eval.fairness.StatisticalParityEvaluator
+csp=net.librec.eval.fairness.CStatisticalParityEvaluator
+psp=net.librec.eval.fairness.PStatisticalParityEvaluator
 miscalib=net.librec.eval.fairness.MiscalibrationEvaluator
 dppf=net.librec.eval.fairness.DiscountedProportionalPFairnessEvaluator
 dpcf=net.librec.eval.fairness.DiscountedProportionalCFairnessEvaluator

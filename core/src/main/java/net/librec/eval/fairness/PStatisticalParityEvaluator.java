@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.List;
 import java.util.Set;
 
-public class StatisticalParityEvaluator extends AbstractRecommenderEvaluator {
+public class PStatisticalParityEvaluator extends AbstractRecommenderEvaluator {
 
     /** LOG */
     protected final Log LOG = LogFactory.getLog(this.getClass());
