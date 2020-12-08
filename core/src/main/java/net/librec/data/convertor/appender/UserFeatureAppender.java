@@ -86,6 +86,22 @@ public class UserFeatureAppender extends Configured implements FeatureAppender {
     }
 
     /**
+     *
+     * is a variable Integer or not?
+     *
+     * @param str
+     * @return boolean value
+     */
+    public static boolean isInteger(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+    /**
      * Adapted from SocialDataAppender.java
      *
      * @param inputDataPath
@@ -138,6 +154,11 @@ public class UserFeatureAppender extends Configured implements FeatureAppender {
                         String[] data = line.trim().split("[ \t,]+");
                         String outerUser = data[0];
                         String outerFeature = data[1];
+
+                        // output a warning if the input is not Integer
+                        if (!isInteger(data[2])) {
+                            LOG.info("In UserFeatureAppender, Integer value is expected.");
+                        }
                         int value = (data.length >= 3) ? Integer.valueOf(data[2]) : 1;
 
                         // build featureMap
