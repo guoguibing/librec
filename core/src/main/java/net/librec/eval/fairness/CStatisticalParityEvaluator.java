@@ -102,9 +102,20 @@ public class CStatisticalParityEvaluator extends AbstractRecommenderEvaluator {
             }
         }
 
+        double res = 0.0;
+        if (protectedSize == 0 && unprotectedSize == 0) {
+            res = 0.0;
+        }
+        if (protectedSize == 0 && unprotectedSize > 0) {
+            res = -1.0*(totalPrecisionUnpro / unprotectedSize);
+        }
+        if (protectedSize > 0 && unprotectedSize == 0) {
+            res = (totalPrecisionPro / protectedSize)*1.0;
+        }
+        if (protectedSize > 0 && unprotectedSize > 0) {
+            res = ((totalPrecisionPro / protectedSize) - (totalPrecisionUnpro / unprotectedSize))*1.0;
+        }
 
-        return (protectedSize > 0 && unprotectedSize > 0) ? (
-                (totalPrecisionPro / protectedSize) - (totalPrecisionUnpro / unprotectedSize)) * 1.0: 0.0d;
-
+        return res;
     }
 }
