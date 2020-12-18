@@ -82,7 +82,7 @@ public abstract class IncrementalRatingRecommender extends IncrementalRecommende
      *
      */
     public double getLearnRate() {
-        return this.regularization;
+        return this.learnRate;
     }
     public void setLearnRate(double learnRate){
         this.learnRate = learnRate;

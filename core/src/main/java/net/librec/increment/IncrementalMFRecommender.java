@@ -219,7 +219,7 @@ public abstract class IncrementalMFRecommender extends IncrementalRatingRecommen
      *
      */
     public double getLearnRate() {
-        return this.regularization;
+        return this.learnRate;
     }
     public void setLearnRate(double learnRate){
         this.learnRate = learnRate;
