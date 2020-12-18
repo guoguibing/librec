@@ -20,6 +20,7 @@ package net.librec.recommender.cf.ranking;
 
 import com.google.common.collect.BiMap;
 import net.librec.common.LibrecException;
+import net.librec.math.algorithm.Randoms;
 import net.librec.math.structure.SequentialSparseVector;
 import net.librec.recommender.MatrixFactorizationRecommender;
 
@@ -118,11 +119,9 @@ public class PNMFRecommender extends MatrixFactorizationRecommender{
     private void initMatrix(double[][] m) {
         double initValue = 1d / (numItems * 2d);
 
-        Random random = new Random(123456789L);
-
         for (int i = 0; i < m.length; i++){
             for (int j = 0; j < m[i].length; j++){
-                m[i][j] = (random.nextDouble() + 1) * initValue;
+                m[i][j] = (Randoms.uniform() + 1) * initValue;
             }
         }
     }

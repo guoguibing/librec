@@ -18,6 +18,7 @@
 package net.librec.recommender.content;
 
 import lombok.NonNull;
+import net.librec.math.algorithm.Randoms;
 import org.datavec.api.util.RandomUtils;
 import org.nd4j.linalg.primitives.Pair;
 
@@ -41,7 +42,7 @@ public class ConvMFDocumentProvider {
     private int numDoc;
 
     public ConvMFDocumentProvider(@NonNull List<String> documents, @NonNull List<double[]> labelsForSentences) {
-        this(documents, labelsForSentences, new Random());
+        this(documents, labelsForSentences, Randoms.randomInstance());
         if(documents == null) {
             throw new NullPointerException("document");
         } else if(labelsForSentences == null) {
@@ -71,7 +72,7 @@ public class ConvMFDocumentProvider {
                 for(int i = 0; i < documents.size(); this.order[i] = i++) {
                 }
 
-                RandomUtils.shuffleInPlace(this.order, rng);
+                RandomUtils.shuffleInPlace(this.order, this.rng);
             }
 
         }
@@ -97,7 +98,6 @@ public class ConvMFDocumentProvider {
         if(this.rng != null) {
             RandomUtils.shuffleInPlace(this.order, this.rng);
         }
-
     }
 
     public int totalNumSentences() {

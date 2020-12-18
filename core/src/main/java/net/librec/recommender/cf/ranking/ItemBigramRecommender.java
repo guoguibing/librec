@@ -171,7 +171,7 @@ public class ItemBigramRecommender extends MatrixProbabilisticGraphicalRecommend
             for (int itemIdxIndex = 0; itemIdxIndex < itemIdxList.size(); itemIdxIndex++) {
                 int itemIdx = itemIdxList.get(itemIdxIndex);
 
-                int topicIdx = (int) (Math.random() * numTopics);
+                int topicIdx = (int) (Randoms.uniform() * numTopics);
                 topicAssignments.put(userIdx, itemIdx, topicIdx);
 
                 userTopicNumbers.plus(userIdx, topicIdx, 1.0);
