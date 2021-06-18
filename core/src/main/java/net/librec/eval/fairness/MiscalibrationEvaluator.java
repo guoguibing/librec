@@ -1,6 +1,8 @@
 package net.librec.eval.fairness;
 
 import com.google.common.collect.BiMap;
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
 import net.librec.eval.AbstractRecommenderEvaluator;
 import net.librec.math.algorithm.Maths;
 import net.librec.math.structure.SequentialAccessSparseMatrix;
@@ -113,12 +115,11 @@ public class MiscalibrationEvaluator extends AbstractRecommenderEvaluator {
 
 
     /**
-     * Evaluate on the test set with the the list of recommended items.
+     * Evaluate on the train set with the the list of recommended items.
      *
-     * @param groundTruthList
-     *            the given test set
      * @param recommendedList
      *            the list of recommended items
+     *            and the training set
      * @return evaluate result
      */
 
@@ -127,22 +128,20 @@ public class MiscalibrationEvaluator extends AbstractRecommenderEvaluator {
 
 //        int numUsers = testMatrix.numRows();
         int numUsers = groundTruthList.size();
-
+        SequentialAccessSparseMatrix trainMatrix = dataModel.getDataSplitter().getTrainData();
 
 
         double klDivSum = 0.0;
         int nonZeroNumUsers = 0;
-        for (int userID = 0; userID < numUsers; userID++) {
-//            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userID);
-            Set<Integer> testSetByUser = groundTruthList.getKeySetByContext(userID);
+        for (int contextIdx = 0; contextIdx < numUsers; contextIdx++) {
+            Set<Integer> testSetByContext = groundTruthList.getKeySetByContext(contextIdx);
+//            int[] trainSetByContext = trainMatrix.row(contextIdx).getIndices(); // items from train
+            Set<Integer> trainSetByContext = Sets.newHashSet(Ints.asList(trainMatrix.row(contextIdx).getIndices()));
+
 
             List<Double> p, q;
-            if (testSetByUser.size() > 0) {
-//                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userID);
-                List<KeyValue<Integer, Double>> recommendListByUser = recommendedList.getKeyValueListByContext(userID);
-
-
-//                List<Integer> itemSetByUser = new ArrayList<>();
+            if (testSetByContext.size() > 0) {
+                List<KeyValue<Integer, Double>> recommendListByUser = recommendedList.getKeyValueListByContext(contextIdx);
                 Set<Integer> itemSetByUser = new HashSet<>();
 
                 int topK = this.topN <= recommendListByUser.size() ? this.topN : recommendListByUser.size();
@@ -152,7 +151,7 @@ public class MiscalibrationEvaluator extends AbstractRecommenderEvaluator {
                 }
 
                 p = ComputeGenreDistribution(itemSetByUser);
-                q = ComputeGenreDistribution(testSetByUser);
+                q = ComputeGenreDistribution(trainSetByContext);
                 // question: how do I turn them into inner ids? check if it's correct!
 
                 //compute KL-Divergence
@@ -164,5 +163,48 @@ public class MiscalibrationEvaluator extends AbstractRecommenderEvaluator {
 
         return nonZeroNumUsers > 0 ? klDivSum / nonZeroNumUsers : 0.0d;
     }
+
+
+//        public double evaluate(RecommendedList groundTruthList, RecommendedList recommendedList) {
+//
+////        int numUsers = testMatrix.numRows();
+//            int numUsers = groundTruthList.size();
+//
+//
+//
+//            double klDivSum = 0.0;
+//            int nonZeroNumUsers = 0;
+//            for (int userID = 0; userID < numUsers; userID++) {
+////            Set<Integer> testSetByUser = testMatrix.getColumnsSet(userID);
+//                Set<Integer> testSetByUser = groundTruthList.getKeySetByContext(userID);
+//
+//                List<Double> p, q;
+//                if (testSetByUser.size() > 0) {
+////                List<ItemEntry<Integer, Double>> recommendListByUser = recommendedList.getItemIdxListByUserIdx(userID);
+//                    List<KeyValue<Integer, Double>> recommendListByUser = recommendedList.getKeyValueListByContext(userID);
+//
+//
+////                List<Integer> itemSetByUser = new ArrayList<>();
+//                    Set<Integer> itemSetByUser = new HashSet<>();
+//
+//                    int topK = this.topN <= recommendListByUser.size() ? this.topN : recommendListByUser.size();
+//                    for (int indexOfItem = 0; indexOfItem < topK; indexOfItem++) {
+//                        int itemIdRecom = recommendListByUser.get(indexOfItem).getKey();
+//                        itemSetByUser.add(itemIdRecom);
+//                    }
+//
+//                    p = ComputeGenreDistribution(itemSetByUser);
+//                    q = ComputeGenreDistribution(testSetByUser);
+//                    // question: how do I turn them into inner ids? check if it's correct!
+//
+//                    //compute KL-Divergence
+//                    double klDiv = KullbackLeiblerDivergence(p, q);
+//                    klDivSum += klDiv;
+//                    nonZeroNumUsers++;
+//                }
+//            }
+//
+//            return nonZeroNumUsers > 0 ? klDivSum / nonZeroNumUsers : 0.0d;
+//        }
 
 }
