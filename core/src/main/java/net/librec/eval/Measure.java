@@ -17,6 +17,7 @@
  */
 package net.librec.eval;
 
+import net.librec.eval.fairness.*;
 import net.librec.eval.ranking.*;
 import net.librec.eval.rating.MAEEvaluator;
 import net.librec.eval.rating.MPEEvaluator;
@@ -42,10 +43,26 @@ public enum Measure {
     RR(ReciprocalRankEvaluator.class),
     Novelty(NoveltyEvaluator.class),
     Entropy(EntropyEvaluator.class),
+    GiniIndex(GiniIndexEvaluator.class),
+    Diversity(DiversityEvaluator.class),
+    FeatureDiversity(DiversityByFeaturesEvaluator.class),
+    ICOV(ItemCoverageEvaluator.class),
     RMSE(RMSEEvaluator.class),
     MSE(MSEEvaluator.class),
     MAE(MAEEvaluator.class),
-    MPE(MPEEvaluator.class);
+    MPE(MPEEvaluator.class),
+    PSP(PStatisticalParityEvaluator.class),
+    CSP(CStatisticalParityEvaluator.class),
+    PPR(PPercentRuleEvaluator.class),
+    MISCALIB(MiscalibrationEvaluator.class),
+    DPCF(DiscountedProportionalCFairnessEvaluator.class),
+    DPPF(DiscountedProportionalPFairnessEvaluator.class),
+    NONPAR(NonParityUnfairnessEvaluator.class),
+    VALUNFAIRNESS(ValueUnfairnessEvaluator.class),
+    ABSUNFAIRNESS(ValueUnfairnessEvaluator.class),
+    OVERESTIMATE(OverestimationUnfairnessEvaluator.class),
+    UNDERESTIMATE(UnderestimationUnfairnessEvaluator.class)
+    ;
 
     private Class<? extends RecommenderEvaluator> evaluatorClass;
 
@@ -78,8 +95,20 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(AP, 10));
             rankingEnumList.add(new MeasureValue(NDCG, 10));
             rankingEnumList.add(new MeasureValue(RR, 10));
+            rankingEnumList.add(new MeasureValue(Diversity, 10));
+            rankingEnumList.add(new MeasureValue(FeatureDiversity, 10));
+            rankingEnumList.add(new MeasureValue(RR, 10));
             rankingEnumList.add(new MeasureValue(Novelty, 10));
             rankingEnumList.add(new MeasureValue(Entropy, 10));
+            rankingEnumList.add(new MeasureValue(GiniIndex, 10));
+            rankingEnumList.add(new MeasureValue(ICOV, 10));
+            rankingEnumList.add(new MeasureValue(PSP, 10));
+            rankingEnumList.add(new MeasureValue(CSP, 10));
+            rankingEnumList.add(new MeasureValue(PPR, 10));
+            rankingEnumList.add(new MeasureValue(MISCALIB, 10));
+            rankingEnumList.add(new MeasureValue(DPCF, 10));
+            rankingEnumList.add(new MeasureValue(DPPF, 10));
+            rankingEnumList.add(new MeasureValue(NONPAR, 10));
         } else {
             rankingEnumList.add(new MeasureValue(PRECISION, topN));
             rankingEnumList.add(new MeasureValue(RECALL, topN));
@@ -87,8 +116,19 @@ public enum Measure {
             rankingEnumList.add(new MeasureValue(AP, topN));
             rankingEnumList.add(new MeasureValue(NDCG, topN));
             rankingEnumList.add(new MeasureValue(RR, topN));
+            rankingEnumList.add(new MeasureValue(Diversity, topN));
+            rankingEnumList.add(new MeasureValue(FeatureDiversity, topN));
             rankingEnumList.add(new MeasureValue(Novelty, topN));
             rankingEnumList.add(new MeasureValue(Entropy, topN));
+            rankingEnumList.add(new MeasureValue(GiniIndex, topN));
+            rankingEnumList.add(new MeasureValue(ICOV, topN));
+            rankingEnumList.add(new MeasureValue(PSP, topN));
+            rankingEnumList.add(new MeasureValue(CSP, topN));
+            rankingEnumList.add(new MeasureValue(PPR, topN));
+            rankingEnumList.add(new MeasureValue(MISCALIB, topN));
+            rankingEnumList.add(new MeasureValue(DPCF, topN));
+            rankingEnumList.add(new MeasureValue(DPPF, topN));
+            rankingEnumList.add(new MeasureValue(NONPAR, topN));
         }
         return rankingEnumList;
     }
@@ -104,6 +144,12 @@ public enum Measure {
         ratingEnumList.add(new MeasureValue(MSE));
         ratingEnumList.add(new MeasureValue(MAE));
         ratingEnumList.add(new MeasureValue(MPE));
+        // fairness metrics
+        ratingEnumList.add(new MeasureValue(VALUNFAIRNESS));
+        ratingEnumList.add(new MeasureValue(ABSUNFAIRNESS));
+        ratingEnumList.add(new MeasureValue(OVERESTIMATE));
+        ratingEnumList.add(new MeasureValue(UNDERESTIMATE));
+
         return ratingEnumList;
     }
 

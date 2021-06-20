@@ -74,6 +74,12 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     public DataAppender dataAppender;
 
     /**
+     * Data Appender {@link FeatureAppender}
+     */
+    public FeatureAppender featureAppender;
+
+
+    /**
      * Build Convert.
      *
      * @throws LibrecException if error occurs when building convert.
@@ -123,6 +129,22 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
         }
     }
 
+    protected void buildFeatureAppender() throws LibrecException {
+        String featureAppenderClass = conf.get("feature.appender.class");
+        if (StringUtils.isNotBlank(featureAppenderClass)) {
+            try {
+                featureAppender = (FeatureAppender) ReflectionUtil.newInstance(DriverClassUtil.getClass(featureAppenderClass), conf);
+                featureAppender.setUserMappingData(getUserMappingData());
+                featureAppender.setItemMappingData(getItemMappingData());
+                featureAppender.processData();
+            } catch (ClassNotFoundException e) {
+                throw new LibrecException(e);
+            } catch (IOException e) {
+                throw new LibrecException(e);
+            }
+        }
+    }
+
     /**
      * Build data model.
      *
@@ -146,6 +168,11 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
         if (trainDataSet != null && trainDataSet.size() > 0 && testDataSet != null && testDataSet.size() > 0) {
             LOG.info("Data cardinality of training is " + trainDataSet.size());
             LOG.info("Data cardinality of testing is " + testDataSet.size());
+        }
+        if (StringUtils.isNotBlank(conf.get("feature.appender.class")) && !conf.getBoolean("feature.appender.read.ready")) {
+            buildFeatureAppender();
+            LOG.info("Feature appender loaded successfully!");
+            conf.setBoolean("feature.appender.read.ready", true);
         }
     }
 
@@ -234,6 +261,16 @@ public abstract class AbstractDataModel extends Configured implements DataModel 
     public DataAppender getDataAppender() {
         return dataAppender;
     }
+
+    /**
+     * Get feature appender
+     *
+     * @return feature appender of data model
+     */
+    public FeatureAppender getFeatureAppender() {
+        return featureAppender;
+    }
+
 
     /**
      * Get data context.

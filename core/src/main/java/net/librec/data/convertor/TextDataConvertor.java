@@ -191,9 +191,16 @@ public class TextDataConvertor extends AbstractDataConvertor {
                 e.printStackTrace();
             }
         }
+        // The rating scale can be as big as the data set if the ratings are real-valued. Silly to print the
+        // whole list.
         List<Double> ratingScale = matrix.getRatingScale();
         if (ratingScale != null) {
-            LOG.info(String.format("rating Scale: %s", ratingScale.toString()));
+            if (ratingScale.size() < 10) {
+                LOG.info(String.format("rating Scale: %s", ratingScale.toString()));
+            } else {
+                LOG.info(String.format("rating Scale (real): %s to %s", ratingScale.get(0),
+                        ratingScale.get(ratingScale.size()-1)));
+            }
         }
         LOG.info(String.format("user number: %d,\t item number is: %d", matrix.numUsers(), matrix.numItems()));
     }

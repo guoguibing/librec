@@ -19,7 +19,9 @@ package net.librec.similarity;
 
 import net.librec.conf.Configuration;
 import net.librec.data.DataModel;
+import net.librec.data.convertor.appender.ItemFeatureAppender;
 import net.librec.data.convertor.appender.SocialDataAppender;
+import net.librec.data.convertor.appender.UserFeatureAppender;
 import net.librec.math.structure.SequentialAccessSparseMatrix;
 import net.librec.math.structure.SequentialSparseVector;
 import net.librec.math.structure.SymmMatrix;
@@ -59,6 +61,11 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
         if (StringUtils.isNotBlank(similarityKey)) {
             if (StringUtils.equals(similarityKey, "social")) {
                 buildSocialSimilarityMatrix(dataModel);
+
+            }
+            if (StringUtils.contains(similarityKey, "feature")) {
+                // added by TRSL
+                buildFeatureSimilarityMatrix(dataModel);
             } else {
                 // calculate the similarity between users, or the similarity between items.
                 boolean isUser = StringUtils.equals(similarityKey, "user");
@@ -127,6 +134,82 @@ public abstract class AbstractRecommenderSimilarity implements RecommenderSimila
             }
         }
     }
+
+
+    /**
+     * Build feature similarity matrix with itemFeatureMatrix or userFeatureMatrix
+     * in dataModel.
+     *
+     * @param dataModel
+     *            the input data model
+     *
+     * @added by TRSL:Nasim
+     */
+    public void buildFeatureSimilarityMatrix(DataModel dataModel) {
+
+        String similarityKey = conf.get("rec.recommender.similarity.key", "user");
+        boolean isUser = StringUtils.contains(similarityKey, "user");
+
+        SequentialAccessSparseMatrix featureMatrix;
+        if (isUser) {
+            //userFeatureMatrix
+            featureMatrix = ((UserFeatureAppender) dataModel.getFeatureAppender()).getUserFeatures();
+        } else {
+            //itemFeatureMatrix
+            featureMatrix = ((ItemFeatureAppender) dataModel.getFeatureAppender()).getItemFeatures();
+        }
+
+        // the number of rows show the number of items or users
+        int numElements = featureMatrix.rowSize();
+        int count = numElements;
+
+        similarityMatrix = new SymmMatrix(count);
+        List<Integer> indexList = new ArrayList<>();
+        for (int index = 0; index < count; index++) {
+            indexList.add(index);
+        }
+
+        indexList.parallelStream().forEach((Integer thisIndex) -> {
+            SequentialSparseVector thisVector = featureMatrix.row(thisIndex);
+            if (thisVector.getNumEntries() != 0) {
+                // user/item itself exclusive
+                for (int thatIndex = thisIndex + 1; thatIndex < count; thatIndex++) {
+                    SequentialSparseVector thatVector = featureMatrix.row(thatIndex);
+                    if (thatVector.getNumEntries() == 0) {
+                        continue;
+                    }
+
+                    double sim = getCorrelation(thisVector, thatVector);
+                    if (!Double.isNaN(sim) && sim != 0.0) {
+                        similarityMatrix.set(thisIndex, thatIndex, sim);
+                    }
+                }
+            }
+        });
+
+
+//        for (int i = 0; i < count; i++) {
+//            SequentialSparseVector thisVector = featureMatrix.row(i);
+//            if (thisVector.getNumEntries() == 0) {
+//                continue;
+//            }
+//            for (int j = i + 1; j < count; j++) {
+//                SequentialSparseVector thatVector = featureMatrix.row(j);
+//                if (thatVector.getNumEntries() == 0) {
+//                    continue;
+//                }
+//
+//                double sim = getCorrelation(thisVector, thatVector);
+//                if (!Double.isNaN(sim) && sim != 0) {
+//                    similarityMatrix.set(i, j, sim);
+//                }
+//            }
+//        }
+
+
+    }
+
+
 
     /**
      * Find the common rated items by this user and that user, or the common
