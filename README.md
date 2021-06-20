@@ -1,6 +1,6 @@
 <img src="http://librec.net/images/logo.png" height="25%" width="25%" />
 
-**LibRec** (http://www.librec.net) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms, aiming to resolve two classic recommendation tasks: **rating prediction** and **item ranking**. 
+**LibRec** (https://guoguibing.github.io/librec/index.html) is a Java library for recommender systems (Java version 1.7 or higher required). It implements a suit of state-of-the-art recommendation algorithms, aiming to resolve two classic recommendation tasks: **rating prediction** and **item ranking**. 
 
 [![Join the chat at https://gitter.im/librec/Lobby](https://badges.gitter.im/librec/Lobby.svg)](https://gitter.im/librec/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)[![Build Status](https://travis-ci.org/guoguibing/librec.svg?branch=2.0.0)](https://travis-ci.org/guoguibing/librec)
 

@@ -27,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * A <tt>AbstractDataConvertor</tt> is a class to convert
@@ -67,7 +68,7 @@ public abstract class AbstractDataConvertor extends ProgressReporter implements 
         if (null == matrix){
             try {
                 processData();
-            } catch (IOException e) {
+            } catch (IOException | SQLException e) {
                 e.printStackTrace();
             }
         }
