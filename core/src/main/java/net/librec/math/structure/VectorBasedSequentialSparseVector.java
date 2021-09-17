@@ -62,7 +62,7 @@ public class VectorBasedSequentialSparseVector extends SequentialSparseVector {
 			List<Double> nonZeros = new ArrayList<Double>();
 			for (VectorEntry e : other) {
 				double value = e.get();
-				if (value != 0d && value != Double.NaN) {
+				if (value != 0d && !Double.isNaN(value)) {
 					nonZeros.add(value);
 				}
 			}
@@ -93,7 +93,7 @@ public class VectorBasedSequentialSparseVector extends SequentialSparseVector {
 		// get nonZero values
 		for (VectorEntry vectorEntry : other) {
 			double value = vectorEntry.get();
-			if (value != 0d && value != Double.NaN) {
+			if (value != 0d && !Double.isNaN(value)) {
 				sortableEntries[elementIndex++] = new OrderedVectorElement(vectorEntry.index(), value);
 			}
 		}
