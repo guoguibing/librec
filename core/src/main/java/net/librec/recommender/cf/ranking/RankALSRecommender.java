@@ -62,6 +62,7 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
     @Override
     protected void trainModel() throws LibrecException {
         for (int iter = 1; iter < numIterations; iter++) {
+            System.out.println("Train iteration " + iter);
 
             // P step: update user vectors
             DenseVector sum_sq = new VectorBasedDenseVector(numFactors);
@@ -75,6 +76,7 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
             }
 
             List<Integer> cus = nonEmptyRows(trainMatrix); // list of users with$c_ui=1$
+            double user_loss = 0;
             for (int u : cus) {
                 // for each user
                 DenseMatrix sum_cqq = new DenseMatrix(numFactors, numFactors);
@@ -110,10 +112,13 @@ public class RankALSRecommender extends MatrixFactorizationRecommender {
                         .plus(sum_sqr.times(sum_c));
 
                 DenseVector pu = M.inverse().times(y);
+                user_loss += y.getLengthSquared();
                 userFactors.row(u).assign((index, value) -> {
                     return pu.get(index);
                 });
             }
+            String info = "RankALS iter " + iter + ": sq. user loss = " + user_loss;
+            LOG.info(info);
 
             // Q step: update item vectors
             Map<Integer, Double> m_sum_sr = new HashMap<>();
