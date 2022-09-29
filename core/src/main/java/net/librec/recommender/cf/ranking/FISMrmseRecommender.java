@@ -161,7 +161,7 @@ public class FISMrmseRecommender extends MatrixFactorizationRecommender {
 				loss += itemBiasReg * bi * bi;
 				// update bu
 				userBiases.plus(u, lRate * (eui - userBiasReg * bu));
-				loss += itemBiasReg * bu * bu;
+				loss += userBiasReg * bu * bu;
 				// update Qi
 				DenseVector deltaq = X.times(eui).minus(Q.row(i).times(beta));
 				loss += beta * Q.row(i).dot(Q.row(i));
