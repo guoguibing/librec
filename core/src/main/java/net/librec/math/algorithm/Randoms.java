@@ -46,6 +46,10 @@ public class Randoms {
         r = new Random(seed);
     }
 
+    public static Random randomInstance() {
+        return r;
+    }
+
     /**
      * Random generate an integer in [min, max)
      *
