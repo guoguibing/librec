@@ -12,7 +12,7 @@
 	<name>librec-spark</name>
 
 	<properties>
-        <spark.version>2.2.1</spark.version>
+        <spark.version>2.4.8</spark.version>
         <scala.version>2.11.8</scala.version>
         <scala.binary.version>2.11</scala.binary.version>
 		<scala.compat.version>1.2</scala.compat.version>
